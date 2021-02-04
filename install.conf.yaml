@@ -44,7 +44,6 @@
       path: src/.functions/*
 
 - shell:
-    - [git submodule update --recursive, Update submodules]
     - [vim -c 'PlugUpgrade' -c 'PlugUpdate' -c 'qa!', Update vim-plug]
     # https://wiki.archlinux.org/index.php/Zsh#Persistent_rehash
     - command: |
