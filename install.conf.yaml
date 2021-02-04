@@ -11,8 +11,6 @@
     - "~/.functions"
 
 - link:
-    ~/.env:
-      path: src/.env
     ~/.aliases:
       path: src/.aliases
     ~/.bash_profile:
