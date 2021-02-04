@@ -21,13 +21,6 @@ scope() {
         export SHELL=/bin/bash
     fi
 
-    # Personal desktop environment scripts,
-    # more useful here than .profile because .xprofile is loaded before i3 in .xinitrc
-    local PERSONAL_BIN=${MY_BIN:-$MY_DOTFILES/bin}
-    if [ -d "$PERSONAL_BIN" ]; then
-        export PATH=$PATH:$PERSONAL_BIN
-    fi
-
     # https://guides.rubygems.org/faqs/#user-install
     if which ruby >/dev/null && which gem >/dev/null; then
         export PATH="$(ruby -r rubygems -e 'puts Gem.user_dir')/bin:$PATH"

@@ -9,7 +9,6 @@ alias xpaste="xclip -rmlastnl -selection clipboard -o"
 # https://github.com/andreafrancia/trash-cli
 alias rm="echo \"No way, man!\""
 alias rrm="command rm"
-alias dotsync="/bin/bash $MY_DOTFILES/install"
 
 # fzy (see .functions for more)
 alias ff="find . -type f | fzy"
