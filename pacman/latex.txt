@@ -1,3 +1,0 @@
-texlive-core
-texlive-fontsextra
-texlive-latexextra
