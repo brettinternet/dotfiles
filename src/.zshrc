@@ -8,11 +8,12 @@ source $HOME/.config/broot/launcher/bash/br
 source /usr/share/nvm/init-nvm.sh
 
 # Source functions
-[ -d "$MY_FUNCTIONS" ] && for i ($MY_FUNCTIONS/*.sh(D)) source $i
-[ -d "$MY_FUNCTIONS" ] && for i ($MY_FUNCTIONS/*.zsh(D)) source $i
+FUNCTIONS_DIR="$HOME/.functions"
+[ -d "$FUNCTIONS_DIR" ] && for i ($FUNCTIONS_DIR/*.sh(D)) source $i
+[ -d "$FUNCTIONS_DIR" ] && for i ($FUNCTIONS_DIR/*.zsh(D)) source $i
 # TODO: autoload test of functions the proper way
 
-fpath+=( $MY_FUNCTIONS )
+fpath+=( $FUNCTIONS_DIR )
 autoload -Uz clock zman colortest
 
 

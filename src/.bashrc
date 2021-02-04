@@ -9,7 +9,8 @@ PS1='[\u@\h \W]\$ '
 source $HOME/.profile
 
 source $HOME/.aliases
-[ -d "$MY_FUNCTIONS" ] && for i in $MY_FUNCTIONS/*.sh; do source $i; done
+FUNCTIONS_DIR="$HOME/.functions"
+[ -d "$FUNCTIONS_DIR" ] && for i in $FUNCTIONS_DIR/*.sh; do source $i; done
 
 source $HOME/.config/broot/launcher/bash/br
 source /usr/share/nvm/init-nvm.sh
