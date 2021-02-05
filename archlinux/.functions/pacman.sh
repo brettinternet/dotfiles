@@ -7,83 +7,83 @@ alias mirror='sudo reflector  --protocol http --protocol https --latest 50 --num
 # Source: https://unix.stackexchange.com/a/384102/224048
 # You may add "--console-log-level=warn" as an aria2 arg to simmer down `/etc/powerpill/powerpill.json`
 pac() {
-    # Downgrade permissions as AUR helpers expect to be run as a non-root user, $UID is read-only in {ba,z}sh
-    export pacman_program="sudo -u #$UID /usr/bin/yay --pacman powerpill --sudoloop"
+  # Downgrade permissions as AUR helpers expect to be run as a non-root user, $UID is read-only in {ba,z}sh
+  export pacman_program="sudo -u #$UID /usr/bin/yay --pacman powerpill --sudoloop"
 
-    # pacmatic needs to be run as root: https://github.com/keenerd/pacmatic/issues/35
-    pacmatic_update() {
+  # pacmatic needs to be run as root: https://github.com/keenerd/pacmatic/issues/35
+  pacmatic_update() {
     sudo --preserve-env=pacman_program /usr/bin/pacmatic "$@"
-    }
+  }
 
-    if [[ -z "$@" ]]; then
+  if [[ -z "$@" ]]; then
     pacmatic_update -Syu
-    else
+  else
     pacmatic_update "$@"
-    fi
+  fi
 }
 
 # Source: OMZ
 
 # List all installed packages with a short description
 function paclist() {
-    # Source: https://bbs.archlinux.org/viewtopic.php?id=93683
-    LC_ALL=C pacman -Qei $(pacman -Qu | cut -d " " -f 1) | \
-    awk 'BEGIN {FS=":"} /^Name/{printf("\033[1;36m%s\033[1;37m", $2)} /^Description/{print $2}'
+  # Source: https://bbs.archlinux.org/viewtopic.php?id=93683
+  LC_ALL=C pacman -Qei $(pacman -Qu | cut -d " " -f 1) | \
+  awk 'BEGIN {FS=":"} /^Name/{printf("\033[1;36m%s\033[1;37m", $2)} /^Description/{print $2}'
 }
 
 # List all disowned files in your system
 function pacdisowned() {
-    emulate -L zsh
+  emulate -L zsh
 
-    tmp=${TMPDIR-/tmp}/pacman-disowned-$UID-$$
-    db=$tmp/db
-    fs=$tmp/fs
+  tmp=${TMPDIR-/tmp}/pacman-disowned-$UID-$$
+  db=$tmp/db
+  fs=$tmp/fs
 
-    mkdir "$tmp"
-    trap  '/bin/rm -rf "$tmp"' EXIT
+  mkdir "$tmp"
+  trap  '/bin/rm -rf "$tmp"' EXIT
 
-    pacman -Qlq | sort -u > "$db"
+  pacman -Qlq | sort -u > "$db"
 
-    find /bin /etc /lib /sbin /usr ! -name lost+found \
-    \( -type d -printf '%p/\n' -o -print \) | sort > "$fs"
+  find /bin /etc /lib /sbin /usr ! -name lost+found \
+  \( -type d -printf '%p/\n' -o -print \) | sort > "$fs"
 
-    comm -23 "$fs" "$db"
+  comm -23 "$fs" "$db"
 }
 
 # Open the website of an ArchLinux package
 if [ -x "$(command -v xdg-open)" ]; then
-    function pacweb() {
-        pkg="$1"
-        infos="$(pacman -Si "$pkg")"
-        if [[ -z "$infos" ]]; then
-          return
-        fi
-        repo="$(grep '^Repo' <<< "$infos" | grep -oP '[^ ]+$')"
-        arch="$(grep '^Arch' <<< "$infos" | grep -oP '[^ ]+$')"
-        xdg-open "https://www.archlinux.org/packages/$repo/$arch/$pkg/" &>/dev/null
-    }
+  function pacweb() {
+    pkg="$1"
+    infos="$(pacman -Si "$pkg")"
+    if [[ -z "$infos" ]]; then
+      return
+    fi
+    repo="$(grep '^Repo' <<< "$infos" | grep -oP '[^ ]+$')"
+    arch="$(grep '^Arch' <<< "$infos" | grep -oP '[^ ]+$')"
+    xdg-open "https://www.archlinux.org/packages/$repo/$arch/$pkg/" &>/dev/null
+  }
 fi
 
 # Pacman hygiene
 function pacman_clean() {
-    set -uo pipefail
+  set -uo pipefail
 
-    ORPHANS=$(pacman -Qtdq)
-    if [[ $ORPHANS ]]; then
-    # Remove pacman orphans
-    sudo pacman -Rns $ORPHANS
-    fi
+  ORPHANS=$(pacman -Qtdq)
+  if [[ $ORPHANS ]]; then
+  # Remove pacman orphans
+  sudo pacman -Rns $ORPHANS
+  fi
 
-    if [ -x "$(command -v xdg-open)" ]; then
-    # Update configuration files
-    # https://wiki.archlinux.org/index.php/Pacman/Pacnew_and_Pacsave
-    sudo pacdiff
-    else
-    echo "Install pacdiff to update configuration files"
-    fi
+  if [ -x "$(command -v xdg-open)" ]; then
+  # Update configuration files
+  # https://wiki.archlinux.org/index.php/Pacman/Pacnew_and_Pacsave
+  sudo pacdiff
+  else
+  echo "Install pacdiff to update configuration files"
+  fi
 
-    # Clean up pacman cache
-    sudo pacman -Sc
+  # Clean up pacman cache
+  sudo pacman -Sc
 }
 
 # Helpful Pacman cmds

@@ -12,32 +12,32 @@ ps axf | grep 'greenclip daemon' | grep -v grep | awk '{print $1}' | xargs kill 
 
 # If matching process is running, kill it to renew our timeout
 for PID in $(pidof -x "$NAME"); do
-    if [ $PID != $$ ]; then
-        # Process is already running, kill group (children too)
-        kill -- -$(ps -o pgid= $PID | grep -o [0-9]*)
-    fi
+  if [ $PID != $$ ]; then
+    # Process is already running, kill group (children too)
+    kill -- -$(ps -o pgid= $PID | grep -o [0-9]*)
+  fi
 done
 
 function revert {
-    # kill subprocesses
-    # pkill -P $$
+  # kill subprocesses
+  # pkill -P $$
 
-    # Flush current selection
-    greenclip print ' '
+  # Flush current selection
+  greenclip print ' '
 
-    # SIGCONT to unfreeze process
-    ps axf | grep 'greenclip daemon' | grep -v grep | awk '{print $1}' | xargs kill -18
+  # SIGCONT to unfreeze process
+  ps axf | grep 'greenclip daemon' | grep -v grep | awk '{print $1}' | xargs kill -18
 
-    dunstify -a "$APPNAME" -u 'low' \
-        -h string:x-dunst-stack-tag:"$NAME" \
-        "Clipboard" "Daemon resumed."
+  dunstify -a "$APPNAME" -u 'low' \
+    -h string:x-dunst-stack-tag:"$NAME" \
+    "Clipboard" "Daemon resumed."
 }
 
 trap revert INT
 
 dunstify -a "$APPNAME" -u 'critical' -t "30000" \
-    -h string:x-dunst-stack-tag:"$NAME" \
-    --action="default,Continue" \
-    "Clipboard" "Daemon paused. Dismiss to resume or wait $TIMEOUT seconds."
+  -h string:x-dunst-stack-tag:"$NAME" \
+  --action="default,Continue" \
+  "Clipboard" "Daemon paused. Dismiss to resume or wait $TIMEOUT seconds."
 
 revert

@@ -9,18 +9,18 @@ MINUTES=$(( $MINUTES % 60 ));
 HOUR=$(( $HOUR % 12 ))
 
 case $HOUR in
-    0) CLOCK="🕛"; [ $MINUTES -ge 30 ] && CLOCK="🕧";;
-    1) CLOCK="🕐"; [ $MINUTES -ge 30 ] && CLOCK="🕜";;
-    2) CLOCK="🕑"; [ $MINUTES -ge 30 ] && CLOCK="🕝";;
-    3) CLOCK="🕒"; [ $MINUTES -ge 30 ] && CLOCK="🕞";;
-    4) CLOCK="🕓"; [ $MINUTES -ge 30 ] && CLOCK="🕟";;
-    5) CLOCK="🕔"; [ $MINUTES -ge 30 ] && CLOCK="🕠";;
-    6) CLOCK="🕕"; [ $MINUTES -ge 30 ] && CLOCK="🕡";;
-    7) CLOCK="🕖"; [ $MINUTES -ge 30 ] && CLOCK="🕢";;
-    8) CLOCK="🕗"; [ $MINUTES -ge 30 ] && CLOCK="🕣";;
-    9) CLOCK="🕘"; [ $MINUTES -ge 30 ] && CLOCK="🕤";;
-10) CLOCK="🕙"; [ $MINUTES -ge 30 ] && CLOCK="🕥";;
-11) CLOCK="🕚"; [ $MINUTES -ge 30 ] && CLOCK="🕦";;
-    *) CLOCK="⌛";;
+  0) CLOCK="🕛"; [ $MINUTES -ge 30 ] && CLOCK="🕧";;
+  1) CLOCK="🕐"; [ $MINUTES -ge 30 ] && CLOCK="🕜";;
+  2) CLOCK="🕑"; [ $MINUTES -ge 30 ] && CLOCK="🕝";;
+  3) CLOCK="🕒"; [ $MINUTES -ge 30 ] && CLOCK="🕞";;
+  4) CLOCK="🕓"; [ $MINUTES -ge 30 ] && CLOCK="🕟";;
+  5) CLOCK="🕔"; [ $MINUTES -ge 30 ] && CLOCK="🕠";;
+  6) CLOCK="🕕"; [ $MINUTES -ge 30 ] && CLOCK="🕡";;
+  7) CLOCK="🕖"; [ $MINUTES -ge 30 ] && CLOCK="🕢";;
+  8) CLOCK="🕗"; [ $MINUTES -ge 30 ] && CLOCK="🕣";;
+  9) CLOCK="🕘"; [ $MINUTES -ge 30 ] && CLOCK="🕤";;
+  10) CLOCK="🕙"; [ $MINUTES -ge 30 ] && CLOCK="🕥";;
+  11) CLOCK="🕚"; [ $MINUTES -ge 30 ] && CLOCK="🕦";;
+  *) CLOCK="⌛";;
 esac
 echo $CLOCK

@@ -13,15 +13,15 @@
 #     'spice-guest-tools' on windows
 
 if [ -x /usr/bin/spice-vdagent ]; then
-    # Xfce recommends delaying the startup of applications
-    # https://wiki.archlinux.org/index.php/Xfce#Autostart
-    sleep 3
+  # Xfce recommends delaying the startup of applications
+  # https://wiki.archlinux.org/index.php/Xfce#Autostart
+  sleep 3
 
+  xrandr --output "$(xrandr | awk '/ connected/{print $1; exit; }')" --auto
+
+  xev -root -event randr | \
+  grep --line-buffered 'subtype XRROutputChangeNotifyEvent' | \
+  while read piped; do \
     xrandr --output "$(xrandr | awk '/ connected/{print $1; exit; }')" --auto
-
-    xev -root -event randr | \
-    grep --line-buffered 'subtype XRROutputChangeNotifyEvent' | \
-    while read piped; do \
-        xrandr --output "$(xrandr | awk '/ connected/{print $1; exit; }')" --auto
-    done
+  done
 fi
