@@ -1,4 +1,4 @@
-.PHONY: setup base install desktop laptop vmguest
+.PHONY: setup install base desktop laptop vmguest vmguest-arch
 
 base/.env:
 	@cp base/example.env base/.env
@@ -7,20 +7,20 @@ base/.env:
 setup: base/.env
 	@printf "\x1B[01;93m✔ Setup complete\n\x1B[0m"
 
-base: setup
+install: setup
 	@./install
 	@printf "\x1B[01;93m✔ Install complete\n\x1B[0m"
 
-install: base
+base: install
 
-desktop: setup
-	@DOTFILE_GROUPS=desktop,x11,archlinux; ./install
-	@printf "\x1B[01;93m✔ Install complete\n\x1B[0m"
+desktop: export DOTFILE_GROUPS = desktop,x11,archlinux
+desktop: install
 
-laptop: setup
-	@DOTFILE_GROUPS=laptop,x11,archlinux; ./install
-	@printf "\x1B[01;93m✔ Install complete\n\x1B[0m"
+laptop: export DOTFILE_GROUPS = laptop,x11,archlinux
+laptop: install
 
-vmguest: setup
-	@DOTFILE_GROUPS=vmguest,x11,archlinux; ./install
-	@printf "\x1B[01;93m✔ Install complete\n\x1B[0m"
+vmguest: export DOTFILE_GROUPS = vmguest
+vmguest: install
+
+vmguest-arch: export DOTFILE_GROUPS = vmguest,x11,archlinux
+vmguest-arch: install
