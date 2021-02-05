@@ -15,32 +15,14 @@ echo "Configuring ${CONFIG}"
 "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}"
 
 # Optional groups
-if [[ $DOTFILE_GROUPS == *"x11"* ]]; then
-  CONFIG="x11.yml"
-  echo "Configuring ${CONFIG}"
-  "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}"
-fi
-
-if [[ $DOTFILE_GROUPS == *"desktop"* ]]; then
-  CONFIG="desktop.yml"
-  echo "Configuring ${CONFIG}"
-  "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}"
-fi
-
-if [[ $DOTFILE_GROUPS == *"laptop"* ]]; then
-  CONFIG="laptop.yml"
-  echo "Configuring ${CONFIG}"
-  "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}"
-fi
-
-if [[ $DOTFILE_GROUPS == *"vmguest"* ]]; then
-  CONFIG="vmguest.yml"
-  echo "Configuring ${CONFIG}"
-  "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}"
-fi
-
-if [[ $DOTFILE_GROUPS == *"archlinux"* ]]; then
-  CONFIG="archlinux.yml"
-  echo "Configuring ${CONFIG}"
-  "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}"
-fi
+IFS=', ' read -r -a DOTFILE_ARRAY <<< "$DOTFILE_GROUPS"
+for GROUP_EL in "${DOTFILE_ARRAY[@]}"; do
+  CONFIG="$GROUP_EL.yml"
+  if [ -f "${BASEDIR}/${CONFIG}" ]; then
+    echo "Configuring ${CONFIG}"
+    "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}"
+  else
+    echo "Cannot find ${CONFIG}"
+    exit 1
+  fi
+done
