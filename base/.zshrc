@@ -4,13 +4,15 @@ source $HOME/.profile
 
 source $HOME/.aliases
 
-source $HOME/.config/broot/launcher/bash/br
-source /usr/share/nvm/init-nvm.sh
+[ -d "$HOME/.config/broot" ] && source $HOME/.config/broot/launcher/bash/br
+[ -d "/usr/share/nvm" ] && source /usr/share/nvm/init-nvm.sh
 
 # Source functions
 FUNCTIONS_DIR="$HOME/.functions"
 [ -d "$FUNCTIONS_DIR" ] && for i ($FUNCTIONS_DIR/*.sh(D)) source $i
-[ -d "$FUNCTIONS_DIR" ] && for i ($FUNCTIONS_DIR/*.zsh(D)) source $i
+if [ -d "$FUNCTIONS_DIR" ] && [ "$(ls -1 $FUNCTIONS_DIR/*.zsh 2>/dev/null | wc -l)" != 0 ]; then
+  for i ($FUNCTIONS_DIR/*.zsh(D)) source $i
+fi
 # TODO: autoload test of functions the proper way
 
 fpath+=( $FUNCTIONS_DIR )
