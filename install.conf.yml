@@ -46,9 +46,7 @@
 - shell:
     - [vim -c 'PlugUpgrade' -c 'PlugUpdate' -c 'qa!', Update vim-plug]
     # https://wiki.archlinux.org/index.php/Zsh#Persistent_rehash
-    - command: |
-        '[[ "$SHELL" = *"zsh" ]] && (REHASH_FILE=$HOME/.cache/zsh/rehash; mkdir -p "${REHASH_FILE%/*}" && \
-            /usr/bin/touch -m "$REHASH_FILE") || echo "Skipping...current shell is $SHELL"'
+    - command: '[[ "$SHELL" = *"zsh" ]] && (REHASH_FILE=$HOME/.cache/zsh/rehash; mkdir -p "${REHASH_FILE%/*}" && /usr/bin/touch -m "$REHASH_FILE") || echo "Skipping...current shell is $SHELL"'
       stdout: true
       stderr: true
       description: Rehash zsh $PATH
