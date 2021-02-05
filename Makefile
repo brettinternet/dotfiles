@@ -13,14 +13,14 @@ install: setup
 
 base: install
 
-desktop: export DOTFILE_GROUPS = desktop,x11,archlinux
+desktop: export DOTFILE_GROUPS = x11,desktop,archlinux
 desktop: install
 
-laptop: export DOTFILE_GROUPS = laptop,x11,archlinux
+laptop: export DOTFILE_GROUPS = x11,laptop,archlinux
 laptop: install
 
 vmguest: export DOTFILE_GROUPS = vmguest
 vmguest: install
 
-vmguest-arch: export DOTFILE_GROUPS = vmguest,x11,archlinux
+vmguest-arch: export DOTFILE_GROUPS = x11,vmguest,archlinux
 vmguest-arch: install
