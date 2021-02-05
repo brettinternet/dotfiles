@@ -181,7 +181,7 @@ zplugin snippet https://github.com/sainnhe/dotfiles/blob/master/.zsh-theme-gruvb
 # Options: https://github.com/geometry-zsh/geometry/blob/acf8febcecf3bad2bd91963506a5b26ccc955270/options.md
 zinit lucid load'![[ $MYPROMPT = 1 ]]' unload'![[ $MYPROMPT != 1 ]]' \
  atload'!geometry::prompt' nocd \
- atinit'GEOMETRY_PATH_COLOR=04; GEOMETRY_STATUS_COLOR=05' for \
+ atinit'GEOMETRY_PATH_COLOR=04; GEOMETRY_STATUS_COLOR=05; GEOMETRY_HOST_COLORS=({1..7})' for \
     geometry-zsh/geometry
 
 MYPROMPT=1
