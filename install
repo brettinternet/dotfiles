@@ -16,5 +16,5 @@ cd "${BASEDIR}"
 # Local only dotfiles are deploy to `/local` from Ansible
 SECONDARYDIR="${BASEDIR}/local"
 if [[ -f "${SECONDARYDIR}/${CONFIG}" ]]; then
-    "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${SECONDARYDIR}" -c "${CONFIG}" "${@}"
+    "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${SECONDARYDIR}" -c "${SECONDARYDIR}/${CONFIG}" "${@}"
 fi
