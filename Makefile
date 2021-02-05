@@ -8,7 +8,7 @@ setup: base/.env
 	@printf "\x1B[01;93m✔ Setup complete\n\x1B[0m"
 
 install: setup
-	@./install
+	@./install $(ARGS)
 	@printf "\x1B[01;93m✔ Install complete\n\x1B[0m"
 
 base: install
