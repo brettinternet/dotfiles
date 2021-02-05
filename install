@@ -2,7 +2,7 @@
 
 set -e
 
-CONFIG="install.conf.yml"
+CONFIG="base.yml"
 DOTBOT_DIR="dotbot"
 
 DOTBOT_BIN="bin/dotbot"
@@ -11,10 +11,36 @@ BASEDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${BASEDIR}"
 
 (cd "${DOTBOT_DIR}" && git submodule update --init --recursive)
+echo "Configuring ${CONFIG}"
 "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}"
 
-# Local only dotfiles are deploy to `/local` from Ansible
-SECONDARYDIR="${BASEDIR}/local"
-if [[ -f "${SECONDARYDIR}/${CONFIG}" ]]; then
-    "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${SECONDARYDIR}" -c "${SECONDARYDIR}/${CONFIG}" "${@}"
+# Optional groups
+if [[ $DOTFILE_GROUPS == *"x11"* ]]; then
+  CONFIG="x11.yml"
+  echo "Configuring ${CONFIG}"
+  "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}"
+fi
+
+if [[ $DOTFILE_GROUPS == *"desktop"* ]]; then
+  CONFIG="desktop.yml"
+  echo "Configuring ${CONFIG}"
+  "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}"
+fi
+
+if [[ $DOTFILE_GROUPS == *"laptop"* ]]; then
+  CONFIG="laptop.yml"
+  echo "Configuring ${CONFIG}"
+  "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}"
+fi
+
+if [[ $DOTFILE_GROUPS == *"vmguest"* ]]; then
+  CONFIG="vmguest.yml"
+  echo "Configuring ${CONFIG}"
+  "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}"
+fi
+
+if [[ $DOTFILE_GROUPS == *"archlinux"* ]]; then
+  CONFIG="archlinux.yml"
+  echo "Configuring ${CONFIG}"
+  "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}"
 fi

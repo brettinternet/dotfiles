@@ -1,0 +1,28 @@
+- defaults:
+    link:
+      create: true
+      relink: true
+
+- link:
+    ~/.xbindkeysrc:
+      path: x11/.xbindkeysrc
+    ~/.xbindkeysrc-mouse:
+      path: x11/.xbindkeysrc-mouse
+      if: 'xinput | grep -q "Logitech MX Master"'
+    ~/.xinitrc:
+      path: x11/.xinitrc
+    ~/.Xmodmap:
+      path: x11/.Xmodmap
+    ~/.xprofile:
+      path: x11/.xprofile
+    ~/.Xresources:
+      path: x11/.Xresources
+    ~/.config/:
+      glob: true
+      path: x11/.config/*
+    ~/.functions/:
+      glob: true
+      path: x11/.functions/*
+    ~/.bin/:
+      glob: true
+      path: x11/.bin/*

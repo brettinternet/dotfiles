@@ -1,0 +1,26 @@
+- defaults:
+    link:
+      create: true
+      relink: true
+
+- create:
+    - ~/dev
+    - ~/dev/me
+    - ~/dev/sandbox
+    - ~/Downloads
+
+- link:
+    ~/.config/:
+      path: laptop/.config/*
+      glob: true
+    ~/.functions/:
+      path: laptop/.functions/*
+      glob: true
+    ~/.bin/:
+      path: laptop/.bin/*
+      glob: true
+    ~/.screenlayout:
+      path: laptop/.screenlayout
+      force: true
+    ~/.xprofile.local:
+      path: laptop/.xprofile.local
