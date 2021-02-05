@@ -14,25 +14,23 @@ COMMAND="brillo -u 100000"
 $COMMAND "$@"
 
 round_up () {
-    FLOAT="$1"
-    PRECISION="${2:-0}"
-    printf "%.${PRECISION}f" "${FLOAT}"
+  FLOAT="$1"
+  PRECISION="${2:-0}"
+  printf "%.${PRECISION}f" "${FLOAT}"
 }
 
 get_current_brightness () {
-    #xbacklight -get
-    brillo -G
+  #xbacklight -get
+  brillo -G
 }
 
 BRIGHTNESS=$(round_up "$(get_current_brightness)")
 
 if [ -n "$BRIGHTNESS" ]; then
-    #ICON="display-brightness-low-symbolic"
-    ICON="whitebalance"
-    dunstify -a "$NAME" -u low -i "$ICON" \
-        -h string:x-dunst-stack-tag:"$NAME" \
-        "Brightness: ${BRIGHTNESS}%" \
-        "$(get-progress-string 10 "<b> </b>"  " " $BRIGHTNESS)"
+  #ICON="display-brightness-low-symbolic"
+  ICON="whitebalance"
+  dunstify -a "$NAME" -u low -i "$ICON" \
+    -h string:x-dunst-stack-tag:"$NAME" \
+    "Brightness: ${BRIGHTNESS}%" \
+    "$(get-progress-string 10 "<b> </b>"  " " $BRIGHTNESS)"
 fi
-
-exit 0

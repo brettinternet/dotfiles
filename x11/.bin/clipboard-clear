@@ -16,4 +16,4 @@ greenclip print ' '
 greenclip daemon &> /dev/null &
 
 dunstify -a "$APPNAME" -h string:x-dunst-stack-tag:"$APPNAME" \
-    "Clipboard" "History cleared"
+  "Clipboard" "History cleared"

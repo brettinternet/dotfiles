@@ -18,23 +18,23 @@ TRACK_ARTIST=$(playerctl -p "$PLAYER" metadata xesam:artist)
 TRACK_ALBUM=$(playerctl -p "$PLAYER" metadata xesam:album)
 
 open_player () {
-    # Note: https://www.reddit.com/r/i3wm/comments/emv57u/scripting_open_existing_window_instead_of_new/
-    # dbus-send --print-reply \
-    #     --dest=org.mpris.MediaPlayer2.spotify \
-    #     /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.OpenUri "string:$1"
-    i3-msg -q '[class="Spotify"] focus'
+  # Note: https://www.reddit.com/r/i3wm/comments/emv57u/scripting_open_existing_window_instead_of_new/
+  # dbus-send --print-reply \
+  #     --dest=org.mpris.MediaPlayer2.spotify \
+  #     /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.OpenUri "string:$1"
+  i3-msg -q '[class="Spotify"] focus'
 }
 
 ICON="spotify"
 ACTION=$(
-    dunstify -a "$APP" -u "low" -i "$ICON" \
-        -A "default,Open Album" \
-        -h string:x-dunst-stack-tag:"$APP" \
-        "$TRACK_TITLE" "$TRACK_ARTIST - $TRACK_ALBUM"
+  dunstify -a "$APP" -u "low" -i "$ICON" \
+    -A "default,Open Album" \
+    -h string:x-dunst-stack-tag:"$APP" \
+    "$TRACK_TITLE" "$TRACK_ARTIST - $TRACK_ALBUM"
 )
 
 case "$ACTION" in
-    "default")
-        open_player $TRACK_ID
-        ;;
+  "default")
+    open_player $TRACK_ID
+    ;;
 esac

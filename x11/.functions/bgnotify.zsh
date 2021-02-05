@@ -23,20 +23,20 @@ autoload -Uz add-zsh-hook || { print "can't add zsh hook!"; return }
 ## definitions ##
 
 function bgnotify_formatted { ## args: (exit_status, command, elapsed_seconds, title)
-    elapsed="$(( $3 % 60 ))s"
-    (( $3 >= 60 )) && elapsed="$((( $3 % 3600) / 60 ))m $elapsed"
-    (( $3 >= 3600 )) && elapsed="$(( $3 / 3600 ))h $elapsed"
-    class="$4"
-    icon=$([ $1 -eq 0 ] && echo "terminal" || echo "error")
-    bgnotify "$class ($elapsed)" "$2" -i "$icon" -a "$class"
+  elapsed="$(( $3 % 60 ))s"
+  (( $3 >= 60 )) && elapsed="$((( $3 % 3600) / 60 ))m $elapsed"
+  (( $3 >= 3600 )) && elapsed="$(( $3 / 3600 ))h $elapsed"
+  class="$4"
+  icon=$([ $1 -eq 0 ] && echo "terminal" || echo "error")
+  bgnotify "$class ($elapsed)" "$2" -i "$icon" -a "$class"
 }
 
 currentWindowId () {
-    xprop -root 2> /dev/null | awk '/NET_ACTIVE_WINDOW/{print $5;exit} END{exit !$5}' || echo "0"
+  xprop -root 2> /dev/null | awk '/NET_ACTIVE_WINDOW/{print $5;exit} END{exit !$5}' || echo "0"
 }
 
 currentWindowClass () { ## args: (window ID)
-    xprop -id "$1" WM_CLASS | awk '/WM_CLASS/{print $4;exit}' | sed -e 's/^"//' -e 's/"$//'
+  xprop -id "$1" WM_CLASS | awk '/WM_CLASS/{print $4;exit}' | sed -e 's/^"//' -e 's/"$//'
 }
 
 # dunst_notify () ( ## args: ...dunstify
@@ -54,11 +54,11 @@ currentWindowClass () { ## args: (window ID)
 # )
 
 bgnotify () { ## args: (title, subtitle)
-    # if hash dunstify 2>/dev/null; then
-        # dunst_notify "$@" &> /dev/null &
-    # elif hash notify-send 2>/dev/null; then
-        notify-send "$@"
-    # fi
+  # if hash dunstify 2>/dev/null; then
+      # dunst_notify "$@" &> /dev/null &
+  # elif hash notify-send 2>/dev/null; then
+      notify-send "$@"
+  # fi
 }
 
 ## Zsh hooks ##
