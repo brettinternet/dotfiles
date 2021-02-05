@@ -1,0 +1,9 @@
+- defaults:
+    link:
+      create: true
+      relink: true
+
+- link:
+    ~/.functions/:
+      path: archlinux/.functions/*
+      glob: true

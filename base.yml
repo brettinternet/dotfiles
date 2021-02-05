@@ -1,0 +1,47 @@
+# https://github.com/anishathalye/dotbot/tree/master#directives
+
+- defaults:
+    link:
+      create: true
+      relink: true
+
+- clean:
+    - "~"
+    - "~/.config"
+    - "~/.functions"
+    - "~/.bin"
+
+- link:
+    ~/.env:
+      path: base/.env
+    ~/.aliases:
+      path: base/.aliases
+    ~/.bash_profile:
+      path: base/.bash_profile
+      force: true
+    ~/.bashrc:
+      path: base/.bashrc
+      force: true
+    ~/.zshrc:
+      path: base/.zshrc
+      if: '[ -x "$(command -v zsh)" ]'
+    ~/.zprofile:
+      path: base/.zprofile
+      if: '[ -x "$(command -v zsh)" ]'
+    ~/.editorconfig:
+      path: base/.editorconfig
+    ~/.profile:
+      path: base/.profile
+    ~/.vimrc:
+      path: base/.vimrc
+      force: true
+    ~/.vimrc.bundles:
+      path: base/.vimrc.bundles
+    ~/.tmux.conf:
+      path: base/.tmux.conf
+    ~/.config/:
+      glob: true
+      path: base/.config/*
+    ~/.functions/:
+      glob: true
+      path: base/.functions/*

@@ -1,0 +1,14 @@
+- defaults:
+    link:
+      create: true
+      relink: true
+
+- link:
+    ~/.bin/:
+      path: vm/.bin/*
+      glob: true
+    ~/.screenlayout:
+      path: vm/.screenlayout
+      force: true
+    ~/.xprofile.local:
+      path: desktop/.xprofile.local

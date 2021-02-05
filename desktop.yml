@@ -1,0 +1,19 @@
+- defaults:
+    link:
+      create: true
+      relink: true
+
+- create:
+    - ~/dev
+    - ~/dev/me
+    - ~/dev/sandbox
+    - ~/Downloads
+
+- link:
+    ~/.screenlayout:
+      path: desktop/.screenlayout
+      force: true
+      if: '[[ $DOTFILE_GROUPS == *"desktop"* ]]'
+    ~/.xprofile.local:
+      path: desktop/.xprofile.local
+      if: '[[ $DOTFILE_GROUPS == *"desktop"* ]]'
