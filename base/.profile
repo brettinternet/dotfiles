@@ -7,6 +7,9 @@ scope() {
         source $WORKSPACE_ONLY_ENV
     fi
 
+    # Personal binaries
+    export PATH=~/.bin:$PATH
+
     # https://wiki.archlinux.org/index.php/Sudo#Using_visudo
     export VISUAL=vim
     export EDITOR="$VISUAL"
