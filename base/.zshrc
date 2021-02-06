@@ -8,11 +8,11 @@ source $HOME/.aliases
 [ -d "/usr/share/nvm" ] && source /usr/share/nvm/init-nvm.sh
 
 # Source functions
-FUNCTIONS_DIR="$HOME/.functions"
-[ -d "$FUNCTIONS_DIR" ] && for i ($FUNCTIONS_DIR/*.sh(D)) source $i
-if [ -d "$FUNCTIONS_DIR" ] && [ "$(ls -1 $FUNCTIONS_DIR/*.zsh 2>/dev/null | wc -l)" != 0 ]; then
-  for i ($FUNCTIONS_DIR/*.zsh(D)) source $i
-fi
+# FUNCTIONS_DIR="$HOME/.functions"
+# [ -d "$FUNCTIONS_DIR" ] && for i ($FUNCTIONS_DIR/*.sh(D)) source $i
+# if [ -d "$FUNCTIONS_DIR" ] && [ "$(ls -1 $FUNCTIONS_DIR/*.zsh 2>/dev/null | wc -l)" != 0 ]; then
+#   for i ($FUNCTIONS_DIR/*.zsh(D)) source $i
+# fi
 # TODO: autoload test of functions the proper way
 
 fpath+=( $FUNCTIONS_DIR )
@@ -181,9 +181,8 @@ zplugin snippet https://github.com/sainnhe/dotfiles/blob/master/.zsh-theme-gruvb
 # Options: https://github.com/geometry-zsh/geometry/blob/acf8febcecf3bad2bd91963506a5b26ccc955270/options.md
 zinit lucid load'![[ $MYPROMPT = 1 ]]' unload'![[ $MYPROMPT != 1 ]]' \
   atload'!geometry::prompt' nocd \
-  atinit'GEOMETRY_PATH_COLOR=04; GEOMETRY_STATUS_COLOR=05; GEOMETRY_HOST_COLORS=({1..7}); GEOMETRY_RPROMPT+=(geometry_hostname)' for \
-    geometry-zsh/geometry \
-  atload'!geometry::hostcolor'
+  atinit'GEOMETRY_PATH_COLOR=04; GEOMETRY_STATUS_COLOR=05; GEOMETRY_RPROMPT+=(geometry_hostname); GEOMETRY_HOST_COLORS=({1..7}); GEOMETRY_STATUS_COLOR=(geometry::hostcolor)' for \
+    geometry-zsh/geometry
 
 MYPROMPT=1
 HOSTNAME=$(uname -n)
