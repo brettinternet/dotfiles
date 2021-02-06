@@ -4,7 +4,7 @@
 # https://unix.stackexchange.com/a/257613/224048
 [[ $- != *i* ]] && return
 
-export SHELL="/bin/bash"
+export SHELL="/usr/bin/bash"
 source $HOME/.profile
 
 scope() {
@@ -30,6 +30,10 @@ scope() {
 }
 
 scope
+
+export HISTCONTROL="$HISTCONTROL erasedups:ignoreboth"
+
+set -o noclobber
 
 source $HOME/.aliases
 source $HOME/.config/broot/launcher/bash/br
