@@ -7,8 +7,8 @@
 alias xcopy="xclip -rmlastnl -selection clipboard"
 alias xpaste="xclip -rmlastnl -selection clipboard -o"
 # https://github.com/andreafrancia/trash-cli
-alias rm="echo \"No way, man!\""
-alias rrm="command rm"
+alias rm='echo \"No way, man!\"; false'
+alias rrm="/bin/rm -i"
 
 # fzy (see .functions for more)
 alias ff="find . -type f | fzy"
