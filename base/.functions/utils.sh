@@ -21,3 +21,14 @@ function up {
     cd $CDSTR
   fi
 }
+
+# Source: https://github.com/ohmyzsh/ohmyzsh/blob/c52e646bb7b109e15f6dc4047b29ca8c8e029433/lib/functions.zsh
+function zsh_stats {
+  fc -l 1 \
+    | awk '{ CMD[$2]++; count++; } END { for (a in CMD) print CMD[a] " " CMD[a]*100/count "% " a }' \
+    | grep -v "./" | sort -nr | head -20 | column -c3 -s " " -t | nl
+}
+
+function alias_value {
+    (( $+aliases[$1] )) && echo $aliases[$1]
+}

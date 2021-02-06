@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# See also https://github.com/ohmyzsh/ohmyzsh/blob/c52e646bb7b109e15f6dc4047b29ca8c8e029433/plugins/archlinux/archlinux.plugin.zsh
+
 # https://wiki.archlinux.org/index.php/Reflector
 alias mirror='sudo reflector  --protocol http --protocol https --latest 50 --number 20 --sort rate --save /etc/pacman.d/mirrorlist --verbose'
 
@@ -33,19 +35,18 @@ function paclist() {
 
 # List all disowned files in your system
 function pacdisowned() {
-  emulate -L zsh
-
+  local tmp db fs
   tmp=${TMPDIR-/tmp}/pacman-disowned-$UID-$$
   db=$tmp/db
   fs=$tmp/fs
 
   mkdir "$tmp"
-  trap  '/bin/rm -rf "$tmp"' EXIT
+  trap 'rm -rf "$tmp"' EXIT
 
   pacman -Qlq | sort -u > "$db"
 
   find /bin /etc /lib /sbin /usr ! -name lost+found \
-  \( -type d -printf '%p/\n' -o -print \) | sort > "$fs"
+    \( -type d -printf '%p/\n' -o -print \) | sort > "$fs"
 
   comm -23 "$fs" "$db"
 }
@@ -84,6 +85,22 @@ function pacman_clean() {
 
   # Clean up pacman cache
   sudo pacman -Sc
+}
+
+function pacmanallkeys() {
+  curl -sL https://www.archlinux.org/people/{developers,trusted-users}/ | \
+    awk -F\" '(/keyserver.ubuntu.com/) { sub(/.*search=0x/,""); print $1}' | \
+    xargs sudo pacman-key --recv-keys
+}
+
+function pacmansignkeys() {
+  local key
+  for key in $@; do
+    sudo pacman-key --recv-keys $key
+    sudo pacman-key --lsign-key $key
+    printf 'trust\n3\n' | sudo gpg --homedir /etc/pacman.d/gnupg \
+      --no-permission-warning --command-fd 0 --edit-key $key
+  done
 }
 
 # Helpful Pacman cmds
