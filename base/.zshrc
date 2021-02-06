@@ -1,21 +1,12 @@
 export SHELL="/bin/zsh"
 
 source $HOME/.profile
-
 source $HOME/.aliases
 
 [ -d "$HOME/.config/broot" ] && source $HOME/.config/broot/launcher/bash/br
 [ -d "/usr/share/nvm" ] && source /usr/share/nvm/init-nvm.sh
 
-# Source functions
-# FUNCTIONS_DIR="$HOME/.functions"
-# [ -d "$FUNCTIONS_DIR" ] && for i ($FUNCTIONS_DIR/*.sh(D)) source $i
-# if [ -d "$FUNCTIONS_DIR" ] && [ "$(ls -1 $FUNCTIONS_DIR/*.zsh 2>/dev/null | wc -l)" != 0 ]; then
-#   for i ($FUNCTIONS_DIR/*.zsh(D)) source $i
-# fi
-# TODO: autoload test of functions the proper way
-
-fpath+=( $FUNCTIONS_DIR )
+fpath+=( "$HOME/.functions" )
 autoload -Uz clock zman colortest
 
 
@@ -132,60 +123,59 @@ rehash_precmd() {
 add-zsh-hook -Uz precmd rehash_precmd
 
 
-#PS1="READY > "
-
-
 # -- Zinit ----------------------------------------
-#
 # Comparison of all ZSH plugin managers https://www.reddit.com/r/zsh/comments/ak0vgi/a_comparison_of_all_the_zsh_plugin_mangers_i_used/
 
-### Added by Zinit's installer
-if [[ ! -f $HOME/.zinit/bin/zinit.zsh ]]; then
-    print -P "%F{33}▓▒░ %F{220}Installing DHARMA Initiative Plugin Manager (zdharma/zinit)…%f"
-    command mkdir -p "$HOME/.zinit" && command chmod g-rwX "$HOME/.zinit"
-    command git clone https://github.com/zdharma/zinit "$HOME/.zinit/bin" && \
-        print -P "%F{33}▓▒░ %F{34}Installation successful.%f" || \
-        print -P "%F{160}▓▒░ The clone has failed.%f"
-fi
+[[ ! -f ~/.zinit/bin/zinit.zsh ]] && {
+    command mkdir -p ~/.zinit
+    command git clone https://github.com/zdharma/zinit ~/.zinit/bin
+}
 source "$HOME/.zinit/bin/zinit.zsh"
 autoload -Uz _zinit
 (( ${+_comps} )) && _comps[zinit]=_zinit
-### End of Zinit installer's chunk
+
+
+# -- Local plugins ----------------------------------------
+
+zinit ice atinit'local i; for i in *.(sh|zsh); do source $i; done'
+zinit light ~/.functions
 
 # -- Plugins via zinit ----------------------------------------
-#
 # Helpful plugin list: https://github.com/zdharma/Zsh-100-Commits-Club
 
 # Fast-syntax-highlighting & autosuggestions
-zinit wait lucid for \
- atinit"ZINIT[COMPINIT_OPTS]=-C; zpcompinit; zpcdreplay" \
-    zdharma/fast-syntax-highlighting \
- atload"!_zsh_autosuggest_start" \
+zinit wait lucid light-mode for \
+  zsh-users/zsh-syntax-highlighting \
+  atload"_zsh_autosuggest_start" \
     zsh-users/zsh-autosuggestions \
- blockf \
+  blockf atpull'zinit creinstall -q .' \
     zsh-users/zsh-completions
 
 # -- Colorscheme
-#
+
 # dark version
-zplugin snippet https://github.com/sainnhe/dotfiles/blob/master/.zsh-theme-gruvbox-material-dark
+zinit ice as"program" id-as"gruvbox-material-dark"
+zinit snippet https://github.com/sainnhe/dotfiles/blob/b13cfb736a7ab27dacfc60a8df8b3485b9d00010/.zsh-theme-gruvbox-material-dark
 # light version
-# zplugin snippet https://github.com/sainnhe/dotfiles/blob/master/.zsh-theme-gruvbox-material-light
+# zinit ice as"program" id-as"gruvbox-material-light"
+# zinit snippet https://github.com/sainnhe/dotfiles/blob/b13cfb736a7ab27dacfc60a8df8b3485b9d00010/.zsh-theme-gruvbox-material-light
+
 
 # -- Prompt
-#
-# Prompt selection method source: https://github.com/zdharma/zinit-configs/blob/b47a3a92f77cf4d7afbea9070a0a1db69cfed517/psprint/zshrc.zsh#L310
-# In case I add more prompts...
 
-# https://github.com/geometry-zsh/geometry
-# Options: https://github.com/geometry-zsh/geometry/blob/acf8febcecf3bad2bd91963506a5b26ccc955270/options.md
-zinit lucid load'![[ $MYPROMPT = 1 ]]' unload'![[ $MYPROMPT != 1 ]]' \
-  atload'!geometry::prompt' nocd \
-  atinit'GEOMETRY_PATH_COLOR=04; GEOMETRY_STATUS_COLOR=05; GEOMETRY_RPROMPT+=(geometry_hostname); GEOMETRY_HOST_COLORS=({1..7}); GEOMETRY_STATUS_COLOR=(geometry::hostcolor)' for \
-    geometry-zsh/geometry
+# Prompt selection method: https://github.com/zdharma/zinit-configs/blob/b47a3a92f77cf4d7afbea9070a0a1db69cfed517/psprint/zshrc.zsh#L310
 
-MYPROMPT=1
-HOSTNAME=$(uname -n)
+get_hostname() {
+  ansi 008 "[$(uname -n)]"
+}
+
+# https://github.com/geometry-zsh/geometry/blob/a8033e0e9a987c1a6ee1813b7cad7f28cfd3c869/options.md
+zinit load geometry-zsh/geometry
+GEOMETRY_PATH_COLOR=04
+GEOMETRY_STATUS_COLOR="$(geometry::hostcolor)"
+[[ $SHOW_PROMPT_HOSTNAME = true ]] && GEOMETRY_PROMPT=(geometry_echo get_hostname geometry_status geometry_path)
+
+# -- Autocompletion
 
 # Fish Alt+l mimic
 zstyle ":completion:file-complete::::" completer _files
