@@ -36,8 +36,8 @@ export HISTCONTROL="$HISTCONTROL erasedups:ignoreboth"
 set -o noclobber
 
 source $HOME/.aliases
-source $HOME/.config/broot/launcher/bash/br
-source /usr/share/nvm/init-nvm.sh
+[ -d "$HOME/.config/broot" ] && source $HOME/.config/broot/launcher/bash/br
+[ -d "/usr/share/nvm" ] && source /usr/share/nvm/init-nvm.sh
 
 # -- Fish ----------------------------------------
 # https://wiki.archlinux.org/index.php/Fish#Setting_fish_as_interactive_shell_only
