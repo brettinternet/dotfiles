@@ -147,9 +147,12 @@ zinit light ~/.functions
 zinit wait lucid light-mode for \
   zsh-users/zsh-syntax-highlighting \
   atload"_zsh_autosuggest_start" \
+  atinit"ZSH_AUTOSUGGEST_USE_ASYNC=true" \
     zsh-users/zsh-autosuggestions \
-  blockf atpull'zinit creinstall -q .' \
+  atload"zicompinit; zicdreplay" \
+    blockf atpull'zinit creinstall -q .' \
     zsh-users/zsh-completions
+
 
 # -- Colorscheme
 
