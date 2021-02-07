@@ -173,7 +173,9 @@ get_hostname() {
 zinit load geometry-zsh/geometry
 GEOMETRY_PATH_COLOR=04
 GEOMETRY_STATUS_COLOR="$(geometry::hostcolor)"
-[[ $SHOW_PROMPT_HOSTNAME = true ]] && GEOMETRY_PROMPT=(geometry_echo get_hostname geometry_status geometry_path)
+if [[ $SHOW_PROMPT_HOSTNAME = true ]]; then
+  GEOMETRY_PROMPT=(geometry_echo get_hostname geometry_status geometry_path)
+fi
 
 # -- Autocompletion
 
