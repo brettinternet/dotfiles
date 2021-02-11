@@ -27,7 +27,7 @@ scope() {
     if [ -f /usr/bin/virtualenvwrapper.sh ]; then
       # https://wiki.archlinux.org/index.php/Python/Virtual_environment#virtualenvwrapper
       export WORKON_HOME=~/.virtualenvs
-      source /usr/bin/virtualenvwrapper.sh
+      source /usr/bin/virtualenvwrapper_lazy.sh
     fi
 
     # https://guides.rubygems.org/faqs/#user-install
