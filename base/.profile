@@ -24,6 +24,12 @@ scope() {
         export SHELL=/bin/bash
     fi
 
+    if [ -f /usr/bin/virtualenvwrapper.sh ]; then
+      # https://wiki.archlinux.org/index.php/Python/Virtual_environment#virtualenvwrapper
+      export WORKON_HOME=~/.virtualenvs
+      source /usr/bin/virtualenvwrapper.sh
+    fi
+
     # https://guides.rubygems.org/faqs/#user-install
     if which ruby >/dev/null && which gem >/dev/null; then
         export PATH="$(ruby -r rubygems -e 'puts Gem.user_dir')/bin:$PATH"
