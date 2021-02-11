@@ -24,7 +24,7 @@ scope() {
         export SHELL=/bin/bash
     fi
 
-    if [ -f /usr/bin/virtualenvwrapper.sh ]; then
+    if [ -f /usr/bin/virtualenvwrapper_lazy.sh ]; then
       # https://wiki.archlinux.org/index.php/Python/Virtual_environment#virtualenvwrapper
       export WORKON_HOME=~/.virtualenvs
       source /usr/bin/virtualenvwrapper_lazy.sh
