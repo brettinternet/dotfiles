@@ -97,6 +97,7 @@ scope() {
       blueman-applet &
   fi
 
+  # # start/enable opensnitchd
   # if command -v opensnitch-ui &> /dev/null; then
   #     opensnitch-ui &
   # fi
