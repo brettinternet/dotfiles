@@ -168,17 +168,28 @@ zinit snippet https://github.com/sainnhe/dotfiles/blob/b13cfb736a7ab27dacfc60a8d
 
 # Prompt selection method: https://github.com/zdharma/zinit-configs/blob/b47a3a92f77cf4d7afbea9070a0a1db69cfed517/psprint/zshrc.zsh#L310
 
+# https://github.com/geometry-zsh/geometry/blob/a8033e0e9a987c1a6ee1813b7cad7f28cfd3c869/options.md
+zinit load geometry-zsh/geometry
+
 get_hostname() {
   ansi 008 "[$(uname -n)]"
 }
 
-# https://github.com/geometry-zsh/geometry/blob/a8033e0e9a987c1a6ee1813b7cad7f28cfd3c869/options.md
-zinit load geometry-zsh/geometry
+virtualenv() {
+  venv=$(geometry_virtualenv)
+  if [ -n "$venv" ]; then
+    echo -n "($venv)"
+  fi
+}
+
 GEOMETRY_PATH_COLOR=04
 GEOMETRY_STATUS_COLOR="$(geometry::hostcolor)"
 if [[ $SHOW_PROMPT_HOSTNAME = true ]]; then
-  GEOMETRY_PROMPT=(geometry_echo get_hostname geometry_status geometry_path)
+  GEOMETRY_PROMPT=(geometry_echo get_hostname virtualenv geometry_status geometry_path)
+else
+  GEOMETRY_PROMPT=(geometry_echo virtualenv geometry_status geometry_path)
 fi
+
 
 # -- Autocompletion
 
