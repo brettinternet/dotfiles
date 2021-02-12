@@ -36,3 +36,34 @@ alias gpc='git push origin "$(git_current_branch)"'
 
 alias gbsuc='git branch --set-upstream-to=origin/$(git_current_branch)'
 alias gpsuc='git push --set-upstream origin $(git_current_branch)'
+
+alias grbo='git rebase'
+function grbos {
+  local branch="${1:-master}"
+  git rebase --exec "git commit --amend --no-edit -n -S" -i origin/$branch
+}
+
+alias g='git'
+alias gb='git branch'
+alias gs='git status'
+alias gst='git stash'
+alias gsp='git stash pop'
+alias gsa='git stash apply'
+alias gsh='git show'
+alias gi='vim .gitignore'
+alias ga='git add'
+alias gaa='git add -A'
+alias gcm='git commit -m'
+alias gscm='git commit -S -m'
+alias grv='git remote -v'
+alias grr='git remote rm'
+alias gra='git remote add'
+alias glog='git l'
+alias gf='git fetch'
+alias gd='git diff'
+alias gp='git push'
+alias gu='git pull'
+alias guom='git pull origin master'
+alias gpom='git push origin master'
+alias gwch='git whatchanged -p --abbrev-commit --pretty=medium'
+
