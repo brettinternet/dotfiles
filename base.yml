@@ -14,8 +14,6 @@
 - link:
     ~/.env:
       path: base/.env
-    ~/.aliases:
-      path: base/.aliases
     ~/.bash_profile:
       path: base/.bash_profile
       force: true

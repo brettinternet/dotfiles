@@ -2,8 +2,6 @@
 
 export SHELL=/bin/fish
 
-source $HOME/.aliases
-
 # jomik/fish-gruvbox
 theme_gruvbox dark hard
 
