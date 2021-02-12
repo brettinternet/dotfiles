@@ -1,7 +1,6 @@
 export SHELL="/bin/zsh"
 
 source $HOME/.profile
-source $HOME/.aliases
 
 [ -d "$HOME/.config/broot" ] && source $HOME/.config/broot/launcher/bash/br
 [ -d "/usr/share/nvm" ] && source /usr/share/nvm/init-nvm.sh
