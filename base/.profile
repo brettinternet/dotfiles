@@ -41,14 +41,16 @@ scope() {
     export PATH=~/.npm-global/bin:~/.local/bin:$GOPATH/bin:~/.cargo/bin:$PATH
 
     # Don't timeout in terminal multiplexer
-    if [[ $TERM != screen* ]] && ! [ -n "$TMUX" ]; then
+    if [[ $TERM != screen* ]] && ! [ -n "$TMUX" ] && [ -z "$DISPLAY" ]; then
       # Automatically logout inactive consoles after 10 min: https://wiki.archlinux.org/index.php/Security#Automatic_logout
       # Applies to SSH sessions as well, but unintended for terminal emulation where $DISPLAY is set
-      local TEN_MINUTES="$(( 60*10 ))";
-      [ -z "$DISPLAY" ] && export TMOUT=$TEN_MINUTES;
+      local TEN_MINUTES="$(( 60*10 ))"
+      export TMOUT=$TEN_MINUTES
       case $( /usr/bin/tty ) in
           /dev/tty[0-9]*) export TMOUT=$TEN_MINUTES;;
       esac
+    else
+      unset TMOUT
     fi
 }
 
