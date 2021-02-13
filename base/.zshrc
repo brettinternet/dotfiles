@@ -181,7 +181,9 @@ prompt_virtualenv() {
 
 GEOMETRY_PATH_COLOR=04
 GEOMETRY_STATUS_COLOR="$(geometry::hostcolor)"
-if [[ $SHOW_PROMPT_HOSTNAME = true ]]; then
+
+# Show hostname is prompt for remote sessions
+if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
   GEOMETRY_PROMPT=(geometry_echo prompt_hostname prompt_virtualenv geometry_status geometry_path)
 else
   GEOMETRY_PROMPT=(geometry_echo prompt_virtualenv geometry_status geometry_path)
