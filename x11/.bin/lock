@@ -9,7 +9,7 @@ TMP_IMAGE="/tmp/lockscreen.png"
 
 # Use session image to avoid `convert` delay every time
 if [ ! -f $TMP_IMAGE ]; then
-  IMAGE_DIR="${MY_WALLPAPERS:-$HOME/walls}"
+  IMAGE_DIR="${MY_WALLPAPERS:-$HOME/.walls}"
   RANDOM_FILE=$(ls $IMAGE_DIR | sort -R | head -n1)
   RESOLUTION=$(xrandr | grep -E ' *[0-9]*x[0-9]* *[0-9][0-9]\.[0-9][0-9]\*\+' | awk '{print $1}' | head -n 1)
   convert -resize "${RESOLUTION}^" -gravity Center -crop "${RESOLUTION}+0+0" "$IMAGE_DIR/$RANDOM_FILE" "$TMP_IMAGE"
