@@ -58,7 +58,7 @@ scope() {
       xbindkeys -f "$HOME/.xbindkeysrc-mouse"
   fi
 
-  local WALLPAPERS_DIR="${MY_WALLPAPERS:-$HOME/walls}"
+  local WALLPAPERS_DIR="${MY_WALLPAPERS:-$HOME/.walls}"
   if [ -d "$WALLPAPERS_DIR" ]; then
       feh --no-fehbg --randomize --bg-fill $WALLPAPERS_DIR/* &
   fi
