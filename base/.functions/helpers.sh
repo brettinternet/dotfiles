@@ -51,8 +51,8 @@ alias fh="history | fzy"
 alias sudo="sudo "
 
 # Directories
+alias dotfiles='cd ~/.dotfiles'
 alias dev='cd ~/dev'
-alias dotfiles='cd ~/dotfiles'
 alias me='cd ~/dev/me'
 alias sandbox='cd ~/dev/sandbox'
 
