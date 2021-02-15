@@ -93,8 +93,8 @@ set $PLAYER Spotify
 
 # Scratchpad
 bindsym $mod+Shift+semicolon move scratchpad
-for_window [instance="^$TERMINAL-scratchpad1$"] move scratchpad, resize set 50 ppt 60 ppt
-for_window [instance="^$TERMINAL-scratchpad2$"] move scratchpad, resize set 600 px 100 ppt, move position 0 px 0 px, sticky enable # , resize shrink down 22 px
+for_window [instance="^$TERMINAL-scratchpad1$"] move container to workspace 1, resize set 50 ppt 60 ppt, move scratchpad
+for_window [instance="^$TERMINAL-scratchpad2$"] move container to workspace 1, resize set 600 px 100 ppt, move position 0 px 0 px, sticky enable, move scratchpad # , resize shrink down 22 px
 for_window [class="$PLAYER"] move scratchpad, move position center
 
 bindsym $mod+semicolon [instance="^$TERMINAL-scratchpad1$"] scratchpad show, move position center
