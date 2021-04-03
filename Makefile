@@ -19,6 +19,9 @@ desktop: install
 laptop: export DOTFILE_GROUPS = x11,laptop,archlinux
 laptop: install
 
+server: export DOTFILE_GROUPS = archlinux
+server: install
+
 vmguest: export DOTFILE_GROUPS = vmguest
 vmguest: install
 
