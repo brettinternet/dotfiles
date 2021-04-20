@@ -53,6 +53,7 @@ scope() {
     unset TMOUT
   fi
 
+  # https://unix.stackexchange.com/a/94508
   local DIRCOLORS=$HOME/.dircolors
   if [[ -f $DIRCOLORS ]]; then
     eval "$(dircolors $DIRCOLORS)";
