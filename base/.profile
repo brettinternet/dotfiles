@@ -52,6 +52,11 @@ scope() {
     else
       unset TMOUT
     fi
+
+    local DIRCOLORS=$HOME/.dircolors
+    if [[ -f $DIRCOLORS ]]; then
+      eval "$(dircolors $DIRCOLORS)";
+    fi
 }
 
 scope
