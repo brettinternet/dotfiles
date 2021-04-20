@@ -20,6 +20,8 @@
     ~/.bashrc:
       path: base/.bashrc
       force: true
+    ~/.dircolors:
+      path: base/.dircolors
     ~/.zshrc:
       path: base/.zshrc
       if: '[ -x "$(command -v zsh)" ]'
