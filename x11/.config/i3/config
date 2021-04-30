@@ -37,166 +37,6 @@ for_window [class=".*"] title_format <span>%class - %title</span>
 for_window [class=.*] border pixel 3
 
 
-# -- Applications ----------------------------------------
-
-# Start a terminal
-bindsym $mod+Return exec i3-sensible-terminal
-
-# Application menu
-bindsym $mod+d --release exec --no-startup-id control-center -r
-# Power menu
-bindsym $mod+Ctrl+q --release exec --no-startup-id control-center -p
-# Clipboard menu
-bindsym $mod+c --release exec --no-startup-id control-center -c
-bindsym $mod+Ctrl+c exec --no-startup-id clipboard-clear
-bindsym $mod+Shift+c exec --no-startup-id clipboard-pause
-# Web search
-bindsym $mod+s --release exec --no-startup-id control-center -b
-# Window navigation
-bindsym $mod+e --release exec --no-startup-id control-center -w
-# Emoji selection
-bindsym $mod+Shift+period --release exec --no-startup-id control-center -e
-
-# Sound mixer
-bindsym $mod+Ctrl+m exec --no-startup-id pavucontrol
-# Bluetooth controller
-bindsym $mod+Ctrl+n exec --no-startup-id blueman-manager
-
-# Restart dunst
-bindsym $mod+Ctrl+d --release exec --no-startup-id pkill dunst && dunst &
-bindsym $mod+t exec --no-startup-id pkill picom; exec notify-send -a 'system' 'Picom stopped' -r '2348'
-bindsym $mod+Ctrl+t exec --no-startup-id picom --experimental-backends -b; exec notify-send -a 'system' 'Picom started' -r '2348'
-
-# Screenshot active window
-bindsym Print --release exec --no-startup-id screenshot -w
-# Screenshot selection mode
-bindsym $mod+Print --release exec --no-startup-id screenshot -s
-# Screenshot monitor
-bindsym Ctrl+Print --release exec --no-startup-id screenshot -m
-# Screenshot monitor and open it with gimp
-bindsym Ctrl+Shift+Print --release exec --no-startup-id screenshot -mg
-
-
-# -- Shortcuts ----------------------------------------
-
-# Zoom webcam in for dramatic effect
-bindsym $mod+Ctrl+z exec v4l2-ctl -d /dev/video0 --set-ctrl=zoom_absolute=255
-bindsym $mod+Shift+Ctrl+z exec v4l2-ctl -d /dev/video0 --set-ctrl=zoom_absolute=100
-
-
-# -- Applications ----------------------------------------
-
-set $TERMINAL alacritty
-set $BROWSER Chromium
-set $EDITOR code-oss
-set $PLAYER Spotify
-
-# Scratchpad
-bindsym $mod+Shift+semicolon move scratchpad
-for_window [instance="^$TERMINAL-scratchpad1$"] move container to workspace 1, resize set 50 ppt 60 ppt, move scratchpad
-for_window [instance="^$TERMINAL-scratchpad2$"] move container to workspace 1, resize set 600 px 100 ppt, move position 0 px 0 px, move scratchpad, sticky enable
-for_window [class="$PLAYER"] move scratchpad, move position center
-
-bindsym $mod+semicolon [instance="^$TERMINAL-scratchpad1$"] scratchpad show, move position center
-bindsym $mod+apostrophe [instance="^$TERMINAL-scratchpad2$"] scratchpad show
-bindsym $mod+a [class="$BROWSER"] scratchpad show, resize set 60 ppt 70 ppt, move position center
-bindsym $mod+z [class="$EDITOR"] scratchpad show, resize set 50 ppt 80 ppt, move position center
-bindsym $mod+w [class="$PLAYER"] scratchpad show
-
-# Floating
-for_window [window_role="pop-up"] floating enable
-for_window [window_type="dialog"] floating enable border pixel 3
-for_window [window_type="utility"] floating enable border pixel 3
-for_window [window_type="popup_menu"] floating enable border normal
-for_window [window_type="notify"] floating enable border none
-for_window [class="Pavucontrol"] floating enable border normal
-for_window [class="Blueman-manager"] floating enable border normal
-for_window [class="Blueman-services"] floating enable border normal
-for_window [class="Solaar"] floating enable border normal
-for_window [class="Arandr"] floating enable border normal
-for_window [class="Nvidia-settings"] floating enable border normal
-for_window [class="Nemo"] floating enable
-for_window [class="feh"] floating enable
-for_window [instance="guvcview"] floating enable
-for_window [class="Hardinfo"] floating enable
-for_window [class="zoom"] floating enable
-for_window [class="qv4l2"] floating enable
-for_window [class="Tlp-UI"] floating enable
-for_window [class="fontforge"] floating enable
-for_window [class="Thunderbird" title="Address Book"] floating enable
-for_window [title="XBindKey: Hit a key"] floating enable
-for_window [instance="Places" class="firefox"] floating enable
-for_window [class="Virt-manager"] floating enable
-for_window [class="Network Connections"] floating enable
-for_window [class="opensnitch-ui"] floating enable
-for_window [class="kgpg"] floating enable
-for_window [class="Seahorse"] floating enable
-for_window [class="Baobab"] floating enable
-for_window [class="Clamtk"] floating enable
-for_window [class="qt5ct"] floating enable
-for_window [class="Transmission-gtk"] floating enable
-for_window [class="Gsmartcontrol"] floating enable
-for_window [class="firetools"] floating enable
-for_window [class="fstats"] floating enable
-for_window [class="firejail-ui"] floating enable
-
-# Quick launcher
-set $mode_launcher Launch: [t]erminal [b]rowser [m]usic [e]ditor [f]iles
-bindsym $mod+Shift+d mode "$mode_launcher"
-
-mode "$mode_launcher" {
-    bindsym t exec --no-startup-id alacritty, mode "default"
-    bindsym b exec --no-startup-id chromium, mode "default"
-    bindsym m exec --no-startup-id spotify, mode "default"
-    bindsym e exec --no-startup-id code, mode "default"
-    bindsym f exec --no-startup-id nemo, mode "default"
-
-    bindsym Escape mode "default"
-    bindsym Return mode "default"
-    bindsym $mod+Shift+d mode "default"
-}
-
-
-# -- Navigation ----------------------------------------
-
-# Cycle workspaces
-bindsym $mod+Tab workspace next_on_output
-bindsym $mod+Shift+Tab workspace prev_on_output
-bindsym $mod+Ctrl+l workspace next_on_output
-bindsym $mod+Ctrl+h workspace prev_on_output
-bindsym $mod+Ctrl+j workspace next
-bindsym $mod+Ctrl+k workspace prev
-
-# change focus
-bindsym $mod+h focus left
-bindsym $mod+j focus down
-bindsym $mod+k focus up
-bindsym $mod+l focus right
-
-## alternatively, you can use the cursor keys:
-bindsym $mod+Left focus left
-bindsym $mod+Down focus down
-bindsym $mod+Up focus up
-bindsym $mod+Right focus right
-
-# move focused window
-bindsym $mod+Shift+h move left
-bindsym $mod+Shift+j move down
-bindsym $mod+Shift+k move up
-bindsym $mod+Shift+l move right
-
-## alternatively, you can use the cursor keys:
-bindsym $mod+Shift+Left move left
-bindsym $mod+Shift+Down move down
-bindsym $mod+Shift+Up move up
-bindsym $mod+Shift+Right move right
-
-# workspace back and forth (with/without active container)
-workspace_auto_back_and_forth yes
-bindsym $mod+b workspace back_and_forth
-bindsym $mod+Shift+b move container to workspace back_and_forth; workspace back_and_forth
-
-
 # -- Windows ----------------------------------------
 
 # Kill focused window
@@ -307,6 +147,166 @@ mode "resize" {
 }
 
 bindsym $mod+r mode "resize"
+
+
+# -- Applications ----------------------------------------
+
+# Start a terminal
+bindsym $mod+Return exec i3-sensible-terminal
+
+# Application menu
+bindsym $mod+d --release exec --no-startup-id control-center -r
+# Power menu
+bindsym $mod+Ctrl+q --release exec --no-startup-id control-center -p
+# Clipboard menu
+bindsym $mod+c --release exec --no-startup-id control-center -c
+bindsym $mod+Ctrl+c exec --no-startup-id clipboard-clear
+bindsym $mod+Shift+c exec --no-startup-id clipboard-pause
+# Web search
+bindsym $mod+s --release exec --no-startup-id control-center -b
+# Window navigation
+bindsym $mod+e --release exec --no-startup-id control-center -w
+# Emoji selection
+bindsym $mod+Shift+period --release exec --no-startup-id control-center -e
+
+# Sound mixer
+bindsym $mod+Ctrl+m exec --no-startup-id pavucontrol
+# Bluetooth controller
+bindsym $mod+Ctrl+n exec --no-startup-id blueman-manager
+
+# Restart dunst
+bindsym $mod+Ctrl+d --release exec --no-startup-id pkill dunst && dunst &
+bindsym $mod+t exec --no-startup-id pkill picom; exec notify-send -a 'system' 'Picom stopped' -r '2348'
+bindsym $mod+Ctrl+t exec --no-startup-id picom --experimental-backends -b; exec notify-send -a 'system' 'Picom started' -r '2348'
+
+# Screenshot active window
+bindsym Print --release exec --no-startup-id screenshot -w
+# Screenshot selection mode
+bindsym $mod+Print --release exec --no-startup-id screenshot -s
+# Screenshot monitor
+bindsym Ctrl+Print --release exec --no-startup-id screenshot -m
+# Screenshot monitor and open it with gimp
+bindsym Ctrl+Shift+Print --release exec --no-startup-id screenshot -mg
+
+
+# -- Shortcuts ----------------------------------------
+
+# Zoom webcam in for dramatic effect
+bindsym $mod+Ctrl+z exec v4l2-ctl -d /dev/video0 --set-ctrl=zoom_absolute=255
+bindsym $mod+Shift+Ctrl+z exec v4l2-ctl -d /dev/video0 --set-ctrl=zoom_absolute=100
+
+
+# -- Applications ----------------------------------------
+
+set $TERMINAL "alacritty"
+set $BROWSER "Chromium"
+set $EDITOR "code-oss"
+set $PLAYER "Spotify"
+
+# Scratchpad
+bindsym $mod+Shift+semicolon move scratchpad
+for_window [instance="^$TERMINAL-scratchpad1$"] move container to workspace $ws1, resize set 50 ppt 60 ppt, move scratchpad
+for_window [instance="^$TERMINAL-scratchpad2$"] move container to workspace $ws1, resize set 600 px 100 ppt, move position 0 px 0 px, move scratchpad, sticky enable
+for_window [class="$PLAYER"] move scratchpad, move position center
+
+bindsym $mod+semicolon [instance="^$TERMINAL-scratchpad1$"] scratchpad show, move position center
+bindsym $mod+apostrophe [instance="^$TERMINAL-scratchpad2$"] scratchpad show
+bindsym $mod+a [class="$BROWSER"] scratchpad show, resize set 60 ppt 70 ppt, move position center
+bindsym $mod+z [class="$EDITOR"] scratchpad show, resize set 50 ppt 80 ppt, move position center
+bindsym $mod+w [class="$PLAYER"] scratchpad show
+
+# Floating
+for_window [window_role="pop-up"] floating enable
+for_window [window_type="dialog"] floating enable border pixel 3
+for_window [window_type="utility"] floating enable border pixel 3
+for_window [window_type="popup_menu"] floating enable border normal
+for_window [window_type="notify"] floating enable border none
+for_window [class="Pavucontrol"] floating enable border normal
+for_window [class="Blueman-manager"] floating enable border normal
+for_window [class="Blueman-services"] floating enable border normal
+for_window [class="Solaar"] floating enable border normal
+for_window [class="Arandr"] floating enable border normal
+for_window [class="Nvidia-settings"] floating enable border normal
+for_window [class="Nemo"] floating enable
+for_window [class="feh"] floating enable
+for_window [instance="guvcview"] floating enable
+for_window [class="Hardinfo"] floating enable
+for_window [class="zoom"] floating enable
+for_window [class="qv4l2"] floating enable
+for_window [class="Tlp-UI"] floating enable
+for_window [class="fontforge"] floating enable
+for_window [class="Thunderbird" title="Address Book"] floating enable
+for_window [title="XBindKey: Hit a key"] floating enable
+for_window [instance="Places" class="firefox"] floating enable
+for_window [class="Virt-manager"] floating enable
+for_window [class="Network Connections"] floating enable
+for_window [class="opensnitch-ui"] floating enable
+for_window [class="kgpg"] floating enable
+for_window [class="Seahorse"] floating enable
+for_window [class="Baobab"] floating enable
+for_window [class="Clamtk"] floating enable
+for_window [class="qt5ct"] floating enable
+for_window [class="Transmission-gtk"] floating enable
+for_window [class="Gsmartcontrol"] floating enable
+for_window [class="firetools"] floating enable
+for_window [class="fstats"] floating enable
+for_window [class="firejail-ui"] floating enable
+
+# Quick launcher
+set $mode_launcher Launch: [t]erminal [b]rowser [m]usic [e]ditor [f]iles
+bindsym $mod+Shift+d mode "$mode_launcher"
+
+mode "$mode_launcher" {
+    bindsym t exec --no-startup-id alacritty, mode "default"
+    bindsym b exec --no-startup-id chromium, mode "default"
+    bindsym m exec --no-startup-id spotify, mode "default"
+    bindsym e exec --no-startup-id code, mode "default"
+    bindsym f exec --no-startup-id nemo, mode "default"
+
+    bindsym Escape mode "default"
+    bindsym Return mode "default"
+    bindsym $mod+Shift+d mode "default"
+}
+
+
+# -- Navigation ----------------------------------------
+
+# Cycle workspaces
+bindsym $mod+Tab workspace next_on_output
+bindsym $mod+Shift+Tab workspace prev_on_output
+bindsym $mod+Ctrl+l workspace next_on_output
+bindsym $mod+Ctrl+h workspace prev_on_output
+bindsym $mod+Ctrl+j workspace next
+bindsym $mod+Ctrl+k workspace prev
+
+# change focus
+bindsym $mod+h focus left
+bindsym $mod+j focus down
+bindsym $mod+k focus up
+bindsym $mod+l focus right
+
+## alternatively, you can use the cursor keys:
+bindsym $mod+Left focus left
+bindsym $mod+Down focus down
+bindsym $mod+Up focus up
+bindsym $mod+Right focus right
+
+# move focused window
+bindsym $mod+Shift+h move left
+bindsym $mod+Shift+j move down
+bindsym $mod+Shift+k move up
+bindsym $mod+Shift+l move right
+
+## alternatively, you can use the cursor keys:
+bindsym $mod+Shift+Left move left
+bindsym $mod+Shift+Down move down
+bindsym $mod+Shift+Up move up
+bindsym $mod+Shift+Right move right
+
+# workspace back and forth (with/without active container)
+workspace_auto_back_and_forth yes
+bindsym $mod+b workspace back_and_forth
+bindsym $mod+Shift+b move container to workspace back_and_forth; workspace back_and_forth
 
 
 # -- Colors ----------------------------------------
