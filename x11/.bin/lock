@@ -24,11 +24,11 @@ revert() {
   # Set DPMS timeouts to zero instead of xset -dpms
   # https://wiki.archlinux.org/index.php/Display_Power_Management_Signaling#Modify_DPMS_and_screensaver_settings_with_a_command
   xset dpms 0 0 0
-  notify-send "DUNST_COMMAND_RESUME"
+  dunstctl set-paused false
 }
 
 # Pause notifications: https://wiki.archlinux.org/index.php/Dunst#Disable_dunst_temporarily
-notify-send "DUNST_COMMAND_PAUSE"
+dunstctl set-paused true
 
 pause
 
