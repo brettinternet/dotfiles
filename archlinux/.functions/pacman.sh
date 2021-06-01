@@ -5,25 +5,6 @@
 # https://wiki.archlinux.org/index.php/Reflector
 alias mirror='sudo reflector  --protocol http --protocol https --latest 50 --number 20 --sort rate --save /etc/pacman.d/mirrorlist --verbose'
 
-# Update pacman with yay
-# Source: https://unix.stackexchange.com/a/384102/224048
-# You may add "--console-log-level=warn" as an aria2 arg to simmer down `/etc/powerpill/powerpill.json`
-pac() {
-  # Downgrade permissions as AUR helpers expect to be run as a non-root user, $UID is read-only in {ba,z}sh
-  export pacman_program="sudo -u #$UID /usr/bin/yay --pacman powerpill --sudoloop"
-
-  # pacmatic needs to be run as root: https://github.com/keenerd/pacmatic/issues/35
-  pacmatic_update() {
-    sudo --preserve-env=pacman_program /usr/bin/pacmatic "$@"
-  }
-
-  if [[ -z "$@" ]]; then
-    pacmatic_update -Syu
-  else
-    pacmatic_update "$@"
-  fi
-}
-
 # Source: OMZ
 
 # List all installed packages with a short description
