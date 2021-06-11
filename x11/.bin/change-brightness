@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Usage:  change-brightness -A 10 augment
+#         change-brightness -U 10 unaugment
+
 # Use `brillo -rc -S 0` for a real brightness=0
 
 NAME=$(basename "$0")
