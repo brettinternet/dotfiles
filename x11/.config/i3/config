@@ -251,6 +251,7 @@ for_window [class="firetools"] floating enable
 for_window [class="fstats"] floating enable
 for_window [class="firejail-ui"] floating enable
 for_window [class="Psensor"] floating enable
+for_window [class="Nm-connection-editor"] floating enable
 
 # Quick launcher
 set $mode_launcher Launch: [t]erminal [b]rowser [m]usic [e]ditor [f]iles
