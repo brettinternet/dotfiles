@@ -1,0 +1,11 @@
+#!/bin/bash
+
+scope() {
+  # wallpaper
+  local WALLPAPERS_DIR="${MY_WALLPAPERS:-$HOME/.walls}"
+  if [ -d "$WALLPAPERS_DIR" ]; then
+      ( feh -q --no-fehbg --randomize --bg-fill $WALLPAPERS_DIR/*.{png,jpg} & ) &>/dev/null
+  fi
+}
+
+scope
