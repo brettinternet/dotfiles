@@ -103,9 +103,12 @@
 "playerctl play-pause"
     Mod4+slash
 
-# Random
+# Utility
 "notify-battery"
     Mod4+XF86Tools
+
+"dock"
+    XF86Display
 
 "mute"
     XF86AudioMicMute
