@@ -362,7 +362,7 @@ bar {
 bindsym $mod+Shift+m bar mode toggle
 
 # reload the configuration file
-#bindsym $mod+Shift+$alt+r restart
+bindsym $mod+Shift+Ctrl+r restart
 
 # restart i3 inplace (preserves your layout/session, can be used to upgrade i3)
 bindsym $mod+Shift+r reload
