@@ -16,6 +16,8 @@ scope() {
   fi
 
   # nmcli radio wifi on
+
+  i3 restart &>/dev/null
 }
 
 scope
