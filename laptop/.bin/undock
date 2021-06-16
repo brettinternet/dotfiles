@@ -19,7 +19,7 @@ scope() {
       ( feh -q --no-fehbg --randomize --bg-fill $WALLPAPERS_DIR/*.{png,jpg} & ) &>/dev/null
   fi
 
-  nmcli radio wifi on
+  # nmcli radio wifi on
 }
 
 scope
