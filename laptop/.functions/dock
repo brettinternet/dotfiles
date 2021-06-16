@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# https://wiki.archlinux.org/title/ThinkPad_docks
+
+scope() {
+  if [[ -x "$(command -v dockd)" ]]; then
+    dockd --set docked
+  else
+    # xrandr
+    local XRANDR_SCRIPT="$HOME/.screenlayout/dock.sh"
+    if [ -f $XRANDR_SCRIPT ]; then
+        /bin/bash -c $XRANDR_SCRIPT
+    else
+        echo "No xrandr script found in .screenlayout"
+    fi
+  fi
+
+  # wallpaper
+  local WALLPAPERS_DIR="${MY_WALLPAPERS:-$HOME/.walls}"
+  if [ -d "$WALLPAPERS_DIR" ]; then
+      ( feh -q --no-fehbg --randomize --bg-fill $WALLPAPERS_DIR/*.{png,jpg} & ) &>/dev/null
+  fi
+
+  # nmcli radio wifi off
+}
+
+DEVICES=$(lsusb)
+if [[ $DEVICES = *"Dock"* ]]; then
+  scope
+fi

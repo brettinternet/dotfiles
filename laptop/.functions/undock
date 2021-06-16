@@ -1,0 +1,25 @@
+#!/bin/bash
+
+scope() {
+  if [[ -x "$(command -v dockd)" ]]; then
+    dockd --set undocked &>/dev/null
+  else
+    # xrandr
+    local XRANDR_SCRIPT="$HOME/.screenlayout/default.sh"
+    if [ -f $XRANDR_SCRIPT ]; then
+        /bin/bash -c $XRANDR_SCRIPT &>/dev/null
+    else
+        echo "No xrandr script found in .screenlayout"
+    fi
+  fi
+
+  # wallpaper
+  local WALLPAPERS_DIR="${MY_WALLPAPERS:-$HOME/.walls}"
+  if [ -d "$WALLPAPERS_DIR" ]; then
+      ( feh -q --no-fehbg --randomize --bg-fill $WALLPAPERS_DIR/*.{png,jpg} & ) &>/dev/null
+  fi
+
+  nmcli radio wifi on
+}
+
+scope
