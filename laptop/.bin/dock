@@ -3,16 +3,12 @@
 # https://wiki.archlinux.org/title/ThinkPad_docks
 
 scope() {
-  if [[ -x "$(command -v dockd)" ]]; then
-    dockd --set docked &>/dev/null
+  # xrandr
+  local XRANDR_SCRIPT="$HOME/.screenlayout/dock.sh"
+  if [ -f $XRANDR_SCRIPT ]; then
+      /bin/bash -c $XRANDR_SCRIPT
   else
-    # xrandr
-    local XRANDR_SCRIPT="$HOME/.screenlayout/dock.sh"
-    if [ -f $XRANDR_SCRIPT ]; then
-        /bin/bash -c $XRANDR_SCRIPT
-    else
-        echo "No xrandr script found in .screenlayout"
-    fi
+      echo "No xrandr script found in .screenlayout"
   fi
 
   # wallpaper
