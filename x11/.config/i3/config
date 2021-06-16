@@ -362,10 +362,10 @@ bar {
 bindsym $mod+Shift+m bar mode toggle
 
 # reload the configuration file
-#bindsym $mod+Shift+c reload
+#bindsym $mod+Shift+$alt+r restart
 
 # restart i3 inplace (preserves your layout/session, can be used to upgrade i3)
-bindsym $mod+Shift+r restart
+bindsym $mod+Shift+r reload
 
 # exit i3 (logs you out of your X session)
 bindsym $mod+Shift+e exec "i3-nagbar -t warning -m 'Exit i3 and end the X session?' -B 'Exit' 'i3-msg exit'"
