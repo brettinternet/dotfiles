@@ -4,7 +4,7 @@
 
 scope() {
   if [[ -x "$(command -v dockd)" ]]; then
-    dockd --set docked
+    dockd --set docked &>/dev/null
   else
     # xrandr
     local XRANDR_SCRIPT="$HOME/.screenlayout/dock.sh"

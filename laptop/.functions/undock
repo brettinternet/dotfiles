@@ -7,7 +7,7 @@ scope() {
     # xrandr
     local XRANDR_SCRIPT="$HOME/.screenlayout/default.sh"
     if [ -f $XRANDR_SCRIPT ]; then
-        /bin/bash -c $XRANDR_SCRIPT &>/dev/null
+        /bin/bash -c $XRANDR_SCRIPT
     else
         echo "No xrandr script found in .screenlayout"
     fi
