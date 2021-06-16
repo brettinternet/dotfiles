@@ -18,6 +18,8 @@ scope() {
   fi
 
   # nmcli radio wifi off
+
+  i3 restart &>/dev/null
 }
 
 DEVICES=$(lsusb)
