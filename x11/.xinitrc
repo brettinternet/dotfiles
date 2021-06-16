@@ -1,5 +1,11 @@
 #!/bin/sh
 
+# https://wiki.archlinux.org/title/NVIDIA_Optimus#Use_NVIDIA_graphics_only
+if [ -f /etc/X11/xorg.conf.d/10-nvidia-drm-outputclass.conf ]; then
+    xrandr --setprovideroutputsource modesetting NVIDIA-0
+    xrandr --auto
+fi
+
 userresources=$HOME/.Xresources
 usermodmap=$HOME/.Xmodmap
 sysresources=/etc/X11/xinit/.Xresources
