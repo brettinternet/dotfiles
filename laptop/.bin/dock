@@ -27,4 +27,6 @@ scope() {
 DEVICES=$(lsusb)
 if [[ $DEVICES = *"Dock"* ]]; then
   scope
+else
+  echo "Dock is unavailable"
 fi
