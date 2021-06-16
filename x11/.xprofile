@@ -60,7 +60,7 @@ scope() {
 
   local WALLPAPERS_DIR="${MY_WALLPAPERS:-$HOME/.walls}"
   if [ -d "$WALLPAPERS_DIR" ]; then
-      feh --no-fehbg --randomize --bg-fill $WALLPAPERS_DIR/* &
+      ( feh -q --no-fehbg --randomize --bg-fill $WALLPAPERS_DIR/*.{png,jpg} & ) &>/dev/null
   fi
 
   # https://wiki.archlinux.org/index.php/Polkit

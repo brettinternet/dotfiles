@@ -24,3 +24,5 @@
       force: true
     ~/.xprofile.local:
       path: laptop/.xprofile.local
+    ~/.zshrc.local:
+      path: laptop/.zshrc.local

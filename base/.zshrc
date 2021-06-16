@@ -2,11 +2,21 @@ export SHELL="/bin/zsh"
 
 source $HOME/.profile
 
-[ -d "$HOME/.config/broot" ] && source $HOME/.config/broot/launcher/bash/br
-[ -d "/usr/share/nvm" ] && source /usr/share/nvm/init-nvm.sh
-
 fpath+=( "$HOME/.functions" )
-autoload -Uz clock zman colortest
+
+scope() {
+  [ -d "$HOME/.config/broot" ] && source $HOME/.config/broot/launcher/bash/br
+  [ -d "/usr/share/nvm" ] && source /usr/share/nvm/init-nvm.sh
+
+  autoload -Uz clock zman colortest wallpaper
+
+  local LOCAL_ZSH_CUSTOMIZATIONS=$HOME/.zshrc.local
+  if [ -f "$LOCAL_ZSH_CUSTOMIZATIONS" ]; then
+    source "$LOCAL_ZSH_CUSTOMIZATIONS"
+  fi
+}
+
+scope
 
 
 # -- Options ----------------------------------------
