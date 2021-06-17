@@ -330,7 +330,7 @@ bar {
     i3bar_command i3bar -t
     status_command i3status
     position top
-    mode hide
+    #mode hide
 
     # https://i3wm.org/docs/userguide.html#_named_workspaces
     strip_workspace_numbers yes
