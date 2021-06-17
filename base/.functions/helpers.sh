@@ -54,9 +54,6 @@ alias sudo="sudo "
 
 # Directories
 alias dotfiles='cd ~/.dotfiles'
-alias dev='cd ~/dev'
-alias me='cd ~/dev/me'
-alias sandbox='cd ~/dev/sandbox'
 
 # ls
 alias ls='ls --color=auto'
