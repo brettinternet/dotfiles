@@ -13,6 +13,11 @@ xidlehook --not-when-fullscreen --not-when-audio \
 # Compositors appear to be incompatible with VM guests
 picom -b --experimental-backends --no-fading-openclose
 
+DEVICES=$(lsusb)
+if [[ $DEVICES = *"Dock"* ]]; then
+  dock
+fi
+
 if [[ -x "$(command -v fusuma)" ]]; then
     fusuma -d 2>&1
     # xinput set-prop 12 268 1 # for touchpad tap
