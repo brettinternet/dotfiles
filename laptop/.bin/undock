@@ -4,6 +4,9 @@ scope() {
   # xrandr
   local XRANDR_SCRIPT="$HOME/.screenlayout/default.sh"
   if [ -f $XRANDR_SCRIPT ]; then
+      # Re-detects available monitors (when external dock displays are no longer present)
+      # an alternative to this is to have the xrandr script explicitly turn off other displays
+      xrandr --auto
       /bin/bash -c $XRANDR_SCRIPT
   else
       echo "No xrandr script found in .screenlayout"
