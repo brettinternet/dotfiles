@@ -1,7 +1,5 @@
 #!/bin/bash
 
-alias reboot="shutdown -r now"
-
 # Source: https://github.com/ohmyzsh/ohmyzsh/blob/c52e646bb7b109e15f6dc4047b29ca8c8e029433/lib/functions.zsh
 function shell_stats {
   fc -l 1 \
@@ -44,6 +42,7 @@ function up {
 # https://github.com/andreafrancia/trash-cli
 alias rm='echo \"No way, man!\"; false'
 alias rrm="/bin/rm -i"
+alias reboot="systemctl reboot"
 
 # fzy (see .functions for more)
 alias ff="find . -type f | fzy"
