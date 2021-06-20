@@ -8,6 +8,8 @@ source $HOME/.profile
 
 unset TMOUT
 
+# See default XDG dirs: https://wiki.archlinux.org/title/XDG_Base_Directory
+
 # non-standard, used by https://build.i3wm.org/docs/i3-sensible-terminal.html
 export TERMINAL=alacritty
 
