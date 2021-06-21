@@ -1,3 +1,4 @@
+# MX Master mouse
 # thumb wheel down => lower volume
 #"change-volume -2%"
 "xte 'key XF86AudioLowerVolume'"
