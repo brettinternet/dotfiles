@@ -16,8 +16,8 @@ if [ ! -f $TMP_IMAGE ]; then
 fi
 
 function pause {
-  STATUS=$(playerctl status)
-  [ "$STATUS" = "Playing" ] && playerctl --all-players stop
+  STATUS=$(playerctl --all-players status)
+  [[ "$STATUS" = *"Playing"* ]] && playerctl --all-players stop
 }
 
 revert() {
