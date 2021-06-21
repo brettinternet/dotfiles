@@ -202,6 +202,7 @@ bindsym $mod+Down exec --no-startup-id change-volume -3%
 
 bindsym $mod+Left exec --no-startup-id playerctl previous
 bindsym $mod+Right exec --no-startup-id playerctl next
+bindsym $mod+$alt+Down exec --no-startup-id playerctl play-pause
 
 
 # -- Applications ----------------------------------------
