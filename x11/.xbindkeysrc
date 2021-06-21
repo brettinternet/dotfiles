@@ -1,3 +1,6 @@
+# TODO: possibly replace with https://github.com/baskerville/sxhkd
+# or with i3 bindsym
+
 # For the benefit of emacs users: -*- shell-script -*-
 ###########################
 # xbindkeys configuration #
