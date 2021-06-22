@@ -74,10 +74,6 @@ bindsym $mod+space focus mode_toggle
 # https://bbs.archlinux.org/viewtopic.php?pid=920994#p920994
 bindsym $mod+Shift+s sticky toggle; exec --no-startup-id TARGET_WINDOW="$(xprop -id $(xprop -root _NET_ACTIVE_WINDOW | cut -d ' ' -f 5) | awk '/WM_CLASS/{print $4}' | sed 's/\"//g')" && notify-send -a 'system' 'i3' "sticky toggle: $TARGET_WINDOW"
 
-#navigate workspaces next / previous
-bindsym $mod+Ctrl+Right workspace next
-bindsym $mod+Ctrl+Left workspace prev
-
 # Define names for default workspaces for which we configure key bindings later on.
 # We use variables to avoid repeating the names in multiple places.
 set $ws1 "1"
