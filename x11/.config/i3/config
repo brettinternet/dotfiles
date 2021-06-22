@@ -54,9 +54,9 @@ bindsym $mod+minus split toggle
 bindsym $mod+f fullscreen toggle
 
 # change container layout (stacked, tabbed, toggle split)
-bindsym $mod+p layout toggle split; exec --no-startup-id dunstify -h string:x-dunst-stack-tag:i3 -a 'system' 'i3' 'split mode'
-bindsym $mod+o layout stacking; exec --no-startup-id dunstify -h string:x-dunst-stack-tag:i3 -a 'system' 'i3' 'stacked mode'
-bindsym $mod+i layout tabbed; exec --no-startup-id dunstify -h string:x-dunst-stack-tag:i3 -a 'system' 'i3' 'tabbed mode'
+bindsym $mod+p layout toggle split; exec --no-startup-id notify-send -a 'system' 'i3' 'split mode' -h string:x-canonical-private-synchronous:i3
+bindsym $mod+o layout stacking; exec --no-startup-id notify-send -a 'system' 'i3' 'stacked mode' -h string:x-canonical-private-synchronous:i3
+bindsym $mod+i layout tabbed; exec --no-startup-id notify-send -a 'system' 'i3' 'tabbed mode' -h string:x-canonical-private-synchronous:i3
 
 # toggle tiling / floating
 bindsym $mod+Shift+space floating toggle
@@ -175,8 +175,8 @@ bindsym $mod+Ctrl+n exec --no-startup-id blueman-manager
 
 # Restart dunst
 bindsym $mod+Ctrl+d --release exec --no-startup-id pkill dunst && dunst &
-bindsym $mod+t exec --no-startup-id pkill picom; exec notify-send -a 'system' 'Picom stopped' -r '2348'
-bindsym $mod+Ctrl+t exec --no-startup-id picom --experimental-backends -b; exec notify-send -a 'system' 'Picom started' -r '2348'
+bindsym $mod+t exec --no-startup-id pkill picom; exec notify-send -a 'system' 'Picom stopped' -h string:x-canonical-private-synchronous:picom
+bindsym $mod+Ctrl+t exec --no-startup-id picom --experimental-backends -b; exec notify-send -a 'system' 'Picom started' -h string:x-canonical-private-synchronous:picom
 
 # Screenshot active window
 bindsym Print --release exec --no-startup-id screenshot -w
@@ -202,7 +202,8 @@ bindsym $mod+Down exec --no-startup-id change-volume -3%
 
 bindsym $mod+Left exec --no-startup-id playerctl previous
 bindsym $mod+Right exec --no-startup-id playerctl next
-bindsym $mod+$alt+Down exec --no-startup-id playerctl play-pause
+bindsym $mod+Ctrl+Down exec --no-startup-id playerctl play-pause; exec --no-startup-id ACTION="$([[ "$(playerctl status)" = "Playing" ]] && echo "pause" || echo "play")" && notify-send -a 'system' "$(playerctl -l | head -n 1)" -i player_$ACTION -h string:x-canonical-private-synchronous:playerctl
+bindsym $mod+Ctrl+Up exec --no-startup-id playerctld shift; exec --no-startup-id ACTION="$([[ "$(playerctl status)" = "Playing" ]] && echo "play" || echo "pause")" && notify-send -a 'system' "player: $(playerctl -l | head -n 1)" -i player_$ACTION -h string:x-canonical-private-synchronous:playerctl
 
 
 # -- Applications ----------------------------------------
