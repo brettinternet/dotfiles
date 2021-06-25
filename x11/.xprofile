@@ -70,6 +70,9 @@ scope() {
 
   unclutter --timeout 3 &
 
+  # https://github.com/altdesktop/playerctl/issues/161
+  playerctld daemon
+
   if command -v greenclip &> /dev/null; then
       greenclip daemon &> /dev/null &
   fi
