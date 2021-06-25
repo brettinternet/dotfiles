@@ -7,8 +7,9 @@ if [[ "$STATUS" = "No players found"  ]]; then
   notify-send -a 'system' "No active player" -i player_stop -h string:x-canonical-private-synchronous:$TAG
 else
   playerctld shift
-  ACTION="$([[ "$STATUS" = "Playing" ]] && echo "play" || echo "pause")"
   PLAYER="$(playerctl -l | head -n 1)"
+  STATUS="$(playerctl -p "$PLAYER" status)"
+  ACTION="$([[ "${STATUS,,}" = "playing" ]] && echo "play" || echo "pause")"
   notify-send -a 'system' "player: $PLAYER" -i player_$ACTION -h string:x-canonical-private-synchronous:$TAG
   if [[ "$PLAYER" = "spotify" ]]; then
     notify-spotify

@@ -3,14 +3,26 @@
 TAG="playerctl"
 STATUS="$(playerctl status 2>&1)"
 
+notify_player() { # $1 - message, $2 action
+  notify-send -a 'system' "$1" -i player_$2 -h string:x-canonical-private-synchronous:$TAG
+}
+
 if [[ "$STATUS" = "No players found"  ]]; then
-  notify-send -a 'system' "No active player" -i player_stop -h string:x-canonical-private-synchronous:$TAG
+  notify_player "No active player" "stop"
 else
-  playerctl play-pause
-  ACTION="$([[ "$STATUS" = "Playing" ]] && echo "pause" || echo "play")"
   PLAYER="$(playerctl -l | head -n 1)"
-  notify-send -a 'system' "$PLAYER" -i player_$ACTION -h string:x-canonical-private-synchronous:$TAG
-  if [[ "$PLAYER" = "spotify" ]]; then
-    notify-spotify
+  playerctl -p "$PLAYER" -s play-pause
+  if [ $? -eq 0 ]; then
+    # `time playerctl play-pause` takes about 10 ms 😴
+    # https://github.com/altdesktop/playerctl/issues/151
+    sleep 0.15
+    STATUS="$(playerctl status)"
+    ACTION="$([[ "${STATUS,,}" = "playing" ]] && echo "play" || echo "pause")"
+    notify_player $PLAYER $ACTION
+    if [[ "${PLAYER,,}" = "spotify" ]]; then
+      notify-spotify &
+    fi
+  else
+      notify_player "$PLAYER is unavailable" "stop"
   fi
 fi

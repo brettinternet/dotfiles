@@ -5,8 +5,7 @@ PLAYER="spotify" # $(playerctl -l)
 
 STATUS=$(playerctl -p "$PLAYER" status)
 
-[ "$STATUS" != "Playing" ] && exit 1
-
+[ "${STATUS,,}" != "playing" ] && exit 1
 
 ACTIVE_WINDOW_CLASS=$(xprop -id $(xprop -root _NET_ACTIVE_WINDOW | cut -d ' ' -f 5) | grep WM_CLASS | cut -d'"' -f2)
 [ "$ACTIVE_WINDOW_CLASS" = "$PLAYER" ] && exit 0
