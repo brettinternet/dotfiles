@@ -198,8 +198,8 @@ bindsym $mod+Down exec --no-startup-id change-volume -3%
 
 bindsym $mod+Left exec --no-startup-id playerctl previous
 bindsym $mod+Right exec --no-startup-id playerctl next
-bindsym $mod+Ctrl+Down exec --no-startup-id playerctl play-pause; exec --no-startup-id ACTION="$([[ "$(playerctl status)" = "Playing" ]] && echo "pause" || echo "play")" && notify-send -a 'system' "$(playerctl -l | head -n 1)" -i player_$ACTION -h string:x-canonical-private-synchronous:playerctl
-bindsym $mod+Ctrl+Up exec --no-startup-id playerctld shift; exec --no-startup-id ACTION="$([[ "$(playerctl status)" = "Playing" ]] && echo "play" || echo "pause")" && notify-send -a 'system' "player: $(playerctl -l | head -n 1)" -i player_$ACTION -h string:x-canonical-private-synchronous:playerctl
+bindsym $mod+Ctrl+Down exec --no-startup-id player-play-pause
+bindsym $mod+Ctrl+Up exec --no-startup-id player-shift
 
 
 # -- Applications ----------------------------------------

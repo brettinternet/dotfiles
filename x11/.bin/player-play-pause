@@ -1,0 +1,16 @@
+#!/bin/bash
+
+TAG="playerctl"
+STATUS="$(playerctl status)"
+
+if [[ "$STATUS" = "No players found"  ]]; then
+  notify-send -a 'system' "No active player" -i player_stop -h string:x-canonical-private-synchronous:$TAG
+else
+  playerctl play-pause
+  ACTION="$([[ "$STATUS" = "Playing" ]] && echo "pause" || echo "play")"
+  PLAYER="$(playerctl -l | head -n 1)"
+  notify-send -a 'system' "$PLAYER" -i player_$ACTION -h string:x-canonical-private-synchronous:$TAG
+  if [[ "$PLAYER" = "spotify" ]]; then
+    notify-spotify
+  fi
+fi
