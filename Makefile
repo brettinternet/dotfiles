@@ -22,6 +22,7 @@ base: install
 desktop: export DOTFILE_GROUPS = x11,desktop,archlinux
 desktop: install
 
+laptop: export DOTFILE_PACKAGE_LISTS = base.txt,x11.txt
 laptop: export DOTFILE_GROUPS = x11,laptop,archlinux
 laptop: install
 
