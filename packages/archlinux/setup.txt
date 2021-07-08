@@ -1,0 +1,12 @@
+base
+dhcpcd
+dosfstools
+efibootmgr
+git
+grub
+gvim
+linux
+linux-firmware
+mtools
+nano
+os-prober
