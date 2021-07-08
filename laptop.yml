@@ -24,3 +24,9 @@
       force: true
     ~/.xprofile.local:
       path: laptop/.xprofile.local
+
+- shell:
+    - command: $DOTFILES_DIR/packages/prompt_install.sh $DOTFILE_PACKAGE_LISTS
+      stdin: true
+      stdout: true
+      stderr: true
