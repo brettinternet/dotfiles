@@ -8,11 +8,14 @@ DOTBOT_DIR="dotbot"
 DOTBOT_BIN="bin/dotbot"
 BASEDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+export DOTFILES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
 cd "${BASEDIR}"
 
 (cd "${DOTBOT_DIR}" && git submodule update --init --recursive)
 echo "Configuring ${CONFIG}"
 "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}"
+
 
 # Optional groups
 IFS=', ' read -r -a DOTFILE_ARRAY <<< "$DOTFILE_GROUPS"
