@@ -8,8 +8,10 @@ Basic dotfiles setup with [dotbot](https://github.com/anishathalye/dotbot/tree/m
 ./install
 ```
 
-### Set up a workstation
+## Set up a workstation
 
 ```sh
 make {desktop|laptop|server|vmguest|vmguest-arch}
 ```
+
+I wrote [pkgls](https://github.com/brettinternet/pkgls) to filter package lists and install missing packages, and output explicitly installed packages. See [packages](./packages/archlinux) for the package lists installed in my various environments.
