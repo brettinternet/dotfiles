@@ -33,7 +33,9 @@ function git_current_branch() {
 
 # https://stackoverflow.com/a/4822516
 # Exclude certain files not gitignored - https://stackoverflow.com/a/53083343
-alias gloc="git ls-files -- ':!:*lock.json' | xargs cat | wc -l"
+function gloc() { # 1 - additional filter patterns
+  git ls-files -- ':!:*lock.json' $1 | xargs cat | wc -l
+}
 
 alias guc='git pull origin "$(git_current_branch)"'
 alias gpc='git push origin "$(git_current_branch)"'
