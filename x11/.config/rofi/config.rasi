@@ -4,4 +4,6 @@ configuration {
     font: "Fira Code 13";
 }
 
+@theme "gruvbox-dark-hard"
+
 /* vim:ft=css

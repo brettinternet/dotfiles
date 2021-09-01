@@ -1,11 +1,7 @@
 window {
     background-color: @background;
     border:           0;
-    padding:        40 50;
-}
-
-overlay {
-    background-color: #000000;
+    padding:          20px 2px;
 }
 
 mainbox {
@@ -17,6 +13,10 @@ message {
     border:       2px 0 0;
     border-color: @separatorcolor;
     padding:      1px;
+}
+
+inputbar {
+    margin: 10px 50px;
 }
 
 textbox {
@@ -33,22 +33,19 @@ listview {
 
 element {
     border:  0;
-    padding: 10px 0;
+    padding: 10px 50px;
 }
 
-element.alternate.normal,
 element.normal.normal {
     background-color: @normal-background;
     text-color:       @normal-foreground;
 }
 
-element.alternate.urgent,
 element.normal.urgent {
     background-color: @urgent-background;
     text-color:       @urgent-foreground;
 }
 
-element.alternate.active,
 element.normal.active {
     background-color: @active-background;
     text-color:       @active-foreground;
@@ -69,14 +66,30 @@ element.selected.active {
     text-color:       @selected-active-foreground;
 }
 
+element.alternate.normal {
+    background-color: @normal-background;
+    text-color:       @normal-foreground;
+}
+
+element.alternate.urgent {
+    background-color: @urgent-background;
+    text-color:       @urgent-foreground;
+}
+
+element.alternate.active {
+    background-color: @active-background;
+    text-color:       @active-foreground;
+}
+
 scrollbar {
+    width:        4px;
     border:       0;
     handle-color: @scrollbar-handle;
-    handle-width: 0px;
+    handle-width: 4px;
     padding:      0;
 }
 
-sidebar {
+mode-switcher {
     border:       2px 0 0;
     border-color: @separatorcolor;
 }
@@ -107,6 +120,11 @@ textbox-prompt-sep {
     text-color: @normal-foreground;
     margin:     0 0.3em 0 0;
 }
+element-text, element-icon {
+    background-color: inherit;
+    text-color:       inherit;
+}
 
-
-/* vim:ft=css
+element-icon {
+  margin: 0 10px 0 0;
+}

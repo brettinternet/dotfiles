@@ -29,30 +29,35 @@ while getopts ":hewcbrpd" opt; do
       ;;
     r)
       rofi -modi run,drun -show drun -display-drun "" -display-run "" \
-        -width 600 -columns 1 -lines 6 -show-icons \
+        -show-icons \
         -matching fuzzy -i \
-        -theme-str '#window { width: 600px; }' \
-        -theme-str '#textbox-prompt-sep { enabled: false;}'
+        -theme-str 'window { width: 600px; }' \
+        -theme-str 'textbox-prompt-sep { enabled: false; }' \
+        -theme-str 'listview { lines: 6; }'
       ;;
     w)
       rofi -modi window -show window -hide-scrollbar \
         -matching fuzzy -i -location 6 \
-        -width 40 -lines 10 \
-        -theme-str '#scrollbar { handle-width: 0;}' \
-        -theme-str '#inputbar { enabled: false;}'
+        -theme-str 'window { width: 40%; }' \
+        -theme-str 'scrollbar { handle-width: 0; }' \
+        -theme-str 'inputbar { enabled: false; }' \
+        -theme-str 'listview { lines: 10; }'
       ;;
     e)
       # https://github.com/Mange/rofi-emoji
       rofi -show emoji -modi emoji -display-emoji "" \
         -location 4 \
-        -columns 2 -width 30 -lines 10 \
-        -theme-str '#textbox-prompt-sep { enabled: false;}'
+        -theme-str 'window { width: 30%; }' \
+        -theme-str 'textbox-prompt-sep { enabled: false;}' \
+        -theme-str 'listview { columns: 2; }' \
+        -theme-str 'listview { lines: 10; }'
       ;;
     c)
       # https://github.com/erebe/greenclip
       rofi -modi "clipboard:greenclip print" \
-        -show "clipboard" -columns 1 \
-        -width 20 -lines 8
+        -show "clipboard" \
+        -theme-str 'window { width: 20%; }' \
+        -theme-str 'listview { lines: 8; }'
       ;;
     b)
       # Used by sr for custom search `S`; https://gitlab.com/surfraw/Surfraw/-/wikis/Configuration
@@ -65,8 +70,8 @@ while getopts ":hewcbrpd" opt; do
       QUERY=$(echo "$ELVI" | rofi \
         -kb-row-select 'Tab' -kb-row-tab 'Control+space' \
         -dmenu -i -p 'web' -location 8 \
-        -width 20 -lines 8 \
-        -theme-str '#scrollbar { handle-width: 0;}'
+        -theme-str 'window { width: 20%; }' \
+        -theme-str 'listview { lines: 8; }'
       )
       if [ -n "$QUERY" ]; then
         ARGS=()
@@ -82,11 +87,13 @@ while getopts ":hewcbrpd" opt; do
       #SCREEN_HEIGHT=$(xrandr | grep -E ' *[0-9]*x[0-9]* *[0-9][0-9]\.[0-9][0-9]\*\+' | awk '{print $1}' | head -n 1 | cut -f2 -d 'x')
       ANS=$(echo " Lock| Exit| Suspend| Reboot| Shutdown" | \
         rofi -sep "|" -dmenu -i -p '' "" \
-        -lines 5 -columns 1 \
-        -theme-str '#window { width: 220px; }' \
-        -theme-str '#textbox-prompt-sep { enabled: false;}' \
-        -theme-str '#scrollbar { handle-width: 0;}' \
-        -theme-str '#inputbar { enabled: false;}'
+        -theme-str 'window { fullscreen: true; padding: 0px; }' \
+        -theme-str 'mainbox { margin: 40% 45%; }' \
+        -theme-str 'textbox-prompt-sep { enabled: false; }' \
+        -theme-str 'scrollbar { handle-width: 0; }' \
+        -theme-str 'inputbar { enabled: false; }' \
+        -theme-str 'listview { lines: 5; }'
+        # -theme-str 'window { width: 220px; }' \
       )
       case "$ANS" in
         *Lock)
