@@ -6,4 +6,6 @@ configuration {
 
 @theme "gruvbox-dark-hard"
 
+/* TODO: use https://github.com/adi1090x/rofi */
+
 /* vim:ft=css
