@@ -49,6 +49,31 @@ function grbos {
   git rebase --exec "git commit --amend --no-edit -n -S" -i origin/$branch
 }
 
+function g_sign { # 1 - email, 2 - GPG key ID
+  local email="$1"
+  local key_id="$2"
+  if [[ -z "$email" ]]; then
+    echo "Missing email as the first argument"
+    return 1
+  fi
+  if [[ -z "$key_id" ]]; then
+    echo "Missing key ID as the second argument"
+    return 1
+  fi
+  if [[ ! $(gpg -k "$key_id") ]]; then
+    echo "Unable to find GPG key by that ID"
+    return 1
+  fi
+  if [[ ! $(gpg -k "$email") ]]; then
+    echo "That email does not match a local GPG key"
+    return 1
+  fi
+  git config user.signingkey "$key_id"
+  git config commit.gpgsign true
+  git config tag.gpgsign true
+  git config user.email "$email"
+}
+
 alias g='git'
 alias gb='git branch'
 alias gs='git status'
