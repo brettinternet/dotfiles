@@ -31,7 +31,7 @@ while getopts ":hewcbrpd" opt; do
       rofi -modi run,drun -show drun -display-drun "" -display-run "" \
         -show-icons \
         -matching fuzzy -i \
-        -theme-str 'window { width: 600px; }' \
+        -theme-str 'window { width: 500px; }' \
         -theme-str 'textbox-prompt-sep { enabled: false; }' \
         -theme-str 'listview { lines: 6; }'
       ;;
