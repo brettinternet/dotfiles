@@ -17,7 +17,7 @@ scope() {
       ( feh -q --no-fehbg --randomize --bg-fill $WALLPAPERS_DIR/*.{png,jpg} & ) &>/dev/null
   fi
 
-  # nmcli radio wifi off
+  nmcli radio wifi off
 
   i3 restart &>/dev/null
 }
