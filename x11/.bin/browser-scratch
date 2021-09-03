@@ -1,0 +1,6 @@
+#!/bin/bash
+
+# `--user-data-dir` is required for now
+# https://bugs.chromium.org/p/chromium/issues/detail?id=118613
+
+chromium --user-data-dir="$HOME/.config/chromium" --class="scratchpad" "$@"
