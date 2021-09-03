@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Usage: open a webpage in fullscreen app mode
+# e.g. `browser-kiosk https://www.reddit.com`
+
+LINK="$1"
+
+chromium --app="$LINK"
+
+LINK_WITHOUT_CLASSNAME=$(echo "$LINK" | grep -oP 'https?://\K\S+')
+
+# WM_CLASS(STRING) ="instance", "class"
+i3-msg '[instance="$LINK_WITHOUT_CLASSNAME"] fullscreen enable'
