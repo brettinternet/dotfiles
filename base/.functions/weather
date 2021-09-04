@@ -1,0 +1,55 @@
+#!/bin/bash
+
+# https://v3.wttr.in
+# https://github.com/chubin/wttr.in
+
+NAME=$(basename "$0")
+
+function usage {
+  cat <<- EOF
+Usage:   $NAME [options]
+
+Options:
+  -h      Display this message
+  -f      Simple view, format to 1, 2, 3, or 4
+  -r      Weather report
+  -d      Data-rich view
+  -m      Map view (unsupported by Alacritty)
+
+EOF
+}
+
+while getopts ":hrdmf:" opt; do
+  case $opt in
+    h)
+      usage
+      ;;
+    r)
+      # Standard report view https://github.com/chubin/wttr.in#data-rich-output-format-v2
+      # head removes last line which is a twitter advertisement
+      curl -s wttr.in | head -n -1
+      ;;
+    f)
+      # Map view https://github.com/chubin/wttr.in#map-view-v3
+      curl -s "wttr.in/?format=$OPTARG"
+      ;;
+    d)
+      # Data-rich view https://github.com/chubin/wttr.in#data-rich-output-format-v2
+      curl -s v2.wttr.in | head -n -1
+      ;;
+    m)
+      # Map view https://github.com/chubin/wttr.in#map-view-v3
+      # Alacritty currently doesn't support sixel images
+      curl -s v3.wttr.in/Salt+Lake+City.sxl | head -n -1
+      ;;
+    *)
+      usage
+      ;;
+  esac
+done
+
+shift $((OPTIND - 1))
+
+if [[ $OPTIND == 1 ]]; then
+  curl -s "wttr.in/?format=4"
+fi
