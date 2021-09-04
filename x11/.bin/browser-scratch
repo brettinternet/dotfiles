@@ -4,3 +4,4 @@
 # https://bugs.chromium.org/p/chromium/issues/detail?id=118613
 
 chromium --user-data-dir="$HOME/.config/chromium" --class="scratchpad" "$@"
+# TODO: set window's class/instance with `xdotool`
