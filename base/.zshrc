@@ -161,6 +161,13 @@ zinit wait lucid light-mode for \
   zsh-users/zsh-syntax-highlighting
 
 
+# -- Programs ----------------------------------------
+
+# https://github.com/tmux-plugins/tpm
+zinit ice as"program" atclone"mkdir -p ~/.tmux/plugins/tpm; mv * ~/.tmux/plugins/tpm"
+zinit light tmux-plugins/tpm
+
+
 # -- Colorscheme
 
 # dark version
