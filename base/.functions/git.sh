@@ -5,7 +5,7 @@
 # Source: https://github.com/ohmyzsh/ohmyzsh/blob/4e45e12dc355e3ba34e7e40ce4936fb222f0155c/plugins/git/git.plugin.zsh#L21-L26
 # These features allow to pause a branch development and switch to another one ("Work in Progress", or wip). When you want to go back to work, just unwip it.
 # Warn if the current branch is a WIP
-function work_in_progress() {
+function work_in_progress {
   if $(git log -n 1 2>/dev/null | grep -q -c "\-\-wip\-\-"); then
     echo "WIP!!"
   fi
@@ -15,12 +15,22 @@ function work_in_progress() {
 alias gwip='git add -A; git rm $(git ls-files --deleted) 2> /dev/null; git commit --no-verify --no-gpg-sign -m "--wip-- [skipci]"'
 alias gunwip='git log -n 1 | grep -q -c "\-\-wip\-\-" && git reset HEAD~1'
 
+function git_pickaxe { # 1 - search string value
+  if [ $# -eq 0 ]; then
+      echo "No arguments provided"
+      exit 1
+  fi
+  local STRING="$1"
+  # Search string, show diff and commit message, chronological order
+  git log -S "$STRING" --patch --reverse
+}
+
 # Source: https://github.com/ohmyzsh/ohmyzsh/blob/1546e1226a7b739776bda43f264b221739ba0397/lib/git.zsh#L68-L81
 # Outputs the name of the current branch
 # Usage example: git pull origin $(git_current_branch)
 # Using '--quiet' with 'symbolic-ref' will not cause a fatal error (128) if
 # it's not a symbolic ref, but in a Git repo.
-function git_current_branch() {
+function git_current_branch {
   local ref
   ref=$(command git symbolic-ref --quiet HEAD 2> /dev/null)
   local ret=$?
@@ -33,7 +43,7 @@ function git_current_branch() {
 
 # https://stackoverflow.com/a/4822516
 # Exclude certain files not gitignored - https://stackoverflow.com/a/53083343
-function gloc() { # 1 - additional filter patterns
+function gloc { # 1 - additional filter patterns
   git ls-files -- ':!:*lock.json' $1 | xargs cat | wc -l
 }
 
