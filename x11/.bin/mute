@@ -5,20 +5,22 @@ NAME=$(basename "$0")
 _usage() {
   cat <<- EOF
 Usage:  $NAME [options]
-        Mute atomically - mutes every PulseAudio source
+        Mute the default PulseAudio source or otherwise every source
 
 Options:
   -h      Display this message
+  -d      Apply to default source only
   -y      Mute
   -n      Unmute
-          Mute is toggled when no option is specified
+          Mute is toggled when -y or -n are not specified
 
 EOF
 }
 
 ACTION="toggle"
+DEFAULT_ONLY="false"
 
-while getopts ":hyn" OPT; do
+while getopts ":hdyn" OPT; do
   case $OPT in
     h)
       _usage
@@ -26,6 +28,9 @@ while getopts ":hyn" OPT; do
       ;;
     y)
       ACTION="1"
+      ;;
+    d)
+      DEFAULT_ONLY="true"
       ;;
     n)
       ACTION="0"
@@ -39,8 +44,12 @@ while getopts ":hyn" OPT; do
 done
 shift $((OPTIND - 1))
 
-# Source: https://askubuntu.com/a/1152002/664421
-pacmd list-sources | \
-  grep -oP 'index: \d+' | \
-  awk '{ print $2 }' | \
-  xargs -I{} pactl set-source-mute {} "$ACTION"
+if [ $DEFAULT_ONLY = "true" ]; then
+  pactl set-source-mute @DEFAULT_SOURCE@ "$ACTION"
+else
+  # Source: https://askubuntu.com/a/1152002/664421
+  pacmd list-sources | \
+    grep -oP 'index: \d+' | \
+    awk '{ print $2 }' | \
+    xargs -I{} pactl set-source-mute {} "$ACTION"
+fi
