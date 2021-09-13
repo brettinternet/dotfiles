@@ -1,0 +1,4 @@
+#!/bin/bash
+
+IMAGE=input.jpg
+ffmpeg -loop 1 -re -i $IMAGE -f v4l2 -vcodec rawvideo -pix_fmt yuv420p /dev/video1
