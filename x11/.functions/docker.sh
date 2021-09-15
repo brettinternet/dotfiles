@@ -1,10 +1,12 @@
 #!/bin/bash
 
-function start_postgres {
-  docker run --name postgres -e POSTGRES_PASSWORD=postgres --network host -d postgres
+function start_postgres { # 1 - optional container name
+  local NAME="${1:-postgres}"
+  docker run --name $NAME -e POSTGRES_PASSWORD=postgres --network host -d postgres
 }
 
-function kill_postgres {
-  docker stop postgres
-  docker rm postgres
+function kill_postgres { # 1 - optional container name
+  local NAME="${1:-postgres}"
+  docker stop $NAME
+  docker rm $NAME
 }
