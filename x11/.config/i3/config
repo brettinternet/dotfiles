@@ -170,7 +170,7 @@ bindsym $mod+Ctrl+m exec --no-startup-id pavucontrol
 bindsym $mod+Ctrl+n exec --no-startup-id blueman-manager
 
 # Restart dunst
-bindsym $mod+Ctrl+d --release exec --no-startup-id pkill dunst && dunst & && sleep 0; exec notify-send -a 'system' 'Dunst restarted' -h string:x-canonical-private-synchronous:dunst
+bindsym $mod+Ctrl+d --release exec --no-startup-id pkill dunst && dunst && sleep 0; exec notify-send -a 'system' 'Dunst restarted' -h string:x-canonical-private-synchronous:dunst
 bindsym $mod+t exec --no-startup-id pkill picom; exec notify-send -a 'system' 'Picom stopped' -h string:x-canonical-private-synchronous:picom
 bindsym $mod+Ctrl+t exec --no-startup-id picom --experimental-backends -b; exec notify-send -a 'system' 'Picom started' -h string:x-canonical-private-synchronous:picom
 
@@ -200,6 +200,9 @@ bindsym $mod+Left exec --no-startup-id playerctl previous
 bindsym $mod+Right exec --no-startup-id playerctl next
 bindsym $mod+Ctrl+Down exec --no-startup-id player-play-pause
 bindsym $mod+Ctrl+Up exec --no-startup-id player-shift
+
+bindsym $mod+Escape exec --no-startup-id mute -y
+bindsym $mod+Ctrl+Escape exec --no-startup-id mute -n
 
 
 # -- Applications ----------------------------------------
