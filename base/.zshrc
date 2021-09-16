@@ -224,3 +224,14 @@ zstyle ':completion:*:*:kill:*' menu yes select
 zstyle ':completion:*:kill:*'   force-list always
 zstyle ":completion:*:descriptions" format "%B%d%b"
 #zstyle ':completion:*:*:*:default' menu yes select search
+
+
+# -- Local configs
+
+for LOCAL_CONFIG in ~/.zshrc*; do
+  if [[ -f "$LOCAL_CONFIG" ]] && [[ "$LOCAL_CONFIG" != *".zshrc" ]]; then
+    source $LOCAL_CONFIG
+    break
+  fi
+done
+
