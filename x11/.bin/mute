@@ -17,6 +17,15 @@ Options:
 EOF
 }
 
+# If matching process is running, kill it to renew our timeout
+for PID in $(pidof -x "$NAME"); do
+  if [ $PID != $$ ]; then
+    # Process is already running, kill group (children too)
+    # kill -- -$(ps -o pgid= $PID | grep -o [0-9]*)
+    kill -9 $PID
+  fi
+done
+
 ACTION="toggle"
 DEFAULT_ONLY="false"
 
@@ -44,12 +53,45 @@ while getopts ":hdyn" OPT; do
 done
 shift $((OPTIND - 1))
 
-if [ $DEFAULT_ONLY = "true" ]; then
-  pactl set-source-mute @DEFAULT_SOURCE@ "$ACTION"
+function pulse_audio_mute { # 1 - mute action (0 or 1)
+  if [ $DEFAULT_ONLY = "true" ]; then
+    pactl set-source-mute @DEFAULT_SOURCE@ "$ACTION"
+  else
+    # Source: https://askubuntu.com/a/1152002/664421
+    pacmd list-sources | \
+      grep -oP 'index: \d+' | \
+      awk '{ print $2 }' | \
+      xargs -I{} pactl set-source-mute {} "$1"
+  fi
+}
+
+pulse_audio_mute $ACTION
+
+IS_DEFAULT_SOURCE_MUTED=$(pactl get-source-mute @DEFAULT_SOURCE@)
+
+function notify_unmuted {
+  dunstify -a "$NAME" -u 'low' -i "microphone-sensitivity-medium" \
+    -h string:x-dunst-stack-tag:"$NAME" \
+    "Unmuted"
+}
+
+if [[ "$ACTION" = "1" || "$IS_DEFAULT_SOURCE_MUTED" == *"yes" ]]; then
+  function revert {
+    pulse_audio_mute 0
+    notify_unmuted
+    kill 0
+  }
+
+  trap revert INT
+
+  ACTION=$(
+    dunstify -a "$NAME" -u 'critical' -i "microphone-sensitivity-muted" \
+      -h string:x-dunst-stack-tag:"$NAME" \
+      --action="default,Unmute" \
+      "Muted"
+  )
+
+  revert
 else
-  # Source: https://askubuntu.com/a/1152002/664421
-  pacmd list-sources | \
-    grep -oP 'index: \d+' | \
-    awk '{ print $2 }' | \
-    xargs -I{} pactl set-source-mute {} "$ACTION"
+  notify_unmuted
 fi
