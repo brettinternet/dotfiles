@@ -234,4 +234,3 @@ for LOCAL_CONFIG in ~/.zshrc*; do
     break
   fi
 done
-
