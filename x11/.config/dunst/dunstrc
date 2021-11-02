@@ -166,7 +166,7 @@
     #min_icon_size = 32 # (Next release)
 
     # Paths to default icons.
-    icon_path = /usr/share/icons/Paper/32x32/status:/usr/share/icons/Paper/32x32/devices:/usr/share/icons/Paper/scalable/status:/usr/share/icons/Paper/32x32/apps:/usr/share/icons/Paper/16x16/actions:/usr/share/icons/Paper/16x16/panel
+    icon_path = /usr/share/icons/Chicago95/devices/32:/usr/share/icons/Chicago95/status/32:/usr/share/icons/Chicago95/actions/32:/usr/share/icons/Chicago95/panel/32:/usr/share/icons/Chicago95/apps/32:/usr/share/icons/Paper/32x32/apps
 
     ### History ###
 
