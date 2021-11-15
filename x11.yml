@@ -4,6 +4,9 @@
       relink: true
 
 - link:
+    ~/.zprofile:
+      path: base/.zprofile
+      if: '[ -x "$(command -v zsh)" ]'
     ~/.xbindkeysrc:
       path: x11/.xbindkeysrc
     ~/.xbindkeysrc-mouse:
