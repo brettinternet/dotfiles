@@ -136,7 +136,7 @@ add-zsh-hook -Uz precmd rehash_precmd
 
 [[ ! -f ~/.zinit/bin/zinit.zsh ]] && {
     command mkdir -p ~/.zinit
-    command git clone https://github.com/zdharma/zinit ~/.zinit/bin
+    command git clone git@github.com:zdharma-continuum/zinit.git ~/.zinit/bin
 }
 source "$HOME/.zinit/bin/zinit.zsh"
 autoload -Uz _zinit
@@ -144,7 +144,6 @@ autoload -Uz _zinit
 
 
 # -- Local plugins ----------------------------------------
-
 zinit ice atinit'local i; for i in *.(sh|zsh); do source $i; done'
 zinit light ~/.functions
 
@@ -172,7 +171,7 @@ zinit light tmux-plugins/tpm
 
 # dark version
 zinit ice as"program" id-as"gruvbox-material-dark"
-zinit snippet https://github.com/sainnhe/dotfiles/blob/b13cfb736a7ab27dacfc60a8df8b3485b9d00010/.zsh-theme-gruvbox-material-dark
+# zinit snippet https://github.com/sainnhe/dotfiles/blob/e917a01b8ce0e84455e2599ffed95c3e52492cf3/.zsh-theme-gruvbox-material-dark
 # light version
 # zinit ice as"program" id-as"gruvbox-material-light"
 # zinit snippet https://github.com/sainnhe/dotfiles/blob/b13cfb736a7ab27dacfc60a8df8b3485b9d00010/.zsh-theme-gruvbox-material-light
@@ -180,31 +179,34 @@ zinit snippet https://github.com/sainnhe/dotfiles/blob/b13cfb736a7ab27dacfc60a8d
 
 # -- Prompt
 
-# Prompt selection method: https://github.com/zdharma/zinit-configs/blob/b47a3a92f77cf4d7afbea9070a0a1db69cfed517/psprint/zshrc.zsh#L310
+# For multiple prompts, do: https://zdharma-continuum.github.io/zinit/wiki/Multiple-prompts/
 
-# https://github.com/geometry-zsh/geometry/blob/a8033e0e9a987c1a6ee1813b7cad7f28cfd3c869/options.md
-zinit load geometry-zsh/geometry
+function load_prompt {
+  prompt_hostname() {
+    ansi 008 "[$(uname -n)]"
+  }
 
-prompt_hostname() {
-  ansi 008 "[$(uname -n)]"
-}
+  prompt_virtualenv() {
+    venv=$(geometry_virtualenv)
+    if [ -n "$venv" ]; then
+      echo -n "($venv)"
+    fi
+  }
 
-prompt_virtualenv() {
-  venv=$(geometry_virtualenv)
-  if [ -n "$venv" ]; then
-    echo -n "($venv)"
+  GEOMETRY_PATH_COLOR=04
+  GEOMETRY_STATUS_COLOR="$(geometry::hostcolor)"
+
+  # Show hostname is prompt for remote sessions
+  if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
+    GEOMETRY_PROMPT=(geometry_echo prompt_hostname prompt_virtualenv geometry_status geometry_path)
+  else
+    GEOMETRY_PROMPT=(geometry_echo prompt_virtualenv geometry_status geometry_path)
   fi
 }
 
-GEOMETRY_PATH_COLOR=04
-GEOMETRY_STATUS_COLOR="$(geometry::hostcolor)"
-
-# Show hostname is prompt for remote sessions
-if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
-  GEOMETRY_PROMPT=(geometry_echo prompt_hostname prompt_virtualenv geometry_status geometry_path)
-else
-  GEOMETRY_PROMPT=(geometry_echo prompt_virtualenv geometry_status geometry_path)
-fi
+zinit ice silent atload"load_prompt"
+# https://github.com/geometry-zsh/geometry/blob/a8033e0e9a987c1a6ee1813b7cad7f28cfd3c869/options.md
+zinit load geometry-zsh/geometry
 
 
 # -- Autocompletion
