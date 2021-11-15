@@ -1,4 +1,4 @@
-.PHONY: update_dotbot setup install base desktop laptop vmguest vmguest-arch
+.PHONY: update_dotbot setup install base desktop laptop vmguest vmguest-arch mac
 
 # ISSUES:
 # - https://github.com/anishathalye/dotbot/issues/282
@@ -36,3 +36,6 @@ vmguest: install
 
 vmguest-arch: export DOTFILE_GROUPS = x11,vmguest,archlinux
 vmguest-arch: install
+
+mac: export DOTFILE_GROUPS = mac
+mac: install
