@@ -27,7 +27,7 @@ while getopts ":hrdmf:" opt; do
     r)
       # Standard report view https://github.com/chubin/wttr.in#data-rich-output-format-v2
       # head removes last line which is a twitter advertisement
-      curl -s wttr.in | head -n -1
+      curl -s wttr.in | sed '$d'
       ;;
     f)
       # Map view https://github.com/chubin/wttr.in#map-view-v3
@@ -35,12 +35,12 @@ while getopts ":hrdmf:" opt; do
       ;;
     d)
       # Data-rich view https://github.com/chubin/wttr.in#data-rich-output-format-v2
-      curl -s v2.wttr.in | head -n -1
+      curl -s v2.wttr.in | sed '$d'
       ;;
     m)
       # Map view https://github.com/chubin/wttr.in#map-view-v3
       # Alacritty currently doesn't support sixel images
-      curl -s v3.wttr.in/Salt+Lake+City.sxl | head -n -1
+      curl -s v3.wttr.in/Salt+Lake+City.sxl | sed '$d'
       ;;
     *)
       usage
