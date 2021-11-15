@@ -22,11 +22,9 @@
       force: true
     ~/.dircolors:
       path: base/.dircolors
+      if: "[ whence dircolors >/dev/null ]"
     ~/.zshrc:
       path: base/.zshrc
-      if: '[ -x "$(command -v zsh)" ]'
-    ~/.zprofile:
-      path: base/.zprofile
       if: '[ -x "$(command -v zsh)" ]'
     ~/.editorconfig:
       path: base/.editorconfig
@@ -39,9 +37,9 @@
       path: base/.vimrc.bundles
     ~/.tmux.conf:
       path: base/.tmux.conf
-    ~/.config/:
-      glob: true
-      path: base/.config/*
+    # ~/.config/:
+    #   glob: true
+    #   path: base/.config/*
     ~/.functions/:
       glob: true
       path: base/.functions/*
