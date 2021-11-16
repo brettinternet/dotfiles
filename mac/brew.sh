@@ -28,7 +28,6 @@ brew install --cask \
   spotify \
   dbeaver-community \
   zoom \
-  alacritty \
   kap \
   cyberduck \
   yippy \
@@ -39,7 +38,6 @@ brew install --cask \
 xattr -cr /Applications/Chromium.app
 xattr -cr /Applications/Kap.app
 xattr -cr /Applications/Yippy.app
-xattr -cr /Applications/Alacritty.app
 
 # vim plug
 if [[ ! -f ~/.vim/autoload/plug.vim ]]; then
