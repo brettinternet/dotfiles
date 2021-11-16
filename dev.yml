@@ -1,8 +1,0 @@
-- defaults:
-    link:
-      create: true
-      relink: true
-
-- link:
-    ~/.zshrc.dev:
-      path: dev/.zshrc.dev

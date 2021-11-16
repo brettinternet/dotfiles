@@ -19,14 +19,11 @@ install: setup
 
 base: install
 
-desktop: export DOTFILE_GROUPS = x11,desktop,archlinux,dev
+desktop: export DOTFILE_GROUPS = x11,desktop,archlinux
 desktop: install
 
-laptop: export DOTFILE_GROUPS = x11,laptop,archlinux,dev
+laptop: export DOTFILE_GROUPS = x11,laptop,archlinux
 laptop: install
-
-dev: export DOTFILE_GROUPS = dev
-dev: install
 
 server: export DOTFILE_GROUPS = archlinux
 server: install
