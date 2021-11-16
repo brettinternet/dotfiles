@@ -3,8 +3,17 @@
       create: true
       relink: true
 
+- create:
+    - ~/dev
+    - ~/dev/me
+    - ~/dev/sandbox
+    - ~/dev/work
+
 - link:
     ~/.zprofile:
       path: mac/.zprofile
     ~/.hushlogin:
       path: mac/.hushlogin
+    ~/.functions/:
+      glob: true
+      path: x11/.functions/*

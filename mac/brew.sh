@@ -7,7 +7,8 @@ brew install \
   bpytop \
   bat \
   tmux \
-  broot
+  broot \
+  asdf
 
 # Tiling?
 # https://github.com/koekeishiya/yabai/wiki/Installing-yabai-(latest-release)
