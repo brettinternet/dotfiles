@@ -5,7 +5,7 @@
 
 - link:
     ~/.zprofile:
-      path: base/.zprofile
+      path: x11/.zprofile
       if: '[ -x "$(command -v zsh)" ]'
     ~/.xbindkeysrc:
       path: x11/.xbindkeysrc
