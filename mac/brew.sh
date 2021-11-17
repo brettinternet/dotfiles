@@ -32,6 +32,7 @@ brew install --cask \
   cyberduck \
   yippy \
   homebrew/cask-fonts/font-fira-code \
+  gpg-suite \
   karabiner-elements
 
 # Reset application attributes to allow run
