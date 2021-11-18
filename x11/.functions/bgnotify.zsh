@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 
 # Forked from https://github.com/t413/zsh-background-notify
+# Adapted for linux only
 
 # Alert when previous command is finished
 # Usage: pacman -Syu; alert
