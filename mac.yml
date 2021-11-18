@@ -16,4 +16,4 @@
       path: mac/.hushlogin
     ~/.functions/:
       glob: true
-      path: x11/.functions/*
+      path: mac/.functions/*
