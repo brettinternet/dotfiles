@@ -1,0 +1,9 @@
+# https://github.com/koekeishiya/yabai/wiki/Configuration#configuration-file
+
+top_padding    10
+bottom_padding 10
+left_padding   10
+right_padding  10
+window_gap     10
+
+mouse_follows_focus on
