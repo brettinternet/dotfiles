@@ -36,12 +36,14 @@ brew install --cask \
   gpg-suite \
   karabiner-elements \
   telegram \
-  home-assistant
+  home-assistant \
+  unnaturalscrollwheels
 
 # Reset application attributes to allow run
 xattr -cr /Applications/Chromium.app
 xattr -cr /Applications/Kap.app
 xattr -cr /Applications/Yippy.app
+xattr -cr /Applications/UnnaturalScrollWheels.app
 
 # vim plug
 if [[ ! -f ~/.vim/autoload/plug.vim ]]; then
