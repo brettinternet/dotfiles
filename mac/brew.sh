@@ -34,7 +34,9 @@ brew install --cask \
   yippy \
   homebrew/cask-fonts/font-fira-code \
   gpg-suite \
-  karabiner-elements
+  karabiner-elements \
+  telegram \
+  home-assistant
 
 # Reset application attributes to allow run
 xattr -cr /Applications/Chromium.app
