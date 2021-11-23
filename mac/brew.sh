@@ -29,7 +29,6 @@ brew install --cask \
   spotify \
   dbeaver-community \
   zoom \
-  kap \
   cyberduck \
   yippy \
   homebrew/cask-fonts/font-fira-code \
@@ -41,7 +40,6 @@ brew install --cask \
 
 # Reset application attributes to allow run
 xattr -cr /Applications/Chromium.app
-xattr -cr /Applications/Kap.app
 xattr -cr /Applications/Yippy.app
 xattr -cr /Applications/UnnaturalScrollWheels.app
 
