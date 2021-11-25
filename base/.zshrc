@@ -6,7 +6,6 @@ fpath+=( "$HOME/.functions" )
 
 scope() {
   [ -d "$HOME/.config/broot" ] && source $HOME/.config/broot/launcher/bash/br
-  [ -d "/usr/share/nvm" ] && source /usr/share/nvm/init-nvm.sh
 
   autoload -Uz clock zman colortest wallpaper weather
 

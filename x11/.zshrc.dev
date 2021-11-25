@@ -4,3 +4,5 @@
 if [ -f /opt/asdf-vm/asdf.sh ]; then
   source /opt/asdf-vm/asdf.sh
 fi
+
+[ -d "/usr/share/nvm" ] && . /usr/share/nvm/init-nvm.sh
