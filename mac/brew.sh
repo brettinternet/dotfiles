@@ -9,7 +9,8 @@ brew install \
   tmux \
   broot \
   asdf \
-  terminal-notifier
+  terminal-notifier \
+  nvm
 
 # Tiling?
 # https://github.com/koekeishiya/yabai/wiki/Installing-yabai-(latest-release)
