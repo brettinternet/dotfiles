@@ -19,7 +19,7 @@ brew install \
 
 brew install --cask \
   firefox \
-  chromium \
+  eloston-chromium \
   hyperdock \
   bitwarden \
   docker \
