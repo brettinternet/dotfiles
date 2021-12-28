@@ -10,7 +10,7 @@ alias mirror='sudo reflector  --protocol http --protocol https --latest 50 --num
 # List all installed packages with a short description
 function paclist() {
   # Source: https://bbs.archlinux.org/viewtopic.php?id=93683
-  LC_ALL=C pacman -Qei $(pacman -Qu | cut -d " " -f 1) | \
+  LC_ALL=C pacman -Qei "$(pacman -Qu | cut -d " " -f 1)" | \
   awk 'BEGIN {FS=":"} /^Name/{printf("\033[1;36m%s\033[1;37m", $2)} /^Description/{print $2}'
 }
 
@@ -53,7 +53,7 @@ function pacman_clean() {
   ORPHANS=$(pacman -Qtdq)
   if [[ $ORPHANS ]]; then
   # Remove pacman orphans
-  sudo pacman -Rns $ORPHANS
+  sudo pacman -Rns "$ORPHANS"
   fi
 
   if [ -x "$(command -v xdg-open)" ]; then
@@ -76,7 +76,7 @@ function pacmanallkeys() {
 
 function pacmansignkeys() {
   local key
-  for key in $@; do
+  for key in "$@"; do
     sudo pacman-key --recv-keys $key
     sudo pacman-key --lsign-key $key
     printf 'trust\n3\n' | sudo gpg --homedir /etc/pacman.d/gnupg \

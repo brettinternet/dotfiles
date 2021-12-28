@@ -23,3 +23,9 @@ jobs:
       - name: Lint yaml
         run: |
           yamllint .
+
+      - name: Lint shell
+        run: |
+          shopt -s nullglob dotglob
+          GLOBIGNORE="dotbot"
+          shellcheck **.{sh,bash,ksh,bashrc,bash_profile,bash_login,bash_logout}

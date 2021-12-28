@@ -13,7 +13,7 @@ function palette {
   for n in {000..255}; do
     colors+=("%F{$n}$n%f")
   done
-  print -cP $colors
+  print -cP "${colors[@]}"
 }
 
 # Moving around
@@ -27,14 +27,15 @@ alias :q='exit'
 
 # "up 6" to "cd ../../../../../.."
 function up {
-  if [[ "$#" < 1 ]] ; then
+  if [[ "$#" -lt 1 ]] ; then
     cd ..
   else
     CDSTR=""
-    for i in {1..$1} ; do
+    for ((i=0; i<n; i++))
+    do
       CDSTR="../$CDSTR"
     done
-    cd $CDSTR
+    cd $CDSTR || exit
   fi
 }
 
@@ -61,9 +62,6 @@ alias lla='ls -lhAF'
 alias la='ls -AF'
 alias lsa='la'
 alias lsg='lla | grep'
-
-# List only directories
-alias lld="lla $colorflag | grep --color=never '^d'"
 
 # PS
 alias psa="ps aux"
