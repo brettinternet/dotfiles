@@ -26,6 +26,8 @@ jobs:
 
       - name: Lint shell
         run: |
+          shellcheck -V
+
           find -type f \
             \( -name '*.sh' -o -name '*.bash' -o -name '*.ksh' -o -name '*.bashrc' \
               -o -name '*.bash_profile' -o -name '*.bash_login' -o -name '*.bash_logout' \) \
