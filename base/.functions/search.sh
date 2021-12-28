@@ -8,5 +8,5 @@ function fvim {
 }
 
 function fcd {
-  cd "$(find -type d -iname "*$1*" | fzy)"
+  cd "$(find . -type d -iname "*$1*" | fzy)" || exit
 }

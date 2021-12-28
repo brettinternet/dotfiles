@@ -6,7 +6,7 @@
 # These features allow to pause a branch development and switch to another one ("Work in Progress", or wip). When you want to go back to work, just unwip it.
 # Warn if the current branch is a WIP
 function work_in_progress {
-  if $(git log -n 1 2>/dev/null | grep -q -c "\-\-wip\-\-"); then
+  if "$(git log -n 1 2>/dev/null | grep -q -c "\-\-wip\-\-")"; then
     echo "WIP!!"
   fi
 }
@@ -38,13 +38,13 @@ function git_current_branch {
     [[ $ret == 128 ]] && return  # no git repo.
     ref=$(command git rev-parse --short HEAD 2> /dev/null) || return
   fi
-  echo ${ref#refs/heads/}
+  echo "${ref#refs/heads/}"
 }
 
 # https://stackoverflow.com/a/4822516
 # Exclude certain files not gitignored - https://stackoverflow.com/a/53083343
 function gloc { # 1 - additional filter patterns
-  git ls-files -- ':!:*lock.json' $1 | xargs cat | wc -l
+  git ls-files -- ':!:*lock.json' "$1" | xargs cat | wc -l
 }
 
 alias guc='git pull origin "$(git_current_branch)"'
@@ -57,7 +57,7 @@ alias gpsuc='git push --set-upstream origin $(git_current_branch)'
 alias grbo='git rebase'
 function grbos {
   local branch="${1:-master}"
-  git rebase --exec "git commit --amend --no-edit -n -S" -i origin/$branch
+  git rebase --exec "git commit --amend --no-edit -n -S" -i origin/"$branch"
 }
 
 function g_sign { # 1 - email, 2 - GPG key ID
