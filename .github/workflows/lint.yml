@@ -26,6 +26,8 @@ jobs:
 
       - name: Lint shell
         run: |
-          shopt -s nullglob dotglob
-          GLOBIGNORE="dotbot"
-          shellcheck **.{sh,bash,ksh,bashrc,bash_profile,bash_login,bash_logout}
+          find -type f \
+            \( -name '*.sh' -o -name '*.bash' -o -name '*.ksh' -o -name '*.bashrc' \
+              -o -name '*.bash_profile' -o -name '*.bash_login' -o -name '*.bash_logout' \) \
+            -not -path "./dotbot/*" \
+            | xargs shellcheck
