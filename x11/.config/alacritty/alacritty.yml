@@ -1,3 +1,4 @@
+---
 # Example https://github.com/alacritty/alacritty/blob/master/alacritty.yml
 window:
   padding:
@@ -19,7 +20,7 @@ schemes:
   gruvbox_material: &dark
     primary:
       background: "0x1d2021" # hard
-      #background: "0x282828" # medium
+      # background: "0x282828" # medium
       foreground: "0xdfbf8e"
 
     normal:
