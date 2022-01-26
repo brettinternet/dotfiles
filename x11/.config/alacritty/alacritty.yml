@@ -4,6 +4,7 @@ window:
   padding:
     x: 40
     y: 40
+  opacity: 1.0
 
 font:
   normal:
@@ -73,9 +74,6 @@ bell:
   animation: EaseOutExpo
   color: "0x282828"
   duration: 0
-
-# Background opacity
-background_opacity: 1.0
 
 # Mouse bindings
 #
