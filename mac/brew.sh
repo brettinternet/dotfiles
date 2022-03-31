@@ -10,7 +10,8 @@ brew install \
   broot \
   asdf \
   terminal-notifier \
-  nvm
+  nvm \
+  wget
 
 # Tiling?
 # https://github.com/koekeishiya/yabai/wiki/Installing-yabai-(latest-release)
