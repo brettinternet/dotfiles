@@ -11,7 +11,9 @@ brew install \
   asdf \
   terminal-notifier \
   nvm \
-  wget
+  wget \
+  wireguard-tools \
+  qrencode
 
 # Tiling?
 # https://github.com/koekeishiya/yabai/wiki/Installing-yabai-(latest-release)
