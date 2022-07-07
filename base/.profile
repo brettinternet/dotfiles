@@ -24,10 +24,19 @@ scope() {
     export SHELL=/bin/bash
   fi
 
+  RUST_ENV_FILE="$HOME/.cargo/env"
+  if [ -f "$RUST_ENV_FILE" ]; then
+    source "$RUST_ENV_FILE"
+  fi
+
   if [ -f /usr/bin/virtualenvwrapper_lazy.sh ]; then
     # https://wiki.archlinux.org/index.php/Python/Virtual_environment#virtualenvwrapper
     export WORKON_HOME=~/.virtualenvs
     source /usr/bin/virtualenvwrapper_lazy.sh
+  elif [ -f /opt/homebrew/bin/virtualenvwrapper_lazy.sh ]; then
+    export WORKON_HOME=~/.virtualenvs
+    export VIRTUALENVWRAPPER_PYTHON=/opt/homebrew/bin/python3
+    source /opt/homebrew/bin/virtualenvwrapper_lazy.sh
   fi
 
   # https://guides.rubygems.org/faqs/#user-install
