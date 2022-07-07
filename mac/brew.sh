@@ -40,7 +40,8 @@ brew install --cask \
   karabiner-elements \
   telegram \
   home-assistant \
-  unnaturalscrollwheels
+  unnaturalscrollwheels \
+  virtualenvwrapper
 
 # Reset application attributes to allow run
 xattr -cr /Applications/Chromium.app
