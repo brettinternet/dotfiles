@@ -14,6 +14,39 @@ cd "${BASEDIR}"
 echo "Configuring ${CONFIG}"
 "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}"
 
+UNAME_OUT="$(uname -s)"
+case "${UNAME_OUT}" in
+    Linux*)     ;;
+    Darwin*)    DOTFILE_GROUPS="mac";;
+    *)          echo "Unsupported host: ${UNAME_OUT}"
+                exit 1;;
+esac
+
+if [ -z "$DOTFILE_GROUPS" ]; then
+  if [ grep -q ^flags.*\ hypervisor\ /proc/cpuinfo ]; then
+    # is vmguest
+    if [ -f "/etc/arch-release" ]; then
+      # is vmguest Arch
+      DOTFILE_GROUPS="x11,vmguest,archlinux"
+    else
+      DOTFILE_GROUPS="vmguest"
+    fi
+  elif [ -f "/etc/arch-release" ]; then
+    # is Arch
+    DOTFILE_GROUPS="archlinux"
+  fi
+
+  if [ -d "/sys/class/power_supply" ]; then
+    # is laptop
+    DOTFILE_GROUPS="${DOTFILE_GROUPS},laptop"
+  fi
+
+  if [ xset q &>/dev/null ]; then
+    # is running X11
+    DOTFILE_GROUPS="${DOTFILE_GROUPS},x11"
+  fi
+fi
+
 # Optional groups
 IFS=', ' read -r -a DOTFILE_ARRAY <<< "$DOTFILE_GROUPS"
 for GROUP_EL in "${DOTFILE_ARRAY[@]}"; do
