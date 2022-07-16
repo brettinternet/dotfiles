@@ -13,7 +13,10 @@ brew install \
   nvm \
   wget \
   wireguard-tools \
-  qrencode
+  qrencode \
+  virtualenvwrapper \
+  lsd \
+  bat
 
 # Tiling?
 # https://github.com/koekeishiya/yabai/wiki/Installing-yabai-(latest-release)
@@ -41,7 +44,7 @@ brew install --cask \
   telegram \
   home-assistant \
   unnaturalscrollwheels \
-  virtualenvwrapper
+  font-hack-nerd-font
 
 # Reset application attributes to allow run
 xattr -cr /Applications/Chromium.app
