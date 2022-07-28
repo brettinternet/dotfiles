@@ -16,7 +16,8 @@ brew install \
   qrencode \
   virtualenvwrapper \
   lsd \
-  bat
+  bat \
+  trash-cli
 
 # Tiling?
 # https://github.com/koekeishiya/yabai/wiki/Installing-yabai-(latest-release)
