@@ -5,7 +5,9 @@ source $HOME/.profile
 fpath+=( "$HOME/.functions" )
 
 scope() {
-  [ -d "$HOME/.config/broot" ] && source $HOME/.config/broot/launcher/bash/br
+  if [ -d "$HOME/.config/broot" ]; then
+    source $HOME/.config/broot/launcher/bash/br
+  fi
 
   autoload -Uz clock zman colortest wallpaper weather
 
@@ -164,6 +166,12 @@ zinit wait lucid light-mode for \
 # https://github.com/tmux-plugins/tpm
 zinit ice as"program" atclone"mkdir -p ~/.tmux/plugins/tpm; mv * ~/.tmux/plugins/tpm"
 zinit light tmux-plugins/tpm
+
+# https://zdharma-continuum.github.io/zinit/wiki/Direnv-explanation/
+zinit from"gh-r" as"program" mv"direnv* -> direnv" \
+    atclone'./direnv hook zsh > zhook.zsh' atpull'%atclone' \
+    pick"direnv" src="zhook.zsh" for \
+        direnv/direnv
 
 
 # -- Colorscheme
