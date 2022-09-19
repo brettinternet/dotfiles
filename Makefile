@@ -6,11 +6,11 @@ update_dotbot:
 	@git submodule update --remote dotbot
 	@printf "\x1B[01;93m✔ submodules updated\n\x1B[0m"
 
-base/.env:
-	@cp base/example.env base/.env
-	@printf "\x1B[01;93m✔ .env file created\n\x1B[0m"
+base/.envrc:
+	@cp base/example.envrc base/.envrc
+	@printf "\x1B[01;93m✔ .envrc file created\n\x1B[0m"
 
-setup: base/.env
+setup: base/.envrc
 	@printf "\x1B[01;93m✔ Setup complete\n\x1B[0m"
 
 install: setup

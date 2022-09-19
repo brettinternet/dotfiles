@@ -13,8 +13,8 @@
     - "~/.bin"
 
 - link:
-    ~/.env:
-      path: base/.env
+    ~/.envrc:
+      path: base/.envrc
     ~/.bash_profile:
       path: base/.bash_profile
       force: true

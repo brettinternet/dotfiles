@@ -13,7 +13,7 @@ alias work='cd $DEV_DIR/work'
 
 # shellcheck disable=SC2034
 NOTES_DIR="${MY_NOTES:-$PERSONAL_DIR/notes}"
-# associated with a private folder with notes, delcared as `$MY_NOTES` in ~/.env
+# associated with a private folder with notes, delcared as `$MY_NOTES` in ~/.envrc
 alias notes='cd $NOTES_DIR'
 alias todo='$EDITOR $NOTES_DIR/daily/todo'
 alias note='$EDITOR $NOTES_DIR/daily/notes'
