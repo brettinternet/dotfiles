@@ -4,6 +4,10 @@ source $HOME/.profile
 
 fpath+=( "$HOME/.functions" )
 
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  fpath+=( /opt/homebrew/share/zsh/site-functions )
+fi
+
 scope() {
   if [ -d "$HOME/.config/broot" ]; then
     source $HOME/.config/broot/launcher/bash/br
