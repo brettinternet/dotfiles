@@ -56,7 +56,7 @@ alias sudo="sudo "
 alias dotfiles='cd ~/.dotfiles'
 
 # ls
-alias ls='ls --color=auto'
+# note: alias ls is in .profile
 alias ll='ls -lhF'
 alias lla='ls -lhAF'
 alias la='ls -AF'

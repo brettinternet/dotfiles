@@ -21,7 +21,7 @@ scope() {
   PS1="${PS1_PREFIX}${BLUE}\W ${GREEN}\$${RESET} "
 
   local FUNCTIONS_DIR="$HOME/.functions"
-# shellcheck source=/dev/null
+  # shellcheck source=/dev/null
   if [ -d "$FUNCTIONS_DIR" ]; then
     local i; for i in "$FUNCTIONS_DIR"/*.sh; do source "$i"; done
   fi

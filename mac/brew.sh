@@ -17,6 +17,7 @@ brew install \
   virtualenvwrapper \
   lsd \
   bat \
+  # hidetatz/tap/kubecolor \ # broken: https://github.com/hidetatz/kubecolor/issues/90
   trash-cli
 
 # Tiling?

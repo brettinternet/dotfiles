@@ -8,7 +8,7 @@ scope() {
   fi
 
   # Personal binaries
-  export PATH=~/.bin:$PATH
+  export PATH=~/.bin:/opt/bin:$PATH
 
   # https://wiki.archlinux.org/index.php/Sudo#Using_visudo
   export VISUAL=vim
@@ -65,8 +65,21 @@ scope() {
   # https://unix.stackexchange.com/a/94508
   local DIRCOLORS=$HOME/.dircolors
   if [[ -f $DIRCOLORS ]]; then
-    eval "$(dircolors $DIRCOLORS)";
+    eval "$(dircolors $DIRCOLORS)"
   fi
+  # Common utility replacements via aliases
+  if [ -x "$(command -v lsd)" ]; then
+    alias ls='lsd'
+  else
+    alias ls='ls --color=auto'
+  fi
+  if [ -x "$(command -v bat)" ]; then
+    alias cat='bat'
+  fi
+  if [ -x "$(command -v kubecolor)" ]; then
+    alias kubectl='kubecolor'
+  fi
+  alias k='kubectl'
 }
 
 scope
