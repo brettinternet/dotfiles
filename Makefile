@@ -22,7 +22,7 @@ base: install
 desktop: export DOTFILE_GROUPS = x11,desktop,archlinux
 desktop: install
 
-laptop: export DOTFILE_GROUPS = x11,laptop,archlinux
+laptop: export DOTFILE_GROUPS = x11,laptop,archlinux,dev
 laptop: install
 
 server: export DOTFILE_GROUPS = archlinux
@@ -34,7 +34,7 @@ vmguest: install
 vmguest-arch: export DOTFILE_GROUPS = x11,vmguest,archlinux
 vmguest-arch: install
 
-mac: export DOTFILE_GROUPS = mac
+mac: export DOTFILE_GROUPS = mac,dev
 mac: install
 
 # https://github.com/koalaman/shellcheck/wiki/Recursiveness
