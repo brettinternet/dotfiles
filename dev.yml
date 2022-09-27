@@ -1,0 +1,9 @@
+---
+- defaults:
+    link:
+      create: true
+      relink: true
+
+- link:
+    ~/.iex.exs:
+      path: dev/.iex.exs
