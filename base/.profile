@@ -74,7 +74,7 @@ scope() {
     alias ls='ls --color=auto'
   fi
   if [ -x "$(command -v bat)" ]; then
-    alias cat='bat'
+    alias cat='bat --theme=gruvbox-dark'
   fi
   if [ -x "$(command -v kubecolor)" ]; then
     alias kubectl='kubecolor'
