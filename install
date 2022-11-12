@@ -40,10 +40,12 @@ if [ -z "$DOTFILE_GROUPS" ]; then
     DOTFILE_GROUPS="archlinux"
   fi
 
-  if [ -d "/sys/class/power_supply" ]; then
-    # is laptop
-    DOTFILE_GROUPS="${DOTFILE_GROUPS},laptop"
-  fi
+  # Check if laptop with `dmidecode --string chassis-type`
+  # https://superuser.com/a/877796
+  # if [ -d "/sys/class/power_supply" ]; then
+  #   # is laptop
+  #   DOTFILE_GROUPS="${DOTFILE_GROUPS},laptop"
+  # fi
 
   if [ xset q &>/dev/null ]; then
     # is running X11
