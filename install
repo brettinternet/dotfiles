@@ -14,6 +14,8 @@ cd "${BASEDIR}"
 echo "Configuring ${CONFIG}"
 "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}"
 
+cp base/example.envrc base/.envrc
+
 UNAME_OUT="$(uname -s)"
 case "${UNAME_OUT}" in
     Linux*)     ;;
