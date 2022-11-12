@@ -27,17 +27,16 @@ case "${UNAME_OUT}" in
 esac
 
 if [ -z "$DOTFILE_GROUPS" ]; then
-  if [ grep -q ^flags.*\ hypervisor\ /proc/cpuinfo ]; then
-    # is vmguest
-    if [ -f "/etc/arch-release" ]; then
-      # is vmguest Arch
-      DOTFILE_GROUPS="x11,vmguest,archlinux"
-    else
-      DOTFILE_GROUPS="vmguest"
-    fi
-  elif [ -f "/etc/arch-release" ]; then
+  # Check if VM guest
+  # https://unix.stackexchange.com/a/32605
+  # if [ grep -q ^flags.*\ hypervisor\ /proc/cpuinfo ]; then
+  #   # is vmguest
+  #   DOTFILE_GROUPS="${DOTFILE_GROUPS},vmguest"
+  # fi
+
+  if [ -f "/etc/arch-release" ]; then
     # is Arch
-    DOTFILE_GROUPS="archlinux"
+    DOTFILE_GROUPS="${DOTFILE_GROUPS},archlinux"
   fi
 
   # Check if laptop with `dmidecode --string chassis-type`
