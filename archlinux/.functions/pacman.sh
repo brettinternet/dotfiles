@@ -3,7 +3,7 @@
 # See also https://github.com/ohmyzsh/ohmyzsh/blob/c52e646bb7b109e15f6dc4047b29ca8c8e029433/plugins/archlinux/archlinux.plugin.zsh
 
 # https://wiki.archlinux.org/index.php/Reflector
-alias mirror='sudo reflector  --protocol http --protocol https --latest 50 --number 20 --sort rate --save /etc/pacman.d/mirrorlist --verbose'
+alias mirror='sudo reflector --protocol http --protocol https --latest 50 --number 20 --sort rate --save /etc/pacman.d/mirrorlist --verbose'
 
 # Source: OMZ
 
