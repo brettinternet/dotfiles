@@ -55,12 +55,14 @@ fi
 # Optional groups
 IFS=', ' read -r -a DOTFILE_ARRAY <<< "$DOTFILE_GROUPS"
 for GROUP_EL in "${DOTFILE_ARRAY[@]}"; do
-  CONFIG="$GROUP_EL.yml"
-  if [ -f "${BASEDIR}/${CONFIG}" ]; then
-    echo "Configuring ${CONFIG}"
-    "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}"
-  else
-    echo "Cannot find ${CONFIG}"
-    exit 1
+  if [ ! -z "$GROUP_EL" ]; then
+    CONFIG="$GROUP_EL.yml"
+    if [ -f "${BASEDIR}/${CONFIG}" ]; then
+      echo "Configuring ${CONFIG}"
+      "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}"
+    else
+      echo "Cannot find ${CONFIG}"
+      exit 1
+    fi
   fi
 done
