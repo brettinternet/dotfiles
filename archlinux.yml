@@ -5,6 +5,8 @@
       relink: true
 
 - link:
-    ~/.functions/:
-      path: archlinux/.functions/*
-      glob: true
+    ~/.functions/pacman.sh:
+      path: archlinux/.functions/pacman.sh
+      # Bug: glob unsupported for single files
+      # https://github.com/anishathalye/dotbot/issues/282
+      # glob: true
