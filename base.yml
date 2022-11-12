@@ -44,3 +44,7 @@
     ~/.functions/:
       glob: true
       path: base/.functions/*
+
+- shell:
+    # Allow direnv access to ~/.envrc
+    - ['[ -f "$HOME/.zinit/plugins/direnv---direnv/direnv" ] && direnv allow $HOME || true']
