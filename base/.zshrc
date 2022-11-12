@@ -141,7 +141,7 @@ add-zsh-hook -Uz precmd rehash_precmd
 
 [[ ! -f ~/.zinit/bin/zinit.zsh ]] && {
     command mkdir -p ~/.zinit
-    command git clone git@github.com:zdharma-continuum/zinit.git ~/.zinit/bin
+    command git clone https://github.com/zdharma-continuum/zinit.git ~/.zinit/bin
 }
 source "$HOME/.zinit/bin/zinit.zsh"
 autoload -Uz _zinit
