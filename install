@@ -10,11 +10,13 @@ BASEDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 cd "${BASEDIR}"
 
+if [ ! -f "${BASEDIR}/base/.envrc" ]; then
+  cp "${BASEDIR}/base/example.envrc" "${BASEDIR}/base/.envrc"
+fi
+
 (cd "${DOTBOT_DIR}" && git submodule update --init --recursive)
 echo "Configuring ${CONFIG}"
 "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}"
-
-cp base/example.envrc base/.envrc
 
 UNAME_OUT="$(uname -s)"
 case "${UNAME_OUT}" in
