@@ -105,7 +105,7 @@ let g:gruvbox_material_transparent_background = 1
 let g:airline_theme = 'gruvbox_material'
 let g:gruvbox_material_enable_bold = 1
 let g:gruvbox_material_visual = 'reverse'
-colorscheme gruvbox-material
+silent! colorscheme gruvbox-material
 hi clear Comment
 
 " Fix Cursor in TMUX
