@@ -5,10 +5,6 @@
       relink: true
 
 - create:
-    - ~/dev
-    - ~/dev/me
-    - ~/dev/sandbox
-    - ~/dev/work
     - ~/Downloads
 
 - link:

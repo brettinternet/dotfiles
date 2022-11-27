@@ -18,39 +18,20 @@ fi
 echo "Configuring ${CONFIG}"
 "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}"
 
-UNAME_OUT="$(uname -s)"
-case "${UNAME_OUT}" in
-    Linux*)     ;;
-    Darwin*)    DOTFILE_GROUPS="mac";;
-    *)          echo "Unsupported host: ${UNAME_OUT}"
-                exit 1;;
-esac
-
+# Assumptions for optional groups
 if [ -z "$DOTFILE_GROUPS" ]; then
-  # Check if VM guest
-  # https://unix.stackexchange.com/a/32605
-  # if [ grep -q ^flags.*\ hypervisor\ /proc/cpuinfo ]; then
-  #   # is vmguest
-  #   DOTFILE_GROUPS="${DOTFILE_GROUPS},vmguest"
-  # fi
-
   if [ -f "/etc/arch-release" ]; then
     # is Arch
     DOTFILE_GROUPS="${DOTFILE_GROUPS},archlinux"
   fi
-
-  # Check if laptop with `dmidecode --string chassis-type`
-  # https://superuser.com/a/877796
-  # if [ -d "/sys/class/power_supply" ]; then
-  #   # is laptop
-  #   DOTFILE_GROUPS="${DOTFILE_GROUPS},laptop"
-  # fi
 
   if [ xset q &>/dev/null ]; then
     # is running X11
     DOTFILE_GROUPS="${DOTFILE_GROUPS},x11"
   fi
 fi
+
+echo "Using groups: $DOTFILE_GROUPS"
 
 # Optional groups
 IFS=', ' read -r -a DOTFILE_ARRAY <<< "$DOTFILE_GROUPS"

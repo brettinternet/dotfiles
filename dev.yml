@@ -4,6 +4,18 @@
       create: true
       relink: true
 
+- create:
+    - ~/dev
+    - ~/dev/me
+    - ~/dev/sandbox
+    - ~/dev/work
+
 - link:
+    ~/.config/k9s/skin.yml:
+      path: dev/.config/k9s/skin.yml
+      if: '[[ "$OSTYPE" == "linux-gnu"* ]]'
+    ~/Library/Application Support/k9s/skin.yml:
+      path: dev/.config/k9s/skin.yml
+      if: '[[ "$OSTYPE" == "darwin"* ]]'
     ~/.iex.exs:
       path: dev/.iex.exs
