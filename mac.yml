@@ -4,12 +4,6 @@
       create: true
       relink: true
 
-- create:
-    - ~/dev
-    - ~/dev/me
-    - ~/dev/sandbox
-    - ~/dev/work
-
 - link:
     ~/.zprofile:
       path: mac/.zprofile
