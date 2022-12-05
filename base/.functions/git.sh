@@ -89,6 +89,7 @@ function g_sign { # 1 - email, 2 - GPG key ID
 alias g='git'
 alias gb='git branch'
 alias gs='git status'
+alias gss='git status -s'
 alias gst='git stash'
 alias gsp='git stash pop'
 alias gsa='git stash apply'
