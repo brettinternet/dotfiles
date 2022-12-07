@@ -2,24 +2,24 @@
 
 set -e
 
-CONFIG="base.yml"
 DOTBOT_DIR="dotbot"
-
 DOTBOT_BIN="bin/dotbot"
 BASEDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 cd "${BASEDIR}"
 
+# Create local .envrc
 if [ ! -f "${BASEDIR}/base/.envrc" ]; then
   cp "${BASEDIR}/base/example.envrc" "${BASEDIR}/base/.envrc"
 fi
 
+# Update dotbot submodule
 (cd "${DOTBOT_DIR}" && git submodule update --init --recursive)
-echo "Configuring ${CONFIG}"
-"${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}"
 
-# Assumptions for optional groups
+# If not set, add default group and assumptions for optional groups
 if [ -z "$DOTFILE_GROUPS" ]; then
+  DOTFILE_GROUPS="base"
+
   if [ -f "/etc/arch-release" ]; then
     # is Arch
     DOTFILE_GROUPS="${DOTFILE_GROUPS},archlinux"
@@ -33,7 +33,7 @@ fi
 
 echo "Using groups: $DOTFILE_GROUPS"
 
-# Optional groups
+# Run dotbot on defined groups
 IFS=', ' read -r -a DOTFILE_ARRAY <<< "$DOTFILE_GROUPS"
 for GROUP_EL in "${DOTFILE_ARRAY[@]}"; do
   if [ ! -z "$GROUP_EL" ]; then
