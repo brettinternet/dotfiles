@@ -5,12 +5,17 @@ on: # yamllint disable-line rule:truthy
   pull_request:
   push:
 
+permissions:
+  contents: read
+
 jobs:
-  lint:
+  python:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Set up Python3
         uses: actions/setup-python@v2
@@ -24,10 +29,17 @@ jobs:
         run: |
           yamllint .
 
-      - name: Lint shell
-        run: >-
-          find . -type f
-            \( -name '*.sh' -o -name '*.bash' -o -name '*.ksh' -o -name '*.bashrc'
-              -o -name '*.bash_profile' -o -name '*.bash_login' -o -name '*.bash_logout' \)
-            -not -path "./dotbot/*"
-            | xargs shellcheck
+  shell:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repository checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Differential ShellCheck
+        uses: redhat-plumbers-in-action/differential-shellcheck@v3
+        with:
+          severity: error
+          token: ${{ secrets.GITHUB_TOKEN }}
