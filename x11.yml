@@ -30,5 +30,3 @@
     ~/.bin/:
       glob: true
       path: x11/.bin/*
-    ~/.zshrc.dev:
-      path: x11/.zshrc.dev
