@@ -170,9 +170,10 @@ zinit ice as"program" atclone"mkdir -p ~/.tmux/plugins/tpm; mv * ~/.tmux/plugins
 zinit light tmux-plugins/tpm
 
 # https://zdharma-continuum.github.io/zinit/wiki/Direnv-explanation/
+# https://github.com/direnv/direnv/issues/68
 zinit from"gh-r" as"program" mv"direnv* -> direnv" \
     atclone'./direnv hook zsh > zhook.zsh' atpull'%atclone' \
-    atload'export DIRENV_LOG_FORMAT=""' \ # https://github.com/direnv/direnv/issues/68
+    atload'export DIRENV_LOG_FORMAT=""' \
     pick"direnv" src="zhook.zsh" for \
         direnv/direnv
 
