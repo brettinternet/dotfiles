@@ -1,5 +1,6 @@
 # https://k9scli.io/topics/skins/
 # https://github.com/derailed/k9s/blob/master/skins/gruvbox-dark.yml
+---
 background: &background default
 
 foreground: &foreground "#ebdbb2"
