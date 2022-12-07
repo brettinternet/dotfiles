@@ -19,3 +19,5 @@
       if: '[[ "$OSTYPE" == "darwin"* ]]'
     ~/.iex.exs:
       path: dev/.iex.exs
+    ~/.zshrc.dev:
+      path: dev/.zshrc.dev
