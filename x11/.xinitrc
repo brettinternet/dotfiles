@@ -29,8 +29,6 @@ if [ -f "$usermodmap" ]; then
     xmodmap "$usermodmap"
 fi
 
-# start some nice programs
-
 if [ -d /etc/X11/xinit/xinitrc.d ] ; then
  for f in /etc/X11/xinit/xinitrc.d/?*.sh ; do
   [ -x "$f" ] && . "$f"
@@ -46,7 +44,7 @@ fi
 # startx i3|xfce
 session=${1:-i3}
 case $session in
-    i3|i3wm     ) exec i3;;
+    i3|i3wm     ) exec i3;; # i3 execs its own startup profile ~/.i3profile
     xfce|xfce4  ) exec startxfce4;;
     *           ) exec $1;;
 esac

@@ -13,8 +13,6 @@
     - "~/.bin"
 
 - link:
-    ~/.envrc:
-      path: base/.envrc
     ~/.bash_profile:
       path: base/.bash_profile
       force: true
@@ -38,6 +36,10 @@
       path: base/.vimrc.bundles
     ~/.tmux.conf:
       path: base/.tmux.conf
+    ~/.bin/:
+      glob: true
+      path: base/.bin/*
+    ## Only fish in here, and disabled for now
     # ~/.config/:
     #   glob: true
     #   path: base/.config/*

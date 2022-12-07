@@ -39,8 +39,8 @@ while getopts ":hrdmf:" opt; do
       ;;
     m)
       # Map view https://github.com/chubin/wttr.in#map-view-v3
-      # Alacritty currently doesn't support sixel images
-      curl -s v3.wttr.in/Salt+Lake+City.sxl | sed '$d'
+      # Alacritty currently doesn't support sixel images https://github.com/alacritty/alacritty/issues/910
+      curl -s v3.wttr.in/Utah.sxl | sed '$d'
       ;;
     *)
       usage

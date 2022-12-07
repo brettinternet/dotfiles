@@ -1,0 +1,25 @@
+---
+- defaults:
+    link:
+      create: true
+      relink: true
+
+- create:
+    - ~/Downloads
+
+- link:
+    ~/.i3profile:
+      path: i3/.i3profile
+    ~/.xbindkeysrc:
+      path: i3/.xbindkeysrc
+    ~/.xbindkeysrc-mouse:
+      path: i3/.xbindkeysrc-mouse
+      if: 'xinput | grep -q "Logitech MX Master"'
+    ~/.bin/:
+      glob: true
+      path: i3/.bin/*
+    ~/.config/:
+      glob: true
+      path: i3/.config/*
+    ~/.functions/alacritty.sh:
+      path: i3/.functions/alacritty.sh

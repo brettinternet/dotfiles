@@ -18,6 +18,10 @@ set $alt Mod1
 font pango:Latin Modern Roman 8
 
 
+# -- Startup ----------------------------------------
+exec ~/.i3profile
+
+
 # -- Borders ----------------------------------------
 
 # Configure border style <normal|1pixel|pixel xx|none|pixel>

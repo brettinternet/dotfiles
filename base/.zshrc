@@ -13,8 +13,6 @@ scope() {
     source $HOME/.config/broot/launcher/bash/br
   fi
 
-  autoload -Uz clock zman colortest wallpaper weather
-
   local LOCAL_ZSH_CUSTOMIZATIONS=$HOME/.zshrc.local
   if [ -f "$LOCAL_ZSH_CUSTOMIZATIONS" ]; then
     source "$LOCAL_ZSH_CUSTOMIZATIONS"
@@ -174,6 +172,7 @@ zinit light tmux-plugins/tpm
 # https://zdharma-continuum.github.io/zinit/wiki/Direnv-explanation/
 zinit from"gh-r" as"program" mv"direnv* -> direnv" \
     atclone'./direnv hook zsh > zhook.zsh' atpull'%atclone' \
+    atload'export DIRENV_LOG_FORMAT=""' \ # https://github.com/direnv/direnv/issues/68
     pick"direnv" src="zhook.zsh" for \
         direnv/direnv
 
