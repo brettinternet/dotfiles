@@ -17,8 +17,9 @@
       path: x11/.xinitrc
     ~/.Xmodmap:
       path: x11/.Xmodmap
-    ~/.xprofile:
-      path: x11/.xprofile
+    # None for now
+    # ~/.xprofile:
+    #   path: x11/.xprofile
     ~/.Xresources:
       path: x11/.Xresources
     ~/.config/:
@@ -27,6 +28,3 @@
     ~/.functions/:
       glob: true
       path: x11/.functions/*
-    ~/.bin/:
-      glob: true
-      path: x11/.bin/*

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/zsh
 
 # Forked: https://github.com/ohmyzsh/ohmyzsh/blob/master/plugins/emoji-clock/emoji-clock.plugin.zsh
 # Add 15 minutes to the current time and save the value as $MINUTES.

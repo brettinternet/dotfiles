@@ -8,9 +8,18 @@ BASEDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 cd "${BASEDIR}"
 
+# Migrate .envrc from previous .envrc configuration within repo
+if [ -f "${BASEDIR}/base/.envrc" && ! -L "${BASEDIR}/base/.envrc" ]; then
+  [ -L "${HOME}/.envrc" ] && rm "${HOME}/.envrc"
+  mv "${BASEDIR}/base/.envrc" "${HOME}/.envrc"
+fi
+
 # Create local .envrc
-if [ ! -f "${BASEDIR}/base/.envrc" ]; then
-  cp "${BASEDIR}/base/example.envrc" "${BASEDIR}/base/.envrc"
+if [ ! -f "${HOME}/.envrc" ]; then
+  cp "${BASEDIR}/base/example.envrc" "${HOME}/.envrc"
+  # Not linked out of this repo so it's maintained even if dotfiles are removed
+  # Symlinked to this repo for easy editing
+  ln -s "${HOME}"/.envrc "${BASEDIR}/base/.envrc"
 fi
 
 # Update dotbot submodule

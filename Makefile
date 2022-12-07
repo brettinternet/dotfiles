@@ -33,6 +33,9 @@ vmguest-arch: install
 mac: export DOTFILE_GROUPS = base,mac,dev
 mac: install
 
+i3: export DOTFILE_GROUPS = i3
+i3: install
+
 # https://github.com/koalaman/shellcheck/wiki/Recursiveness
 lint:
 	@yamllint .
