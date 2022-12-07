@@ -13,5 +13,5 @@ Basic dotfiles setup with [dotbot](https://github.com/anishathalye/dotbot/tree/m
 ### Set up a workstation
 
 ```sh
-make {desktop|laptop|server|vmguest|vmguest-arch|mac}
+make {desktop|laptop|mac|server}
 ```

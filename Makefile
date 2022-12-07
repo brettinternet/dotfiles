@@ -1,14 +1,13 @@
-.PHONY: update_dotbot setup install uninstall base desktop laptop vmguest vmguest-arch mac lint
-
 # ISSUES:
 # - https://github.com/anishathalye/dotbot/issues/282
+
+.PHONY: update_dotbot setup install uninstall base desktop laptop vmguest vmguest-arch mac lint
+
+install:
+	@./install $(ARGS)
+
 update_dotbot:
 	@git submodule update --remote dotbot
-	@printf "\x1B[01;93m✔ submodules updated\n\x1B[0m"
-
-install: setup
-	@./install $(ARGS)
-	@printf "\x1B[01;93m✔ Install complete\n\x1B[0m"
 
 uninstall: export DOTFILE_GROUPS = archlinux,base,desktop,dev,laptop,mac,vmguest,x11
 uninstall:
