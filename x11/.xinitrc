@@ -43,4 +43,10 @@ fi
 [ -f /etc/xprofile ] && . /etc/xprofile
 [ -f ~/.xprofile ] && . ~/.xprofile
 
-exec i3
+# startx i3|xfce
+session=${1:-i3}
+case $session in
+    i3|i3wm     ) exec i3;;
+    xfce|xfce4  ) exec startxfce4;;
+    *           ) exec $1;;
+esac
