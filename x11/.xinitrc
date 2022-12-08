@@ -41,10 +41,12 @@ fi
 [ -f /etc/xprofile ] && . /etc/xprofile
 [ -f ~/.xprofile ] && . ~/.xprofile
 
-# startx i3|xfce
-session=${1:-i3}
+# e.g. startx i3
+# e.g. XINIT_SESSION=xfce startx
+session=${1:-$XINIT_SESSION}
 case $session in
-    i3|i3wm     ) exec i3;; # i3 execs its own startup profile ~/.i3profile
-    xfce|xfce4  ) exec startxfce4;;
-    *           ) exec $1;;
+    xfce|xfce4  ) exec startxfce4 "${@:2}";;
+    # i3 execs its own startup profile ~/.i3profile
+    i3|i3wm     )
+    *           ) exec i3 "${@:2}";;
 esac
