@@ -5,11 +5,6 @@
       relink: true
 
 - link:
-    ~/.xbindkeysrc:
-      path: x11/.xbindkeysrc
-    ~/.xbindkeysrc-mouse:
-      path: x11/.xbindkeysrc-mouse
-      if: 'xinput | grep -q "Logitech MX Master"'
     ~/.xinitrc:
       path: x11/.xinitrc
     ~/.Xmodmap:
