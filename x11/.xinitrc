@@ -47,6 +47,5 @@ session=${1:-$XINIT_SESSION}
 case $session in
     xfce|xfce4  ) exec startxfce4 "${@:2}";;
     # i3 execs its own startup profile ~/.i3profile
-    i3|i3wm     )
     *           ) exec i3 "${@:2}";;
 esac
