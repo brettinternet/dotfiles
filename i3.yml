@@ -23,3 +23,6 @@
       path: i3/.config/*
     ~/.functions/alacritty.sh:
       path: i3/.functions/alacritty.sh
+    ~/.zprofile:
+      path: i3/.zprofile
+      if: '[ -x "$(command -v zsh)" ]'

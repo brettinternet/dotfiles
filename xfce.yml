@@ -1,0 +1,10 @@
+---
+- defaults:
+    link:
+      create: true
+      relink: true
+
+- link:
+    ~/.zprofile:
+      path: xfce/.zprofile
+      if: '[ -x "$(command -v zsh)" ]'
