@@ -9,7 +9,7 @@ BASEDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "${BASEDIR}"
 
 # Migrate .envrc from previous .envrc configuration within repo
-if [ -f "${BASEDIR}/base/.envrc" && ! -L "${BASEDIR}/base/.envrc" ]; then
+if [ -f "${BASEDIR}/base/.envrc" ] && [ ! -L "${BASEDIR}/base/.envrc" ]; then
   [ -L "${HOME}/.envrc" ] && rm "${HOME}/.envrc"
   mv "${BASEDIR}/base/.envrc" "${HOME}/.envrc"
 fi
