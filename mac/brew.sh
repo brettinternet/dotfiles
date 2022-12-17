@@ -2,6 +2,8 @@
 
 brew install \
   git \
+  emacs \
+  neovim \
   node \
   elixir \
   bpytop \
