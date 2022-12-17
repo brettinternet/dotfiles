@@ -57,7 +57,7 @@ alias gpsuc='git push --set-upstream origin $(git_current_branch)'
 
 alias grbo='git rebase'
 function grbos {
-  local branch="${1:-master}"
+  local branch="${1:-main}"
   git rebase --exec "git commit --amend --no-edit -n -S" -i origin/"$branch"
 }
 
@@ -107,7 +107,7 @@ alias gf='git fetch'
 alias gd='git diff'
 alias gp='git push'
 alias gu='git pull'
-alias guom='git pull origin master'
-alias gpom='git push origin master'
+alias guom='git pull origin main'
+alias gpom='git push origin main'
 alias gwch='git whatchanged -p --abbrev-commit --pretty=medium'
 
