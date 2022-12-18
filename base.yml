@@ -36,13 +36,11 @@
       path: base/.vimrc.bundles
     ~/.tmux.conf:
       path: base/.tmux.conf
+    ~/.config/nvim/lua/user/init.lua:
+      path: base/.config/nvim/lua/user/init.lua
     ~/.bin/:
       glob: true
       path: base/.bin/*
-    ## Only fish in here, and disabled for now
-    # ~/.config/:
-    #   glob: true
-    #   path: base/.config/*
     ~/.functions/:
       glob: true
       path: base/.functions/*
@@ -50,3 +48,17 @@
 - shell:
     # Allow direnv access to ~/.envrc
     - ['[ -f "$HOME/.zinit/plugins/direnv---direnv/direnv" ] && direnv allow $HOME || true']
+    - ['[ -f /bin/zsh ] && /bin/zsh -c "source ~/.zshrc; zinit self-update"']
+    -
+      - >-
+        [ -d "$HOME/.zinit/plugins/astronvim---astronvim" ] &&
+        nvim --headless -c 'autocmd User PackerSync quitall'
+    - ['doom upgrade']
+    -
+      # https://github.com/tmux-plugins/tpm/blob/master/docs/managing_plugins_via_cmd_line.md
+      - >-
+        tmux start\;
+        new -d\;
+        run "~/.tmux/plugins/tpm/bin/install_plugins"\;
+        run "~/.tmux/plugins/tpm/bin/update_plugins all"\;
+        kill-session
