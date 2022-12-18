@@ -2,6 +2,7 @@
 
 brew install \
   git \
+  coreutils \
   emacs \
   neovim \
   node \
@@ -17,6 +18,7 @@ brew install \
   wireguard-tools \
   qrencode \
   virtualenvwrapper \
+  fd \
   lsd \
   bat \
   # hidetatz/tap/kubecolor \ # broken: https://github.com/hidetatz/kubecolor/issues/90
@@ -54,6 +56,8 @@ brew install --cask \
 xattr -cr /Applications/Chromium.app
 xattr -cr /Applications/Yippy.app
 xattr -cr /Applications/UnnaturalScrollWheels.app
+
+xcode-select --install
 
 # vim plug
 if [[ ! -f ~/.vim/autoload/plug.vim ]]; then

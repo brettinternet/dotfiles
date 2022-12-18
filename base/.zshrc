@@ -172,10 +172,28 @@ zinit light tmux-plugins/tpm
 # https://zdharma-continuum.github.io/zinit/wiki/Direnv-explanation/
 # https://github.com/direnv/direnv/issues/68
 zinit from"gh-r" as"program" mv"direnv* -> direnv" \
-    atclone'./direnv hook zsh > zhook.zsh' atpull'%atclone' \
-    atload'export DIRENV_LOG_FORMAT=""' \
-    pick"direnv" src="zhook.zsh" for \
-        direnv/direnv
+  atclone'./direnv hook zsh > zhook.zsh' atpull'%atclone' \
+  atload'export DIRENV_LOG_FORMAT=""' \
+  pick"direnv" src="zhook.zsh" for \
+    direnv/direnv
+
+# Emacs config
+zinit ice as"program" atclone'./bin/doom install --env --fonts' pick"./bin/*"
+zinit light doomemacs/doomemacs
+
+# https://astronvim.github.io/Configuration/manage_user_config
+NVIM_SETUP=$(cat <<-END
+mkdir ~/.config/nvim;
+mv * ~/.config/nvim;
+nvim --headless -c 'autocmd User PackerComplete quitall'
+END
+)
+
+# Neovim config
+zinit ice as"program" \
+  atclone'$NVIM_SETUP' \
+  atpull'nvim +AstroUpdate'
+zinit light AstroNvim/AstroNvim
 
 
 # -- Colorscheme
@@ -183,9 +201,6 @@ zinit from"gh-r" as"program" mv"direnv* -> direnv" \
 # dark version
 zinit ice as"program" id-as"gruvbox-material-dark"
 # zinit snippet https://github.com/sainnhe/dotfiles/blob/e917a01b8ce0e84455e2599ffed95c3e52492cf3/.zsh-theme-gruvbox-material-dark
-# light version
-# zinit ice as"program" id-as"gruvbox-material-light"
-# zinit snippet https://github.com/sainnhe/dotfiles/blob/b13cfb736a7ab27dacfc60a8df8b3485b9d00010/.zsh-theme-gruvbox-material-light
 
 
 # -- Prompt

@@ -83,30 +83,12 @@ alias lh='ls -alt | head' # see the last modified files
 alias screen='TERM=screen screen'
 alias ssh='TERM=xterm-256color; ssh'
 
+# Editors
+alias e='emacs'
 
-# Vim
 alias vi='vim'
-
-# vimrc editing
-alias ve='vim ~/.vimrc'
-# zsh profile editing
-alias ze='vim ~/.zshrc'
-# fish profile editing
-alias fe='vim ~/.config/fish/config.fish'
+alias vim='nvim'
+alias v='vim'
 
 # Zippin
 alias gz='tar -zcvf'
-
-# ansible
-# source: https://github.com/ohmyzsh/ohmyzsh/blob/master/plugins/ansible/ansible.plugin.zsh
-# alias a='ansible '
-# alias aconf='ansible-config '
-# alias acon='ansible-console '
-# alias aver='ansible-version'
-# alias arinit='ansible-role-init'
-# alias aplaybook='ansible-playbook '
-# alias ainv='ansible-inventory '
-# alias adoc='ansible-doc '
-# alias agal='ansible-galaxy '
-# alias apull='ansible-pull '
-# alias aval='ansible-vault'
