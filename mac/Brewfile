@@ -1,0 +1,53 @@
+# https://github.com/Homebrew/homebrew-bundle
+
+mas "Xcode", id: 497799835
+
+brew "git"
+brew "coreutils"
+brew "emacs"
+brew "neovim"
+brew "node"
+brew "elixir"
+brew "bpytop"
+brew "bat"
+brew "tmux"
+brew "broot"
+brew "asdf"
+brew "terminal-notifier"
+brew "nvm"
+brew "wget"
+brew "wireguard-tools"
+brew "qrencode"
+brew "virtualenvwrapper"
+brew "fd"
+brew "lsd"
+brew "bat"
+brew "trash-cli"
+
+cask "firefox"
+cask "chromium"
+cask "hyperdock"
+cask "bitwarden"
+cask "docker"
+cask "visual-studio-code"
+cask "iterm2"
+cask "authy"
+cask "stats"
+cask "spotify"
+cask "dbeaver-community"
+cask "zoom"
+cask "yippy"
+cask "gpg-suite"
+cask "karabiner-elements"
+cask "telegram"
+cask "home-assistant"
+cask "unnaturalscrollwheels"
+
+tap "homebrew/cask-fonts"
+cask "font-fira-code"
+cask "font-hack-nerd-font"
+
+# Tiling?
+# https://github.com/koekeishiya/yabai/wiki/Installing-yabai-(latest-release)
+# koekeishiya/formulae/skhd
+# koekeishiya/formulae/yabai

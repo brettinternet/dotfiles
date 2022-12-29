@@ -12,3 +12,6 @@
     ~/.functions/:
       glob: true
       path: mac/.functions/*
+
+- shell:
+    - ['./mac/brew.sh']

@@ -49,10 +49,11 @@
     # Allow direnv access to ~/.envrc
     - ['[ -f "$HOME/.zinit/plugins/direnv---direnv/direnv" ] && direnv allow $HOME || true']
     - ['[ -f /bin/zsh ] && /bin/zsh -c "source ~/.zshrc; zinit self-update"']
-    -
-      - >-
-        [ -d "$HOME/.zinit/plugins/astronvim---astronvim" ] &&
-        nvim --headless -c 'autocmd User PackerSync quitall'
+    # Issue: https://github.com/wbthomason/packer.nvim/issues/751
+    # -
+    #   - >-
+    #     [ -d "$HOME/.zinit/plugins/astronvim---astronvim" ] &&
+    #     nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync'
     - ['doom upgrade']
     -
       # https://github.com/tmux-plugins/tpm/blob/master/docs/managing_plugins_via_cmd_line.md
