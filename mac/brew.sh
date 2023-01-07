@@ -7,7 +7,7 @@ xattr -cr /Applications/Chromium.app
 xattr -cr /Applications/Yippy.app
 xattr -cr /Applications/UnnaturalScrollWheels.app
 
-# xcode-select --install
+xcode-select --install
 
 # vim plug
 if [[ ! -f ~/.vim/autoload/plug.vim ]]; then
