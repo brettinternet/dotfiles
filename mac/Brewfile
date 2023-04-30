@@ -23,6 +23,7 @@ brew "fd"
 brew "lsd"
 brew "bat"
 brew "trash-cli"
+brew "go-task"
 
 cask "firefox"
 cask "chromium"
