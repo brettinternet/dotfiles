@@ -20,7 +20,7 @@ IEx.configure(
   default_prompt:
     [
       # ANSI CHA, move cursor to column 1
-      "\e[G",
+      #"\e[G",
       :light_magenta,
       # plain string
       " iex",
