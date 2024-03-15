@@ -12,6 +12,9 @@
     ~/.functions/:
       glob: true
       path: mac/.functions/*
+    ~/.hammerspoon/init.lua:
+      glob: true
+      path: mac/.hammerspoon/init.lua
 
 - shell:
     - ['./mac/brew.sh']
