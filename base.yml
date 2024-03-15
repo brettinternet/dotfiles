@@ -54,7 +54,7 @@
     #   - >-
     #     [ -d "$HOME/.zinit/plugins/astronvim---astronvim" ] &&
     #     nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync'
-    - ['doom upgrade']
+    # - ['doom upgrade']
     -
       # https://github.com/tmux-plugins/tpm/blob/master/docs/managing_plugins_via_cmd_line.md
       - >-
