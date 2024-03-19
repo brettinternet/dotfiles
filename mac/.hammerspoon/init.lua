@@ -35,31 +35,35 @@ function prefixFn(fn)
 end
 
 local function launchFocusOrSwitchBack(bundleid)
-  currentApp = hs.application.frontmostApplication()
-  if lastApp and currentApp and (currentApp:bundleID() == bundleid) then
-    lastApp:activate(true)
-  else
-    hs.application.launchOrFocusByBundleID(bundleid)
-  end
-  lastApp = currentApp
+  return function()
+    currentApp = hs.application.frontmostApplication()
+    if lastApp and currentApp and (currentApp:bundleID() == bundleid) then
+      lastApp:activate(true)
+    else
+      hs.application.launchOrFocusByBundleID(bundleid)
+    end
+    lastApp = currentApp
 
-  -- Center mouse on Window after focus or switch occurs
-  currentWindow = hs.window.focusedWindow()
-  currentFrame = currentWindow:frame()
-  cfx = currentFrame.x + (currentFrame.w / 2)
-  cfy = currentFrame.y + (currentFrame.h / 2)
-  cfp = hs.geometry.point(cfx, cfy)
-  hs.mouse.absolutePosition(cfp)
+    -- Center mouse on Window after focus or switch occurs
+    currentWindow = hs.window.focusedWindow()
+    currentFrame = currentWindow:frame()
+    cfx = currentFrame.x + (currentFrame.w / 2)
+    cfy = currentFrame.y + (currentFrame.h / 2)
+    cfp = hs.geometry.point(cfx, cfy)
+    hs.mouse.absolutePosition(cfp)
+  end
 end
 
 -- Applications
-prefix:bind('', 'W', prefixFn(function() launchFocusOrSwitchBack("com.google.Chrome") end))
-prefix:bind('', 'S', prefixFn(function() launchFocusOrSwitchBack("com.spotify.client") end))
-prefix:bind('', 'F', prefixFn(function() launchFocusOrSwitchBack("com.apple.finder") end))
-prefix:bind('', 'C', prefixFn(function() launchFocusOrSwitchBack("com.microsoft.VSCode") end))
-prefix:bind('', 'X', prefixFn(function() launchFocusOrSwitchBack("com.googlecode.iterm2") end))
-prefix:bind('', 'A', prefixFn(function() launchFocusOrSwitchBack("com.tinyspeck.slackmacgap") end))
-prefix:bind('', 'D', prefixFn(function() launchFocusOrSwitchBack("com.hnc.Discord") end))
+prefix:bind('', 'B', prefixFn(launchFocusOrSwitchBack("com.google.Chrome")))
+prefix:bind('', 'S', prefixFn(launchFocusOrSwitchBack("com.spotify.client")))
+prefix:bind('', 'F', prefixFn(launchFocusOrSwitchBack("com.apple.finder")))
+prefix:bind('', 'C', prefixFn(launchFocusOrSwitchBack("com.microsoft.VSCode")))
+prefix:bind('', 'X', prefixFn(launchFocusOrSwitchBack("com.googlecode.iterm2")))
+prefix:bind('', 'A', prefixFn(launchFocusOrSwitchBack("com.tinyspeck.slackmacgap")))
+prefix:bind('', 'D', prefixFn(launchFocusOrSwitchBack("com.hnc.Discord")))
+prefix:bind('', 'Z', prefixFn(launchFocusOrSwitchBack("us.zoom.xos")))
+prefix:bind('', 'O', prefixFn(launchFocusOrSwitchBack("com.obsproject.obs-studio")))
 
 -- System
 prefix:bind('cmd', 'L', prefixFn(function() hs.caffeinate.lockScreen() end))
