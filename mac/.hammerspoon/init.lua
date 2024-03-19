@@ -58,7 +58,8 @@ prefix:bind('', 'S', prefixFn(function() launchFocusOrSwitchBack("com.spotify.cl
 prefix:bind('', 'F', prefixFn(function() launchFocusOrSwitchBack("com.apple.finder") end))
 prefix:bind('', 'C', prefixFn(function() launchFocusOrSwitchBack("com.microsoft.VSCode") end))
 prefix:bind('', 'X', prefixFn(function() launchFocusOrSwitchBack("com.googlecode.iterm2") end))
-prefix:bind('', 'D', prefixFn(function() launchFocusOrSwitchBack("com.tinyspeck.slackmacgap") end))
+prefix:bind('', 'A', prefixFn(function() launchFocusOrSwitchBack("com.tinyspeck.slackmacgap") end))
+prefix:bind('', 'D', prefixFn(function() launchFocusOrSwitchBack("com.hnc.Discord") end))
 
 -- System
 prefix:bind('cmd', 'L', prefixFn(function() hs.caffeinate.lockScreen() end))
@@ -69,14 +70,14 @@ prefix:bind('cmd', 'C', prefixFn(function()
 end))
 
 -- Info helpers
-prefix:bind('cmd', 'B', function()
+prefix:bind('cmd', 'B', prefixFn(function()
   hs.pasteboard.setContents(hs.application.frontmostApplication():bundleID())
-  hs.alert.show("BundleID Copied") prefix:exit()
-end)
-prefix:bind('cmd', 'D', function()
+  hs.alert.show("BundleID Copied")
+end))
+prefix:bind('cmd', 'D', prefixFn(function()
   hs.pasteboard.setContents(hs.application.frontmostApplication():title())
-  hs.alert.show("Title Copied") prefix:exit()
-end)
+  hs.alert.show("Title Copied")
+end))
 
 
 -- Get around paste blockers with cmd+alt+v
