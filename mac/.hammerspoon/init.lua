@@ -97,6 +97,11 @@ end)
 
 
 -- A better push to talk / toggle mute
+function clearMuteAlert()
+  if muteAlertId then
+    hs.alert.closeSpecific(muteAlertId)
+  end
+end
 
 local holdingToTalk = false
 local function pushToTalk()
@@ -104,7 +109,8 @@ local function pushToTalk()
   local audio = hs.audiodevice.defaultInputDevice()
   local muted = audio:inputMuted()
   if muted then
-    muteAlertId = hs.alert.show("🎤 Microphone on")
+    clearMuteAlert()
+    muteAlertId = hs.alert.show("🎤 Microphone on", true)
     audio:setInputMuted(false)
   end
 end
@@ -125,10 +131,8 @@ local function toggleMuteOrPTT()
     muting = true
   else
     audio:setInputMuted(muting)
-    if muteAlertId then
-      hs.alert.closeSpecific(muteAlertId)
-    end
   end
+  clearMuteAlert()
   if muting then
     muteAlertId = hs.alert.show("📵 Microphone muted")
   else
