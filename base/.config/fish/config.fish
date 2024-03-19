@@ -9,3 +9,5 @@ theme_gruvbox dark hard
 # https://github.com/fish-shell/fish-shell/issues/4706#issuecomment-363327906
 function fish_greeting
 end
+
+export PATH="$PATH:$HOME/.local/bin"
