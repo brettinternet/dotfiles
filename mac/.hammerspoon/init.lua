@@ -114,7 +114,17 @@ local playSpotify = function()
 end
 
 local focusingSpotify = false
-local focusSpotify = function()
+local spotifyPressReleased = true
+local longPressSpotify = function()
+  local spotify = hs.application.get(spotifyBundleID)
+  if spotify and focusingSpotify and spotifyPressReleased then
+    if spotify:isFrontmost() then
+      spotify:hide()
+    else
+      hs.application.launchOrFocusByBundleID(spotifyBundleID)
+    end
+    spotifyPressReleased = false
+  end
   focusingSpotify = true
 end
 
@@ -122,14 +132,7 @@ end
 -- On shot key press, play or pause Spotify
 local playOrPauseSpotify = function()
   local spotify = hs.application.get(spotifyBundleID)
-  if spotify and focusingSpotify then
-    focusingSpotify = false
-    if spotify:isFrontmost() then
-      spotify:hide()
-    else
-      hs.application.launchOrFocusByBundleID(spotifyBundleID)
-    end
-  else
+  if not focusingSpotify then
     local isSpotifyRunning = spotify ~= nil and spotify:isRunning() or false
     if isSpotifyRunning then
       playSpotify()
@@ -141,6 +144,8 @@ local playOrPauseSpotify = function()
       currentApp:activate()
     end
   end
+  focusingSpotify = false
+  spotifyPressReleased = true
 end
 
-hs.hotkey.bind(nil, "f20", nil, playOrPauseSpotify, focusSpotify)
+hs.hotkey.bind(nil, "f20", nil, playOrPauseSpotify, longPressSpotify)
