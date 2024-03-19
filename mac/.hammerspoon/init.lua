@@ -1,10 +1,3 @@
--- https://developer.okta.com/blog/2020/10/22/set-up-a-mute-indicator-light-for-zoom-with-hammerspoon
--- http://peterhajas.com/blog/streamdeck.html
--- https://github.com/peterhajas/dotfiles/blob/master/hammerspoon/.hammerspoon/streamdeck/peek.lua
--- https://github.com/arkag/hammerspoon-config/blob/master/init.lua
--- https://github.com/levinine/hammerspoon-config/blob/main/window-management.lua
--- https://github.com/arkag/hammerspoon-config/blob/master/init.lua
-
 -- https://www.hammerspoon.org/Spoons/SpoonInstall.html
 hs.loadSpoon("SpoonInstall")
 spoon.SpoonInstall.use_syncinstall = true
@@ -22,10 +15,75 @@ function dump(o)
   end
 end
 
+prefix = hs.hotkey.modal.new('cmd', ';')
+prefix:bind('', "escape", function() prefix:exit() end)
+lastApp = nil
+
+function prefix:entered()
+  commandModeAlert = hs.alert.show("Command mode", true)
+end
+
+function prefix:exited()
+  hs.alert.closeSpecific(commandModeAlert)
+end
+
+function prefixFn(fn)
+  return function()
+    fn()
+    prefix:exit()
+  end
+end
+
+local function launchFocusOrSwitchBack(bundleid)
+  currentApp = hs.application.frontmostApplication()
+  if lastApp and currentApp and (currentApp:bundleID() == bundleid) then
+    lastApp:activate(true)
+  else
+    hs.application.launchOrFocusByBundleID(bundleid)
+  end
+  lastApp = currentApp
+
+  -- Center mouse on Window after focus or switch occurs
+  currentWindow = hs.window.focusedWindow()
+  currentFrame = currentWindow:frame()
+  cfx = currentFrame.x + (currentFrame.w / 2)
+  cfy = currentFrame.y + (currentFrame.h / 2)
+  cfp = hs.geometry.point(cfx, cfy)
+  hs.mouse.absolutePosition(cfp)
+end
+
+-- Applications
+prefix:bind('', 'W', prefixFn(function() launchFocusOrSwitchBack("com.google.Chrome") end))
+prefix:bind('', 'S', prefixFn(function() launchFocusOrSwitchBack("com.spotify.client") end))
+prefix:bind('', 'F', prefixFn(function() launchFocusOrSwitchBack("com.apple.finder") end))
+prefix:bind('', 'C', prefixFn(function() launchFocusOrSwitchBack("com.microsoft.VSCode") end))
+prefix:bind('', 'X', prefixFn(function() launchFocusOrSwitchBack("com.googlecode.iterm2") end))
+prefix:bind('', 'D', prefixFn(function() launchFocusOrSwitchBack("com.tinyspeck.slackmacgap") end))
+
+-- System
+prefix:bind('cmd', 'L', prefixFn(function() hs.caffeinate.lockScreen() end))
+prefix:bind('cmd', 'P', prefixFn(function() hs.caffeinate.systemSleep() end))
+prefix:bind('cmd', 'C', prefixFn(function()
+  hs.pasteboard.clearContents()
+  hs.alert.show("Clipboard Cleared")
+end))
+
+-- Info helpers
+prefix:bind('cmd', 'B', function()
+  hs.pasteboard.setContents(hs.application.frontmostApplication():bundleID())
+  hs.alert.show("BundleID Copied") prefix:exit()
+end)
+prefix:bind('cmd', 'D', function()
+  hs.pasteboard.setContents(hs.application.frontmostApplication():title())
+  hs.alert.show("Title Copied") prefix:exit()
+end)
+
+
 -- Get around paste blockers with cmd+alt+v
 hs.hotkey.bind({"alt", "cmd", "shift"}, "V", function()
   hs.eventtap.keyStrokes(hs.pasteboard.getContents())
 end)
+
 
 hs.loadSpoon("AClock")
 hs.hotkey.bind({"cmd", "ctrl"}, "z", function()
@@ -37,26 +95,27 @@ hs.hotkey.bind({"cmd", "ctrl"}, "z", function()
   spoon.AClock:toggleShow()
 end)
 
+
 -- A better push to talk / toggle mute
 
 local holdingToTalk = false
-local pushToTalk = function()
+local function pushToTalk()
   holdingToTalk = true
   local audio = hs.audiodevice.defaultInputDevice()
   local muted = audio:inputMuted()
   if muted then
+    muteAlertId = hs.alert.show("🎤 Microphone on")
     audio:setInputMuted(false)
   end
 end
 
-local toggleMute = function()
+local function toggleMute()
   local audio = hs.audiodevice.defaultInputDevice()
   local muted = audio:inputMuted()
   audio:setInputMuted(not muted)
 end
 
-local muteNotification = nil
-local toggleMuteOrPTT = function()
+local function toggleMuteOrPTT()
   local audio = hs.audiodevice.defaultInputDevice()
   local muted = audio:inputMuted()
   local muting = not muted
@@ -70,36 +129,21 @@ local toggleMuteOrPTT = function()
       hs.alert.closeSpecific(muteAlertId)
     end
   end
-  if muteNotification then
-    muteNotification:withdraw()
-  end
-  -- TODO: set notification image
-  -- https://www.hammerspoon.org/docs/hs.image.html
-  -- https://www.hammerspoon.org/docs/hs.notify.html#contentImage
   if muting then
-    muteNotification = hs.notify.new(toggleMute, {
-      title = "Muted",
-      autoWithdraw = false,
-      withdrawAfter = 0
-    })
-    muteNotification:send()
-    -- muteAlertId = hs.alert.show("Muted")
+    muteAlertId = hs.alert.show("📵 Microphone muted")
   else
-    muteNotification = hs.notify.new(toggleMute, {
-      title = "Not muted"
-    })
-    muteNotification:send()
-    -- muteAlertId = hs.alert.show("Unmuted")
+    muteAlertId = hs.alert.show("🎤 Microphone on")
   end
 end
 
 hs.hotkey.bind({"cmd", "shift"}, "a", nil, toggleMuteOrPTT, pushToTalk)
 hs.hotkey.bind(nil, "f19", nil, toggleMute)
 
+
 -- A more specific play/pause to only toggle Spotify
 
 local spotifyBundleID = "com.spotify.client"
-local playSpotify = function()
+local function playSpotify()
   local spotify = hs.application.get(spotifyBundleID)
   -- No other way to check if app is in "background" state (closed but not quit)
   -- `newKeyEvent` only works on apps that are hidden or open 🤔
@@ -115,7 +159,7 @@ end
 
 local focusingSpotify = false
 local spotifyPressReleased = true
-local longPressSpotify = function()
+local function longPressSpotify()
   local spotify = hs.application.get(spotifyBundleID)
   if spotify and focusingSpotify and spotifyPressReleased then
     if spotify:isFrontmost() then
@@ -130,7 +174,7 @@ end
 
 -- On long key press, focus spotify unless already focused, then hide
 -- On shot key press, play or pause Spotify
-local playOrPauseSpotify = function()
+local function playOrPauseSpotify()
   local spotify = hs.application.get(spotifyBundleID)
   if not focusingSpotify then
     local isSpotifyRunning = spotify ~= nil and spotify:isRunning() or false
@@ -149,3 +193,31 @@ local playOrPauseSpotify = function()
 end
 
 hs.hotkey.bind(nil, "f20", nil, playOrPauseSpotify, longPressSpotify)
+prefix:bind('', '/', prefixFn(playOrPauseSpotify))
+
+
+-- Change audio output
+local function toggleAudioOutput()
+  local current = hs.audiodevice.defaultOutputDevice()
+  local speakers = hs.audiodevice.findOutputByName('Stone Pro Audio')
+  local headphones = hs.audiodevice.findOutputByName('Elgato Wave XLR')
+
+  if toggleAudioOutputAlertID then
+    hs.alert.closeSpecific(toggleAudioOutputAlertID)
+  end
+  if current:name() == speakers:name() then
+    headphones:setDefaultOutputDevice()
+    toggleAudioOutputAlertID = hs.alert.show(headphones:name())
+  else
+    speakers:setDefaultOutputDevice()
+    toggleAudioOutputAlertID = hs.alert.show(speakers:name())
+  end
+end
+
+prefix:bind('', ']', prefixFn(toggleAudioOutput))
+
+
+-- Reload config on change
+local home = os.getenv("HOME")
+hs.pathwatcher.new(home .. "/.dotfiles/mac/.hammerspoon/", function() hs.reload() end):start()
+hs.alert.show("Hammerspoon config loaded")
