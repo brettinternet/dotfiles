@@ -2,6 +2,7 @@
 hs.loadSpoon("SpoonInstall")
 spoon.SpoonInstall.use_syncinstall = true
 
+-- Print helper
 function dump(o)
   if type(o) == 'table' then
      local s = '{ '
@@ -14,6 +15,8 @@ function dump(o)
      return tostring(o)
   end
 end
+
+-- Prefix modal for app/system commands
 
 prefix = hs.hotkey.modal.new('cmd', ';')
 prefix:bind('', "escape", function() prefix:exit() end)
@@ -64,6 +67,7 @@ prefix:bind('', 'A', prefixFn(launchFocusOrSwitchBack("com.tinyspeck.slackmacgap
 prefix:bind('', 'D', prefixFn(launchFocusOrSwitchBack("com.hnc.Discord")))
 prefix:bind('', 'Z', prefixFn(launchFocusOrSwitchBack("us.zoom.xos")))
 prefix:bind('', 'O', prefixFn(launchFocusOrSwitchBack("com.obsproject.obs-studio")))
+prefix:bind('', 'H', prefixFn(launchFocusOrSwitchBack("io.robbie.HomeAssistant")))
 
 -- System
 prefix:bind('cmd', 'L', prefixFn(function() hs.caffeinate.lockScreen() end))
@@ -82,7 +86,11 @@ prefix:bind('cmd', 'D', prefixFn(function()
   hs.pasteboard.setContents(hs.application.frontmostApplication():title())
   hs.alert.show("Title Copied")
 end))
+prefix:bind('', '\\', prefixFn(function()
+  hs.execute('/Applications/BetterDisplay.app/Contents/MacOS/BetterDisplay toggle -name="Dell AW3423DW" -connected')
+end))
 
+-- Utils
 
 -- Get around paste blockers with cmd+alt+v
 hs.hotkey.bind({"alt", "cmd", "shift"}, "V", function()
@@ -100,131 +108,11 @@ hs.hotkey.bind({"cmd", "ctrl"}, "z", function()
   spoon.AClock:toggleShow()
 end)
 
+-- Load all modules
 
--- A better push to talk / toggle mute
-function clearMuteAlert()
-  if muteAlertId then
-    hs.alert.closeSpecific(muteAlertId)
-  end
-end
-
-local holdingToTalk = false
-local function pushToTalk()
-  holdingToTalk = true
-  local audio = hs.audiodevice.defaultInputDevice()
-  local muted = audio:inputMuted()
-  if muted then
-    clearMuteAlert()
-    muteAlertId = hs.alert.show("🎤 Microphone on", true)
-    audio:setInputMuted(false)
-  end
-end
-
-local function toggleMute()
-  local audio = hs.audiodevice.defaultInputDevice()
-  local muted = audio:inputMuted()
-  audio:setInputMuted(not muted)
-end
-
-local function toggleMuteOrPTT()
-  local audio = hs.audiodevice.defaultInputDevice()
-  local muted = audio:inputMuted()
-  local muting = not muted
-  if holdingToTalk then
-    holdingToTalk = false
-    audio:setInputMuted(true)
-    muting = true
-  else
-    audio:setInputMuted(muting)
-  end
-  clearMuteAlert()
-  if muting then
-    muteAlertId = hs.alert.show("📵 Microphone muted")
-  else
-    muteAlertId = hs.alert.show("🎤 Microphone on")
-  end
-end
-
-hs.hotkey.bind({"cmd", "shift"}, "a", nil, toggleMuteOrPTT, pushToTalk)
-hs.hotkey.bind(nil, "f19", nil, toggleMute)
-
-
--- A more specific play/pause to only toggle Spotify
-
-local spotifyBundleID = "com.spotify.client"
-local function playSpotify()
-  local spotify = hs.application.get(spotifyBundleID)
-  -- No other way to check if app is in "background" state (closed but not quit)
-  -- `newKeyEvent` only works on apps that are hidden or open 🤔
-  local isBackgroundOrClosed = not (spotify and spotify:focusedWindow())
-  if isBackgroundOrClosed then
-    hs.application.launchOrFocusByBundleID(spotifyBundleID)
-    spotify = hs.application.get(spotifyBundleID)
-    spotify:hide()
-  end
-  playKey = hs.eventtap.event.newKeyEvent(nil, "space", true)
-  playKey:post(spotify)
-end
-
-local focusingSpotify = false
-local spotifyPressReleased = true
-local function longPressSpotify()
-  local spotify = hs.application.get(spotifyBundleID)
-  if spotify and focusingSpotify and spotifyPressReleased then
-    if spotify:isFrontmost() then
-      spotify:hide()
-    else
-      hs.application.launchOrFocusByBundleID(spotifyBundleID)
-    end
-    spotifyPressReleased = false
-  end
-  focusingSpotify = true
-end
-
--- On long key press, focus spotify unless already focused, then hide
--- On shot key press, play or pause Spotify
-local function playOrPauseSpotify()
-  local spotify = hs.application.get(spotifyBundleID)
-  if not focusingSpotify then
-    local isSpotifyRunning = spotify ~= nil and spotify:isRunning() or false
-    if isSpotifyRunning then
-      playSpotify()
-    else
-      local currentApp = hs.application.frontmostApplication()
-      hs.application.open(spotifyBundleID)
-      currentApp:activate()
-      hs.timer.doAfter(1, playSpotify)
-      currentApp:activate()
-    end
-  end
-  focusingSpotify = false
-  spotifyPressReleased = true
-end
-
-hs.hotkey.bind(nil, "f20", nil, playOrPauseSpotify, longPressSpotify)
-prefix:bind('', '/', prefixFn(playOrPauseSpotify))
-
-
--- Change audio output
-local function toggleAudioOutput()
-  local current = hs.audiodevice.defaultOutputDevice()
-  local speakers = hs.audiodevice.findOutputByName('Stone Pro Audio')
-  local headphones = hs.audiodevice.findOutputByName('Elgato Wave XLR')
-
-  if toggleAudioOutputAlertID then
-    hs.alert.closeSpecific(toggleAudioOutputAlertID)
-  end
-  if current:name() == speakers:name() then
-    headphones:setDefaultOutputDevice()
-    toggleAudioOutputAlertID = hs.alert.show(headphones:name())
-  else
-    speakers:setDefaultOutputDevice()
-    toggleAudioOutputAlertID = hs.alert.show(speakers:name())
-  end
-end
-
-prefix:bind('', ']', prefixFn(toggleAudioOutput))
-
+require("audio")
+require("media")
+require("system")
 
 -- Reload config on change
 local home = os.getenv("HOME")

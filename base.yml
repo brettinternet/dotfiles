@@ -25,6 +25,7 @@
     ~/.zshrc:
       path: base/.zshrc
       if: '[ -x "$(command -v zsh)" ]'
+      force: true
     ~/.editorconfig:
       path: base/.editorconfig
     ~/.profile:
