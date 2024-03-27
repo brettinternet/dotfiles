@@ -19,7 +19,7 @@ local spotifyPressReleased = true
 local function longPressSpotify()
   local spotify = hs.application.get(spotifyBundleID)
   if spotify and focusingSpotify and spotifyPressReleased then
-    if spotify:isFrontmost() then
+    if spotify:isFrontmost() and not spotify:isHidden() then
       spotify:hide()
     else
       hs.application.launchOrFocusByBundleID(spotifyBundleID)
