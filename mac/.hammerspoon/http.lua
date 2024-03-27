@@ -24,6 +24,7 @@ local function getLaunchFocusOrHideAndSwitchBackFn(bundleid)
 end
 
 local actions = {
+  ["/reload"] = hs.reload,
   ["/chrome"] = getLaunchFocusOrHideAndSwitchBackFn("com.google.Chrome"),
   ["/spotify"] = getLaunchFocusOrHideAndSwitchBackFn("com.spotify.client"),
   ["/zoom"] = getLaunchFocusOrHideAndSwitchBackFn("us.zoom.xos"),
