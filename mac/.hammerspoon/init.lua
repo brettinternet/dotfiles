@@ -20,9 +20,8 @@ end
 
 -- Prefix modal for app/system commands
 
-prefix = hs.hotkey.modal.new('cmd', ';')
+local prefix = hs.hotkey.modal.new('cmd', ';')
 prefix:bind('', "escape", function() prefix:exit() end)
-lastApp = nil
 
 function prefix:entered()
   commandModeAlert = hs.alert.show("Command mode", true)
@@ -32,22 +31,26 @@ function prefix:exited()
   hs.alert.closeSpecific(commandModeAlert)
 end
 
-function prefixFn(fn)
+local function prefixFn(fn)
   return function()
     fn()
     prefix:exit()
   end
 end
 
-local function launchFocusOrSwitchBack(bundleid)
+local lastApp = nil
+function getLaunchFocusOrHideAndSwitchBackFn(bundleid)
   return function()
     currentApp = hs.application.frontmostApplication()
-    if lastApp and currentApp and (currentApp:bundleID() == bundleid) then
-      lastApp:activate(true)
+    if currentApp and (currentApp:bundleID() == bundleid) then
+      currentApp:hide()
+      if lastApp then
+        lastApp:activate(true)
+      end
     else
       hs.application.launchOrFocusByBundleID(bundleid)
+      lastApp = currentApp
     end
-    lastApp = currentApp
 
     -- Center mouse on Window after focus or switch occurs
     currentWindow = hs.window.focusedWindow()
@@ -60,16 +63,16 @@ local function launchFocusOrSwitchBack(bundleid)
 end
 
 -- Applications
-prefix:bind('', 'B', prefixFn(launchFocusOrSwitchBack("com.google.Chrome")))
-prefix:bind('', 'S', prefixFn(launchFocusOrSwitchBack("com.spotify.client")))
-prefix:bind('', 'F', prefixFn(launchFocusOrSwitchBack("com.apple.finder")))
-prefix:bind('', 'C', prefixFn(launchFocusOrSwitchBack("com.microsoft.VSCode")))
-prefix:bind('', 'X', prefixFn(launchFocusOrSwitchBack("com.googlecode.iterm2")))
-prefix:bind('', 'A', prefixFn(launchFocusOrSwitchBack("com.tinyspeck.slackmacgap")))
-prefix:bind('', 'D', prefixFn(launchFocusOrSwitchBack("com.hnc.Discord")))
-prefix:bind('', 'Z', prefixFn(launchFocusOrSwitchBack("us.zoom.xos")))
-prefix:bind('', 'O', prefixFn(launchFocusOrSwitchBack("com.obsproject.obs-studio")))
-prefix:bind('', 'H', prefixFn(launchFocusOrSwitchBack("io.robbie.HomeAssistant")))
+prefix:bind('', 'B', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.google.Chrome")))
+prefix:bind('', 'S', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.spotify.client")))
+prefix:bind('', 'F', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.apple.finder")))
+prefix:bind('', 'C', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.microsoft.VSCode")))
+prefix:bind('', 'X', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.googlecode.iterm2")))
+prefix:bind('', 'A', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.tinyspeck.slackmacgap")))
+prefix:bind('', 'D', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.hnc.Discord")))
+prefix:bind('', 'Z', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("us.zoom.xos")))
+prefix:bind('', 'O', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.obsproject.obs-studio")))
+prefix:bind('', 'H', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("io.robbie.HomeAssistant")))
 
 -- System
 prefix:bind('cmd', 'L', prefixFn(function() hs.caffeinate.lockScreen() end))

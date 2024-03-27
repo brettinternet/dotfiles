@@ -1,28 +1,6 @@
 -- Useful for actions with Stream Deck or macropad (without hotkeys)
 -- localhost GET requests to run actions in background
 
-lastApp = nil
-local function getLaunchFocusOrHideAndSwitchBackFn(bundleid)
-  return function()
-    currentApp = hs.application.frontmostApplication()
-    if lastApp and currentApp and (currentApp:bundleID() == bundleid) then
-      currentApp:hide()
-      lastApp:activate(true)
-    else
-      hs.application.launchOrFocusByBundleID(bundleid)
-      lastApp = currentApp
-    end
-
-    -- Center mouse on Window after focus or switch occurs
-    currentWindow = hs.window.focusedWindow()
-    currentFrame = currentWindow:frame()
-    cfx = currentFrame.x + (currentFrame.w / 2)
-    cfy = currentFrame.y + (currentFrame.h / 2)
-    cfp = hs.geometry.point(cfx, cfy)
-    hs.mouse.absolutePosition(cfp)
-  end
-end
-
 local actions = {
   ["/reload"] = hs.reload,
   ["/chrome"] = getLaunchFocusOrHideAndSwitchBackFn("com.google.Chrome"),
