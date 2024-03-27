@@ -1,3 +1,5 @@
+-- Todo: modify https://github.com/dbalatero/SkyRocket.spoon
+
 -- https://www.hammerspoon.org/Spoons/SpoonInstall.html
 hs.loadSpoon("SpoonInstall")
 spoon.SpoonInstall.use_syncinstall = true
@@ -113,6 +115,7 @@ end)
 require("audio")
 require("media")
 require("system")
+require("http")
 
 -- Reload config on change
 local home = os.getenv("HOME")
