@@ -50,7 +50,6 @@ local function playOrPauseSpotify()
 end
 
 hs.hotkey.bind(nil, "f20", nil, playOrPauseSpotify, longPressSpotify)
-prefix:bind('', '/', prefixFn(playOrPauseSpotify))
 
 
 -- Change audio output
@@ -71,42 +70,58 @@ local function toggleAudioOutput()
   end
 end
 
-prefix:bind('', ']', prefixFn(toggleAudioOutput))
+hs.hotkey.bind(nil, "f13", toggleAudioOutput)
 
 -- Play/Pause YouTube
 
-local function browserTab(browser)
-  local function open()
-    hs.application.launchOrFocus(browser)
-  end
-  local function jump(url)
-    local script = ([[(function() {
-      var browser = Application('%s');
-      browser.activate();
+local function openBrowserTab(browser, url)
+  local script = ([[(function() {
+    var browser = Application('%s');
+    browser.activate();
+    var tabIndex;
 
-      for (win of browser.windows()) {
-        var tabIndex = win.tabs().findIndex(tab => tab.url().match(/%s/));
-        if (tabIndex !== -1) {
-          win.activeTabIndex = (tabIndex + 1);
-          win.index = 1;
-          break;
-        }
+    for (win of browser.windows()) {
+      tabIndex = win.tabs().findIndex(tab => tab.url().match(/%s/));
+      if (tabIndex !== -1) {
+        win.activeTabIndex = (tabIndex + 1);
+        win.index = 1;
+        break;
       }
-    })();
-    ]]):format(browser, url)
-    hs.osascript.javascript(script)
-  end
-  return { open = open, jump = jump }
+    }
+    return tabIndex;
+  })();
+  ]]):format(browser, url)
+  return hs.osascript.javascript(script)
 end
 
-local function playYoutube()
+local function openNewBrowserWindow(browser, url)
+  local script = ([[(function() {
+    var browser = Application('%s');
+    browser.activate();
+    browser.Window().make();
+    browser.windows[0].tabs[0].url = '%s';
+  })();
+  ]]):format(browser, url)
+  return hs.osascript.javascript(script)
+end
+
+function playPauseOrOpenYoutube()
   local currentApp = hs.application.frontmostApplication()
   local browser = "com.google.Chrome"
   local chrome = hs.application.get(browser)
-  browserTab(browser).jump("youtube.com")
-  local playKey = hs.eventtap.event.newKeyEvent(nil, "k", true)
-  playKey:post(chrome)
+  local success, tabIndex = openBrowserTab(browser, "youtube.com")
+  if success then
+    if tabIndex > -1 then
+      local playKey = hs.eventtap.event.newKeyEvent(nil, "k", true)
+      playKey:post(chrome)
+    else
+      local success = openNewBrowserWindow(browser, "https://youtube.com")
+      if success then
+        hs.application.launchOrFocusByBundleID(browser)
+      end
+    end
+  end
   currentApp:activate()
 end
 
-hs.hotkey.bind(nil, "f19", playYoutube)
+hs.hotkey.bind(nil, "f19", playPauseOrOpenYoutube)
