@@ -10,8 +10,8 @@ local function getLaunchFocusOrHideAndSwitchBackFn(bundleid)
       lastApp:activate(true)
     else
       hs.application.launchOrFocusByBundleID(bundleid)
+      lastApp = currentApp
     end
-    lastApp = currentApp
 
     -- Center mouse on Window after focus or switch occurs
     currentWindow = hs.window.focusedWindow()
