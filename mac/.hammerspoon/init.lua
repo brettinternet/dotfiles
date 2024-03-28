@@ -4,6 +4,8 @@
 hs.loadSpoon("SpoonInstall")
 spoon.SpoonInstall.use_syncinstall = true
 
+hs.ipc.cliInstall()
+
 -- Print helper
 function dump(o)
   if type(o) == 'table' then
