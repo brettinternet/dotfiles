@@ -9,7 +9,7 @@ hs.hotkey.bind(nil, "f15", systemSleep)
 -- Sleep displays and then wake, (so if another active input is available, monitor switches to that)
 function bounceDisplays()
   hs.execute("pmset displaysleepnow")
-  hs.timer.doAfter(3, hs.caffeinate.declareUserActivity)
+  hs.timer.doAfter(10, hs.caffeinate.declareUserActivity)
 end
 
 hs.hotkey.bind(nil, "f16", bounceDisplays)
