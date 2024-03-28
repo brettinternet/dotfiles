@@ -46,7 +46,7 @@ function getLaunchFocusOrHideAndSwitchBackFn(bundleid)
     currentApp = hs.application.frontmostApplication()
     if currentApp and (currentApp:bundleID() == bundleid) then
       currentApp:hide()
-      if lastApp then
+      if lastApp and currentApp ~= lastApp then
         lastApp:activate(true)
       end
     else
