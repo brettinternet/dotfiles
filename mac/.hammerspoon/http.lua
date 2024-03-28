@@ -12,6 +12,7 @@ local actions = {
   ["/discord"] = getLaunchFocusOrHideAndSwitchBackFn("com.hnc.Discord"),
   ["/messages"] = getLaunchFocusOrHideAndSwitchBackFn("com.apple.MobileSMS"),
   ["/play_pause_youtube"] = playPauseOrOpenYoutube,
+  ["/bounce_displays"] = bounceDisplays,
 }
 
 local server = hs.httpserver.new(false)
