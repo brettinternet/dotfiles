@@ -1,6 +1,6 @@
 -- Power states
 
-local function systemSleep()
+function systemSleep()
   hs.caffeinate.systemSleep()
 end
 
