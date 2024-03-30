@@ -13,6 +13,7 @@ local actions = {
   ["/messages"] = getLaunchFocusOrHideAndSwitchBackFn("com.apple.MobileSMS"),
   ["/play_pause_youtube"] = playPauseOrOpenYoutube,
   ["/bounce_displays"] = bounceDisplays,
+  ["/sleep"] = systemSleep,
 }
 
 local server = hs.httpserver.new(false)
