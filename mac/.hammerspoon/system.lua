@@ -7,9 +7,12 @@ end
 hs.hotkey.bind(nil, "f15", systemSleep)
 
 -- Sleep displays and then wake, (so if another active input is available, monitor switches to that)
+local userActivityId = nil
 function bounceDisplays()
   hs.execute("pmset displaysleepnow")
-  hs.timer.doAfter(10, hs.caffeinate.declareUserActivity)
+  hs.timer.doAfter(10, function()
+    userActivityId = hs.caffeinate.declareUserActivity(userActivityId)
+  end)
 end
 
 hs.hotkey.bind(nil, "f16", bounceDisplays)
@@ -21,7 +24,8 @@ local function allowCaffeine()
   return not noBurnInPls
 end
 
-local shouldCaffeinate = false
+local sleepType = "displayIdle"
+local isCaffeinate = hs.caffeinate.get(sleepType)
 local caffeineMenu = hs.menubar.new()
 
 local function setCaffeineDisplay(keepAwake)
@@ -34,20 +38,20 @@ end
 
 local function setCaffeine(keepAwake)
   keepAwake = allowCaffeine() and keepAwake
-  hs.caffeinate.set("displayIdle", keepAwake, true)
+  hs.caffeinate.set(sleepType, keepAwake, true)
   setCaffeineDisplay(keepAwake)
 end
 
 local function toggleCaffeine()
-  shouldCaffeinate = not shouldCaffeinate
-  setCaffeine(shouldCaffeinate)
+  isCaffeinate = not isCaffeinate
+  setCaffeine(isCaffeinate)
 end
 
 hs.hotkey.bind(nil, "f14", toggleCaffeine)
 
 if caffeineMenu then
   caffeineMenu:setClickCallback(toggleCaffeine)
-  setCaffeine(shouldCaffeinate)
+  setCaffeine(isCaffeinate)
 end
 
 -- Watch screen lock to disable caffeine
@@ -67,7 +71,7 @@ local function onPower(event)
   then
     log.i("Screen awakened!")
     -- Restore Caffeinated state:
-    setCaffeine(shouldCaffeinate)
+    setCaffeine(isCaffeinate)
     return
   end
   if event == powerWatcher.screensDidLock
