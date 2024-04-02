@@ -14,6 +14,13 @@ local actions = {
   ["/play_pause_youtube"] = playPauseOrOpenYoutube,
   ["/bounce_displays"] = bounceDisplays,
   ["/sleep"] = systemSleep,
+  ["/outlook"] = function()
+    local success, windowId = openBrowserTab("com.google.Chrome", "outlook.office.com")
+    print(windowId)
+    if windowId then
+      hs.application.get("com.google.Chrome"):activate()
+    end
+  end,
   ["/calendar"] = function()
     openDisposableBrowserWindow("com.google.Chrome", "https://pdq-hq.slack.com/archives/D03JDATJ7D5")
     hs.application.get("com.tinyspeck.slackmacgap"):activate()
