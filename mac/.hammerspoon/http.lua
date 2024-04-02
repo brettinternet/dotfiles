@@ -14,6 +14,10 @@ local actions = {
   ["/play_pause_youtube"] = playPauseOrOpenYoutube,
   ["/bounce_displays"] = bounceDisplays,
   ["/sleep"] = systemSleep,
+  ["/calendar"] = function()
+    openDisposableBrowserWindow("com.google.Chrome", "https://pdq-hq.slack.com/archives/D03JDATJ7D5")
+    hs.application.get("com.tinyspeck.slackmacgap"):activate()
+  end,
 }
 
 local server = hs.httpserver.new(false)
