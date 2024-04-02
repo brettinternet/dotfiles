@@ -98,8 +98,9 @@ local function openNewBrowserWindow(browser, url)
   local script = ([[(function() {
     var browser = Application('%s');
     browser.activate();
-    browser.Window().make();
-    browser.windows[0].tabs[0].url = '%s';
+    var window = browser.Window().make();
+    window.tabs[0].url = '%s';
+    return window.id();
   })();
   ]]):format(browser, url)
   return hs.osascript.javascript(script)
@@ -125,3 +126,30 @@ function playPauseOrOpenYoutube()
 end
 
 hs.hotkey.bind(nil, "f19", playPauseOrOpenYoutube)
+
+function openDisposableBrowserWindow(browser, url)
+  local script = ([[(function() {
+    var browser = Application('%s');
+    browser.activate();
+    var window = browser.Window().make();
+    window.tabs[0].url = '%s';
+    return window.id();
+  })();
+  ]]):format(browser, url)
+  local success, windowId = hs.osascript.javascript(script)
+  if success and windowId then
+    local script = ([[(function() {
+      var browser = Application('%s');
+      var windowId = '%s';
+      for (win of browser.windows()) {
+        if (win.id() === windowId) {
+          win.close();
+          return;
+        }
+      }
+    })();
+    ]]):format(browser, windowId)
+    hs.osascript.javascript(script)
+    -- hs.timer.doAfter(1, function() hs.osascript.javascript(script) end)
+  end
+end
