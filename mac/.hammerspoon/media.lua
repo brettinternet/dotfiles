@@ -74,21 +74,18 @@ hs.hotkey.bind(nil, "f13", toggleAudioOutput)
 
 -- Play/Pause YouTube
 
-local function openBrowserTab(browser, url)
+function openBrowserTab(browser, url)
   local script = ([[(function() {
     var browser = Application('%s');
-    browser.activate();
-    var tabIndex;
 
     for (win of browser.windows()) {
-      tabIndex = win.tabs().findIndex(tab => tab.url().match(/%s/));
+      var tabIndex = win.tabs().findIndex(tab => tab.url().match(/%s/));
       if (tabIndex !== -1) {
         win.activeTabIndex = (tabIndex + 1);
         win.index = 1;
-        break;
+        return win.id();
       }
     }
-    return tabIndex;
   })();
   ]]):format(browser, url)
   return hs.osascript.javascript(script)
@@ -97,7 +94,6 @@ end
 local function openNewBrowserWindow(browser, url)
   local script = ([[(function() {
     var browser = Application('%s');
-    browser.activate();
     var window = browser.Window().make();
     window.tabs[0].url = '%s';
     return window.id();
@@ -110,15 +106,15 @@ function playPauseOrOpenYoutube()
   local currentApp = hs.application.frontmostApplication()
   local browser = "com.google.Chrome"
   local chrome = hs.application.get(browser)
-  local success, tabIndex = openBrowserTab(browser, "youtube.com")
+  local success, windowId = openBrowserTab(browser, "youtube.com")
   if success then
-    if tabIndex > -1 then
+    if windowId then
       local playKey = hs.eventtap.event.newKeyEvent(nil, "k", true)
       playKey:post(chrome)
     else
       local success = openNewBrowserWindow(browser, "https://youtube.com")
       if success then
-        hs.application.launchOrFocusByBundleID(browser)
+        chrome:activate()
       end
     end
   end
@@ -149,7 +145,6 @@ function openDisposableBrowserWindow(browser, url)
       }
     })();
     ]]):format(browser, windowId)
-    hs.osascript.javascript(script)
-    -- hs.timer.doAfter(1, function() hs.osascript.javascript(script) end)
+    hs.timer.doAfter(0.5, function() hs.osascript.javascript(script) end)
   end
 end
