@@ -15,6 +15,19 @@ local actions = {
       getLaunchFocusOrHideAndSwitchBackFn("io.robbie.HomeAssistant")()
     end
   end,
+  ["/plex"] = function()
+    local plex = hs.application.get("tv.plex.desktop")
+    if plex and plex:isRunning() then
+      getLaunchFocusOrHideAndSwitchBackFn("tv.plex.desktop")()
+    else
+      local success, windowId = openBrowserTab("com.google.Chrome", "plex.gardiner")
+      if success and windowId then
+        hs.application.get("com.google.Chrome"):activate()
+      else
+        getLaunchFocusOrHideAndSwitchBackFn("tv.plex.desktop")()
+      end
+    end
+  end,
   ["/slack"] = getLaunchFocusOrHideAndSwitchBackFn("com.tinyspeck.slackmacgap"),
   ["/discord"] = getLaunchFocusOrHideAndSwitchBackFn("com.hnc.Discord"),
   ["/messages"] = getLaunchFocusOrHideAndSwitchBackFn("com.apple.MobileSMS"),
