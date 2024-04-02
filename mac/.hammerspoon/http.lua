@@ -7,7 +7,14 @@ local actions = {
   ["/spotify"] = getLaunchFocusOrHideAndSwitchBackFn("com.spotify.client"),
   ["/zoom"] = getLaunchFocusOrHideAndSwitchBackFn("us.zoom.xos"),
   ["/obs"] = getLaunchFocusOrHideAndSwitchBackFn("com.obsproject.obs-studio"),
-  ["/homeassistant"] = getLaunchFocusOrHideAndSwitchBackFn("io.robbie.HomeAssistant"),
+  ["/homeassistant"] = function()
+    local success, windowId = openBrowserTab("com.google.Chrome", "home.gardiner")
+    if success and windowId then
+      hs.application.get("com.google.Chrome"):activate()
+    else
+      getLaunchFocusOrHideAndSwitchBackFn("io.robbie.HomeAssistant")()
+    end
+  end,
   ["/slack"] = getLaunchFocusOrHideAndSwitchBackFn("com.tinyspeck.slackmacgap"),
   ["/discord"] = getLaunchFocusOrHideAndSwitchBackFn("com.hnc.Discord"),
   ["/messages"] = getLaunchFocusOrHideAndSwitchBackFn("com.apple.MobileSMS"),
