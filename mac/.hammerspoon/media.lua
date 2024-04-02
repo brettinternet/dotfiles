@@ -126,7 +126,6 @@ hs.hotkey.bind(nil, "f19", playPauseOrOpenYoutube)
 function openDisposableBrowserWindow(browser, url)
   local script = ([[(function() {
     var browser = Application('%s');
-    browser.activate();
     var window = browser.Window().make();
     window.tabs[0].url = '%s';
     return window.id();
