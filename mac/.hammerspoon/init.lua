@@ -56,11 +56,13 @@ function getLaunchFocusOrHideAndSwitchBackFn(bundleid)
 
     -- Center mouse on Window after focus or switch occurs
     currentWindow = hs.window.focusedWindow()
-    currentFrame = currentWindow:frame()
-    cfx = currentFrame.x + (currentFrame.w / 2)
-    cfy = currentFrame.y + (currentFrame.h / 2)
-    cfp = hs.geometry.point(cfx, cfy)
-    hs.mouse.absolutePosition(cfp)
+    if currentWindow then
+      currentFrame = currentWindow:frame()
+      cfx = currentFrame.x + (currentFrame.w / 2)
+      cfy = currentFrame.y + (currentFrame.h / 2)
+      cfp = hs.geometry.point(cfx, cfy)
+      hs.mouse.absolutePosition(cfp)
+    end
   end
 end
 
