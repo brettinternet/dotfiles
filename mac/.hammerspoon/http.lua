@@ -7,6 +7,7 @@ local actions = {
   ["/spotify"] = getLaunchFocusOrHideAndSwitchBackFn("com.spotify.client"),
   ["/zoom"] = getLaunchFocusOrHideAndSwitchBackFn("us.zoom.xos"),
   ["/obs"] = getLaunchFocusOrHideAndSwitchBackFn("com.obsproject.obs-studio"),
+  ["/weather"] = getLaunchFocusOrHideAndSwitchBackFn("com.apple.weather"),
   ["/homeassistant"] = function()
     local success, windowId = openBrowserTab("com.google.Chrome", "home.gardiner")
     if success and windowId then
