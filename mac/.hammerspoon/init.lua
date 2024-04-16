@@ -41,11 +41,16 @@ local function prefixFn(fn)
 end
 
 local lastApp = nil
-function getLaunchFocusOrHideAndSwitchBackFn(bundleid)
+function getLaunchFocusOrHideAndSwitchBackFn(bundleid, kill)
+  kill = kill or false
   return function()
     currentApp = hs.application.frontmostApplication()
     if currentApp and (currentApp:bundleID() == bundleid) then
-      currentApp:hide()
+      if kill then
+        currentApp:kill()
+      else
+        currentApp:hide()
+      end
       if lastApp and currentApp ~= lastApp then
         lastApp:activate(true)
       end
