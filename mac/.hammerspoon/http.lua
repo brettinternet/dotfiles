@@ -9,6 +9,7 @@ local actions = {
   ["/obs"] = getLaunchFocusOrHideAndSwitchBackFn("com.obsproject.obs-studio"),
   ["/weather"] = getLaunchFocusOrHideAndSwitchBackFn("com.apple.weather", true),
   ["/notes"] = getLaunchFocusOrHideAndSwitchBackFn("com.apple.Notes", true),
+  ["/mail"] = getLaunchFocusOrHideAndSwitchBackFn("com.apple.mail"),
   ["/homeassistant"] = function()
     local success, windowId = openBrowserTab("com.google.Chrome", "home.gardiner")
     if success and windowId then
