@@ -16,6 +16,10 @@ function palette {
   print -cP "${colors[@]}"
 }
 
+function password {
+  LC_ALL=C tr -dc 'A-Za-z0-9!#%&'\''()*+,-./:;<=>?@[\]^_{|}~' </dev/urandom | head -c 32; echo ''
+}
+
 # Moving around
 alias home='cd ~'
 alias ..='cd ../'
