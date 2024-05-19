@@ -41,8 +41,6 @@ cask "karabiner-elements"
 cask "telegram"
 cask "home-assistant"
 cask "unnaturalscrollwheels"
-
-tap "homebrew/cask-fonts"
 cask "font-fira-code"
 cask "font-hack-nerd-font"
 
