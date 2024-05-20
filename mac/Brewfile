@@ -24,6 +24,7 @@ brew "lsd"
 brew "bat"
 brew "trash-cli"
 brew "go-task"
+brew "atuin"
 
 cask "firefox"
 cask "chromium"

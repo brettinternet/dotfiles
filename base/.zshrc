@@ -195,6 +195,11 @@ zinit ice as"program" \
   atpull'nvim +AstroUpdate'
 zinit light AstroNvim/AstroNvim
 
+# Atuin
+if [ -x "$(command -v atuin)" ]; then
+  zinit light atuinsh/atuin
+  export ATUIN_SYNC_ADDRESS=https://sh.internal.brett.cloud
+fi
 
 # -- Colorscheme
 
