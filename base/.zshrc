@@ -201,12 +201,6 @@ if [ -x "$(command -v atuin)" ]; then
   export ATUIN_SYNC_ADDRESS=https://sh.internal.brett.cloud
 fi
 
-# -- Colorscheme
-
-# dark version
-zinit ice as"program" id-as"gruvbox-material-dark"
-# zinit snippet https://github.com/sainnhe/dotfiles/blob/e917a01b8ce0e84455e2599ffed95c3e52492cf3/.zsh-theme-gruvbox-material-dark
-
 
 # -- Prompt
 
