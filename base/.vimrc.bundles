@@ -5,7 +5,7 @@
 call plug#begin('~/.vim/plugged')
 
 " Theme
-Plug 'gruvbox-material/vim', {'as': 'gruvbox-material'} " https://github.com/gruvbox-material/vim
+Plug 'navarasu/onedark.nvim', {'as': 'onedark'} " https://github.com/gruvbox-material/vim
 
 " Tooling
 Plug 'vim-airline/vim-airline'                              " Status line, written in Vimscript
