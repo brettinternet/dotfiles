@@ -98,14 +98,11 @@ nnoremap <leader>s :call FzyCommand("find . -type f", ":sp")<cr>
 set termguicolors
 set background=dark
 
-" Colorscheme; see :help gruvbox-material-configuration
-let g:gruvbox_material_background = 'hard'
-"let g:gruvbox_material_enable_italic = 1 " https://github.com/sainnhe/icursive-nerd-font
-let g:gruvbox_material_transparent_background = 1
-let g:airline_theme = 'gruvbox_material'
-let g:gruvbox_material_enable_bold = 1
-let g:gruvbox_material_visual = 'reverse'
-silent! colorscheme gruvbox-material
+" https://github.com/navarasu/onedark.nvim
+let g:onedark_config = {
+    \ 'style': 'warmer',
+\}
+silent! colorscheme onedark
 hi clear Comment
 
 " Fix Cursor in TMUX
