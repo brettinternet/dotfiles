@@ -37,8 +37,9 @@
       path: base/.vimrc.bundles
     ~/.tmux.conf:
       path: base/.tmux.conf
-    ~/.config/nvim/lua/user/init.lua:
-      path: base/.config/nvim/lua/user/init.lua
+    ~/.config/nvim/:
+      glob: true
+      path: base/.config/nvim/*
     ~/.bin/:
       glob: true
       path: base/.bin/*
@@ -50,11 +51,7 @@
     # Allow direnv access to ~/.envrc
     - ['[ -f "$HOME/.zinit/plugins/direnv---direnv/direnv" ] && direnv allow $HOME || true']
     - ['[ -f /bin/zsh ] && /bin/zsh -c "source ~/.zshrc; zinit self-update"']
-    # Issue: https://github.com/wbthomason/packer.nvim/issues/751
-    # -
-    #   - >-
-    #     [ -d "$HOME/.zinit/plugins/astronvim---astronvim" ] &&
-    #     nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync'
+    - ['[ -x "$(command -v nvim)" ] && nvim --headless -c "quitall"']
     # - ['doom upgrade']
     -
       # https://github.com/tmux-plugins/tpm/blob/master/docs/managing_plugins_via_cmd_line.md
