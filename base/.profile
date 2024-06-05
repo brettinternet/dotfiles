@@ -47,7 +47,7 @@ scope() {
   # global NPM packages: https://docs.npmjs.com/resolving-eacces-permissions-errors-when-installing-packages-globally
   # Set custom gopath because I prefer it to be a hidden folder
   export GOPATH=~/.go
-  export PATH=~/.npm-global/bin:~/.local/bin:$GOPATH/bin:~/.cargo/bin:$PATH
+  export PATH=~/.npm-global/bin:~/.local/bin:$GOPATH/bin:~/.cargo/bin:$PATH:~/.config/emacs/bin
 
   # Don't timeout in terminal multiplexer
   if [[ $TERM != screen* ]] && ! [ -n "$TMUX" ] && [ -z "$DISPLAY" ] && [ "$(uname)" != "Darwin" ]; then

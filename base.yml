@@ -37,9 +37,6 @@
       path: base/.vimrc.bundles
     ~/.tmux.conf:
       path: base/.tmux.conf
-    ~/.config/nvim/:
-      glob: true
-      path: base/.config/nvim/*
     ~/.bin/:
       glob: true
       path: base/.bin/*
@@ -51,8 +48,6 @@
     # Allow direnv access to ~/.envrc
     - ['[ -f "$HOME/.zinit/plugins/direnv---direnv/direnv" ] && direnv allow $HOME || true']
     - ['[ -f /bin/zsh ] && /bin/zsh -c "source ~/.zshrc; zinit self-update"']
-    - ['[ -x "$(command -v nvim)" ] && nvim --headless -c "quitall"']
-    # - ['doom upgrade']
     -
       # https://github.com/tmux-plugins/tpm/blob/master/docs/managing_plugins_via_cmd_line.md
       - >-
