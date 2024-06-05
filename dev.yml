@@ -25,6 +25,9 @@
       path: dev/.config/nvim
     ~/.config/emacs:
       path: dev/.config/emacs
+    ~/.functions/:
+      glob: true
+      path: base/.functions/*
 
 - shell:
     - ['doom upgrade']
