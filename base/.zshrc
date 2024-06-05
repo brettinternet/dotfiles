@@ -177,24 +177,6 @@ zinit from"gh-r" as"program" mv"direnv* -> direnv" \
   pick"direnv" src="zhook.zsh" for \
     direnv/direnv
 
-# Emacs config
-zinit ice as"program" atclone'./bin/doom install --env --fonts' pick"./bin/*"
-zinit light doomemacs/doomemacs
-
-# https://astronvim.github.io/Configuration/manage_user_config
-NVIM_SETUP=$(cat <<-END
-mkdir ~/.config/nvim;
-mv * ~/.config/nvim;
-nvim --headless -c 'autocmd User PackerComplete quitall'
-END
-)
-
-# Neovim config
-zinit ice as"program" \
-  atclone'$NVIM_SETUP' \
-  atpull'nvim +AstroUpdate'
-zinit light AstroNvim/AstroNvim
-
 # Atuin
 if [ -x "$(command -v atuin)" ]; then
   zinit light atuinsh/atuin

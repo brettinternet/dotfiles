@@ -89,9 +89,7 @@ alias ssh='TERM=xterm-256color; ssh'
 
 # Editors
 alias e='emacs'
-
 alias vi='vim'
-alias vim='nvim'
 alias v='vim'
 
 # Zippin
