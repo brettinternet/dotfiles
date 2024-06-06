@@ -1,0 +1,30 @@
+k9s:
+  liveViewAutoRefresh: false
+  refreshRate: 2
+  maxConnRetry: 5
+  readOnly: false
+  noExitOnCtrlC: false
+  ui:
+    enableMouse: true
+    headless: false
+    logoless: true
+    crumbsless: false
+    reactive: false
+    noIcons: false
+    skin: skin
+  skipLatestRevCheck: false
+  disablePodCounting: false
+  logger:
+    tail: 100
+    buffer: 10000
+    sinceSeconds: -1
+    fullScreen: false
+    textWrap: false
+    showTime: true
+  thresholds:
+    cpu:
+      critical: 90
+      warn: 70
+    memory:
+      critical: 90
+      warn: 70
