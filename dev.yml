@@ -11,11 +11,17 @@
     - ~/dev/work
 
 - link:
-    ~/.config/k9s/skin.yml:
-      path: dev/.config/k9s/skin.yml
+    ~/.config/k9s/config.yaml:
+      path: dev/.config/k9s/config.yaml
       if: '[[ "$OSTYPE" == "linux-gnu"* ]]'
-    ~/Library/Application Support/k9s/skin.yml:
-      path: dev/.config/k9s/skin.yml
+    ~/.config/k9s/skins/skin.yaml:
+      path: dev/.config/k9s/skin.yaml
+      if: '[[ "$OSTYPE" == "linux-gnu"* ]]'
+    ~/Library/Application Support/k9s/config.yaml:
+      path: dev/.config/k9s/config.yaml
+      if: '[[ "$OSTYPE" == "darwin"* ]]'
+    ~/Library/Application Support/k9s/skins/skin.yaml:
+      path: dev/.config/k9s/skin.yaml
       if: '[[ "$OSTYPE" == "darwin"* ]]'
     ~/.iex.exs:
       path: dev/.iex.exs
