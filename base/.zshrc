@@ -183,6 +183,12 @@ if [ -x "$(command -v atuin)" ]; then
   export ATUIN_SYNC_ADDRESS=https://sh.internal.brett.cloud
 fi
 
+# Emacs
+if [ -x "$(command -v emacs)" ]; then
+  zinit ice as"program" atclone'./bin/doom install --env --fonts' pick"./bin/*"
+  zinit light doomemacs/doomemacs
+fi
+
 
 # -- Prompt
 
