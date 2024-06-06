@@ -23,12 +23,9 @@
       path: dev/.zshrc.dev
     ~/.config/nvim:
       path: dev/.config/nvim
-    ~/.config/emacs:
-      path: dev/.config/emacs
     ~/.functions/:
       glob: true
       path: base/.functions/*
 
 - shell:
-    - ['doom upgrade']
     - ['nvim --headless "+Lazy! sync" -c "quitall"']

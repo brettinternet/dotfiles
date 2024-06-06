@@ -49,6 +49,7 @@
     - ['[ -f "$HOME/.zinit/plugins/direnv---direnv/direnv" ] && direnv allow $HOME || true']
     - ['[ -f /bin/zsh ] && /bin/zsh -c "source ~/.zshrc; zinit self-update"']
     - ['/usr/bin/vim +PlugInstall +qall > /dev/null']
+    - ['[ -x "$(command -v doom)" ] && doom upgrade']
     -
       # https://github.com/tmux-plugins/tpm/blob/master/docs/managing_plugins_via_cmd_line.md
       - >-
