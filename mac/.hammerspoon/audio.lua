@@ -1,13 +1,13 @@
 -- A better push to talk / toggle mute
 local shouldCaffeinate = false
-local muteMenu = hs.menubar.new()
+-- local muteMenu = hs.menubar.new()
 
 local function setMuteDisplay(mute)
-  if mute then
-    muteMenu:setTitle("📵")
-  else
-    muteMenu:setTitle("🎤")
-  end
+  -- if mute then
+  --   muteMenu:setTitle("📵")
+  -- else
+  --   muteMenu:setTitle("🎤")
+  -- end
 end
 
 local function clearMuteAlert()
@@ -61,7 +61,7 @@ local function toggleMuteOrPTT()
   end
 end
 
-hs.hotkey.bind({"cmd", "shift"}, "a", nil, toggleMuteOrPTT, pushToTalk)
+-- hs.hotkey.bind({"cmd", "shift"}, "a", nil, toggleMuteOrPTT, pushToTalk)
 hs.hotkey.bind(nil, "f18", nil, toggleMute)
 
 if muteMenu then
