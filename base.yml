@@ -21,7 +21,7 @@
       force: true
     ~/.dircolors:
       path: base/.dircolors
-      if: "[ whence dircolors >/dev/null ]"
+      if: "whence dircolors >/dev/null"
     ~/.zshrc:
       path: base/.zshrc
       if: '[ -x "$(command -v zsh)" ]'
