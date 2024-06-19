@@ -7,6 +7,10 @@ function shell_stats {
     | grep -v "./" | sort -nr | head -20 | column -c3 -s " " -t | nl
 }
 
+function disk_ids {
+  find /dev/disk/by-id/ -type l|xargs -I{} ls -l {}|grep -v -E '[0-9]$' |sort -k11|cut -d' ' -f9,10,11,12
+}
+
 # Print console colors
 function palette {
   local colors
