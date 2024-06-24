@@ -13,6 +13,7 @@ scope() {
   # https://wiki.archlinux.org/index.php/Sudo#Using_visudo
   export VISUAL=vim
   export EDITOR="$VISUAL"
+  export SYSTEMD_EDITOR="$EDITOR"
 
   # https://wiki.archlinux.org/index.php/Environment_variables#Default_programs
   if [ ! -n "$DISPLAY" ]; then
