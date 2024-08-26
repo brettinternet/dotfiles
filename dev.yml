@@ -23,6 +23,8 @@
     ~/Library/Application Support/k9s/skins/skin.yaml:
       path: dev/.config/k9s/skin.yaml
       if: '[[ "$OSTYPE" == "darwin"* ]]'
+    ~/.tool-versions:
+      path: dev/.tool-versions
     ~/.iex.exs:
       path: dev/.iex.exs
     ~/.zshrc.dev:
