@@ -180,7 +180,7 @@ zinit from"gh-r" as"program" mv"direnv* -> direnv" \
 # Atuin
 if [ -x "$(command -v atuin)" ]; then
   zinit light atuinsh/atuin
-  export ATUIN_SYNC_ADDRESS=https://sh.internal.brett.cloud
+  export ATUIN_SYNC_ADDRESS=https://sh.internal.gardiner.cloud
 fi
 
 # Emacs
