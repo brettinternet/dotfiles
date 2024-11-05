@@ -21,3 +21,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
   [ -s "/opt/homebrew/opt/nvm/nvm.sh" ] && . "/opt/homebrew/opt/nvm/nvm.sh"
   [ -s "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm" ] && . "/opt/homebrew/opt/nvm/etc/bash_completion.d/nvm"
 fi
+
+if command -v task >/dev/null 2>&1; then
+  eval "$(task --completion zsh)"
+fi
