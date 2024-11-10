@@ -1,6 +1,6 @@
 # Dotfiles
 
-[![Lint](https://github.com/brettinternet/dotfiles/actions/workflows/lint.yml/badge.svg)](https://github.com/brettinternet/dotfiles/actions/workflows/lint.yml)
+[![Lint](https://github.com/brettinternet/dotfiles/actions/workflows/lint.yaml/badge.svg)](https://github.com/brettinternet/dotfiles/actions/workflows/lint.yaml)
 
 ![desktop screenshot](./screenshot.png)
 

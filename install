@@ -41,7 +41,7 @@ echo "Using groups: $DOTFILE_GROUPS"
 IFS=', ' read -r -a DOTFILE_ARRAY <<< "$DOTFILE_GROUPS"
 for GROUP_EL in "${DOTFILE_ARRAY[@]}"; do
   if [ ! -z "$GROUP_EL" ]; then
-    CONFIG="$GROUP_EL.yml"
+    CONFIG="$GROUP_EL.yaml"
     if [ -f "${BASEDIR}/${CONFIG}" ]; then
       echo "Configuring ${CONFIG}"
       "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}"
