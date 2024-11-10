@@ -3,7 +3,7 @@
 version: "3"
 
 includes:
-  setup: .taskfiles/setup_{{OS}}.yaml
+  setup: Taskfile.{{OS}}.yaml
 
 tasks:
   default:
@@ -21,5 +21,6 @@ tasks:
     desc: Run direnv hooks
     cmd: direnv allow .
     status:
+      - '[ -x "$(command -v direnv)" ]'
       - "[[ $(direnv status --json | jq '.state.foundRC.allowed') == 0 ]]"
       - "[[ $(direnv status --json | jq '.state.loadedRC.allowed') == 0 ]]"

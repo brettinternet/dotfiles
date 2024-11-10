@@ -26,9 +26,9 @@ brew "trash-cli"
 brew "go-task"
 brew "atuin"
 
-cask "firefox"
-cask "chromium"
-cask "hyperdock"
+tap "finestructure/Hummingbird"
+brew "finestructure/hummingbird/hummingbird"
+
 cask "bitwarden"
 cask "docker"
 cask "visual-studio-code"
@@ -44,8 +44,3 @@ cask "home-assistant"
 cask "unnaturalscrollwheels"
 cask "font-fira-code"
 cask "font-hack-nerd-font"
-
-# Tiling?
-# https://github.com/koekeishiya/yabai/wiki/Installing-yabai-(latest-release)
-# koekeishiya/formulae/skhd
-# koekeishiya/formulae/yabai

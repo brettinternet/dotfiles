@@ -6,8 +6,12 @@
 
 - link:
     ~/.bin/:
-      path: vm/.bin/*
+      path: vmguest/.bin/*
       glob: true
     ~/.screenlayout:
-      path: vm/.screenlayout
+      path: vmguest/.screenlayout
       force: true
+      if: '[ xset q &>/dev/null ]'
+    ~/.profile:
+      path: vmguest/.xprofile.local
+      if: '[ -x "$(command -v spice-vdagent)" ]'

@@ -4,6 +4,12 @@
       create: true
       relink: true
 
+- create:
+    - ~/dev
+    - ~/dev/me
+    - ~/dev/sandbox
+    - ~/dev/work
+
 - link:
     ~/.zprofile:
       path: darwin/.zprofile
@@ -12,11 +18,15 @@
     ~/.functions/:
       glob: true
       path: darwin/.functions/*
+    ~/.zshrc.darwin:
+      path: darwin/.zshrc.darwin
     ~/.hammerspoon/:
       glob: true
       path: darwin/.hammerspoon/*
-    ~/.zshrc.darwin:
-      path: base/platform/.zshrc.darwin
+    ~/.config/nix-darwin/:
+      glob: true
+      path: darwin/.config/nix-darwin/*
+      if: '[ -x "$(command -v nix)" ]'
 
 - shell:
     - ['./darwin/brew.sh']
