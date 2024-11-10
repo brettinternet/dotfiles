@@ -64,9 +64,6 @@
     ~/.functions/pacman.sh:
       path: base/platform/pacman.sh
       if: '[ `uname` = Linux ] && [ -x "$(command -v pacman)" ]'
-    ~/.zshrc.darwin:
-      path: base/platform/.zshrc.darwin
-      if: '[ `uname` = Darwin ]'
     ~/.zshrc.linux:
       path: base/platform/.zshrc.linux
       if: '[ `uname` = Linux ]'

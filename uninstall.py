@@ -13,9 +13,9 @@ dotfile_groups = os.getenv("DOTFILE_GROUPS")
 groups = dotfile_groups.split(",") if dotfile_groups else None
 
 if groups and len(groups) > 0:
-    logging.info(f"""Remove links from {", ".join(map(lambda f: f"{f}.yml", groups))}.""")
+    logging.info(f"""Remove links from {", ".join(map(lambda f: f"{f}.yaml", groups))}.""")
     for group in groups:
-        stream = open(f"{group}.yml", "r")
+        stream = open(f"{group}.yaml", "r")
         conf = yaml.load(stream, yaml.FullLoader)
         for section in conf:
             if "link" in section:
