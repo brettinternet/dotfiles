@@ -131,5 +131,5 @@ require("http")
 
 -- Reload config on change
 local home = os.getenv("HOME")
-hs.pathwatcher.new(home .. "/.dotfiles/mac/.hammerspoon/", function() hs.reload() end):start()
+hs.pathwatcher.new(home .. "/.dotfiles/darwin/.hammerspoon/", function() hs.reload() end):start()
 hs.alert.show("Hammerspoon config loaded")

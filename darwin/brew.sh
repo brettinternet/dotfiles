@@ -1,6 +1,6 @@
 #!/bin/bash
 
-brew bundle --file mac/Brewfile
+brew bundle --file darwin/Brewfile
 
 # Reset application attributes to allow run
 xattr -cr /Applications/Chromium.app

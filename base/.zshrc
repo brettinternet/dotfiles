@@ -240,9 +240,10 @@ zstyle ':completion:*:kill:*'   force-list always
 zstyle ":completion:*:descriptions" format "%B%d%b"
 #zstyle ':completion:*:*:*:default' menu yes select search
 
-if command -v task >/dev/null 2>&1; then
-  eval "$(task --completion zsh)"
-fi
+# if command -v task >/dev/null 2>&1; then
+#   autoload -Uz compdef
+#   eval "$(task --completion zsh)"
+# fi
 
 # -- Local configs
 

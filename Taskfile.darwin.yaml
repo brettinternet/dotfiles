@@ -1,0 +1,19 @@
+---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+vars:
+  BREW_SH: "{{.ROOT_DIR}}/darwin/brew.sh"
+
+tasks:
+  init:
+    desc: Darwin setup
+    cmds:
+      - task: brew
+
+  brew:
+    desc: Install workstation dependencies with Brew
+    cmd: "{{.BREW_SH}}"
+    preconditions:
+      - { msg: "Missing Homebrew", sh: "command -v brew" }
+      - { msg: "Missing Brewfile", sh: "test -f {{.BREWFILE}}" }
