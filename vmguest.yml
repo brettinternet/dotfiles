@@ -11,5 +11,3 @@
     ~/.screenlayout:
       path: vm/.screenlayout
       force: true
-    ~/.xprofile.local:
-      path: desktop/.xprofile.local

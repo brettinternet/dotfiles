@@ -12,16 +12,16 @@
 
 - link:
     ~/.config/:
-      path: laptop/.config/*
+      path: thinkpad/.config/*
       glob: true
     ~/.functions/:
-      path: laptop/.functions/*
+      path: thinkpad/.functions/*
       glob: true
     ~/.bin/:
-      path: laptop/.bin/*
+      path: thinkpad/.bin/*
       glob: true
     ~/.screenlayout:
-      path: laptop/.screenlayout
+      path: thinkpad/.screenlayout
       force: true
     ~/.xprofile.local:
-      path: laptop/.xprofile.local
+      path: thinkpad/.xprofile.local

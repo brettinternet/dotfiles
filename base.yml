@@ -33,28 +33,59 @@
     ~/.vimrc:
       path: base/.vimrc
       force: true
+      if: '[ -x "$(command -v vim)" ]'
     ~/.vimrc.bundles:
       path: base/.vimrc.bundles
+      if: '[ -x "$(command -v vim)" ]'
     ~/.tmux.conf:
       path: base/.tmux.conf
+      if: '[ -x "$(command -v tmux)" ]'
+    ~/.config/k9s/config.yaml:
+      path: base/.config/k9s/config.yaml
+      if: '[ `uname` = Linux ] && [ -x "$(command -v kubectl)" ]'
+    ~/.config/k9s/skins/skin.yaml:
+      path: base/.config/k9s/skin.yaml
+      if: '[ `uname` = Linux ] && [ -x "$(command -v kubectl)" ]'
+    ~/Library/Application Support/k9s/config.yaml:
+      path: base/.config/k9s/config.yaml
+      if: '[ `uname` = Darwin ] && [ -x "$(command -v kubectl)" ]'
+    ~/Library/Application Support/k9s/skins/skin.yaml:
+      path: base/.config/k9s/skin.yaml
+      if: '[ `uname` = Darwin ] && [ -x "$(command -v kubectl)" ]'
+    ~/.config/nvim:
+      path: base/.config/nvim
+      if: '[ -x "$(command -v nvim)" ]'
     ~/.bin/:
       glob: true
       path: base/.bin/*
     ~/.functions/:
       glob: true
       path: base/.functions/*
+    ~/.functions/pacman.sh:
+      path: base/platform/pacman.sh
+      if: '[ `uname` = Linux ] && [ -x "$(command -v pacman)" ]'
+    ~/.zshrc.darwin:
+      path: base/platform/.zshrc.darwin
+      if: '[ `uname` = Darwin ]'
+    ~/.zshrc.linux:
+      path: base/platform/.zshrc.linux
+      if: '[ `uname` = Linux ]'
 
 - shell:
     # Allow direnv access to ~/.envrc
     - ['[ -f "$HOME/.zinit/plugins/direnv---direnv/direnv" ] && direnv allow $HOME || true']
     - ['[ -f /bin/zsh ] && /bin/zsh -c "source ~/.zshrc; zinit self-update"']
     - ['/usr/bin/vim +PlugInstall +qall > /dev/null']
+    - ['[ -x "$(command -v nvim)" ] && nvim --headless "+Lazy! sync" -c "quitall"']
     - ['[ -x "$(command -v doom)" ] && doom upgrade || true']
     -
       # https://github.com/tmux-plugins/tpm/blob/master/docs/managing_plugins_via_cmd_line.md
       - >-
-        tmux start\;
-        new -d\;
-        run "~/.tmux/plugins/tpm/bin/install_plugins"\;
-        run "~/.tmux/plugins/tpm/bin/update_plugins all"\;
-        kill-session
+        if [ -x "$(command -v tmux)" ]; then
+          tmux start-server;
+          tmux new-session -d;
+          tmux source-file ~/.tmux.conf;
+          run "~/.tmux/plugins/tpm/bin/install_plugins";
+          run "~/.tmux/plugins/tpm/bin/update_plugins all";
+          tmux kill-session -t 0;
+        fi

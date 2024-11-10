@@ -1,7 +1,7 @@
 # ISSUES:
 # - https://github.com/anishathalye/dotbot/issues/282
 
-.PHONY: update_dotbot setup install uninstall base desktop laptop vmguest vmguest-arch mac lint
+.PHONY: update_dotbot setup install uninstall base thinkpad vmguest darwin lint
 
 install:
 	@./install $(ARGS)
@@ -9,17 +9,14 @@ install:
 update_dotbot:
 	@git submodule update --remote dotbot
 
-uninstall: export DOTFILE_GROUPS = archlinux,base,desktop,dev,laptop,mac,vmguest,x11
+uninstall: export DOTFILE_GROUPS = archlinux,base,thinkpad,darwin,vmguest,x11
 uninstall:
 	@./uninstall.py
 
 base: install
 
-desktop: export DOTFILE_GROUPS = base,x11,desktop,archlinux
-desktop: install
-
-laptop: export DOTFILE_GROUPS = base,x11,laptop,archlinux,dev
-laptop: install
+thinkpad: export DOTFILE_GROUPS = base,x11,thinkpad,archlinux
+thinkpad: install
 
 server: export DOTFILE_GROUPS = base,archlinux
 server: install
@@ -30,8 +27,10 @@ vmguest: install
 vmguest-arch: export DOTFILE_GROUPS = base,x11,vmguest,archlinux
 vmguest-arch: install
 
-mac: export DOTFILE_GROUPS = base,mac,dev
-mac: install
+darwin: export DOTFILE_GROUPS = base,darwin
+darwin: install
+
+mac: darwin
 
 i3: export DOTFILE_GROUPS = i3
 i3: install

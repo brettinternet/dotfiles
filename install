@@ -29,11 +29,6 @@ fi
 if [ -z "$DOTFILE_GROUPS" ]; then
   DOTFILE_GROUPS="base"
 
-  if [ -f "/etc/arch-release" ]; then
-    # is Arch
-    DOTFILE_GROUPS="${DOTFILE_GROUPS},archlinux"
-  fi
-
   if [ xset q &>/dev/null ]; then
     # is running X11
     DOTFILE_GROUPS="${DOTFILE_GROUPS},x11"
