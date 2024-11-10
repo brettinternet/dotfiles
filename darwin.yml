@@ -6,15 +6,15 @@
 
 - link:
     ~/.zprofile:
-      path: mac/.zprofile
+      path: darwin/.zprofile
     ~/.hushlogin:
-      path: mac/.hushlogin
+      path: darwin/.hushlogin
     ~/.functions/:
       glob: true
-      path: mac/.functions/*
+      path: darwin/.functions/*
     ~/.hammerspoon/:
       glob: true
-      path: mac/.hammerspoon/*
+      path: darwin/.hammerspoon/*
 
 - shell:
-    - ['./mac/brew.sh']
+    - ['./darwin/brew.sh']
