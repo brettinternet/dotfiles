@@ -55,6 +55,9 @@
     ~/.config/nvim:
       path: base/.config/nvim
       if: '[ -x "$(command -v nvim)" ]'
+    ~/.config/broot/conf.toml:
+      path: base/.config/broot/conf.toml
+      if: '[ -x "$(command -v broot)" ]'
     ~/.bin/:
       glob: true
       path: base/.bin/*

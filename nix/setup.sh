@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Note: flake is not accessible through symlink - https://github.com/NixOS/nix/issues/8013
+
 # Install Nix
 # https://nixos.org/download/
 if [ -z "$(command -v nix)" ]; then
@@ -12,8 +14,8 @@ function run_nix() {
   "${cmd[@]}"
 }
 
-nix_darwin_config_dir="$HOME/.config/nix-darwin"
-nix_config_name="macbook"
+nix_darwin_config_dir=$HOME/.dotfiles/nix
+nix_config_name="bort"
 
 # Install Nix-darwin
 # https://github.com/LnL7/nix-darwin#flakes
@@ -26,4 +28,10 @@ fi
 
 run_nix run nix-darwin -- switch --flake $nix_darwin_config_dir#$nix_config_name
 source ~/.zshrc # reload shell in case darwin-rebuild isn't available
-darwin-rebuild switch --flake $nix_darwin_config_dir#$nix_config_name
+darwin-rebuild switch --flake $nix_darwin_config_dir
+
+xattr -cr /Applications/UnnaturalScrollWheels.app
+
+if ! xcode-select -p 1>/dev/null; then
+  xcode-select --install
+fi

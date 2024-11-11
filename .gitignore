@@ -1,4 +1,3 @@
 .envrc
 lazy-lock.json
 Brewfile.lock.json
-flake.lock
