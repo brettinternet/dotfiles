@@ -75,7 +75,7 @@
     # Allow direnv access to ~/.envrc
     - ['[ -f "$HOME/.zinit/plugins/direnv---direnv/direnv" ] && direnv allow $HOME || true']
     - ['[ -f /bin/zsh ] && /bin/zsh -c "source ~/.zshrc; zinit self-update"']
-    - ['/usr/bin/vim +PlugInstall +qall > /dev/null']
+    # - ['[ -x "$(command -v vim)" ] && /usr/bin/vim +PlugInstall +qall > /dev/null']
     - ['[ -x "$(command -v nvim)" ] && nvim --headless "+Lazy! sync" -c "quitall"']
     - ['[ -x "$(command -v doom)" ] && doom upgrade || true']
     -
