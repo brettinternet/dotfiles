@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# Note: flake is not accessible through symlink - https://github.com/NixOS/nix/issues/8013
+# Nix annoyances:
+# - git add first? 🤔 https://github.com/NixOS/nix/issues/6642
+# - flake is not accessible through symlink - https://github.com/NixOS/nix/issues/8013
 
 # Install Nix
 # https://nixos.org/download/

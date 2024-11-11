@@ -1,5 +1,3 @@
-# Nix annoyances:
-# - git add first? 🤔 https://github.com/NixOS/nix/issues/6642
 {
   description = "My nix-darwin system flake";
 

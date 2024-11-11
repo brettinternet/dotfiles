@@ -3,16 +3,10 @@
 brew bundle --file darwin/Brewfile
 
 # Reset application attributes to allow run
-xattr -cr /Applications/Chromium.app
-xattr -cr /Applications/Yippy.app
 xattr -cr /Applications/UnnaturalScrollWheels.app
 
-xcode-select --install
-
-# vim plug
-if [[ ! -f ~/.vim/autoload/plug.vim ]]; then
-  curl -fLo ~/.vim/autoload/plug.vim --create-dirs \
-    https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+if ! xcode-select -p 1>/dev/null; then
+  xcode-select --install
 fi
 
 if ! command -v rustc; then

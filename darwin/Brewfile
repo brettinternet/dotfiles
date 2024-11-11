@@ -1,37 +1,41 @@
-# https://github.com/Homebrew/homebrew-bundle
-
-mas "Xcode", id: 497799835
-
-brew "git"
-brew "coreutils"
-brew "emacs"
-brew "neovim"
-brew "node"
-brew "elixir"
-brew "btop"
-brew "bat"
-brew "tmux"
-brew "broot"
+# CLI
 brew "asdf"
-brew "terminal-notifier"
-brew "nvm"
-brew "wget"
-brew "qrencode"
-brew "virtualenvwrapper"
-brew "fd"
-brew "lsd"
-brew "bat"
-brew "trash-cli"
-brew "go-task"
 brew "atuin"
+brew "bat"
+brew "broot"
+brew "btop"
+brew "coreutils"
+brew "elixir"
+brew "fd"
+brew "git"
+brew "go-task"
+brew "lsd"
+brew "mas"
+brew "neovim"
+brew "qrencode"
+brew "rustc"
+brew "terminal-notifier"
+brew "tmux"
+brew "trash-cli"
+brew "wget"
 
+brew "nvm"
+brew "virtualenvwrapper"
+
+# CLI + GUI
 brew "wireguard-tools"
 
+# Custom taps
 tap "finestructure/Hummingbird"
 brew "finestructure/hummingbird/hummingbird"
 
-cask "bitwarden"
+# GUI
+cask "balenaetcher"
+cask "datagrip"
+cask "discord"
 cask "docker"
+cask "elgato-control-center"
+cask "elgato-stream-deck"
 cask "font-fira-code"
 cask "font-hack-nerd-font"
 cask "google-chrome"
@@ -40,10 +44,25 @@ cask "hammerspoon"
 cask "home-assistant"
 cask "iterm2"
 cask "karabiner-elements"
+cask "kopiaui"
+cask "maccy"
+cask "obs"
+cask "plex"
+cask "postico"
+cask "raspberry-pi-imager"
 cask "slack"
 cask "stats"
 cask "spotify"
 cask "telegram"
 cask "unnaturalscrollwheels"
+cask "vnc-viewer"
 cask "visual-studio-code"
+cask "vlc"
 cask "zoom"
+
+# AppStore
+mas "AdGuard for Safari", id: 1440147259
+mas "Bitwarden", id: 1352778147 # appstore for safari support
+mas "WiFiman", id: 1385561119
+mas "Windows App", id: 1295203466 # Microsoft Remote Desktop
+mas "Xcode", id: 497799835

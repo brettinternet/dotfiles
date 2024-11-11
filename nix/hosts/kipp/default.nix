@@ -1,6 +1,4 @@
 { pkgs, ... }: {
-  nix.settings.experimental-features = "nix-command flakes";
-
   system.defaults = {
     dock.autohide = true;
     dock.persistent-apps = [];
@@ -17,33 +15,32 @@
   services.nix-daemon.enable = true;
   nix.settings.experimental-features = "nix-command flakes";
   programs.zsh.enable = true;
-  system.configurationRevision = self.rev or self.dirtyRev or null;
   # Read changelog before upgrading: darwin-rebuild changelog
   system.stateVersion = 5;
   nixpkgs.hostPlatform = "aarch64-darwin";
   time.timeZone = "America/Denver";
 
     # Search packages: nix-env -qaP | grep wget
-  environment.systemPackages = [
-    pkgs.asdf
-    pkgs.atuin
-    pkgs.bat
-    pkgs.broot
-    pkgs.btop
-    pkgs.coreutils
-    pkgs.elixir
-    pkgs.fd
-    pkgs.git
-    pkgs.go-task
-    pkgs.lsd
-    pkgs.mas
-    pkgs.neovim
-    pkgs.qrencode
-    pkgs.rustc
-    pkgs.terminal-notifier
-    pkgs.tmux
-    pkgs.trash-cli
-    pkgs.wget
+  environment.systemPackages = with pkgs; [
+    asdf
+    atuin
+    bat
+    broot
+    btop
+    coreutils
+    elixir
+    fd
+    git
+    go-task
+    lsd
+    mas
+    neovim
+    qrencode
+    rustc
+    terminal-notifier
+    tmux
+    trash-cli
+    wget
   ];
 
   homebrew = {
@@ -60,6 +57,7 @@
     casks = [
       "balenaetcher"
       "datagrip"
+      "discord"
       "docker"
       "elgato-control-center"
       "elgato-stream-deck"
@@ -70,7 +68,7 @@
       "hammerspoon"
       "home-assistant"
       "iterm2"
-      # "karabiner-elements"
+      "karabiner-elements"
       "kopiaui"
       "maccy"
       "obs"
