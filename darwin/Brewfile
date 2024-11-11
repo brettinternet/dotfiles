@@ -26,7 +26,7 @@ brew "wireguard-tools"
 
 # Custom taps
 tap "finestructure/Hummingbird"
-brew "finestructure/hummingbird/hummingbird"
+cask "finestructure/hummingbird/hummingbird"
 
 # GUI
 cask "balenaetcher"
