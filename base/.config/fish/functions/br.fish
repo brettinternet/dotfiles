@@ -1,1 +1,1 @@
-/home/brett/.local/share/broot/launcher/fish/br.fish
+/Users/brett/Library/Application Support/org.dystroy.broot/launcher/fish/br.fish

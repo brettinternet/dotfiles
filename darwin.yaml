@@ -30,3 +30,4 @@
 
 - shell:
     - ['./darwin/brew.sh']
+    - ['[ -x "$(command -v nix)" ] && ./nix/setup.sh']
