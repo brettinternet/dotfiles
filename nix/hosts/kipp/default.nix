@@ -1,26 +1,6 @@
 { pkgs, ... }: {
-  # Search packages: nix-env -qaP | grep wget
-  environment.systemPackages = [
-    pkgs.asdf
-    pkgs.atuin
-    pkgs.bat
-    pkgs.broot
-    pkgs.btop
-    pkgs.coreutils
-    pkgs.elixir
-    pkgs.fd
-    pkgs.git
-    pkgs.go-task
-    pkgs.lsd
-    pkgs.mas
-    pkgs.neovim
-    pkgs.qrencode
-    pkgs.rustc
-    pkgs.terminal-notifier
-    pkgs.tmux
-    pkgs.trash-cli
-    pkgs.wget
-  ];
+  nix.settings.experimental-features = "nix-command flakes";
+
   system.defaults = {
     dock.autohide = true;
     dock.persistent-apps = [];
@@ -42,6 +22,29 @@
   system.stateVersion = 5;
   nixpkgs.hostPlatform = "aarch64-darwin";
   time.timeZone = "America/Denver";
+
+    # Search packages: nix-env -qaP | grep wget
+  environment.systemPackages = [
+    pkgs.asdf
+    pkgs.atuin
+    pkgs.bat
+    pkgs.broot
+    pkgs.btop
+    pkgs.coreutils
+    pkgs.elixir
+    pkgs.fd
+    pkgs.git
+    pkgs.go-task
+    pkgs.lsd
+    pkgs.mas
+    pkgs.neovim
+    pkgs.qrencode
+    pkgs.rustc
+    pkgs.terminal-notifier
+    pkgs.tmux
+    pkgs.trash-cli
+    pkgs.wget
+  ];
 
   homebrew = {
     enable = true;
@@ -96,5 +99,6 @@
 
   nix.extraOptions = ''
     extra-platforms = aarch64-darwin x86_64-darwin
+    experimental-features = nix-command flakes
   '';
 }
