@@ -75,8 +75,8 @@
     # Allow direnv access to ~/.envrc
     - ['[ -f "$HOME/.zinit/plugins/direnv---direnv/direnv" ] && direnv allow $HOME || true']
     - ['[ -f /bin/zsh ] && /bin/zsh -c "source ~/.zshrc; zinit self-update"']
-    # - ['[ -x "$(command -v vim)" ] && /usr/bin/vim +PlugInstall +qall > /dev/null']
-    - ['[ -x "$(command -v nvim)" ] && nvim --headless "+Lazy! sync" -c "quitall"']
+    # - ['[ -x "$(command -v vim)" ] && /usr/bin/vim +PlugInstall +qall > /dev/null || true']
+    - ['[ -x "$(command -v nvim)" ] && nvim --headless "+Lazy! sync" -c "quitall" || true']
     - ['[ -x "$(command -v doom)" ] && doom upgrade || true']
     -
       # https://github.com/tmux-plugins/tpm/blob/master/docs/managing_plugins_via_cmd_line.md
