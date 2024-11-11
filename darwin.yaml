@@ -29,5 +29,5 @@
       if: '[ -x "$(command -v nix)" ]'
 
 - shell:
-    - ['./darwin/brew.sh']
-    - ['[ -x "$(command -v nix)" ] && ./nix/setup.sh']
+    - ['./darwin/setup.sh']
+    # - ['[ -x "$(command -v nix)" ] && ./nix/setup.sh']
