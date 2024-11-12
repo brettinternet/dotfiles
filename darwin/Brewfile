@@ -25,8 +25,8 @@ brew "virtualenvwrapper"
 brew "wireguard-tools"
 
 # Custom taps
-tap "finestructure/Hummingbird"
 cask "finestructure/hummingbird/hummingbird"
+cask "nikitabobko/tap/aerospace"
 
 # GUI
 cask "balenaetcher"
@@ -62,6 +62,6 @@ cask "zoom"
 # AppStore
 mas "AdGuard for Safari", id: 1440147259
 mas "Bitwarden", id: 1352778147 # appstore for safari support
-mas "WiFiman", id: 1385561119
+# mas "WiFiman", id: 1385561119 # ios apps unsupported: https://github.com/mas-cli/mas/issues/321
 mas "Windows App", id: 1295203466 # Microsoft Remote Desktop
 mas "Xcode", id: 497799835
