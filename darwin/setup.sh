@@ -8,10 +8,8 @@ fi
 
 brew bundle --file darwin/Brewfile
 
-# Reset application attributes to allow run
-xattr -cr /Applications/UnnaturalScrollWheels.app
-
 if ! xcode-select -p 1>/dev/null; then
+  sudo xcodebuild -license accept
   xcode-select --install
 fi
 
