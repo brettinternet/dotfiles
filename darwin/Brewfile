@@ -1,6 +1,5 @@
 # CLI
 brew "asdf"
-brew "atuin"
 brew "bat"
 brew "broot"
 brew "btop"
