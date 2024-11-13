@@ -11,6 +11,8 @@
     - ~/dev/work
 
 - link:
+    ~/.gitconfig:
+      path: darwin/.gitconfig
     ~/.zprofile:
       path: darwin/.zprofile
     ~/.hushlogin:
@@ -31,5 +33,5 @@
       if: '[ -x "$(command -v nix)" ]'
 
 - shell:
-    - ['./darwin/setup.sh']
+    - ["./darwin/setup.sh"]
     # - ['[ -x "$(command -v nix)" ] && ./nix/setup.sh']
