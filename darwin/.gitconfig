@@ -1,0 +1,9 @@
+[core]
+  editor = nvim
+
+[user]
+  name = brett
+  email = 20871604+brettinternet@users.noreply.github.com
+
+[pull]
+  rebase = true
