@@ -7,3 +7,6 @@
 
 [pull]
   rebase = true
+
+[alias]
+	graph = log --graph --all --format='%h %s%n        (%an, %ar)%d' --abbrev-commit
