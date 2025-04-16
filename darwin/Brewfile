@@ -31,12 +31,10 @@ cask "nikitabobko/tap/aerospace"
 
 # GUI
 cask "balenaetcher"
-cask "datagrip"
 cask "discord"
 cask "docker"
 cask "elgato-control-center"
 cask "elgato-stream-deck"
-cask "figma"
 cask "font-fira-code"
 cask "font-hack-nerd-font"
 cask "google-chrome"
