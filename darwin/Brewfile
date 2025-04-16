@@ -31,6 +31,8 @@ cask "nikitabobko/tap/aerospace"
 
 # GUI
 cask "balenaetcher"
+cask "bambu-studio"
+cask "db-browser-for-sqlite"
 cask "discord"
 cask "docker"
 cask "elgato-control-center"
