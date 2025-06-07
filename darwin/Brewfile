@@ -27,7 +27,6 @@ brew "wireguard-tools"
 
 # Custom taps
 cask "finestructure/hummingbird/hummingbird"
-cask "nikitabobko/tap/aerospace"
 
 # GUI
 cask "balenaetcher"
