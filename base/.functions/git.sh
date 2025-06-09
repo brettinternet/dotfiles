@@ -111,3 +111,28 @@ alias guom='git pull origin main'
 alias gpom='git push origin main'
 alias gwch='git whatchanged -p --abbrev-commit --pretty=medium'
 
+alias gwtl='git worktree list'
+alias gwta='git worktree add'
+alias gwtr='git worktree remove'
+alias gwtp='git worktree prune'
+alias gwt='gwta'
+
+function gwta {
+  local worktree_name="$1"
+  local branch_name="${2:-$1}"
+
+  if [[ -z "$worktree_name" ]]; then
+    echo "Usage: gwt <worktree_name> [branch_name]"
+    return 1
+  fi
+
+  local current_dir=$(basename "$(git rev-parse --show-toplevel)")
+  local new_worktree_name="${current_dir}-${worktree_name}"
+  local worktree_path="$(git rev-parse --show-toplevel)/../${new_worktree_name}"
+
+  if [[ -n "$branch_name" ]]; then
+    git worktree add -b "$branch_name" "$worktree_path"
+  else
+    git worktree add "$worktree_path"
+  fi
+}
