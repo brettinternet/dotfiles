@@ -112,7 +112,6 @@ alias gpom='git push origin main'
 alias gwch='git whatchanged -p --abbrev-commit --pretty=medium'
 
 alias gwtl='git worktree list'
-alias gwta='git worktree add'
 alias gwtr='git worktree remove'
 alias gwtp='git worktree prune'
 alias gwt='gwta'
@@ -135,4 +134,6 @@ function gwta {
   else
     git worktree add "$worktree_path"
   fi
+
+  cd $worktree_path
 }
