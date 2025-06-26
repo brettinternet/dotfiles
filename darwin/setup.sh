@@ -12,8 +12,3 @@ if ! xcode-select -p 1>/dev/null; then
   sudo xcodebuild -license accept
   xcode-select --install
 fi
-
-if ! command -v rustc; then
-  # https://www.rust-lang.org/tools/install
-  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-fi
