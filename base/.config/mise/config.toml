@@ -6,8 +6,10 @@ node = "latest"
 "aqua:pnpm" = "latest"
 rust = "latest"
 task = "latest"
+uv = "latest"
 # "npm:@anthropic-ai/claude-code" = "latest"
 # "npm:@biomejs/biome" = "latest"
 
 [settings]
 disable_backends = ["asdf"]
+pipx_uvx = true
