@@ -1,13 +1,10 @@
 # CLI
-brew "asdf"
 brew "bat"
 brew "broot"
 brew "btop"
 brew "coreutils"
-brew "elixir"
 brew "fd"
 brew "git"
-brew "go-task"
 brew "k9s"
 brew "lsd"
 brew "mas"
@@ -18,9 +15,6 @@ brew "terminal-notifier"
 brew "tmux"
 brew "trash-cli"
 brew "wget"
-
-brew "nvm"
-brew "virtualenvwrapper"
 
 # CLI + GUI
 brew "wireguard-tools"

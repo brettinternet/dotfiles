@@ -1,0 +1,13 @@
+[tools]
+elixir = "latest"
+erlang = "latest"
+go = "latest"
+node = "latest"
+"aqua:pnpm" = "latest"
+rust = "latest"
+task = "latest"
+# "npm:@anthropic-ai/claude-code" = "latest"
+# "npm:@biomejs/biome" = "latest"
+
+[settings]
+disable_backends = ["asdf"]

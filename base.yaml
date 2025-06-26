@@ -40,6 +40,9 @@
     ~/.tmux.conf:
       path: base/.tmux.conf
       if: '[ -x "$(command -v tmux)" ]'
+    ~/.config/mise/config.toml:
+      path: base/.config/mise/config.toml
+      if: '[ -x "$(command -v mise)" ]'
     ~/.config/k9s/config.yaml:
       path: base/.config/k9s/config.yaml
       if: '[ `uname` = Linux ] && [ -x "$(command -v kubectl)" ]'
@@ -69,17 +72,20 @@
       if: '[ `uname` = Linux ] && [ -x "$(command -v pacman)" ]'
     ~/.zshrc.linux:
       path: base/platform/.zshrc.linux
-      if: '[ `uname` = Linux ]'
+      if: "[ `uname` = Linux ]"
 
 - shell:
     # Allow direnv access to ~/.envrc
-    - ['[ -f "$HOME/.zinit/plugins/direnv---direnv/direnv" ] && direnv allow $HOME || true']
+    - [
+        '[ -f "$HOME/.zinit/plugins/direnv---direnv/direnv" ] && direnv allow $HOME || true',
+      ]
     - ['[ -f /bin/zsh ] && /bin/zsh -c "source ~/.zshrc; zinit self-update"']
     # - ['[ -x "$(command -v vim)" ] && /usr/bin/vim +PlugInstall +qall > /dev/null || true']
-    - ['[ -x "$(command -v nvim)" ] && nvim --headless "+Lazy! sync" -c "quitall" || true']
+    - [
+        '[ -x "$(command -v nvim)" ] && nvim --headless "+Lazy! sync" -c "quitall" || true',
+      ]
     - ['[ -x "$(command -v doom)" ] && doom upgrade || true']
-    -
-      # https://github.com/tmux-plugins/tpm/blob/master/docs/managing_plugins_via_cmd_line.md
+    - # https://github.com/tmux-plugins/tpm/blob/master/docs/managing_plugins_via_cmd_line.md
       - >-
         if [ -x "$(command -v tmux)" ]; then
           tmux start-server;
