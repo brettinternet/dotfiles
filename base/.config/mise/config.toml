@@ -1,10 +1,12 @@
 [tools]
 bun = "latest"
+cosign = "latest"
 elixir = "latest"
 erlang = "latest"
 go = "latest"
 node = "latest"
 rust = "latest"
+slsa-verifier = "latest"
 task = "latest"
 uv = "latest"
 
