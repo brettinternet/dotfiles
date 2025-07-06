@@ -19,3 +19,6 @@ indent_size = 4
 [Makefile]
 indent_style = tab
 indent_size = 4
+
+[*.y?ml]
+indent_size = 2
