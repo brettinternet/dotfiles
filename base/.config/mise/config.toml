@@ -1,4 +1,5 @@
 [tools]
+biome = "latest"
 bun = "latest"
 cosign = "latest"
 elixir = "latest"
