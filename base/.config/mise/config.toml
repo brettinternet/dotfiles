@@ -1,9 +1,9 @@
 [tools]
+bun = "latest"
 elixir = "latest"
 erlang = "latest"
 go = "latest"
 node = "latest"
-"aqua:pnpm" = "latest"
 rust = "latest"
 task = "latest"
 uv = "latest"
@@ -11,5 +11,6 @@ uv = "latest"
 # "npm:@biomejs/biome" = "latest"
 
 [settings]
-disable_backends = ["asdf"]
-pipx_uvx = true
+disable_backends = ["asdf", "pipx", "npm"]
+pipx.uvx = true
+npm.bun = true
