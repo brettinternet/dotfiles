@@ -1,0 +1,20 @@
+/*
+Open Vivaldi with CSS inspect option:
+open -a Vivaldi --args --debug-packed-apps --silent-debugger-extension-api
+*/
+
+.mainbar,
+.mainbar .toolbar-mainbar {
+  height: 46px;
+}
+
+#browser.mac.address-top .toolbar:has(.window-buttongroup.on-mainbar) {
+  /* min-height: calc(46px / var(--uiZoomLevel)); */
+  min-height: auto;
+}
+
+.UrlBar-AddressField {
+  height: 30px;
+  font-size: 16px;
+  font-weight: lighter;
+}
