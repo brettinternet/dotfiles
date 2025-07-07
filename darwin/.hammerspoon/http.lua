@@ -3,13 +3,19 @@
 
 local actions = {
   ["/reload"] = hs.reload,
+  ["/vivaldi"] = getLaunchFocusOrHideAndSwitchBackFn("com.vivaldi.Vivaldi"),
   ["/chrome"] = getLaunchFocusOrHideAndSwitchBackFn("com.google.Chrome"),
+  ["/zed"] = getLaunchFocusOrHideAndSwitchBackFn("dev.zed.Zed"),
+  ["/github"] = getLaunchFocusOrHideAndSwitchBackFn("com.github.GitHubClient"),
   ["/spotify"] = getLaunchFocusOrHideAndSwitchBackFn("com.spotify.client"),
   ["/zoom"] = getLaunchFocusOrHideAndSwitchBackFn("us.zoom.xos"),
   ["/obs"] = getLaunchFocusOrHideAndSwitchBackFn("com.obsproject.obs-studio"),
   ["/weather"] = getLaunchFocusOrHideAndSwitchBackFn("com.apple.weather", true),
   ["/notes"] = getLaunchFocusOrHideAndSwitchBackFn("com.apple.Notes", true),
   ["/mail"] = getLaunchFocusOrHideAndSwitchBackFn("com.apple.mail"),
+  ["/slack"] = getLaunchFocusOrHideAndSwitchBackFn("com.tinyspeck.slackmacgap"),
+  ["/discord"] = getLaunchFocusOrHideAndSwitchBackFn("com.hnc.Discord"),
+  ["/messages"] = getLaunchFocusOrHideAndSwitchBackFn("com.apple.MobileSMS"),
   ["/homeassistant"] = function()
     local success, windowId = openBrowserTab("com.google.Chrome", "home.gardiner")
     if success and windowId then
@@ -31,9 +37,6 @@ local actions = {
       end
     end
   end,
-  ["/slack"] = getLaunchFocusOrHideAndSwitchBackFn("com.tinyspeck.slackmacgap"),
-  ["/discord"] = getLaunchFocusOrHideAndSwitchBackFn("com.hnc.Discord"),
-  ["/messages"] = getLaunchFocusOrHideAndSwitchBackFn("com.apple.MobileSMS"),
   ["/play_pause_youtube"] = playPauseOrOpenYoutube,
   ["/bounce_displays"] = bounceDisplays,
   ["/sleep"] = systemSleep,
@@ -55,7 +58,7 @@ local server = hs.httpserver.new(false)
 server:setInterface("localhost")
 server:setPort(1337)
 
-server:setCallback(function (method, path)
+server:setCallback(function(method, path)
   if method ~= "GET" then
     return "", 405, {}
   end

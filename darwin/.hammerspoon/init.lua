@@ -9,14 +9,14 @@ hs.ipc.cliInstall()
 -- Print helper
 function dump(o)
   if type(o) == 'table' then
-     local s = '{ '
-     for k,v in pairs(o) do
-        if type(k) ~= 'number' then k = '"'..k..'"' end
-        s = s .. '['..k..'] = ' .. dump(v) .. ','
-     end
-     return s .. '} '
+    local s = '{ '
+    for k, v in pairs(o) do
+      if type(k) ~= 'number' then k = '"' .. k .. '"' end
+      s = s .. '[' .. k .. '] = ' .. dump(v) .. ','
+    end
+    return s .. '} '
   else
-     return tostring(o)
+    return tostring(o)
   end
 end
 
@@ -73,9 +73,12 @@ end
 
 -- Applications
 prefix:bind('', 'B', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.google.Chrome")))
+prefix:bind('', 'C', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("dev.zed.Zed")))
+prefix:bind('', 'G', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.github.GitHubClient")))
 prefix:bind('', 'S', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.spotify.client")))
 prefix:bind('', 'F', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.apple.finder")))
-prefix:bind('', 'C', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.microsoft.VSCode")))
+-- prefix:bind('', 'V', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.microsoft.VSCode")))
+prefix:bind('', 'V', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.vivaldi.Vivaldi")))
 prefix:bind('', 'X', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.googlecode.iterm2")))
 prefix:bind('', 'A', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.tinyspeck.slackmacgap")))
 prefix:bind('', 'D', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.hnc.Discord")))
@@ -107,13 +110,13 @@ end))
 -- Utils
 
 -- Get around paste blockers with cmd+alt+v
-hs.hotkey.bind({"alt", "cmd", "shift"}, "V", function()
+hs.hotkey.bind({ "alt", "cmd", "shift" }, "V", function()
   hs.eventtap.keyStrokes(hs.pasteboard.getContents())
 end)
 
 
 hs.loadSpoon("AClock")
-hs.hotkey.bind({"cmd", "ctrl"}, "z", function()
+hs.hotkey.bind({ "cmd", "ctrl" }, "z", function()
   spoon.AClock.textSize = 300
   spoon.AClock.width = 960
   spoon.AClock.height = 690
