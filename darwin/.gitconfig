@@ -10,3 +10,8 @@
 
 [alias]
 	graph = log --graph --all --format='%h %s%n        (%an, %ar)%d' --abbrev-commit
+[filter "lfs"]
+	process = git-lfs filter-process
+	required = true
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
