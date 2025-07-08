@@ -3,18 +3,27 @@ Open Vivaldi with CSS inspect option:
 open -a Vivaldi --args --debug-packed-apps --silent-debugger-extension-api
 */
 
+/* Top browser header */
 .mainbar,
 .mainbar .toolbar-mainbar {
   height: 46px;
 }
 
+/* Reset min-height for address bar wrapper */
 #browser.mac.address-top .toolbar:has(.window-buttongroup.on-mainbar) {
   /* min-height: calc(46px / var(--uiZoomLevel)); */
   min-height: auto;
 }
 
+/* Address bar */
 .UrlBar-AddressField {
   height: 30px;
   font-size: 16px;
   font-weight: lighter;
+}
+
+/* Useless icon buttons in the address bar */
+.button-toolbar.ContentBlocker-Control,
+.BookmarkButton {
+  display: none;
 }
