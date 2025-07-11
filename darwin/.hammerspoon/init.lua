@@ -73,11 +73,11 @@ end
 
 -- Applications
 prefix:bind('', 'F', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.google.Chrome")))
-prefix:bind('', 'C', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("dev.zed.Zed")))
+-- prefix:bind('', 'C', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("dev.zed.Zed")))
+prefix:bind('', 'C', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.microsoft.VSCode")))
 prefix:bind('', 'G', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.github.GitHubClient")))
 prefix:bind('', 'S', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.spotify.client")))
 prefix:bind('', 'E', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.apple.finder")))
--- prefix:bind('', 'V', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.microsoft.VSCode")))
 prefix:bind('', 'V', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.vivaldi.Vivaldi")))
 prefix:bind('', 'X', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.googlecode.iterm2")))
 prefix:bind('', 'A', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.tinyspeck.slackmacgap")))

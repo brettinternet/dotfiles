@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Applications
+alias c="code ."
 alias z="zed ."
-alias c="zed ."
 
 # Navigation
 DEV_DIR="$HOME/dev"
