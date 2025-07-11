@@ -1,0 +1,5 @@
+[tools]
+yamllint = "latest"
+
+[settings]
+disable_backends = ["asdf"]

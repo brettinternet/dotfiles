@@ -2,3 +2,6 @@
 lazy-lock.json
 Brewfile.lock.json
 .DS_Store
+/Taskfile.yaml
+/Taskfile.yml
+mise.local.yaml
