@@ -78,6 +78,7 @@ prefix:bind('', 'C', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.microsoft
 prefix:bind('', 'G', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.github.GitHubClient")))
 prefix:bind('', 'S', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.spotify.client")))
 prefix:bind('', 'E', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.apple.finder")))
+prefix:bind('', 'M', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.apple.MobileSMS")))
 prefix:bind('', 'V', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.vivaldi.Vivaldi")))
 prefix:bind('', 'X', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.googlecode.iterm2")))
 prefix:bind('', 'A', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.tinyspeck.slackmacgap")))
