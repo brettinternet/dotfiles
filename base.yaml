@@ -81,7 +81,7 @@
       ]
     - ['[ -f /bin/zsh ] && /bin/zsh -c "source ~/.zshrc; zinit self-update"']
     - ["mise self-update"]
-    - ["mise up"]
+    - ["mise up --quiet"]
     # - ['[ -x "$(command -v vim)" ] && /usr/bin/vim +PlugInstall +qall > /dev/null || true']
     - [
         '[ -x "$(command -v nvim)" ] && nvim --headless "+Lazy! sync" -c "quitall" || true',
