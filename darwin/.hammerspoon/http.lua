@@ -4,7 +4,7 @@
 local actions = {
   ["/reload"] = hs.reload,
   ["/vivaldi"] = getLaunchFocusOrHideAndSwitchBackFn("com.vivaldi.Vivaldi"),
-  ["/chrome"] = getLaunchFocusOrHideAndSwitchBackFn("com.google.Chrome"),
+  ["/chrome"] = getLaunchFocusOrHideAndSwitchBackFn("org.chromium.Chromium"),
   ["/zed"] = getLaunchFocusOrHideAndSwitchBackFn("dev.zed.Zed"),
   ["/github"] = getLaunchFocusOrHideAndSwitchBackFn("com.github.GitHubClient"),
   ["/spotify"] = getLaunchFocusOrHideAndSwitchBackFn("com.spotify.client"),
@@ -17,9 +17,9 @@ local actions = {
   ["/discord"] = getLaunchFocusOrHideAndSwitchBackFn("com.hnc.Discord"),
   ["/messages"] = getLaunchFocusOrHideAndSwitchBackFn("com.apple.MobileSMS"),
   ["/homeassistant"] = function()
-    local success, windowId = openBrowserTab("com.google.Chrome", "home.gardiner")
+    local success, windowId = openBrowserTab("org.chromium.Chromium", "home.gardiner")
     if success and windowId then
-      hs.application.get("com.google.Chrome"):activate()
+      hs.application.get("org.chromium.Chromium"):activate()
     else
       getLaunchFocusOrHideAndSwitchBackFn("io.robbie.HomeAssistant")()
     end
@@ -29,9 +29,9 @@ local actions = {
     if plex and plex:isRunning() then
       getLaunchFocusOrHideAndSwitchBackFn("tv.plex.desktop")()
     else
-      local success, windowId = openBrowserTab("com.google.Chrome", "plex.gardiner")
+      local success, windowId = openBrowserTab("org.chromium.Chromium", "plex.gardiner")
       if success and windowId then
-        hs.application.get("com.google.Chrome"):activate()
+        hs.application.get("org.chromium.Chromium"):activate()
       else
         getLaunchFocusOrHideAndSwitchBackFn("tv.plex.desktop")()
       end
@@ -41,14 +41,14 @@ local actions = {
   ["/bounce_displays"] = bounceDisplays,
   ["/sleep"] = systemSleep,
   ["/outlook"] = function()
-    local success, windowId = openBrowserTab("com.google.Chrome", "outlook.office.com")
+    local success, windowId = openBrowserTab("org.chromium.Chromium", "outlook.office.com")
     print(windowId)
     if windowId then
-      hs.application.get("com.google.Chrome"):activate()
+      hs.application.get("org.chromium.Chromium"):activate()
     end
   end,
   ["/calendar"] = function()
-    openDisposableBrowserWindow("com.google.Chrome", "https://pdq-hq.slack.com/archives/D03JDATJ7D5")
+    openDisposableBrowserWindow("org.chromium.Chromium", "https://pdq-hq.slack.com/archives/D03JDATJ7D5")
     hs.application.get("com.tinyspeck.slackmacgap"):activate()
   end,
 }
