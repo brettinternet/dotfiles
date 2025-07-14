@@ -5,3 +5,4 @@ Brewfile.lock.json
 /Taskfile.yaml
 /Taskfile.yml
 mise.local.yaml
+*.dump
