@@ -39,11 +39,10 @@ export HISTCONTROL="$HISTCONTROL erasedups:ignoreboth"
 
 set -o noclobber
 
+eval "$(mise activate bash)"
+
 # shellcheck source=/dev/null
 [ -d "$HOME/.config/broot" ] && . "$HOME/.config/broot/launcher/bash/br"
 # shellcheck source=/dev/null
 [ -d "/usr/share/nvm" ] && . /usr/share/nvm/init-nvm.sh
 
-# -- Fish ----------------------------------------
-# https://wiki.archlinux.org/index.php/Fish#Setting_fish_as_interactive_shell_only
-#if [ -z "$BASH_EXECUTION_STRING" ]; then exec fish; fi
