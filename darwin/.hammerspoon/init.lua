@@ -72,7 +72,7 @@ function getLaunchFocusOrHideAndSwitchBackFn(bundleid, kill)
 end
 
 -- Applications
-prefix:bind('', 'F', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.google.Chrome")))
+prefix:bind('', 'F', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("org.chromium.Chromium")))
 -- prefix:bind('', 'C', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("dev.zed.Zed")))
 prefix:bind('', 'C', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.microsoft.VSCode")))
 prefix:bind('', 'G', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.github.GitHubClient")))
