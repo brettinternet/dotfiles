@@ -19,6 +19,8 @@ alias notes='cd $NOTES_DIR'
 alias todo='$EDITOR $NOTES_DIR/daily/todo'
 alias note='$EDITOR $NOTES_DIR/daily/notes'
 
+alias claude='claude --ide'
+
 function flush_dns() {
   sudo dscacheutil -flushcache
   sudo killall -HUP mDNSResponder
