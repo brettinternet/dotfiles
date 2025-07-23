@@ -190,7 +190,6 @@ zinit as="command" lucid from="gh-r" for \
     id-as="usage" \
     atpull="%atclone" \
     jdx/usage
-    #atload='eval "$(mise activate zsh)"' \
 
 zinit as="command" lucid from="gh-r" for \
     id-as="mise" mv="mise* -> mise" \
@@ -199,6 +198,20 @@ zinit as="command" lucid from="gh-r" for \
     atload='eval "$(mise activate zsh)"' \
     jdx/mise
 
+zinit wait"0c" lucid light-mode for \
+  id-as'fzf' \
+  as"program" \
+  from"gh-r" \
+  nocompile \
+  atload"source <(fzf --zsh)" \
+  junegunn/fzf
+
+# zinit lucid light-mode for \
+#   id-as'rg' \
+#   as"program" \
+#   from'gh-r' \
+#   sbin'**/rg -> rg' \
+#   BurntSushi/ripgrep
 
 # -- Prompt
 
@@ -263,5 +276,3 @@ for LOCAL_CONFIG in ~/.zshrc*; do
     break
   fi
 done
-
-eval "$(mise activate zsh)"
