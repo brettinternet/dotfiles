@@ -161,8 +161,6 @@ zinit wait lucid light-mode for \
 
 # -- Programs ----------------------------------------
 
-zinit pack for fzf
-
 # https://github.com/tmux-plugins/tpm
 zinit ice as"program" atclone"mkdir -p ~/.tmux/plugins/tpm; mv * ~/.tmux/plugins/tpm"
 zinit light tmux-plugins/tpm
@@ -174,6 +172,7 @@ zinit from"gh-r" as"program" mv"direnv* -> direnv" \
   atload'export DIRENV_LOG_FORMAT=""' \
   pick"direnv" src="zhook.zsh" for \
     direnv/direnv
+
 
 # Emacs
 if [ -x "$(command -v emacs)" ]; then
@@ -264,11 +263,5 @@ for LOCAL_CONFIG in ~/.zshrc*; do
     break
   fi
 done
-
-export PNPM_HOME="$HOME/.pnpm"
-case ":$PATH:" in
-  *":$PNPM_HOME:"*) ;;
-  *) export PATH="$PNPM_HOME:$PATH" ;;
-esac
 
 eval "$(mise activate zsh)"
