@@ -25,7 +25,6 @@
     asdf
     atuin
     bat
-    broot
     btop
     coreutils
     elixir

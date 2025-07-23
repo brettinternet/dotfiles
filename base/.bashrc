@@ -42,7 +42,4 @@ set -o noclobber
 eval "$(mise activate bash)"
 
 # shellcheck source=/dev/null
-[ -d "$HOME/.config/broot" ] && . "$HOME/.config/broot/launcher/bash/br"
-# shellcheck source=/dev/null
 [ -d "/usr/share/nvm" ] && . /usr/share/nvm/init-nvm.sh
-

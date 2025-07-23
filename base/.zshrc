@@ -9,10 +9,6 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 fi
 
 scope() {
-  if [ -d "$HOME/.config/broot" ]; then
-    source $HOME/.config/broot/launcher/bash/br
-  fi
-
   local LOCAL_ZSH_CUSTOMIZATIONS=$HOME/.zshrc.local
   if [ -f "$LOCAL_ZSH_CUSTOMIZATIONS" ]; then
     source "$LOCAL_ZSH_CUSTOMIZATIONS"
@@ -164,6 +160,8 @@ zinit wait lucid light-mode for \
 
 
 # -- Programs ----------------------------------------
+
+zinit pack for fzf
 
 # https://github.com/tmux-plugins/tpm
 zinit ice as"program" atclone"mkdir -p ~/.tmux/plugins/tpm; mv * ~/.tmux/plugins/tpm"

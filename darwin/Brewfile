@@ -1,6 +1,5 @@
 # CLI
 brew "bat"
-brew "broot"
 brew "btop"
 brew "coreutils"
 brew "fd"
