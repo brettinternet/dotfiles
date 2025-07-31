@@ -50,7 +50,7 @@ function gloc { # 1 - additional filter patterns
 
 alias guc='git pull origin "$(git_current_branch)"'
 alias gpc='git push origin "$(git_current_branch)"'
-alias gpcf='git push --force-with-lease origin "$(git_current_branch)"'
+alias gpcf='git push --force-with-lease --no-verify origin "$(git_current_branch)"'
 
 alias gbsuc='git branch --set-upstream-to=origin/$(git_current_branch)'
 alias gpsuc='git push --set-upstream origin $(git_current_branch)'
