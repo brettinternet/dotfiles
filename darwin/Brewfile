@@ -55,9 +55,8 @@ cask "vlc"
 cask "zoom"
 
 # AppStore
-mas "AdGuard for Safari", id: 1440147259
-mas "Bitwarden", id: 1352778147 # appstore for safari support
+mas "Bitwarden", id: 1352778147 # Safari support
 mas "Home Assistant", id: 1099568401
-# mas "WiFiman", id: 1385561119 # ios apps unsupported: https://github.com/mas-cli/mas/issues/321
+mas "uBlock Origin Lite", id: 6745342698
 mas "Windows App", id: 1295203466 # Microsoft Remote Desktop
 mas "Xcode", id: 497799835
