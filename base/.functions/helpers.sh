@@ -47,12 +47,6 @@ function up {
   fi
 }
 
-# Helpers
-# https://github.com/andreafrancia/trash-cli
-alias rm='echo \"No way, man!\"; false'
-alias rrm="/bin/rm -i"
-alias reboot="systemctl reboot"
-
 # fzy (see .functions for more)
 alias ff="find . -type f | fzy"
 alias fh="history | fzy"
