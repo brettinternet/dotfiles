@@ -21,6 +21,9 @@ brew "wireguard-tools"
 # Custom taps
 cask "finestructure/hummingbird/hummingbird"
 
+tap "deskflow/homebrew-tap"
+cask "deskflow"
+
 # GUI
 cask "balenaetcher"
 cask "bambu-studio"
