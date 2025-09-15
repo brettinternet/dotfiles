@@ -46,10 +46,11 @@ local actions = {
       hs.application.get("org.chromium.Chromium"):activate()
     end
   end,
-  ["/calendar"] = function()
+  ["/calendar/work"] = function()
     openDisposableBrowserWindow("org.chromium.Chromium", "https://pdq-hq.slack.com/archives/D03JDATJ7D5")
     hs.application.get("com.tinyspeck.slackmacgap"):activate()
   end,
+  ["/calendar/personal"] = getLaunchFocusOrHideAndSwitchBackFn("com.apple.iCal", true),
 }
 
 local server = hs.httpserver.new(false)
