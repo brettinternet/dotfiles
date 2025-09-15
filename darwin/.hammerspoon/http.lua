@@ -42,7 +42,6 @@ local actions = {
   ["/sleep"] = systemSleep,
   ["/outlook"] = function()
     local success, windowId = openBrowserTab("org.chromium.Chromium", "outlook.office.com")
-    print(windowId)
     if windowId then
       hs.application.get("org.chromium.Chromium"):activate()
     end
