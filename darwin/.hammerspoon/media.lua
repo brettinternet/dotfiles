@@ -104,7 +104,7 @@ end
 
 function playPauseOrOpenYoutube()
   local currentApp = hs.application.frontmostApplication()
-  local browser = "com.google.Chrome"
+  local browser = "org.chromium.Chromium"
   local chrome = hs.application.get(browser)
   local success, windowId = openBrowserTab(browser, "youtube.com")
   if success then
