@@ -1,6 +1,8 @@
 #!/bin/sh
 
 scope() {
+  ulimit -n 4096
+
   # To allow for some customization across workspaces
   local WORKSPACE_ONLY_ENV=$HOME/.envrc
   if [ -f $WORKSPACE_ONLY_ENV ]; then
