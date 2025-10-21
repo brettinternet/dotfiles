@@ -3,7 +3,6 @@
 
 local actions = {
   ["/reload"] = hs.reload,
-  ["/vivaldi"] = getLaunchFocusOrHideAndSwitchBackFn("com.vivaldi.Vivaldi"),
   ["/chrome"] = getLaunchFocusOrHideAndSwitchBackFn("org.chromium.Chromium"),
   ["/zed"] = getLaunchFocusOrHideAndSwitchBackFn("dev.zed.Zed"),
   ["/github"] = getLaunchFocusOrHideAndSwitchBackFn("com.github.GitHubClient"),
@@ -41,9 +40,16 @@ local actions = {
   ["/bounce_displays"] = bounceDisplays,
   ["/sleep"] = systemSleep,
   ["/outlook"] = function()
-    local success, windowId = openBrowserTab("org.chromium.Chromium", "outlook.office.com")
-    if windowId then
-      hs.application.get("org.chromium.Chromium"):activate()
+    local browser = "org.chromium.Chromium"
+    local success, windowId = openBrowserTab(browser, "outlook.office.com")
+    if success and windowId then
+      hs.application.get(browser):activate()
+    else
+      local success = openNewBrowserWindow(browser, "https://outlook.office.com/mail")
+      if success then
+        local chrome = hs.application.get(browser)
+        chrome:activate()
+      end
     end
   end,
   ["/calendar/work"] = function()
