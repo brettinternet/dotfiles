@@ -79,7 +79,8 @@ function openBrowserTab(browser, url)
     var browser = Application('%s');
 
     for (win of browser.windows()) {
-      var tabIndex = win.tabs().findIndex(tab => tab.url().match(/%s/));
+      var urlMatch = new RegExp('%s');
+      var tabIndex = win.tabs().findIndex(tab => tab.url().match(urlMatch));
       if (tabIndex !== -1) {
         win.activeTabIndex = (tabIndex + 1);
         win.index = 1;
@@ -91,7 +92,7 @@ function openBrowserTab(browser, url)
   return hs.osascript.javascript(script)
 end
 
-local function openNewBrowserWindow(browser, url)
+function openNewBrowserWindow(browser, url)
   local script = ([[(function() {
     var browser = Application('%s');
     var window = browser.Window().make();
