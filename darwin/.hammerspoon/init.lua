@@ -73,7 +73,6 @@ end
 
 -- Applications
 prefix:bind('', 'F', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("org.chromium.Chromium")))
--- prefix:bind('', 'C', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("dev.zed.Zed")))
 prefix:bind('', 'C', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.microsoft.VSCode")))
 prefix:bind('', 'G', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.github.GitHubClient")))
 prefix:bind('', 'S', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.spotify.client")))

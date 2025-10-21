@@ -57,6 +57,7 @@ local actions = {
     hs.application.get("com.tinyspeck.slackmacgap"):activate()
   end,
   ["/calendar/personal"] = getLaunchFocusOrHideAndSwitchBackFn("com.apple.iCal", true),
+  ["/claude"] = getLaunchFocusOrHideAndSwitchBackFn("com.anthropic.claudefordesktop"),
 }
 
 local server = hs.httpserver.new(false)
