@@ -10,7 +10,7 @@ rust = "latest"
 slsa-verifier = "latest"
 task = "latest"
 uv = "latest"
-"npm:@anthropic-ai/claude-code" = "latest"
+claude = "latest"
 
 [settings]
 disable_backends = ["asdf", "pipx", "npm"]
