@@ -40,9 +40,6 @@
     ~/.tmux.conf:
       path: base/.tmux.conf
       if: '[ -x "$(command -v tmux)" ]'
-    ~/.config/mise/config.toml:
-      path: base/.config/mise/config.toml
-      if: '[ -x "$(command -v mise)" ]'
     ~/.config/k9s/config.yaml:
       path: base/.config/k9s/config.yaml
       if: '[ `uname` = Linux ] && [ -x "$(command -v kubectl)" ]'
@@ -77,16 +74,18 @@
         '[ -f "$HOME/.zinit/plugins/direnv---direnv/direnv" ] && direnv allow $HOME || true',
       ]
     - ['[ -f /bin/zsh ] && /bin/zsh -c "source ~/.zshrc; zinit self-update"']
-    - ["mise self-update"]
-    - ["mise up --quiet"]
+    - [
+        "command -v mise >/dev/null 2>&1 && mise self-update --yes --quiet || true",
+      ]
+    - ["command -v mise >/dev/null 2>&1 && mise up --yes --quiet || true"]
     # - ['[ -x "$(command -v vim)" ] && /usr/bin/vim +PlugInstall +qall > /dev/null || true']
     - [
-        '[ -x "$(command -v nvim)" ] && nvim --headless "+Lazy! sync" -c "quitall" || true',
+        'command -v nvim >/dev/null 2>&1 && nvim --headless "+Lazy! sync" -c "quitall" || true',
       ]
-    - ['[ -x "$(command -v doom)" ] && doom upgrade || true']
+    - ["command -v doom >/dev/null 2>&1 && doom upgrade || true"]
     - # https://github.com/tmux-plugins/tpm/blob/master/docs/managing_plugins_via_cmd_line.md
       - >-
-        if [ -x "$(command -v tmux)" ]; then
+        if command -v tmux >/dev/null 2>&1; then
           tmux start-server;
           tmux new-session -d;
           tmux source-file ~/.tmux.conf;

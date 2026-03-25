@@ -1,16 +1,22 @@
 [tools]
 biome = "latest"
+btop = "latest"
 bun = "latest"
 cosign = "latest"
+claude = "latest"
+fd = "latest"
 gh = "latest"
 go = "latest"
+k9s = "latest"
+lsd = "latest"
 node = "latest"
 python = "latest"
 rust = "latest"
 slsa-verifier = "latest"
+sops = "latest"
 task = "latest"
 uv = "latest"
-claude = "latest"
+wget = "latest"
 
 [settings]
 disable_backends = ["asdf", "pipx", "npm"]

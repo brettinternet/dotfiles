@@ -27,6 +27,9 @@
     ~/.hammerspoon/:
       glob: true
       path: darwin/.hammerspoon/*
+    ~/.config/mise/config.toml:
+      path: darwin/.config/mise/config.toml
+      if: '[ -x "$(command -v mise)" ]'
     ~/.config/nix-darwin/:
       glob: true
       path: darwin/.config/nix-darwin/*

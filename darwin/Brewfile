@@ -1,19 +1,11 @@
 # CLI
-brew "bat"
-brew "btop"
 brew "coreutils"
-brew "fd"
 brew "git"
-brew "k9s"
-brew "lsd"
 brew "mas"
 brew "neovim"
-brew "qrencode"
-brew "sops"
 brew "terminal-notifier"
 brew "tmux"
 brew "trash-cli"
-brew "wget"
 
 # CLI + GUI
 brew "wireguard-tools"
