@@ -19,6 +19,6 @@ task = "latest"
 uv = "latest"
 
 [settings]
-disable_backends = ["asdf", "pipx", "npm"]
+disable_backends = ["asdf", "pipx"]
 pipx.uvx = true
 npm.bun = true
