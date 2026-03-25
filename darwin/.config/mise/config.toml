@@ -1,9 +1,10 @@
 [tools]
 biome = "latest"
-btop = "latest"
 bun = "latest"
 cosign = "latest"
 claude = "latest"
+colima = "latest"
+docker-cli = "latest"
 fd = "latest"
 gh = "latest"
 go = "latest"
@@ -16,7 +17,6 @@ slsa-verifier = "latest"
 sops = "latest"
 task = "latest"
 uv = "latest"
-wget = "latest"
 
 [settings]
 disable_backends = ["asdf", "pipx", "npm"]
