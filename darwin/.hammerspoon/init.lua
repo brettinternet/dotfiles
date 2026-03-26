@@ -114,17 +114,6 @@ hs.hotkey.bind({ "alt", "cmd", "shift" }, "V", function()
   hs.eventtap.keyStrokes(hs.pasteboard.getContents())
 end)
 
-
-hs.loadSpoon("AClock")
-hs.hotkey.bind({ "cmd", "ctrl" }, "z", function()
-  spoon.AClock.textSize = 300
-  spoon.AClock.width = 960
-  spoon.AClock.height = 690
-  spoon.AClock.textFont = "Fira Code"
-  spoon.AClock.textColor = hs.drawing.color.hammerspoon.black
-  spoon.AClock:toggleShow()
-end)
-
 -- Load all modules
 
 require("audio")
