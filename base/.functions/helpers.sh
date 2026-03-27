@@ -83,7 +83,7 @@ alias tf='tail -f'
 alias l='less'
 alias lh='ls -alt | head' # see the last modified files
 alias screen='TERM=screen screen'
-alias ssh='TERM=xterm-256color; ssh'
+alias ssh='TERM=xterm-256color ssh'
 
 # Editors
 alias e='emacs'
