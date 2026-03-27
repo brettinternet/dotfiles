@@ -63,8 +63,10 @@ function wt-clean() {
 
 function wt-switch() {
   local branch=$1
-  local root=$(git worktree list | head -1 | awk '{print $1}')
-  local default=$(git -C "$root" symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|origin/||')
+  local root
+  root=$(git worktree list | head -1 | awk '{print $1}')
+  local default
+  default=$(git -C "$root" symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|origin/||')
   default=${default:-main}
 
   if [[ -z "$branch" ]]; then

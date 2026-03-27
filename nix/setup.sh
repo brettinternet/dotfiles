@@ -21,16 +21,17 @@ nix_config_name="bort"
 
 # Install Nix-darwin
 # https://github.com/LnL7/nix-darwin#flakes
-if [ ! -f $nix_darwin_config_dir/flake.nix ]; then
-  mkdir -p $nix_darwin_config_dir
-  cd $nix_darwin_config_dir
+if [ ! -f "$nix_darwin_config_dir/flake.nix" ]; then
+  mkdir -p "$nix_darwin_config_dir"
+  cd "$nix_darwin_config_dir" || exit
   run_nix flake init -t nix-darwin
   sed -i '' "s/simple/$nix_config_name/" flake.nix
 fi
 
-run_nix run nix-darwin -- switch --flake $nix_darwin_config_dir#$nix_config_name
+run_nix run nix-darwin -- switch --flake "$nix_darwin_config_dir#$nix_config_name"
+# shellcheck source=/dev/null
 source ~/.zshrc # reload shell in case darwin-rebuild isn't available
-darwin-rebuild switch --flake $nix_darwin_config_dir
+darwin-rebuild switch --flake "$nix_darwin_config_dir"
 
 xattr -cr /Applications/UnnaturalScrollWheels.app
 

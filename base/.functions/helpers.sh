@@ -8,7 +8,7 @@ function shell_stats {
 }
 
 function disk_ids {
-  find /dev/disk/by-id/ -type l|xargs -I{} ls -l {}|grep -v -E '[0-9]$' |sort -k11|cut -d' ' -f9,10,11,12
+  find /dev/disk/by-id/ -type l -print0 | xargs -0 -I{} ls -l {} | grep -v -E '[0-9]$' | sort -k11 | cut -d' ' -f9,10,11,12
 }
 
 # Print console colors
