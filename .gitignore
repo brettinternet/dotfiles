@@ -6,3 +6,4 @@ Brewfile.lock.json
 /Taskfile.yml
 mise.local.yaml
 *.dump
+.trees

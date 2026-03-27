@@ -32,6 +32,14 @@ function wt-new() {
   open -a $TERM_PROGRAM "$(pwd)/.trees/$branch"
 }
 
+function wt-delete() {
+  local branch=${1:-$(git branch --show-current)}
+  local root=$(git worktree list | head -1 | awk '{print $1}')
+
+  git -C "$root" worktree remove ".trees/$branch" --force
+  git -C "$root" branch -d "$branch"
+}
+
 function wt-clean() {
   local branch=""
   local force=0
@@ -69,4 +77,5 @@ function wt-clean() {
 
   git -C "$root" worktree remove "$tree" --force
   git -C "$root" branch -d "$branch" 2>/dev/null || git -C "$root" branch -D "$branch"
+  cd "$root"
 }
