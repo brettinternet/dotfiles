@@ -9,16 +9,14 @@ permissions:
   contents: read
 
 jobs:
-  python:
+  yaml:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
+        uses: actions/checkout@v4
 
-      - name: Set up Python3
-        uses: actions/setup-python@v2
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: 3.x
 
@@ -26,20 +24,18 @@ jobs:
         run: pip3 install yamllint
 
       - name: Lint yaml
-        run: |
-          yamllint .
+        run: yamllint .
 
   shell:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Repository checkout
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Differential ShellCheck
-        uses: redhat-plumbers-in-action/differential-shellcheck@v3
-        with:
-          severity: error
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: ShellCheck
+        run: |
+          find . -type f \
+            \( -name '*.sh' -o -name '*.bash' -o -name '*.ksh' \
+            -o -name '*.bashrc' -o -name '*.bash_profile' \
+            -o -name '*.bash_login' -o -name '*.bash_logout' \) \
+            -not -path "./dotbot/*" | xargs shellcheck
