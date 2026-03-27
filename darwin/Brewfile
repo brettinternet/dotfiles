@@ -12,12 +12,6 @@ brew "wget"
 # CLI + GUI
 brew "wireguard-tools"
 
-# Custom taps
-cask "finestructure/hummingbird/hummingbird"
-
-tap "deskflow/homebrew-tap"
-cask "deskflow"
-
 # GUI
 cask "db-browser-for-sqlite"
 cask "discord"
@@ -25,6 +19,7 @@ cask "elgato-control-center"
 cask "elgato-stream-deck"
 cask "font-fira-code"
 cask "font-hack-nerd-font"
+cask "ghostty"
 cask "github"
 cask "ungoogled-chromium"
 cask "gpg-suite"
@@ -34,11 +29,9 @@ cask "iterm2"
 cask "karabiner-elements"
 cask "maccy"
 cask "plex"
-cask "postico"
 cask "slack"
 cask "stats"
 cask "spotify"
-cask "unnaturalscrollwheels"
 cask "vnc-viewer"
 cask "visual-studio-code"
 cask "vlc"
