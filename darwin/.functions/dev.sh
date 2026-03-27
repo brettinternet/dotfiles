@@ -1,16 +1,19 @@
 #!/bin/bash
 
-alias wt-list='git worktree list | tail -n +2 | awk "{print \$3}" | tr -d "[]"'
+function wt-list() {
+  git worktree list | tail -n +2 | awk '{print $3}' | tr -d '[]'
+}
 
 function wt-new() {
   local branch=$1
   git worktree add -b "$branch" ".trees/$branch" main
-  open -a $TERM_PROGRAM "$(pwd)/.trees/$branch"
+  open -a "$TERM_PROGRAM" "$(pwd)/.trees/$branch"
 }
 
 function wt-delete() {
   local branch=${1:-$(git branch --show-current)}
-  local root=$(git worktree list | head -1 | awk '{print $1}')
+  local root
+  root=$(git worktree list | head -1 | awk '{print $1}')
 
   git -C "$root" worktree remove ".trees/$branch" --force
   git -C "$root" branch -d "$branch"
@@ -29,7 +32,8 @@ function wt-clean() {
   done
 
   branch=${branch:-$(git branch --show-current)}
-  local root=$(git worktree list | head -1 | awk '{print $1}')
+  local root
+  root=$(git worktree list | head -1 | awk '{print $1}')
   local tree="$root/.trees/$branch"
 
   if [[ $force -eq 0 ]]; then
@@ -40,7 +44,8 @@ function wt-clean() {
     fi
 
     # Unpushed commits
-    local upstream=$(git -C "$tree" rev-parse --abbrev-ref "@{upstream}" 2>/dev/null)
+    local upstream
+    upstream=$(git -C "$tree" rev-parse --abbrev-ref "@{upstream}" 2>/dev/null)
     if [[ -z "$upstream" ]]; then
       echo "wt-clean: '$branch' has no remote tracking branch. Use -f to force." >&2
       return 1
@@ -53,7 +58,7 @@ function wt-clean() {
 
   git -C "$root" worktree remove "$tree" --force
   git -C "$root" branch -d "$branch" 2>/dev/null || git -C "$root" branch -D "$branch"
-  cd "$root"
+  cd "$root" || return
 }
 
 function wt-switch() {

@@ -7,3 +7,4 @@ Brewfile.lock.json
 mise.local.yaml
 *.dump
 .trees
+AGENTS.local.md
