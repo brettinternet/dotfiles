@@ -70,26 +70,20 @@
 
 - shell:
     # Allow direnv access to ~/.envrc
-    - [
-      '[ -f "$HOME/.zinit/plugins/direnv---direnv/direnv" ] && direnv allow $HOME || true',
-    ]
+    - ['[ -f "$HOME/.zinit/plugins/direnv---direnv/direnv" ] && direnv allow $HOME || true']
     - ['[ -f /bin/zsh ] && /bin/zsh -c "source ~/.zshrc; zinit self-update"']
-    - [
-      "command -v mise >/dev/null 2>&1 && mise self-update --yes --quiet || true",
-    ]
+    - ["command -v mise >/dev/null 2>&1 && mise self-update --yes --quiet || true"]
     - ["command -v mise >/dev/null 2>&1 && mise up --yes --quiet || true"]
     # - ['[ -x "$(command -v vim)" ] && /usr/bin/vim +PlugInstall +qall > /dev/null || true']
-    - [
-      'command -v nvim >/dev/null 2>&1 && nvim --headless "+Lazy! sync" -c "quitall" || true',
-    ]
+    - ['command -v nvim >/dev/null 2>&1 && nvim --headless "+Lazy! sync" -c "quitall" || true']
     - ["command -v doom >/dev/null 2>&1 && doom upgrade || true"]
     - # https://github.com/tmux-plugins/tpm/blob/master/docs/managing_plugins_via_cmd_line.md
       - >-
-        if command -v tmux >/dev/null 2>&1; then
-          tmux start-server;
-          tmux new-session -d -s dotfiles-setup;
-          tmux source-file ~/.tmux.conf;
-          ~/.tmux/plugins/tpm/bin/install_plugins;
-          ~/.tmux/plugins/tpm/bin/update_plugins all;
-          tmux kill-server;
-        fi
+          if command -v tmux >/dev/null 2>&1; then
+            tmux start-server;
+            tmux new-session -d -s dotfiles-setup;
+            tmux source-file ~/.tmux.conf;
+            ~/.tmux/plugins/tpm/bin/install_plugins;
+            ~/.tmux/plugins/tpm/bin/update_plugins all;
+            tmux kill-server;
+          fi

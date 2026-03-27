@@ -27,6 +27,10 @@
     ~/.hammerspoon/:
       glob: true
       path: darwin/.hammerspoon/*
+    ~/.config/ghostty/:
+      glob: true
+      path: darwin/.config/ghostty/*
+      if: '[ -x "$(command -v ghostty)" ]'
     ~/.config/mise/config.toml:
       path: darwin/.config/mise/config.toml
       if: '[ -x "$(command -v mise)" ]'

@@ -4,7 +4,13 @@
 
 Dotfiles managed with [dotbot](https://github.com/anishathalye/dotbot). Supports macOS (darwin), Linux servers, Thinkpad/Xorg, and VM guests.
 
-Make sure linting passes after each change.
+Make sure the checks passes after each change.
+
+## Setup
+
+```sh
+task init # Sets up dependencies, dirnev and git hooks
+```
 
 ## Install
 
@@ -21,7 +27,7 @@ make thinkpad  # Thinkpad: base + x11 + thinkpad + archlinux groups
 ## Lint
 
 ```sh
-make lint   # runs yamllint + shellcheck
+task check   # runs lint checks
 ```
 
 ## Structure

@@ -13,9 +13,21 @@ tasks:
 
   init:
     desc: Install dependencies and setup environment
+    aliases: [setup]
     cmds:
       - task: setup:init
+      - task: mise
       - task: direnv
+      - task: lefthook
+
+  mise:
+    desc: Install workstation dependencies
+    cmds:
+      - mise trust -q -a
+      - mise install -q
+    preconditions:
+      - sh: command -v mise
+        msg: Mise is not installed
 
   direnv:
     desc: Run direnv hooks
@@ -24,3 +36,29 @@ tasks:
       - '[ -x "$(command -v direnv)" ]'
       - "[[ $(direnv status --json | jq '.state.foundRC.allowed') == 0 ]]"
       - "[[ $(direnv status --json | jq '.state.loadedRC.allowed') == 0 ]]"
+
+  lefthook:
+    desc: Install Lefthook
+    cmds:
+      - lefthook install
+    preconditions:
+      - command -v lefthook
+      - test -f lefthook.yaml
+
+  check:
+    desc: Run checks
+    cmds:
+      - yamllint .
+      - >-
+          find . -type f
+          \( -name '*.sh' -o -name '*.bash' -o -name '*.ksh' -o -name '*.bashrc'
+          -o -name '*.bash_profile' -o -name '*.bash_login' -o -name '*.bash_logout' \)
+          -not -path "./dotbot/*"
+          | xargs shellcheck
+      - dprint check
+
+  fix:
+    desc: Run fixes
+    cmds:
+      - command -v typos > /dev/null 2>&1 && typos --write-changes || true
+      - dprint fmt
