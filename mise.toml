@@ -10,3 +10,6 @@ yamllint = "latest"
 
 [settings]
 disable_backends = ["asdf"]
+
+[hooks]
+enter = "mise i -q"
