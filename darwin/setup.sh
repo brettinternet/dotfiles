@@ -8,7 +8,9 @@ fi
 
 brew bundle --file darwin/Brewfile
 
-if ! xcode-select -p 1>/dev/null; then
+if [ -d "/Applications/Xcode.app" ]; then
+  sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
   sudo xcodebuild -license accept
+elif ! xcode-select -p &>/dev/null; then
   xcode-select --install
 fi
