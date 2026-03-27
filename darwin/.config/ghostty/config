@@ -30,3 +30,4 @@ mouse-hide-while-typing = true
 copy-on-select = false
 clipboard-trim-trailing-spaces = true
 bell-features = border
+window-inherit-working-directory = false
