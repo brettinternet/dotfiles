@@ -24,7 +24,9 @@ if ! (type bgnotify_formatted | grep -q 'function'); then ## allow custom functi
 fi
 
 currentWindowId () {
-  osascript -e 'tell application (path to frontmost application as text) to id of front window' 2&> /dev/null || echo "0"
+  osascript -e 'with timeout of 1 seconds
+    tell application (path to frontmost application as text) to id of front window
+  end timeout' 2>/dev/null || echo "0"
 }
 
 bgnotify () { ## args: (title, subtitle)
