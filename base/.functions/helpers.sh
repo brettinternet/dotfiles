@@ -39,7 +39,7 @@ function up {
     cd ..
   else
     CDSTR=""
-    for ((i=0; i<n; i++))
+    for ((i=0; i<$1; i++))
     do
       CDSTR="../$CDSTR"
     done
