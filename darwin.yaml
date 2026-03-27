@@ -40,5 +40,6 @@
       if: '[ -x "$(command -v nix)" ]'
 
 - shell:
+    - ["ln -s $(which docker-cli-plugin-docker-compose) ~/.docker/cli-plugins/docker-compose"]
     - ["./darwin/setup.sh"]
     # - ['[ -x "$(command -v nix)" ] && ./nix/setup.sh']

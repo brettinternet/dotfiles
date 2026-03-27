@@ -60,5 +60,4 @@ tasks:
   fix:
     desc: Run fixes
     cmds:
-      - command -v typos > /dev/null 2>&1 && typos --write-changes || true
       - dprint fmt
