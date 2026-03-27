@@ -79,11 +79,11 @@
     - ["command -v doom >/dev/null 2>&1 && doom upgrade || true"]
     - # https://github.com/tmux-plugins/tpm/blob/master/docs/managing_plugins_via_cmd_line.md
       - >-
-          if command -v tmux >/dev/null 2>&1; then
-            tmux start-server;
-            tmux new-session -d -s dotfiles-setup;
-            tmux source-file ~/.tmux.conf;
-            ~/.tmux/plugins/tpm/bin/install_plugins;
-            ~/.tmux/plugins/tpm/bin/update_plugins all;
-            tmux kill-server;
-          fi
+        if command -v tmux >/dev/null 2>&1; then
+          tmux start-server;
+          tmux new-session -d -s dotfiles-setup;
+          tmux source-file ~/.tmux.conf;
+          ~/.tmux/plugins/tpm/bin/install_plugins;
+          ~/.tmux/plugins/tpm/bin/update_plugins all;
+          tmux kill-server;
+        fi
