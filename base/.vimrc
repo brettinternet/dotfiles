@@ -11,15 +11,13 @@ endif
 
 " -- General ----------------------------------------
 
-set encoding=UTF-8
+set encoding=utf-8
 set autoindent
 set autoread                                " reload files when changed on disk, i.e. via `git checkout`
 set backspace=2                             " Fix broken backspace in some setups
 set backupcopy=yes                          " see :help crontab
 set clipboard=unnamedplus                   " yank and paste with the system clipboard
 set directory-=.                            " don't store swapfiles in the current directory
-set encoding=utf-8
-set ignorecase                              " case-insensitive search
 set laststatus=2                            " always show statusline
 set list                                    " show trailing whitespace
 set listchars=tab:▸\ ,trail:▫
@@ -35,7 +33,7 @@ set wildmode=longest,list,full
 set expandtab                               " expand tabs to spaces - https://vim.fandom.com/wiki/Indenting_source_code
 set shiftwidth=4                            " normal mode indentation commands use 2 spaces
 set softtabstop=4                           " insert mode tab and backspace use 2 spaces
-set ignorecase                              " Search
+set ignorecase                              " case-insensitive search
 set smartcase                               " case-sensitive search if any caps
 set incsearch                               " search as you type
 set wrapscan
