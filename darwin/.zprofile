@@ -1,4 +1,6 @@
 # Load brew path
 eval "$(/opt/homebrew/bin/brew shellenv)"
 
-# test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
+if [ -d /Applications/Ghostty.app ]; then
+  export PATH="$PATH:/Applications/Ghostty.app/Contents/MacOS"
+fi

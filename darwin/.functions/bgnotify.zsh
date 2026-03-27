@@ -32,6 +32,7 @@ currentWindowId () {
 bgnotify () { ## args: (title, subtitle)
   [[ "$TERM_PROGRAM" == 'iTerm.app' ]] && term_id='com.googlecode.iterm2';
   [[ "$TERM_PROGRAM" == 'Apple_Terminal' ]] && term_id='com.apple.terminal';
+  [[ "$TERM_PROGRAM" == 'ghostty' ]] && term_id='com.mitchellh.ghostty';
   ## now call terminal-notifier, (hopefully with $term_id!)
   [ -z "$term_id" ] && terminal-notifier -message "$2" -title "$1" >/dev/null ||
   terminal-notifier -message "$2" -title "$1" -activate "$term_id" -sender "$term_id" >/dev/null

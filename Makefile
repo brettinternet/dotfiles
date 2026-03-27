@@ -34,7 +34,3 @@ mac: darwin
 
 i3: export DOTFILE_GROUPS = i3
 i3: install
-
-lint:
-	@yamllint .
-	@find . -type f \( -name '*.sh' -o -name '*.bash' -o -name '*.ksh' -o -name '*.bashrc' -o -name '*.bash_profile' -o -name '*.bash_login' -o -name '*.bash_logout' \) -not -path "./dotbot/*" | xargs shellcheck
