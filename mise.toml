@@ -1,5 +1,6 @@
 [tools]
 yamllint = "latest"
+shellcheck = "latest"
 
 [settings]
 disable_backends = ["asdf"]
