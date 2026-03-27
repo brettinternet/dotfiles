@@ -125,9 +125,11 @@ function gwta {
     return 1
   fi
 
-  local current_dir=$(basename "$(git rev-parse --show-toplevel)")
+  local current_dir
+  current_dir=$(basename "$(git rev-parse --show-toplevel)")
   local new_worktree_name="${current_dir}-${worktree_name}"
-  local worktree_path="$(git rev-parse --show-toplevel)/../${new_worktree_name}"
+  local worktree_path
+  worktree_path="$(git rev-parse --show-toplevel)/../${new_worktree_name}"
 
   if [[ -n "$branch_name" ]]; then
     git worktree add -b "$branch_name" "$worktree_path"
@@ -135,5 +137,5 @@ function gwta {
     git worktree add "$worktree_path"
   fi
 
-  cd $worktree_path
+  cd "$worktree_path" || return
 }
