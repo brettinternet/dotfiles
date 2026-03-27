@@ -40,6 +40,7 @@ function wt-delete() {
 
   git -C "$root" worktree remove ".trees/$branch" --force
   git -C "$root" branch -d "$branch"
+  cd "$root" || return
 }
 
 function wt-clean() {
