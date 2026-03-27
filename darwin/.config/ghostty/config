@@ -14,7 +14,6 @@ window-width = 80
 window-theme = dark
 background-opacity = 0.90
 background-blur = macos-glass-regular
-unfocused-split-opacity = 0.90
 
 # Quick terminal
 quick-terminal-position = left
