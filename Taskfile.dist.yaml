@@ -61,3 +61,9 @@ tasks:
     desc: Run fixes
     cmds:
       - dprint fmt
+
+  update:
+    desc: Update dependencies
+    cmds:
+      - mise update -q
+      - git submodule foreach git pull
