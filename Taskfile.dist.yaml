@@ -50,17 +50,19 @@ tasks:
     cmds:
       - yamllint .
       - >-
-          find . -type f
-          \( -name '*.sh' -o -name '*.bash' -o -name '*.ksh' -o -name '*.bashrc'
-          -o -name '*.bash_profile' -o -name '*.bash_login' -o -name '*.bash_logout' \)
-          -not -path "./dotbot/*"
-          | xargs shellcheck
+        find . -type f
+        \( -name '*.sh' -o -name '*.bash' -o -name '*.ksh' -o -name '*.bashrc'
+        -o -name '*.bash_profile' -o -name '*.bash_login' -o -name '*.bash_logout' \)
+        -not -path "./dotbot/*"
+        | xargs shellcheck
       - dprint check
+      - prettier --check "**/*.{yaml,yml}"
 
   fix:
     desc: Run fixes
     cmds:
       - dprint fmt
+      - prettier --write "**/*.{yaml,yml}"
 
   update:
     desc: Update dependencies

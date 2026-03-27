@@ -4,7 +4,7 @@
 
 Dotfiles managed with [dotbot](https://github.com/anishathalye/dotbot). Supports macOS (darwin), Linux servers, Thinkpad/Xorg, and VM guests.
 
-Make sure the checks passes after each change.
+Make sure the checks passes after each change. Keep working until all checks pass.
 
 ## Setup
 
