@@ -1,0 +1,33 @@
+# Styles
+font-size = 16
+font-family = "Fira Code"
+macos-titlebar-style = tabs
+macos-titlebar-proxy-icon = hidden
+theme = Gruvbox Dark Hard
+
+# Window
+window-padding-x = 12
+window-padding-y = 4
+window-padding-balance = true
+window-height = 50
+window-width = 80
+window-theme = dark
+background-opacity = 0.90
+background-blur = macos-glass-regular
+unfocused-split-opacity = 0.90
+
+# Quick terminal
+quick-terminal-position = left
+quick-terminal-size = 40%
+quick-terminal-screen = mouse
+quick-terminal-autohide = false
+quick-terminal-space-behavior = remain
+quick-terminal-animation-duration = 0
+keybind = global:cmd+shift+semicolon=toggle_quick_terminal
+
+# Behavior
+confirm-close-surface = false
+mouse-hide-while-typing = true
+copy-on-select = false
+clipboard-trim-trailing-spaces = true
+bell-features = border
