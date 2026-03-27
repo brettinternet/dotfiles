@@ -1,5 +1,4 @@
 -- A better push to talk / toggle mute
-local shouldCaffeinate = false
 -- local muteMenu = hs.menubar.new()
 
 local function setMuteDisplay(mute)

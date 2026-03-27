@@ -10,7 +10,7 @@ local function playSpotify()
     spotify = hs.application.get(spotifyBundleID)
     spotify:hide()
   end
-  playKey = hs.eventtap.event.newKeyEvent(nil, "space", true)
+  local playKey = hs.eventtap.event.newKeyEvent(nil, "space", true)
   playKey:post(spotify)
 end
 

@@ -48,8 +48,8 @@ function up {
 }
 
 # fzy (see .functions for more)
-alias ff="find . -type f | fzy"
-alias fh="history | fzy"
+alias ff="find . -type f | fzf"
+alias fh="history | fzf"
 
 # https://wiki.archlinux.org/index.php/Sudo#Passing_aliases
 alias sudo="sudo "
