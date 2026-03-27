@@ -84,7 +84,7 @@ scope() {
   fi
   alias k='kubectl'
   local BUN_BIN=$HOME/.bun/bin
-  if [ -f $BUN_BIN ]; then
+  if [ -d $BUN_BIN ]; then
     export PATH="$BUN_BIN:$PATH"
   fi
 }
