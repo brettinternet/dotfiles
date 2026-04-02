@@ -24,3 +24,4 @@ uv = "latest"
 disable_backends = ["asdf", "pipx"]
 pipx.uvx = true
 npm.bun = true
+experimental = true
