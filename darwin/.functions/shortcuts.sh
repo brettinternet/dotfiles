@@ -11,6 +11,7 @@ alias dev='cd $DEV_DIR'
 alias me='cd $PERSONAL_DIR'
 alias sandbox='cd $DEV_DIR/sandbox'
 alias work='cd $DEV_DIR/work'
+alias ai='cd $PERSONAL_DIR/ai'
 
 # shellcheck disable=SC2034
 NOTES_DIR="${MY_NOTES:-$PERSONAL_DIR/notes}"
