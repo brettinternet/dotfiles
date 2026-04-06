@@ -41,6 +41,6 @@
 
 - shell:
     # https://github.com/jdx/mise/discussions/5950#discussioncomment-15312282
-    - ["ln -s $(which docker-cli-plugin-docker-compose) ~/.docker/cli-plugins/docker-compose"]
-    - ["./darwin/setup.sh"]
+    - ["ln -s $(which docker-cli-plugin-docker-compose) ~/.docker/cli-plugins/docker-compose || true"]
+    # - ["./darwin/setup.sh"]
     # - ['[ -x "$(command -v nix)" ] && ./nix/setup.sh']
