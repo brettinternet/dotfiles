@@ -5,7 +5,7 @@ cosign = "latest"
 claude = "latest"
 colima = "latest"
 docker-cli = "latest"
-docker-compose = "latest"
+docker-compose = { version = "latest", postinstall = "ln -sf $(which docker-cli-plugin-docker-compose) ~/.docker/cli-plugins/docker-compose" }
 fd = "latest"
 gh = "latest"
 go = "latest"
