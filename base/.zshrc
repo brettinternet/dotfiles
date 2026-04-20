@@ -4,7 +4,15 @@ source $HOME/.profile
 
 fpath+=( "$HOME/.functions" )
 
-if [[ "$OSTYPE" == "darwin"* ]]; then
+BREW_ZSH_FUNCTIONS="/opt/homebrew/share/zsh/site-functions"
+if [[ -d "$BREW_ZSH_FUNCTIONS" ]] && \
+    [[ "$(stat -f "%Su" $BREW_ZSH_FUNCTIONS)" == "$(id -un)" ]]; then
+  OWNS_BREW_ZSH_FUNCTIONS=true
+else
+  OWNS_BREW_ZSH_FUNCTIONS=false
+fi
+
+if [[ "$OWNS_BREW_ZSH_FUNCTIONS" == true ]] && [[ "$OSTYPE" == "darwin"* ]]; then
   fpath+=( /opt/homebrew/share/zsh/site-functions )
 fi
 
