@@ -8,3 +8,5 @@ mise.local.yaml
 *.dump
 .trees
 AGENTS.local.md
+.claude/settings.local.json
+.rtk

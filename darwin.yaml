@@ -13,6 +13,8 @@
 - link:
     ~/.gitconfig:
       path: darwin/.gitconfig
+    ~/.gitignore:
+      path: darwin/.gitignore
     ~/.zprofile:
       path: darwin/.zprofile
     ~/.hushlogin:
