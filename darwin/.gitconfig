@@ -1,5 +1,6 @@
 [core]
   editor = nvim
+	excludesFile = ~/.gitignore
 
 [user]
   name = brett
@@ -10,6 +11,7 @@
 
 [alias]
 	graph = log --graph --all --format='%h %s%n        (%an, %ar)%d' --abbrev-commit
+
 [filter "lfs"]
 	process = git-lfs filter-process
 	required = true

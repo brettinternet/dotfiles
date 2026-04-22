@@ -1,0 +1,14 @@
+# Tools
+Taskfile.yaml
+mise.local.toml
+.trees
+.worktrees
+
+# AI
+.rtk
+CLAUDE.local.md
+AGENTS.local.md
+.claude/settings.local.json
+
+# System
+.DS_Store
