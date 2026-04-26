@@ -206,21 +206,6 @@ zinit as="command" lucid from="gh-r" for \
     atload='eval "$(mise activate zsh)"' \
     jdx/mise
 
-zinit wait"0c" lucid light-mode for \
-  id-as'fzf' \
-  as"program" \
-  from"gh-r" \
-  nocompile \
-  atload"source <(fzf --zsh)" \
-  junegunn/fzf
-
-# zinit lucid light-mode for \
-#   id-as'rg' \
-#   as"program" \
-#   from'gh-r' \
-#   sbin'**/rg -> rg' \
-#   BurntSushi/ripgrep
-
 # -- Prompt
 
 # For multiple prompts, do: https://zdharma-continuum.github.io/zinit/wiki/Multiple-prompts/
