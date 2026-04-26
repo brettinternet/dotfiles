@@ -14,28 +14,34 @@ autoload -Uz add-zsh-hook || { print "can't add zsh hook!"; return }
 
 ## definitions ##
 
-if ! (type bgnotify_formatted | grep -q 'function'); then ## allow custom function override
+if (( ! $+functions[bgnotify_formatted] )); then ## allow custom function override
   function bgnotify_formatted { ## args: (exit_status, command, elapsed_seconds)
-    elapsed="$(( $3 % 60 ))s"
+    local elapsed="$(( $3 % 60 ))s"
     (( $3 >= 60 )) && elapsed="$((( $3 % 3600) / 60 ))m $elapsed"
     (( $3 >= 3600 )) && elapsed="$(( $3 / 3600 ))h $elapsed"
     [ $1 -eq 0 ] && bgnotify "#win (took $elapsed)" "$2" || bgnotify "#fail (took $elapsed)" "$2"
   }
 fi
 
-currentWindowId () {
+currentWindowId() {
   osascript -e 'with timeout of 1 seconds
     tell application (path to frontmost application as text) to id of front window
   end timeout' 2>/dev/null || echo "0"
 }
 
-bgnotify () { ## args: (title, subtitle)
-  [[ "$TERM_PROGRAM" == 'iTerm.app' ]] && term_id='com.googlecode.iterm2';
-  [[ "$TERM_PROGRAM" == 'Apple_Terminal' ]] && term_id='com.apple.terminal';
-  [[ "$TERM_PROGRAM" == 'ghostty' ]] && term_id='com.mitchellh.ghostty';
+bgnotify() { ## args: (title, subtitle)
+  local term_id=""
+  case "$TERM_PROGRAM" in
+    iTerm.app) term_id='com.googlecode.iterm2' ;;
+    Apple_Terminal) term_id='com.apple.terminal' ;;
+    ghostty) term_id='com.mitchellh.ghostty' ;;
+  esac
   ## now call terminal-notifier, (hopefully with $term_id!)
-  [ -z "$term_id" ] && terminal-notifier -message "$2" -title "$1" >/dev/null ||
-  terminal-notifier -message "$2" -title "$1" -activate "$term_id" -sender "$term_id" >/dev/null
+  if [[ -z "$term_id" ]]; then
+    terminal-notifier -message "$2" -title "$1" >/dev/null
+  else
+    terminal-notifier -message "$2" -title "$1" -activate "$term_id" -sender "$term_id" >/dev/null
+  fi
 }
 
 
@@ -48,11 +54,11 @@ bgnotify_begin() {
 }
 
 bgnotify_end() {
-  didexit=$?
-  elapsed=$(( EPOCHSECONDS - bgnotify_timestamp ))
-  past_threshold=$(( elapsed >= bgnotify_threshold ))
+  local didexit=$?
+  local elapsed=$(( EPOCHSECONDS - bgnotify_timestamp ))
+  local past_threshold=$(( elapsed >= bgnotify_threshold ))
   if (( bgnotify_timestamp > 0 )) && (( past_threshold )); then
-    if [ $(currentWindowId) != "$bgnotify_windowid" ]; then
+    if [[ "$(currentWindowId)" != "$bgnotify_windowid" ]]; then
       print -n "\a"
       bgnotify_formatted "$didexit" "$bgnotify_lastcmd" "$elapsed"
     fi

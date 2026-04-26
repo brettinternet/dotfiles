@@ -49,12 +49,18 @@ tasks:
     desc: Run checks
     cmds:
       - yamllint .
+      - shellcheck -s sh base/.profile
       - >-
         find . -type f
         \( -name '*.sh' -o -name '*.bash' -o -name '*.ksh' -o -name '*.bashrc'
         -o -name '*.bash_profile' -o -name '*.bash_login' -o -name '*.bash_logout' \)
         -not -path "./dotbot/*"
         | xargs shellcheck
+      - >-
+        find . -type f
+        \( -name '*.zsh' -o -name '.zprofile' -o -name '.zshrc' -o -name '.zshrc.*' \)
+        -not -path "./dotbot/*"
+        | xargs -n 1 zsh -n
       - dprint check
       - prettier --check "**/*.{yaml,yml}"
 

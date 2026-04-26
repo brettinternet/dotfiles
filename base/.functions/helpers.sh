@@ -36,14 +36,15 @@ alias :q='exit'
 # "up 6" to "cd ../../../../../.."
 function up {
   if [[ "$#" -lt 1 ]] ; then
-    cd ..
+    cd .. || return
   else
-    CDSTR=""
+    local CDSTR=""
+    local i
     for ((i=0; i<$1; i++))
     do
       CDSTR="../$CDSTR"
     done
-    cd $CDSTR || exit
+    cd "$CDSTR" || return
   fi
 }
 

@@ -6,8 +6,7 @@
 # These features allow to pause a branch development and switch to another one ("Work in Progress", or wip). When you want to go back to work, just unwip it.
 # Warn if the current branch is a WIP
 function work_in_progress {
-  # shellcheck disable=SC2091
-  if "$(git log -n 1 2>/dev/null | grep -q -c "\-\-wip\-\-")"; then
+  if git log -n 1 2>/dev/null | command grep -q -- "--wip--"; then
     echo "WIP!!"
   fi
 }
@@ -19,7 +18,7 @@ alias gunwip='git log -n 1 | grep -q -c "\-\-wip\-\-" && git reset HEAD~1'
 function git_pickaxe { # 1 - search string value
   if [ $# -eq 0 ]; then
       echo "No arguments provided"
-      exit 1
+      return 1
   fi
   local STRING="$1"
   # Search string, show diff and commit message, chronological order
