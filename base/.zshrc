@@ -1,29 +1,15 @@
-export SHELL="/bin/zsh"
+export SHELL="${commands[zsh]:-/bin/zsh}"
 
-source $HOME/.profile
+source "$HOME/.profile"
 
 fpath+=( "$HOME/.functions" )
 
 BREW_ZSH_FUNCTIONS="/opt/homebrew/share/zsh/site-functions"
-if [[ -d "$BREW_ZSH_FUNCTIONS" ]] && \
-    [[ "$(stat -f "%Su" $BREW_ZSH_FUNCTIONS)" == "$(id -un)" ]]; then
-  OWNS_BREW_ZSH_FUNCTIONS=true
-else
-  OWNS_BREW_ZSH_FUNCTIONS=false
+if [[ "$OSTYPE" == darwin* ]] && [[ -d "$BREW_ZSH_FUNCTIONS" ]] && \
+    [[ "$(stat -f "%Su" "$BREW_ZSH_FUNCTIONS")" == "$(id -un)" ]]; then
+  fpath+=( "$BREW_ZSH_FUNCTIONS" )
 fi
-
-if [[ "$OWNS_BREW_ZSH_FUNCTIONS" == true ]] && [[ "$OSTYPE" == "darwin"* ]]; then
-  fpath+=( /opt/homebrew/share/zsh/site-functions )
-fi
-
-scope() {
-  local LOCAL_ZSH_CUSTOMIZATIONS=$HOME/.zshrc.local
-  if [ -f "$LOCAL_ZSH_CUSTOMIZATIONS" ]; then
-    source "$LOCAL_ZSH_CUSTOMIZATIONS"
-  fi
-}
-
-scope
+unset BREW_ZSH_FUNCTIONS
 
 
 # -- Options ----------------------------------------
@@ -31,6 +17,8 @@ scope
 HISTFILE=~/.histfile
 HISTSIZE=50000
 SAVEHIST=10000
+ZSH_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
+command mkdir -p "$ZSH_CACHE_DIR"
 
 setopt interactive_comments
 setopt append_history hist_ignore_dups hist_ignore_space hist_expire_dups_first
@@ -151,7 +139,7 @@ autoload -Uz _zinit
 
 
 # -- Local plugins ----------------------------------------
-zinit ice atinit'local i; for i in *.(sh|zsh); do source $i; done'
+zinit ice atinit'local i; for i in *.(sh|zsh)(N); do source "$i"; done'
 zinit light ~/.functions
 
 # -- Plugins via zinit ----------------------------------------
@@ -240,7 +228,7 @@ zinit load geometry-zsh/geometry
 
 # -- Autocompletion
 
-# Fish Alt+l mimic
+# Alt+l file completion
 zstyle ":completion:file-complete::::" completer _files
 zle -C file-complete complete-word _generic
 zstyle -e ':completion:*:default' list-colors 'reply=("${PREFIX:+=(#bi)($PREFIX:t)(?)*==04=02}:${(s.:.)LS_COLORS}")'
@@ -263,9 +251,16 @@ zstyle ":completion:*:descriptions" format "%B%d%b"
 
 # -- Local configs
 
-for LOCAL_CONFIG in ~/.zshrc*; do
-  if [[ -f "$LOCAL_CONFIG" ]] && [[ "$LOCAL_CONFIG" != *".zshrc" ]]; then
-    source $LOCAL_CONFIG
-    break
+case "$OSTYPE" in
+  darwin*) DOTFILES_ZSH_PLATFORM_CONFIG="$HOME/.zshrc.darwin" ;;
+  linux*) DOTFILES_ZSH_PLATFORM_CONFIG="$HOME/.zshrc.linux" ;;
+  *) DOTFILES_ZSH_PLATFORM_CONFIG="" ;;
+esac
+
+for DOTFILES_ZSH_CONFIG in "$DOTFILES_ZSH_PLATFORM_CONFIG" "$HOME/.zshrc.local"; do
+  if [[ -n "$DOTFILES_ZSH_CONFIG" ]] && [[ -f "$DOTFILES_ZSH_CONFIG" ]]; then
+    source "$DOTFILES_ZSH_CONFIG"
   fi
 done
+
+unset DOTFILES_ZSH_CONFIG DOTFILES_ZSH_PLATFORM_CONFIG

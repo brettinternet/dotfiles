@@ -6,11 +6,12 @@ alias pip='pip3'
 # GCloud SDK
 gcloud_sdk_path="/opt/google-cloud-sdk"
 if [ -f "$gcloud_sdk_path/path.zsh.inc" ]; then
-  . "$gcloud_sdk_path/path.zsh.inc";
+  . "$gcloud_sdk_path/path.zsh.inc"
 fi
 
 if [ -f "$gcloud_sdk_path/completion.zsh.inc" ]; then
-  . "$gcloud_sdk_path/completion.zsh.inc";
+  . "$gcloud_sdk_path/completion.zsh.inc"
 fi
 
 export VISUAL="code --wait"
+export EDITOR="$VISUAL"

@@ -21,7 +21,7 @@
       force: true
     ~/.dircolors:
       path: base/.dircolors
-      if: "whence dircolors >/dev/null"
+      if: "command -v dircolors >/dev/null 2>&1"
     ~/.zshrc:
       path: base/.zshrc
       if: '[ -x "$(command -v zsh)" ]'
@@ -42,16 +42,16 @@
       if: '[ -x "$(command -v tmux)" ]'
     ~/.config/k9s/config.yaml:
       path: base/.config/k9s/config.yaml
-      if: '[ `uname` = Linux ] && [ -x "$(command -v kubectl)" ]'
+      if: '[ "$(uname)" = Linux ] && [ -x "$(command -v kubectl)" ]'
     ~/.config/k9s/skins/skin.yaml:
       path: base/.config/k9s/skin.yaml
-      if: '[ `uname` = Linux ] && [ -x "$(command -v kubectl)" ]'
+      if: '[ "$(uname)" = Linux ] && [ -x "$(command -v kubectl)" ]'
     ~/Library/Application Support/k9s/config.yaml:
       path: base/.config/k9s/config.yaml
-      if: '[ `uname` = Darwin ] && [ -x "$(command -v kubectl)" ]'
+      if: '[ "$(uname)" = Darwin ] && [ -x "$(command -v kubectl)" ]'
     ~/Library/Application Support/k9s/skins/skin.yaml:
       path: base/.config/k9s/skin.yaml
-      if: '[ `uname` = Darwin ] && [ -x "$(command -v kubectl)" ]'
+      if: '[ "$(uname)" = Darwin ] && [ -x "$(command -v kubectl)" ]'
     ~/.config/nvim:
       path: base/.config/nvim
       if: '[ -x "$(command -v nvim)" ]'
@@ -63,15 +63,15 @@
       path: base/.functions/*
     ~/.functions/pacman.sh:
       path: base/platform/pacman.sh
-      if: '[ `uname` = Linux ] && [ -x "$(command -v pacman)" ]'
+      if: '[ "$(uname)" = Linux ] && [ -x "$(command -v pacman)" ]'
     ~/.zshrc.linux:
       path: base/platform/.zshrc.linux
-      if: "[ `uname` = Linux ]"
+      if: '[ "$(uname)" = Linux ]'
 
 - shell:
     # Allow direnv access to ~/.envrc
-    - ['[ -f "$HOME/.zinit/plugins/direnv---direnv/direnv" ] && direnv allow $HOME || true']
-    - ['[ -f /bin/zsh ] && /bin/zsh -c "source ~/.zshrc; zinit self-update"']
+    - ['[ -f "$HOME/.zinit/plugins/direnv---direnv/direnv" ] && direnv allow "$HOME" || true']
+    - ['command -v zsh >/dev/null 2>&1 && zsh -ic "zinit self-update"']
     - ["command -v mise >/dev/null 2>&1 && mise self-update --yes --quiet || true"]
     - ["command -v mise >/dev/null 2>&1 && mise up --yes --quiet || true"]
     # - ['[ -x "$(command -v vim)" ] && /usr/bin/vim +PlugInstall +qall > /dev/null || true']
