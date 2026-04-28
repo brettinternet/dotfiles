@@ -1,5 +1,4 @@
 [tools]
-dprint = "latest"
 prettier = "latest"
 direnv = "latest"
 gitleaks = "latest"

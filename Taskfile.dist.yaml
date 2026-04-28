@@ -61,14 +61,14 @@ tasks:
         \( -name '*.zsh' -o -name '.zprofile' -o -name '.zshrc' -o -name '.zshrc.*' \)
         -not -path "./dotbot/*"
         | xargs -n 1 zsh -n
-      - dprint check
       - prettier --check "**/*.{yaml,yml}"
+      - prettier --check "**/*.{json,jsonc}"
 
   fix:
     desc: Run fixes
     cmds:
-      - dprint fmt
       - prettier --write "**/*.{yaml,yml}"
+      - prettier --write "**/*.{json,jsonc}"
 
   update:
     desc: Update dependencies
