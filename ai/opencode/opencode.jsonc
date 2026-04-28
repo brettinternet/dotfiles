@@ -1,0 +1,49 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "disabled_providers": ["opencode"],
+  "plugin": ["superpowers@git+https://github.com/obra/superpowers.git"],
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+    },
+    "chrome-devtools": {
+      "type": "local",
+      "command": ["bunx", "chrome-devtools-mcp@latest"],
+    },
+  },
+  "agent": {
+    "designer": {
+      "description": "Designs and plans work using Superpowers brainstorming and writing-plans.",
+      "mode": "primary",
+      "model": "provider/design-model",
+      "permission": {
+        "edit": "deny",
+        "bash": "ask",
+        "task": {
+          "*": "deny",
+          "implementer": "allow",
+          "reviewer": "allow",
+        },
+      },
+    },
+    "implementer": {
+      "description": "Implements one explicit plan task using TDD.",
+      "mode": "subagent",
+      "model": "provider/implementation-model",
+      "permission": {
+        "edit": "allow",
+        "bash": "ask",
+      },
+    },
+    "reviewer": {
+      "description": "Reviews completed implementation against the plan, tests, and code quality.",
+      "mode": "subagent",
+      "model": "provider/review-model",
+      "permission": {
+        "edit": "deny",
+        "bash": "ask",
+      },
+    },
+  },
+}

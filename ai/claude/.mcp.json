@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "bunx",
+      "args": ["@playwright/mcp"]
+    },
+    "chrome-devtools": {
+      "command": "bunx",
+      "args": ["chrome-devtools-mcp@latest", "--executable-path", "/Applications/Chromium.app/Contents/MacOS/Chromium"]
+    },
+    "linear": {
+      "url": "https://mcp.linear.app/mcp"
+    },
+    "notion": {
+      "url": "https://mcp.notion.com/mcp"
+    }
+  }
+}
