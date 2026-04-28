@@ -1,0 +1,18 @@
+{
+  // Example local opencode config with custom MCPs
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "chrome-devtools": {
+      "type": "local",
+      "command": ["bunx", "chrome-devtools-mcp@latest", "--executable-path", "/Applications/Chromium.app/Contents/MacOS/Chromium"],
+    },
+    "linear": {
+      "type": "remote",
+      "command": "https://mcp.linear.app/sse",
+    },
+    "notion": {
+      "type": "remote",
+      "url": "https://mcp.notion.com/mcp",
+    },
+  },
+}

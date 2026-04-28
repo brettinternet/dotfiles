@@ -1,0 +1,34 @@
+---
+- defaults:
+    link:
+      create: true
+      relink: true
+
+- link:
+    # OpenCode
+    ~/.config/opencode/AGENTS.md:
+      path: ai/AGENTS.md
+    ~/.config/opencode/opencode.json:
+      path: ai/opencode/opencode.jsonc
+    ~/.config/opencode/tui.json:
+      path: ai/opencode/tui.jsonc
+    ~/.config/opencode/commands/:
+      glob: true
+      path: ai/commands/*
+    ~/.config/opencode/agents/:
+      glob: true
+      path: ai/agents/*
+    # Claude
+    ~/.claude/CLAUDE.md:
+      path: ai/AGENTS.md
+    ~/.claude/settings.json:
+      path: ai/claude/settings.json
+    ~/.claude/commands/:
+      glob: true
+      path: ai/commands/*
+    ~/.claude/agents/:
+      glob: true
+      path: ai/agents/*
+    # Codex
+    ~/.codex/AGENTS.md:
+      path: ai/AGENTS.md

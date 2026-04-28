@@ -1,12 +1,19 @@
+# env
 .envrc
 lazy-lock.json
+
+# macos
 Brewfile.lock.json
 .DS_Store
+
+# tools
 /Taskfile.yaml
 /Taskfile.yml
 mise.local.yaml
 *.dump
 .trees
+
+# AI
 AGENTS.local.md
 .claude/settings.local.json
 .rtk
