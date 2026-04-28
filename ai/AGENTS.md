@@ -1,5 +1,3 @@
-@AGENTS.local.md
-
 # User Preferences
 
 ## Communication Style
