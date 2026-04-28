@@ -1,28 +1,44 @@
 [tools]
-ast-grep = "latest"
-biome = "latest"
-bun = "latest"
+
+# tools
+task = "latest"
+sops = "latest"
+lsd = "latest"
+gh = "latest"
+k9s = "latest"
+slsa-verifier = "latest"
 cosign = "latest"
 claude = "latest"
-colima = "latest"
-docker-cli = "latest"
-docker-compose = { version = "latest", postinstall = "mkdir -p ~/.docker/cli-plugins && ln -sf $(command -v docker-cli-plugin-docker-compose) ~/.docker/cli-plugins/docker-compose" }
+opencode = "latest"
+
+# dev
+go = "latest"
+rust = "latest"
+python = "latest"
+uv = "latest"
+node = "latest"
+bun = "latest"
+biome = "latest"
+
+# search
 fd = "latest"
 fzf = "latest"
-gh = "latest"
-go = "latest"
-k9s = "latest"
-lima = "latest"
-lsd = "latest"
-node = "latest"
-opencode = "latest"
-python = "latest"
-rust = "latest"
+qmd = "latest"
 rg = "latest"
-slsa-verifier = "latest"
-sops = "latest"
-task = "latest"
-uv = "latest"
+ast-grep = "latest"
+
+# containers
+lima = "latest"
+colima = "latest"
+docker-cli = "latest"
+[tools.docker-compose]
+version = "latest"
+postinstall = '''
+mkdir -p ~/.docker/cli-plugins ~/.local/bin
+compose_plugin="$(which docker-cli-plugin-docker-compose)"
+ln -sf "$compose_plugin" ~/.docker/cli-plugins/docker-compose
+ln -sf "$compose_plugin" ~/.local/bin/docker-compose
+'''
 
 [settings]
 disable_backends = ["asdf", "pipx"]
