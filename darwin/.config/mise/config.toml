@@ -23,9 +23,10 @@ biome = "latest"
 # search
 fd = "latest"
 fzf = "latest"
-qmd = "latest"
+"npm:@tobilu/qmd" = "latest"
 rg = "latest"
 ast-grep = "latest"
+yq = "latest"
 
 # containers
 lima = "latest"
