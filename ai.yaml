@@ -15,9 +15,9 @@
     ~/.config/opencode/commands/:
       glob: true
       path: ai/commands/*
-    ~/.config/opencode/agents/:
-      glob: true
-      path: ai/agents/*
+    # ~/.config/opencode/agents/:
+    #   glob: true
+    #   path: ai/opencode/agents/*
     # Claude
     ~/.claude/CLAUDE.md:
       path: ai/AGENTS.md
@@ -28,7 +28,7 @@
       path: ai/commands/*
     ~/.claude/agents/:
       glob: true
-      path: ai/agents/*
+      path: ai/claude/agents/*
     # Codex
     ~/.codex/AGENTS.md:
       path: ai/AGENTS.md
