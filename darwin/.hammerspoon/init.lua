@@ -1,8 +1,49 @@
 -- Todo: modify https://github.com/dbalatero/SkyRocket.spoon
 
--- https://www.hammerspoon.org/Spoons/SpoonInstall.html
-hs.loadSpoon("SpoonInstall")
-spoon.SpoonInstall.use_syncinstall = true
+local function shellQuote(value)
+  return "'" .. tostring(value):gsub("'", "'\\''") .. "'"
+end
+
+local function ensureSpoonInstall()
+  local spoonDir = hs.configdir .. "/Spoons"
+  local spoonPath = spoonDir .. "/SpoonInstall.spoon"
+
+  if hs.fs.attributes(spoonPath, "mode") == "directory" then
+    return true
+  end
+
+  hs.alert.show("Installing SpoonInstall")
+  hs.fs.mkdir(spoonDir)
+
+  local zipPath = spoonDir .. "/SpoonInstall.spoon.zip"
+  local spoonInstallUrl = "https://github.com/Hammerspoon/Spoons/raw/master/Spoons/SpoonInstall.spoon.zip"
+  local command = table.concat({
+    "/usr/bin/curl -fsSL -o", shellQuote(zipPath), shellQuote(spoonInstallUrl),
+    "&& /usr/bin/unzip -oq", shellQuote(zipPath), "-d", shellQuote(spoonDir),
+    "&& /bin/rm -f", shellQuote(zipPath),
+  }, " ")
+
+  local _, ok = hs.execute(command, true)
+  if not ok or hs.fs.attributes(spoonPath, "mode") ~= "directory" then
+    hs.alert.show("SpoonInstall install failed")
+    return false
+  end
+
+  return true
+end
+
+local hasSpoonInstall = ensureSpoonInstall()
+if hasSpoonInstall then
+  local ok = pcall(hs.loadSpoon, "SpoonInstall")
+  if ok and spoon.SpoonInstall then
+    spoon.SpoonInstall.use_syncinstall = true
+    pcall(function()
+      spoon.SpoonInstall:andUse("Caffeine", { start = true })
+    end)
+  else
+    hs.alert.show("SpoonInstall unavailable")
+  end
+end
 
 hs.ipc.cliInstall()
 
@@ -11,8 +52,9 @@ function dump(o)
   if type(o) == 'table' then
     local s = '{ '
     for k, v in pairs(o) do
-      if type(k) ~= 'number' then k = '"' .. k .. '"' end
-      s = s .. '[' .. k .. '] = ' .. dump(v) .. ','
+      local key = k
+      if type(key) ~= 'number' then key = '"' .. key .. '"' end
+      s = s .. '[' .. key .. '] = ' .. dump(v) .. ','
     end
     return s .. '} '
   else
@@ -89,6 +131,16 @@ prefix:bind('', 'H', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("io.robbie.Hom
 -- System
 prefix:bind('cmd', 'L', prefixFn(function() hs.caffeinate.lockScreen() end))
 prefix:bind('cmd', 'P', prefixFn(function() hs.caffeinate.systemSleep() end))
+local function toggleCaffeine()
+  if not spoon.Caffeine then
+    hs.alert.show("Caffeine unavailable")
+    return
+  end
+
+  spoon.Caffeine:setState(not hs.caffeinate.get("displayIdle"))
+end
+
+prefix:bind('cmd', 'K', prefixFn(toggleCaffeine))
 prefix:bind('cmd', 'C', prefixFn(function()
   hs.pasteboard.clearContents()
   hs.alert.show("Clipboard Cleared")
