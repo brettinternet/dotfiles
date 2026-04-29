@@ -17,3 +17,6 @@ mise.local.yaml
 AGENTS.local.md
 .claude/settings.local.json
 .rtk
+.worktrees
+docs/superpowers
+CLAUDE.md
