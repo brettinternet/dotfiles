@@ -1,7 +1,7 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "disabled_providers": ["opencode"],
-  "plugin": ["superpowers@git+https://github.com/obra/superpowers.git"],
+  "plugin": [""],
   "mcp": {
     "context7": {
       "type": "remote",
@@ -13,10 +13,11 @@
     },
   },
   "agent": {
-    "designer": {
-      "description": "Designs and plans work using Superpowers brainstorming and writing-plans.",
+    // https://models.dev/
+    "plan": {
+      "description": "System designer and architect.",
       "mode": "primary",
-      "model": "provider/design-model",
+      "model": "openai/gpt-5.5",
       "permission": {
         "edit": "deny",
         "bash": "ask",
@@ -30,7 +31,7 @@
     "implementer": {
       "description": "Implements one explicit plan task using TDD.",
       "mode": "subagent",
-      "model": "provider/implementation-model",
+      "model": "openai/gpt-5.3-codex-spark",
       "permission": {
         "edit": "allow",
         "bash": "ask",
@@ -39,7 +40,7 @@
     "reviewer": {
       "description": "Reviews completed implementation against the plan, tests, and code quality.",
       "mode": "subagent",
-      "model": "provider/review-model",
+      "model": "openai/gpt-5.5",
       "permission": {
         "edit": "deny",
         "bash": "ask",
