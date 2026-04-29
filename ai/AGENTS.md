@@ -13,6 +13,7 @@
 - Use `chrome-devtools` tool to verify browser changes when working with web UI.
 - Prefer fast local CLIs for code navigation: use `rg`/ripgrep for content search, `fd` for file discovery, and `ast-grep` for structural code search/refactors before falling back to fragile regex edits.
 - Use `qmd get <file>:<line> -l <count>` to read a specific passage from a file. Never read an entire file to inspect one function — use qmd first. If you know the file path and approximate line number, qmd is always the right call. e.g. `qmd get src/main/App.java:120 -l 30`
+- Use `bun` and `bunx` instead of `npm` or `npx`.
 
 ## Git
 
