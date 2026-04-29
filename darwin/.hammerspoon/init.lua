@@ -131,16 +131,104 @@ prefix:bind('', 'H', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("io.robbie.Hom
 -- System
 prefix:bind('cmd', 'L', prefixFn(function() hs.caffeinate.lockScreen() end))
 prefix:bind('cmd', 'P', prefixFn(function() hs.caffeinate.systemSleep() end))
-local function toggleCaffeine()
+local caffeineBatteryThreshold = 20
+local caffeineOverride = false
+local caffeineOverrideAlert = nil
+local caffeineLastDisabledReason = nil
+
+local function caffeineDisabledReason()
+  local reasons = {}
+
+  if #hs.screen.allScreens() ~= 1 then
+    table.insert(reasons, "multiple displays")
+  end
+
+  local batteryPercentage = hs.battery.percentage()
+  if batteryPercentage and batteryPercentage < caffeineBatteryThreshold then
+    table.insert(reasons, "battery below " .. caffeineBatteryThreshold .. "%")
+  end
+
+  if #reasons > 0 then
+    return table.concat(reasons, " and ")
+  end
+end
+
+local function caffeineAllowed()
+  return caffeineDisabledReason() == nil
+end
+
+local function clearCaffeineOverride()
+  caffeineOverride = false
+  if caffeineOverrideAlert then
+    hs.alert.closeSpecific(caffeineOverrideAlert)
+    caffeineOverrideAlert = nil
+  end
+end
+
+local function showCaffeineOverride(reason)
+  if caffeineOverrideAlert then
+    hs.alert.closeSpecific(caffeineOverrideAlert)
+  end
+  caffeineOverrideAlert = hs.alert.show("CAFFEINE OVERRIDE ACTIVE\n" .. reason, true)
+end
+
+local function setCaffeine(on, allowOverride)
   if not spoon.Caffeine then
     hs.alert.show("Caffeine unavailable")
     return
   end
 
-  spoon.Caffeine:setState(not hs.caffeinate.get("displayIdle"))
+  if not on then
+    spoon.Caffeine:setState(false)
+    clearCaffeineOverride()
+    return
+  end
+
+  local disabledReason = caffeineDisabledReason()
+  if disabledReason and not allowOverride then
+    spoon.Caffeine:setState(false)
+    clearCaffeineOverride()
+    hs.alert.show("Caffeine disabled: " .. disabledReason)
+    return
+  end
+
+  spoon.Caffeine:setState(true)
+  if disabledReason then
+    caffeineOverride = true
+    caffeineLastDisabledReason = disabledReason
+    showCaffeineOverride(disabledReason)
+  else
+    clearCaffeineOverride()
+  end
+end
+
+local function toggleCaffeine()
+  local shouldEnable = not hs.caffeinate.get("displayIdle")
+  setCaffeine(shouldEnable, shouldEnable)
 end
 
 prefix:bind('cmd', 'K', prefixFn(toggleCaffeine))
+local function enforceCaffeineAllowed()
+  local disabledReason = caffeineDisabledReason()
+  if disabledReason and disabledReason ~= caffeineLastDisabledReason then
+    local wasOn = hs.caffeinate.get("displayIdle")
+    setCaffeine(false)
+    if wasOn then
+      hs.alert.show("Caffeine disabled: " .. disabledReason)
+    end
+  elseif not disabledReason and caffeineOverride then
+    clearCaffeineOverride()
+  end
+  caffeineLastDisabledReason = disabledReason
+end
+
+caffeineScreenWatcher = hs.screen.watcher.new(function()
+  enforceCaffeineAllowed()
+end):start()
+caffeineBatteryWatcher = hs.battery.watcher.new(function()
+  enforceCaffeineAllowed()
+end):start()
+enforceCaffeineAllowed()
 prefix:bind('cmd', 'C', prefixFn(function()
   hs.pasteboard.clearContents()
   hs.alert.show("Clipboard Cleared")
