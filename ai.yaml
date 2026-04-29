@@ -8,9 +8,9 @@
     # OpenCode
     ~/.config/opencode/AGENTS.md:
       path: ai/AGENTS.md
-    ~/.config/opencode/opencode.json:
+    ~/.config/opencode/opencode.jsonc:
       path: ai/opencode/opencode.jsonc
-    ~/.config/opencode/tui.json:
+    ~/.config/opencode/tui.jsonc:
       path: ai/opencode/tui.jsonc
     ~/.config/opencode/commands/:
       glob: true
