@@ -6,7 +6,7 @@ Look up the linked Linear, Jira, or GitHub issue where possible using the branch
 Produce a review with:
 
 - A 2-sentence summary of what the PR does, including the relevant call stack or execution path for the changed behavior
-- At most 1-2 priority comments, only for issues that could plausibly break behavior, data, deployments, security, or compatibility
+- At most 1-2 priority comments, only for issues that could plausibly break behavior, data, deployments, security, or compatibility, if there's already a comment in the PR that addresses an issue then call that out
 
 Only include the highest-priority comments. If nothing meets that bar, say there are no potentially breaking concerns.
 If a potentially breaking concern depends on an assumption or missing context, phrase it as a question instead of an assertion.
