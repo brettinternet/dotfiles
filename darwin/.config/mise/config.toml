@@ -44,5 +44,4 @@ ln -sf "$compose_plugin" ~/.local/bin/docker-compose
 [settings]
 disable_backends = ["asdf", "pipx"]
 pipx.uvx = true
-npm.bun = true
 experimental = true
