@@ -26,8 +26,6 @@
       path: ai/opencode/opencode.jsonc
     ~/.config/opencode/ocx.jsonc:
       path: ai/opencode/ocx.jsonc
-    ~/.config/opencode/oh-my-openagent.jsonc:
-      path: ai/opencode/oh-my-openagent.jsonc
     ~/.config/opencode/tui.jsonc:
       path: ai/opencode/tui.jsonc
     ~/.config/opencode/commands/:
