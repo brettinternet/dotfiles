@@ -1,0 +1,9 @@
+{
+  "name": "brettinternet-opencode-registry",
+  "private": true,
+  "scripts": {
+    "build": "bunx ocx@2.0.10 build . --out dist",
+    "preview": "bun run build && bunx serve@14.2.6 dist",
+    "dev": "bun run preview"
+  }
+}

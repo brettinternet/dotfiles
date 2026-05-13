@@ -1,0 +1,10 @@
+{
+  "$schema": "https://ocx.kdco.dev/schemas/ocx.json",
+  "registries": {
+    "cfb": {
+      "url": "https://opencode.cfb.dev",
+    },
+  },
+  "lockRegistries": false,
+  "skipCompatCheck": false,
+}

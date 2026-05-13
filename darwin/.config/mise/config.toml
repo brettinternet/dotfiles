@@ -8,8 +8,11 @@ gh = "latest"
 k9s = "latest"
 slsa-verifier = "latest"
 cosign = "latest"
+
+# ai
 claude = "latest"
 opencode = "latest"
+"npm:ocx" = "latest"
 
 # dev
 go = "latest"
@@ -32,6 +35,7 @@ yq = "latest"
 lima = "latest"
 colima = "latest"
 docker-cli = "latest"
+
 [tools.docker-compose]
 version = "latest"
 postinstall = '''
@@ -44,4 +48,5 @@ ln -sf "$compose_plugin" ~/.local/bin/docker-compose
 [settings]
 disable_backends = ["asdf", "pipx"]
 pipx.uvx = true
+npm.package_manager = "bun"
 experimental = true

@@ -75,3 +75,13 @@ tasks:
     cmds:
       - mise update -q
       - git submodule foreach git pull
+
+  build-opencode-registry:
+    desc: Build OpenCode registry
+    cmds:
+      - bun --cwd ./ai/opencode/registry run build
+
+  start-opencode-registry:
+    desc: Start OpenCode registry
+    cmds:
+      - bun --cwd ./ai/opencode/registry run preview
