@@ -7,14 +7,14 @@
   "ocx": "1.0.16",
   "components": [
     {
-      "name": "omo-openai",
+      "name": "omo-gpt",
       "type": "profile",
       "description": "Oh-My-OpenAgent profile for native OpenAI access",
       "files": [
-        { "path": "profiles/omo-openai/ocx.jsonc", "target": "ocx.jsonc" },
-        { "path": "profiles/omo-openai/opencode.jsonc", "target": "opencode.jsonc" },
-        { "path": "profiles/omo-openai/oh-my-openagent.jsonc", "target": "oh-my-openagent.jsonc" },
-        { "path": "profiles/omo-openai/README.md", "target": "README.md" },
+        { "path": "profiles/omo-gpt/ocx.jsonc", "target": "ocx.jsonc" },
+        { "path": "profiles/omo-gpt/opencode.jsonc", "target": "opencode.jsonc" },
+        { "path": "profiles/omo-gpt/oh-my-openagent.jsonc", "target": "oh-my-openagent.jsonc" },
+        { "path": "profiles/omo-gpt/README.md", "target": "README.md" },
       ],
     },
     {
@@ -29,14 +29,14 @@
       ],
     },
     {
-      "name": "omo-claude-openai",
+      "name": "omo-claude-gpt",
       "type": "profile",
-      "description": "Oh-My-OpenAgent profile for Anthropic Claude-only access",
+      "description": "Oh-My-OpenAgent profile for native Anthropic Claude and OpenAI GPT access",
       "files": [
-        { "path": "profiles/omo-claude-openai/ocx.jsonc", "target": "ocx.jsonc" },
-        { "path": "profiles/omo-claude-openai/opencode.jsonc", "target": "opencode.jsonc" },
-        { "path": "profiles/omo-claude-openai/oh-my-openagent.jsonc", "target": "oh-my-openagent.jsonc" },
-        { "path": "profiles/omo-claude-openai/README.md", "target": "README.md" },
+        { "path": "profiles/omo-claude-gpt/ocx.jsonc", "target": "ocx.jsonc" },
+        { "path": "profiles/omo-claude-gpt/opencode.jsonc", "target": "opencode.jsonc" },
+        { "path": "profiles/omo-claude-gpt/oh-my-openagent.jsonc", "target": "oh-my-openagent.jsonc" },
+        { "path": "profiles/omo-claude-gpt/README.md", "target": "README.md" },
       ],
     },
     {
