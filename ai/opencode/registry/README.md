@@ -20,6 +20,8 @@ This serves `dist/` locally after building it.
 
 The `.github/workflows/opencode-registry-pages.yaml` workflow builds this registry and publishes the generated `dist/` contents under the `opencode/` Pages path. `index.json` must be available directly under the registry URL because `ocx registry add` validates `<url>/index.json`.
 
+Enable Pages once in the repository settings with **Source: GitHub Actions**. The workflow does not auto-create the Pages site because GitHub's `GITHUB_TOKEN` can be blocked from enabling Pages for a repository.
+
 Expected registry URL:
 
 ```text
