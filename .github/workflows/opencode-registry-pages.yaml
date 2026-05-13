@@ -1,0 +1,53 @@
+---
+name: OpenCode Registry Pages
+
+on: # yamllint disable-line rule:truthy
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/opencode-registry-pages.yaml
+      - "ai/opencode/registry/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  pages: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}opencode/
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Build registry
+        working-directory: ai/opencode/registry
+        run: bun run build
+
+      - name: Stage Pages artifact
+        run: |
+          mkdir -p pages/opencode
+          cp -R ai/opencode/registry/dist/. pages/opencode/
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: pages
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

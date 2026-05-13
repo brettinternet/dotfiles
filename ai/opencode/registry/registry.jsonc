@@ -1,0 +1,54 @@
+{
+  "$schema": "https://ocx.kdco.dev/schemas/v2/registry.json",
+  "name": "OpenCode Profiles",
+  "version": "0.0.1",
+  "author": "brettinternet",
+  "opencode": "1.0.0",
+  "ocx": "1.0.16",
+  "components": [
+    {
+      "name": "omo-openai",
+      "type": "profile",
+      "description": "Oh-My-OpenAgent profile for native OpenAI access",
+      "files": [
+        { "path": "profiles/omo-openai/ocx.jsonc", "target": "ocx.jsonc" },
+        { "path": "profiles/omo-openai/opencode.jsonc", "target": "opencode.jsonc" },
+        { "path": "profiles/omo-openai/oh-my-openagent.jsonc", "target": "oh-my-openagent.jsonc" },
+        { "path": "profiles/omo-openai/README.md", "target": "README.md" },
+      ],
+    },
+    {
+      "name": "omo-claude",
+      "type": "profile",
+      "description": "Oh-My-OpenAgent profile for native Anthropic Claude access",
+      "files": [
+        { "path": "profiles/omo-claude/ocx.jsonc", "target": "ocx.jsonc" },
+        { "path": "profiles/omo-claude/opencode.jsonc", "target": "opencode.jsonc" },
+        { "path": "profiles/omo-claude/oh-my-openagent.jsonc", "target": "oh-my-openagent.jsonc" },
+        { "path": "profiles/omo-claude/README.md", "target": "README.md" },
+      ],
+    },
+    {
+      "name": "omo-claude-openai",
+      "type": "profile",
+      "description": "Oh-My-OpenAgent profile for Anthropic Claude-only access",
+      "files": [
+        { "path": "profiles/omo-claude-openai/ocx.jsonc", "target": "ocx.jsonc" },
+        { "path": "profiles/omo-claude-openai/opencode.jsonc", "target": "opencode.jsonc" },
+        { "path": "profiles/omo-claude-openai/oh-my-openagent.jsonc", "target": "oh-my-openagent.jsonc" },
+        { "path": "profiles/omo-claude-openai/README.md", "target": "README.md" },
+      ],
+    },
+    {
+      "name": "omo-openrouter",
+      "type": "profile",
+      "description": "Oh-My-OpenAgent profile for broad model access through OpenRouter",
+      "files": [
+        { "path": "profiles/omo-openrouter/ocx.jsonc", "target": "ocx.jsonc" },
+        { "path": "profiles/omo-openrouter/opencode.jsonc", "target": "opencode.jsonc" },
+        { "path": "profiles/omo-openrouter/oh-my-openagent.jsonc", "target": "oh-my-openagent.jsonc" },
+        { "path": "profiles/omo-openrouter/README.md", "target": "README.md" },
+      ],
+    },
+  ],
+}

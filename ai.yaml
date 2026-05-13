@@ -5,19 +5,6 @@
       relink: true
 
 - link:
-    # OpenCode
-    ~/.config/opencode/AGENTS.md:
-      path: ai/AGENTS.md
-    ~/.config/opencode/opencode.jsonc:
-      path: ai/opencode/opencode.jsonc
-    ~/.config/opencode/tui.jsonc:
-      path: ai/opencode/tui.jsonc
-    ~/.config/opencode/commands/:
-      glob: true
-      path: ai/commands/*
-    # ~/.config/opencode/agents/:
-    #   glob: true
-    #   path: ai/opencode/agents/*
     # Claude
     ~/.claude/CLAUDE.md:
       path: ai/AGENTS.md
@@ -32,3 +19,23 @@
     # Codex
     ~/.codex/AGENTS.md:
       path: ai/AGENTS.md
+    # OpenCode
+    ~/.config/opencode/AGENTS.md:
+      path: ai/AGENTS.md
+    ~/.config/opencode/opencode.jsonc:
+      path: ai/opencode/opencode.jsonc
+    ~/.config/opencode/ocx.jsonc:
+      path: ai/opencode/ocx.jsonc
+    ~/.config/opencode/oh-my-openagent.jsonc:
+      path: ai/opencode/oh-my-openagent.jsonc
+    ~/.config/opencode/tui.jsonc:
+      path: ai/opencode/tui.jsonc
+    ~/.config/opencode/commands/:
+      glob: true
+      path: ai/commands/*
+    # ~/.config/opencode/agents/:
+    #   glob: true
+    #   path: ai/opencode/agents/*
+    ~/.config/opencode/profiles/:
+      glob: true
+      path: ai/opencode/registry/files/profiles/*

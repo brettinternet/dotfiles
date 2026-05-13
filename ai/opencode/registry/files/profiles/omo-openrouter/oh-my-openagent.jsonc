@@ -1,0 +1,100 @@
+{
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-openagent/dev/assets/oh-my-opencode.schema.json",
+  "agents": {
+    // Claude-optimized primary worker (Opus 4.7 strongly recommended per docs)
+    "sisyphus": {
+      "model": "openrouter/anthropic/claude-sonnet-4.6",
+      "variant": "high",
+    },
+    // GPT-native deep autonomous worker ("Codex on steroids")
+    "hephaestus": {
+      "model": "openrouter/openai/gpt-5.5",
+      "variant": "medium",
+    },
+    // GPT-native architecture/debugging consultant
+    "oracle": {
+      "model": "openrouter/openai/gpt-5.5",
+      "variant": "high",
+    },
+    // Utility agent: speed over intelligence (doc search/retrieval)
+    "librarian": {
+      "model": "openrouter/minimax/minimax-m2",
+    },
+    // Utility agent: fast codebase grep (optimized for code search)
+    "explore": {
+      "model": "openrouter/x-ai/grok-code-fast-1",
+    },
+    // Vision/screenshots — GPT-5.5 leads default vision path
+    "multimodal-looker": {
+      "model": "openrouter/openai/gpt-5.5",
+      "variant": "medium",
+      "fallback_models": [
+        {
+          "model": "openrouter/openai/gpt-5-nano",
+        },
+      ],
+    },
+    // Dual-prompt strategic planner (Claude preferred)
+    "prometheus": {
+      "model": "openrouter/anthropic/claude-opus-4.7",
+      "variant": "high",
+    },
+    // Claude-optimized plan review
+    "metis": {
+      "model": "openrouter/anthropic/claude-opus-4.7",
+      "variant": "high",
+    },
+    // GPT-native high-accuracy reviewer
+    "momus": {
+      "model": "openrouter/openai/gpt-5.5",
+      "variant": "xhigh",
+    },
+    // Dual-prompt todo orchestrator (Sonnet is the documented default)
+    "atlas": {
+      "model": "openrouter/anthropic/claude-sonnet-4.6",
+    },
+    // Junior sisyphus — Sonnet for cheaper delegation
+    "sisyphus-junior": {
+      "model": "openrouter/anthropic/claude-sonnet-4.6",
+    },
+  },
+  "categories": {
+    // Frontend/visual — Gemini excels at visual tasks per docs
+    "visual-engineering": {
+      "model": "openrouter/google/gemini-3.1-pro-preview",
+      "variant": "high",
+    },
+    // Hard logic-heavy tasks — GPT-5.5 at xhigh reasoning
+    "ultrabrain": {
+      "model": "openrouter/openai/gpt-5.5",
+      "variant": "xhigh",
+    },
+    // Deep autonomous problem-solving — GPT-5.3-codex is the deep-coding powerhouse
+    "deep": {
+      "model": "openrouter/openai/gpt-5.3-codex",
+      "variant": "medium",
+    },
+    // Trivial tasks — fast + cheap
+    "quick": {
+      "model": "openrouter/openai/gpt-5.4-mini",
+    },
+    // Low-effort catchall — mini model
+    "unspecified-low": {
+      "model": "openrouter/openai/gpt-5.4-mini",
+    },
+    // High-effort catchall — full GPT-5.5
+    "unspecified-high": {
+      "model": "openrouter/openai/gpt-5.5",
+      "variant": "medium",
+    },
+    // Prose/documentation — Claude Sonnet for writing quality
+    "writing": {
+      "model": "openrouter/anthropic/claude-sonnet-4.6",
+    },
+    // Creative/unconventional — Claude Opus for artistry
+    "artistry": {
+      "model": "openrouter/anthropic/claude-opus-4.7",
+      "variant": "xhigh",
+    },
+  },
+}
