@@ -33,24 +33,24 @@ https://brett.cloud/dotfiles/opencode
 Install one profile directly from the registry URL:
 
 ```bash
-ocx profile add omo-claude-openai --source brettinternet/omo-claude-openai --from https://brett.cloud/dotfiles/opencode --global
+ocx profile add omo-claude-gpt --source brettinternet/omo-claude-gpt --from https://brett.cloud/dotfiles/opencode --global
 ```
 
 Or save the registry alias first:
 
 ```bash
 ocx registry add https://brett.cloud/dotfiles/opencode --name brettinternet --global
-ocx profile add omo-openai --source brettinternet/omo-openai --global
+ocx profile add omo-gpt --source brettinternet/omo-gpt --global
 ocx profile add omo-claude --source brettinternet/omo-claude --global
-ocx profile add omo-claude-openai --source brettinternet/omo-claude-openai --global
+ocx profile add omo-claude-gpt --source brettinternet/omo-claude-gpt --global
 ocx profile add omo-openrouter --source brettinternet/omo-openrouter --global
 ```
 
 ## Refresh a profile
 
 ```bash
-ocx profile remove omo-claude-openai --global
-ocx profile add omo-claude-openai --source brettinternet/omo-claude-openai --from https://brett.cloud/dotfiles/opencode --global
+ocx profile remove omo-claude-gpt --global
+ocx profile add omo-claude-gpt --source brettinternet/omo-claude-gpt --from https://brett.cloud/dotfiles/opencode --global
 ```
 
 ## Notes
