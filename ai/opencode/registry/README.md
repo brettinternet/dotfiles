@@ -43,7 +43,7 @@ ocx registry add https://brett.cloud/dotfiles/opencode --name brettinternet --gl
 ocx profile add omo-gpt --source brettinternet/omo-gpt --global
 ocx profile add omo-claude --source brettinternet/omo-claude --global
 ocx profile add omo-claude-gpt --source brettinternet/omo-claude-gpt --global
-ocx profile add omo-openrouter --source brettinternet/omo-openrouter --global
+ocx profile add omo-or --source brettinternet/omo-or --global
 ```
 
 ## Refresh a profile
