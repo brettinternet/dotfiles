@@ -27,6 +27,22 @@ node = "latest"
 bun = "latest"
 biome = "latest"
 
+# lsp
+erlang = "latest"
+elixir = "latest"
+"github:elixir-lsp/elixir-ls" = { version = "latest", postinstall = "ln -sf \"$MISE_TOOL_INSTALL_PATH/language_server.sh\" \"$MISE_TOOL_INSTALL_PATH/elixir-ls\"" }
+"go:golang.org/x/tools/gopls" = "latest"
+"npm:pyright" = "latest"
+ruff = "latest"
+"npm:typescript" = "latest"
+"npm:typescript-language-server" = "latest"
+"npm:bash-language-server" = "latest"
+"npm:yaml-language-server" = "latest"
+"npm:vscode-langservers-extracted" = "latest"
+marksman = "latest"
+taplo = "latest"
+lua-language-server = "latest"
+
 # search
 fd = "latest"
 fzf = "latest"
