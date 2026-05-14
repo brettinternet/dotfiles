@@ -48,7 +48,6 @@ tasks:
   check:
     desc: Run checks
     cmds:
-      - yamllint .
       - shellcheck -s sh base/.profile
       - >-
         find . -type f
@@ -61,14 +60,12 @@ tasks:
         \( -name '*.zsh' -o -name '.zprofile' -o -name '.zshrc' -o -name '.zshrc.*' \)
         -not -path "./dotbot/*"
         | xargs -n 1 zsh -n
-      - prettier --check "**/*.{yaml,yml}"
-      - prettier --check "**/*.{json,jsonc}"
+      - prettier --check "**/*.{yaml,yml,json,jsonc}"
 
   fix:
     desc: Run fixes
     cmds:
-      - prettier --write "**/*.{yaml,yml}"
-      - prettier --write "**/*.{json,jsonc}"
+      - prettier --write "**/*.{yaml,yml,json,jsonc}"
 
   update:
     desc: Update dependencies
