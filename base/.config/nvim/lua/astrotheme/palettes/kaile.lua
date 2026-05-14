@@ -1,3 +1,4 @@
+
 local c = {
   none = "NONE",
   syntax = {},
@@ -8,6 +9,7 @@ local c = {
 
 -- Kaile mirrors the high-contrast terminal palette in
 -- darwin/iterm2-themes/kaile.itermcolors and the dark-terminal agent theme.
+-- https://raw.githubusercontent.com/can1357/oh-my-pi/refs/heads/main/packages/coding-agent/src/modes/theme/defaults/dark-terminal.json
 -- The UI stays near-black while syntax uses saturated ANSI colors.
 
 --------------------------------
