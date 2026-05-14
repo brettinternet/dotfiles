@@ -33,8 +33,9 @@
       glob: true
       path: darwin/.config/ghostty/*
       if: '[ -x "$(command -v ghostty)" ]'
-    ~/.config/mise/config.toml:
-      path: darwin/.config/mise/config.toml
+    ~/.config/mise/conf.d/:
+      glob: true
+      path: darwin/.config/mise/conf.d/*
       if: '[ -x "$(command -v mise)" ]'
     ~/.config/nix-darwin/:
       glob: true

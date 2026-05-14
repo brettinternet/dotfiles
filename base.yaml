@@ -52,6 +52,10 @@
     ~/Library/Application Support/k9s/skins/skin.yaml:
       path: base/.config/k9s/skin.yaml
       if: '[ "$(uname)" = Darwin ] && [ -x "$(command -v kubectl)" ]'
+    ~/.config/mise/conf.d/:
+      glob: true
+      path: base/.config/mise/conf.d/*
+      if: '[ -x "$(command -v mise)" ]'
     ~/.config/nvim:
       path: base/.config/nvim
       if: '[ -x "$(command -v nvim)" ]'
