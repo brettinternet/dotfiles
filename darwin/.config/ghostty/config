@@ -31,3 +31,7 @@ copy-on-select = false
 clipboard-trim-trailing-spaces = true
 bell-features = border
 window-inherit-working-directory = false
+
+# Keyboard
+keybind = alt+backspace=text:\x1b\x7f
+keybind = shift+enter=text:\n

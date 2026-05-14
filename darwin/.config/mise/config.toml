@@ -16,6 +16,7 @@ claude = "latest"
 opencode = "latest"
 "npm:ocx" = "latest"
 "npm:@rynfar/meridian" = "1.42.1"
+"github:can1357/oh-my-pi" = "latest"
 
 # dev
 go = "latest"
