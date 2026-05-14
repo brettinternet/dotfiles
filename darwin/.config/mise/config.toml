@@ -10,7 +10,6 @@ gh = "latest"
 k9s = "latest"
 slsa-verifier = "latest"
 cosign = "latest"
-btop = "latest"
 
 # ai
 claude = "latest"
