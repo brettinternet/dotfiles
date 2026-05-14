@@ -1,53 +1,59 @@
 #!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
-DOTBOT_DIR="dotbot"
-DOTBOT_BIN="bin/dotbot"
+readonly DOTBOT_DIR="dotbot"
+readonly DOTBOT_BIN="bin/dotbot"
 BASEDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly BASEDIR
+readonly LOCAL_ENVRC="${HOME}/.envrc"
+readonly REPO_ENVRC="${BASEDIR}/base/.envrc"
 
 cd "${BASEDIR}"
 
-# Migrate .envrc from previous .envrc configuration within repo
-if [ -f "${BASEDIR}/base/.envrc" ] && [ ! -L "${BASEDIR}/base/.envrc" ]; then
-  [ -L "${HOME}/.envrc" ] && rm "${HOME}/.envrc"
-  mv "${BASEDIR}/base/.envrc" "${HOME}/.envrc"
+# Migrate .envrc from the previous in-repo location to the local home file.
+if [ -f "${REPO_ENVRC}" ] && [ ! -L "${REPO_ENVRC}" ]; then
+  if [ -L "${LOCAL_ENVRC}" ]; then
+    rm "${LOCAL_ENVRC}"
+  fi
+  mv "${REPO_ENVRC}" "${LOCAL_ENVRC}"
 fi
 
-# Create local .envrc
-if [ ! -f "${HOME}/.envrc" ]; then
-  cp "${BASEDIR}/base/example.envrc" "${HOME}/.envrc"
-  # Not linked out of this repo so it's maintained even if dotfiles are removed
-  # Symlinked to this repo for easy editing
-  ln -s "${HOME}"/.envrc "${BASEDIR}/base/.envrc"
+# Keep secrets/local overrides outside the repo while preserving an editable repo path.
+if [ ! -f "${LOCAL_ENVRC}" ]; then
+  cp "${BASEDIR}/base/example.envrc" "${LOCAL_ENVRC}"
 fi
 
-# Update dotbot submodule
-(cd "${DOTBOT_DIR}" && git submodule update --init --recursive)
+if [ ! -e "${REPO_ENVRC}" ]; then
+  ln -s "${LOCAL_ENVRC}" "${REPO_ENVRC}"
+fi
 
-# If not set, add default group and assumptions for optional groups
-if [ -z "$DOTFILE_GROUPS" ]; then
+# Update dotbot submodules.
+git -C "${BASEDIR}/${DOTBOT_DIR}" submodule update --init --recursive
+
+# If not set, install the base group and include x11 when an X server is active.
+if [ -z "${DOTFILE_GROUPS:-}" ]; then
   DOTFILE_GROUPS="base"
 
-  if [ xset q &>/dev/null ]; then
-    # is running X11
+  if command -v xset >/dev/null 2>&1 && xset q >/dev/null 2>&1; then
     DOTFILE_GROUPS="${DOTFILE_GROUPS},x11"
   fi
 fi
 
-echo "Using groups: $DOTFILE_GROUPS"
+printf 'Using groups: %s\n' "${DOTFILE_GROUPS}"
 
-# Run dotbot on defined groups
-IFS=', ' read -r -a DOTFILE_ARRAY <<< "$DOTFILE_GROUPS"
-for GROUP_EL in "${DOTFILE_ARRAY[@]}"; do
-  if [ ! -z "$GROUP_EL" ]; then
-    CONFIG="$GROUP_EL.yaml"
-    if [ -f "${BASEDIR}/${CONFIG}" ]; then
-      echo "Configuring ${CONFIG}"
-      "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${CONFIG}" "${@}"
-    else
-      echo "Cannot find ${CONFIG}"
-      exit 1
-    fi
+IFS=',' read -r -a dotfile_groups <<< "${DOTFILE_GROUPS}"
+for group in "${dotfile_groups[@]}"; do
+  group="${group#"${group%%[![:space:]]*}"}"
+  group="${group%"${group##*[![:space:]]}"}"
+  [ -n "${group}" ] || continue
+
+  config="${group}.yaml"
+  if [ ! -f "${BASEDIR}/${config}" ]; then
+    printf 'Cannot find %s\n' "${config}" >&2
+    exit 1
   fi
+
+  printf 'Configuring %s\n' "${config}"
+  "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${config}" "$@"
 done

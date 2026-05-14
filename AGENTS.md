@@ -8,10 +8,10 @@ Make sure the checks passes after each change. Keep working until all checks pas
 
 ## Setup
 
-Project setup uses go-task @Taskfile.dist.yaml to setup and develop the project.
+Project setup uses go-task @Taskfile.dist.yaml to set up and develop the project.
 
 ```sh
-task init # Sets up dependencies, dirnev and git hooks
+task init # Sets up dependencies, direnv and git hooks
 ```
 
 ## Install
@@ -24,8 +24,8 @@ Make is used to install the dotfiles since it's available on all target machines
 
 # Platform-specific
 make darwin    # macOS: base + darwin groups
-make server    # Linux server: base + archlinux groups
-make thinkpad  # Thinkpad: base + x11 + thinkpad + archlinux groups
+make server    # Linux server: base group
+make thinkpad  # Thinkpad: base + x11 + thinkpad groups
 ```
 
 ## Lint

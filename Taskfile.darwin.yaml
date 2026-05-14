@@ -3,7 +3,8 @@
 version: "3"
 
 vars:
-  BREW_SH: "{{.ROOT_DIR}}/darwin/brew.sh"
+  BREWFILE: "{{.ROOT_DIR}}/darwin/Brewfile"
+  BREW_SH: "{{.ROOT_DIR}}/darwin/setup.sh"
 
 tasks:
   init:
@@ -15,5 +16,4 @@ tasks:
     desc: Install workstation dependencies with Brew
     cmd: "{{.BREW_SH}}"
     preconditions:
-      - { msg: "Missing Homebrew", sh: "command -v brew" }
       - { msg: "Missing Brewfile", sh: "test -f {{.BREWFILE}}" }
