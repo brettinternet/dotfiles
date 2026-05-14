@@ -62,16 +62,20 @@
     "editor.findMatchHighlightBorder": "#666666",
     "editor.foreground": "#cccccc",
     "editor.hoverHighlightBackground": "#001100",
-    "editor.inactiveSelectionBackground": "#111111",
+    "editor.inactiveSelectionBackground": "#333333",
     "editor.lineHighlightBackground": "#111111",
     "editor.lineHighlightBorder": "#111111",
     "editor.rangeHighlightBackground": "#111111",
     "editor.selectionBackground": "#333333",
     "editor.selectionForeground": "#ffffff",
+    "editor.selectionHighlightBackground": "#333300",
+    "editor.selectionHighlightBorder": "#ffff00",
     "editor.snippetFinalTabstopHighlightBorder": "#00ff00",
     "editor.snippetTabstopHighlightBackground": "#333333",
-    "editor.wordHighlightBackground": "#111111",
-    "editor.wordHighlightStrongBackground": "#333333",
+    "editor.wordHighlightBackground": "#333300",
+    "editor.wordHighlightBorder": "#ffff00",
+    "editor.wordHighlightStrongBackground": "#003333",
+    "editor.wordHighlightStrongBorder": "#00ffcc",
     "editorBracketHighlight.foreground1": "#00ffcc",
     "editorBracketHighlight.foreground2": "#00aaff",
     "editorBracketHighlight.foreground3": "#ffff00",
@@ -403,7 +407,7 @@
       "name": "YAML keys",
       "scope": ["entity.name.tag.yaml", "meta.map.key.yaml entity.name.tag.yaml", "meta.flow-pair.key.yaml entity.name.tag.yaml"],
       "settings": {
-        "foreground": "#00aaff",
+        "foreground": "#ff0000",
         "fontStyle": "bold"
       }
     },
@@ -417,7 +421,7 @@
         "string.unquoted.plain.out.yaml"
       ],
       "settings": {
-        "foreground": "#ff0000"
+        "foreground": "#00ff00"
       }
     },
     {
@@ -454,6 +458,46 @@
       ],
       "settings": {
         "foreground": "#ffff00"
+      }
+    },
+    {
+      "name": "TOML keys",
+      "scope": ["support.type.property-name.toml", "support.type.property-name.array.toml", "support.type.property-name.table.toml"],
+      "settings": {
+        "foreground": "#ff0000",
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "name": "TOML table names",
+      "scope": ["meta.table.toml", "meta.array.table.toml", "meta.table.inline.toml"],
+      "settings": {
+        "foreground": "#00aaff",
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "name": "TOML string values",
+      "scope": [
+        "string.quoted.single.basic.line.toml",
+        "string.quoted.single.literal.line.toml",
+        "string.quoted.triple.basic.block.toml",
+        "string.quoted.triple.literal.block.toml"
+      ],
+      "settings": {
+        "foreground": "#00ff00"
+      }
+    },
+    {
+      "name": "TOML dates and times",
+      "scope": [
+        "constant.other.time.date.toml",
+        "constant.other.time.datetime.local.toml",
+        "constant.other.time.datetime.offset.toml",
+        "constant.other.time.time.toml"
+      ],
+      "settings": {
+        "foreground": "#00ffcc"
       }
     },
     {
