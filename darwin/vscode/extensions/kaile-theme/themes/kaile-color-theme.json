@@ -400,6 +400,63 @@
       }
     },
     {
+      "name": "YAML keys",
+      "scope": ["entity.name.tag.yaml", "meta.map.key.yaml entity.name.tag.yaml", "meta.flow-pair.key.yaml entity.name.tag.yaml"],
+      "settings": {
+        "foreground": "#00aaff",
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "name": "YAML string values",
+      "scope": [
+        "string.quoted.double.yaml",
+        "string.quoted.single.yaml",
+        "string.unquoted.block.yaml",
+        "string.unquoted.plain.in.yaml",
+        "string.unquoted.plain.out.yaml"
+      ],
+      "settings": {
+        "foreground": "#ff0000"
+      }
+    },
+    {
+      "name": "YAML numbers and booleans",
+      "scope": [
+        "constant.language.boolean.yaml",
+        "constant.language.null.yaml",
+        "constant.numeric.float.yaml",
+        "constant.numeric.integer.yaml"
+      ],
+      "settings": {
+        "foreground": "#00ff00"
+      }
+    },
+    {
+      "name": "YAML anchors and aliases",
+      "scope": [
+        "entity.name.type.anchor.yaml",
+        "keyword.control.flow.alias.yaml",
+        "keyword.control.property.anchor.yaml",
+        "variable.other.alias.yaml"
+      ],
+      "settings": {
+        "foreground": "#ff5faf"
+      }
+    },
+    {
+      "name": "YAML directives",
+      "scope": [
+        "keyword.other.directive.tag.yaml",
+        "keyword.other.directive.yaml.yaml",
+        "string.unquoted.directive-name.yaml",
+        "string.unquoted.directive-parameter.yaml"
+      ],
+      "settings": {
+        "foreground": "#ffff00"
+      }
+    },
+    {
       "name": "Markup headings",
       "scope": ["markup.heading", "entity.name.section"],
       "settings": {
