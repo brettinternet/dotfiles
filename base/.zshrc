@@ -205,8 +205,8 @@ mise_release_arch() {
 zinit as="command" lucid from="gh-r" for \
     id-as="mise" \
     bpick"mise-v*-$(mise_release_os)-$(mise_release_arch).tar.gz" \
-    mv"mise/bin/mise -> mise" \
-    atclone="chmod +x ./mise && ./mise completion zsh > _mise" \
+    pick"mise" \
+    atclone='[[ -x ./mise/bin/mise ]] && command mv -f ./mise/bin/mise ./mise-bin && command rm -rf ./mise && command mv -f ./mise-bin ./mise; chmod +x ./mise && ./mise completion zsh > _mise' \
     atpull="%atclone" \
     atload='[[ -f ./mise && -x ./mise ]] && eval "$(./mise activate zsh)"' \
     jdx/mise
