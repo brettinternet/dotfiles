@@ -74,6 +74,11 @@ fi
 profile_dircolors="$HOME/.dircolors"
 if [ -f "$profile_dircolors" ] && command -v dircolors >/dev/null 2>&1; then
   eval "$(dircolors "$profile_dircolors")"
+  export LS_COLORS="${LS_COLORS:+$LS_COLORS:}ow=01;31:tw=01;33"
+elif [ -x "$(command -v lsd)" ]; then
+  export LS_COLORS="${LS_COLORS:+$LS_COLORS:}ow=01;31:tw=01;33"
+elif [ "$(uname)" = "Darwin" ]; then
+  export LSCOLORS="exfxcxdxbxegedabagxxxx"
 fi
 
 # Common utility replacements via aliases
