@@ -80,6 +80,9 @@
     - # https://github.com/tmux-plugins/tpm/blob/master/docs/managing_plugins_via_cmd_line.md
       - >-
         if command -v tmux >/dev/null 2>&1; then
+          if [ ! -x "$HOME/.tmux/plugins/tpm/tpm" ] && command -v git >/dev/null 2>&1; then
+            git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm";
+          fi;
           tmux start-server;
           tmux new-session -d -s dotfiles-setup;
           tmux source-file ~/.tmux.conf;
