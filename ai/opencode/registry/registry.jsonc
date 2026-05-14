@@ -40,6 +40,17 @@
       ],
     },
     {
+      "name": "omo-gpt-cc-proxy",
+      "type": "profile",
+      "description": "Oh-My-OpenAgent profile for OpenAI GPT and Claude via a local Meridian proxy",
+      "files": [
+        { "path": "profiles/omo-gpt-cc-proxy/ocx.jsonc", "target": "ocx.jsonc" },
+        { "path": "profiles/omo-gpt-cc-proxy/opencode.jsonc", "target": "opencode.jsonc" },
+        { "path": "profiles/omo-gpt-cc-proxy/oh-my-openagent.jsonc", "target": "oh-my-openagent.jsonc" },
+        { "path": "profiles/omo-gpt-cc-proxy/README.md", "target": "README.md" },
+      ],
+    },
+    {
       "name": "omo-or",
       "type": "profile",
       "description": "Oh-My-OpenAgent profile for broad model access through OpenRouter",
