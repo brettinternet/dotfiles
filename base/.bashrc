@@ -41,7 +41,11 @@ export HISTCONTROL="${HISTCONTROL:+$HISTCONTROL:}erasedups:ignoreboth"
 
 set -o noclobber
 
-command -v mise >/dev/null 2>&1 && eval "$(mise activate bash)"
+mise_bin="$(command -v mise 2>/dev/null || true)"
+if [ -f "$mise_bin" ] && [ -x "$mise_bin" ]; then
+  eval "$(mise activate bash)"
+fi
+unset mise_bin
 
 # shellcheck source=/dev/null
 [ -d "/usr/share/nvm" ] && . /usr/share/nvm/init-nvm.sh

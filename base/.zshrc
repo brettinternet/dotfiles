@@ -188,11 +188,27 @@ zinit as="command" lucid from="gh-r" for \
     atpull="%atclone" \
     jdx/usage
 
+mise_release_os() {
+  case "$(uname -s)" in
+    Darwin) echo macos ;;
+    Linux) echo linux ;;
+  esac
+}
+
+mise_release_arch() {
+  case "$(uname -m)" in
+    x86_64|amd64) echo x64 ;;
+    arm64|aarch64) echo arm64 ;;
+  esac
+}
+
 zinit as="command" lucid from="gh-r" for \
-    id-as="mise" mv="mise* -> mise" \
-    atclone="./mise* completion zsh > _mise" \
+    id-as="mise" \
+    bpick"mise-v*-$(mise_release_os)-$(mise_release_arch)" \
+    mv"mise-v*-$(mise_release_os)-$(mise_release_arch) -> mise" \
+    atclone="chmod +x ./mise && ./mise completion zsh > _mise" \
     atpull="%atclone" \
-    atload='[[ -x ./mise ]] && eval "$(./mise activate zsh)"' \
+    atload='[[ -f ./mise && -x ./mise ]] && eval "$(./mise activate zsh)"' \
     jdx/mise
 
 # -- Prompt

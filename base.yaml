@@ -71,9 +71,12 @@
 - shell:
     # Allow direnv access to ~/.envrc
     - ['[ -f "$HOME/.zinit/plugins/direnv---direnv/direnv" ] && direnv allow "$HOME" || true']
+    - ['[ -f "$HOME/.zinit/plugins/mise/mise" ] && chmod u+x "$HOME/.zinit/plugins/mise/mise" || true']
     - ['command -v zsh >/dev/null 2>&1 && zsh -ic "zinit self-update"']
-    - ["command -v mise >/dev/null 2>&1 && mise self-update --yes --quiet || true"]
-    - ["command -v mise >/dev/null 2>&1 && mise up --yes --quiet || true"]
+    - [
+        'mise_bin="$(command -v mise 2>/dev/null || true)"; [ -f "$mise_bin" ] && [ -x "$mise_bin" ] && mise self-update --yes --quiet || true',
+      ]
+    - ['mise_bin="$(command -v mise 2>/dev/null || true)"; [ -f "$mise_bin" ] && [ -x "$mise_bin" ] && mise up --yes --quiet || true']
     # - ['[ -x "$(command -v vim)" ] && /usr/bin/vim +PlugInstall +qall > /dev/null || true']
     - ['command -v nvim >/dev/null 2>&1 && nvim --headless "+Lazy! sync" -c "quitall" || true']
     - ["command -v doom >/dev/null 2>&1 && doom upgrade || true"]
