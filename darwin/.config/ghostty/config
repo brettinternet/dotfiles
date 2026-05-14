@@ -3,7 +3,28 @@ font-size = 16
 font-family = "Fira Code"
 macos-titlebar-style = tabs
 macos-titlebar-proxy-icon = hidden
-theme = Gruvbox Dark Hard
+palette = 0=#111111
+palette = 1=#ff0000
+palette = 2=#00ff00
+palette = 3=#ffff00
+palette = 4=#00aaff
+palette = 5=#ff5faf
+palette = 6=#00ffcc
+palette = 7=#cccccc
+palette = 8=#666666
+palette = 9=#ff0000
+palette = 10=#00ff00
+palette = 11=#ffff00
+palette = 12=#00aaff
+palette = 13=#ff5faf
+palette = 14=#00ffcc
+palette = 15=#ffffff
+background = #050505
+foreground = #cccccc
+cursor-color = #00ff00
+cursor-text = #050505
+selection-background = #333333
+selection-foreground = #cccccc
 
 # Window
 window-padding-x = 12
