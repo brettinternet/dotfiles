@@ -35,9 +35,9 @@
     ~/.config/opencode/commands/:
       glob: true
       path: ai/commands/*
-    # ~/.config/opencode/agents/:
-    #   glob: true
-    #   path: ai/opencode/agents/*
+    ~/.config/opencode/agents/:
+      glob: true
+      path: ai/opencode/agents/*
     ~/.config/opencode/profiles/:
       glob: true
       path: ai/opencode/registry/files/profiles/*
