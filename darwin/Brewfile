@@ -1,5 +1,4 @@
 # CLI
-brew "btop"
 brew "coreutils"
 brew "git"
 brew "mas"
