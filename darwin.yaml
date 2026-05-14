@@ -40,3 +40,5 @@
       glob: true
       path: darwin/.config/nix-darwin/*
       if: '[ -x "$(command -v nix)" ]'
+    ~/.vscode/extensions/local.kaile-theme:
+      path: darwin/vscode/extensions/kaile-theme
