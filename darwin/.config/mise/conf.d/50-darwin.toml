@@ -1,36 +1,16 @@
 #:schema https://mise.en.dev/schema/mise.json
 
 [tools]
-
-# tools
-task = "latest"
-sops = "latest"
-lsd = "latest"
-gh = "latest"
-k9s = "latest"
-slsa-verifier = "latest"
-cosign = "latest"
-
 # ai
 claude = "latest"
 opencode = "latest"
 "npm:ocx" = "latest"
 "npm:@rynfar/meridian" = "latest"
 "github:can1357/oh-my-pi" = "latest"
-
-# dev
-go = "latest"
-rust = "latest"
-python = "latest"
-uv = "latest"
-node = "latest"
-bun = "latest"
-biome = "latest"
+"npm:@tobilu/qmd" = "latest"
+ast-grep = "latest"
 
 # lsp
-erlang = "latest"
-elixir = "latest"
-"github:elixir-lsp/elixir-ls" = { version = "latest", postinstall = "ln -sf \"$MISE_TOOL_INSTALL_PATH/language_server.sh\" \"$MISE_TOOL_INSTALL_PATH/elixir-ls\"" }
 "go:golang.org/x/tools/gopls" = "latest"
 "npm:pyright" = "latest"
 ruff = "latest"
@@ -42,14 +22,9 @@ ruff = "latest"
 marksman = "latest"
 taplo = "latest"
 lua-language-server = "latest"
-
-# search
-fd = "latest"
-fzf = "latest"
-"npm:@tobilu/qmd" = "latest"
-rg = "latest"
-ast-grep = "latest"
-yq = "latest"
+erlang = "latest"
+elixir = "latest"
+"github:elixir-lsp/elixir-ls" = { version = "latest", postinstall = "ln -sf \"$MISE_TOOL_INSTALL_PATH/language_server.sh\" \"$MISE_TOOL_INSTALL_PATH/elixir-ls\"" }
 
 # containers
 lima = "latest"
@@ -66,8 +41,4 @@ ln -sf "$compose_plugin" ~/.local/bin/docker-compose
 '''
 
 [settings]
-disable_backends = ["asdf", "pipx"]
-pipx.uvx = true
-npm.package_manager = "bun"
-experimental = true
 github.credential_command = "gh auth token"

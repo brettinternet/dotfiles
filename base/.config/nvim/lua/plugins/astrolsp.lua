@@ -1,5 +1,5 @@
 -- AstroLSP customizes language server setup. Tool binaries are provided by mise
--- in darwin/.config/mise/config.toml rather than installed through Mason.
+-- in ~/.config/mise/conf.d fragments rather than installed through Mason.
 
 ---@type LazySpec
 return {
