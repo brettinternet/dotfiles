@@ -4,6 +4,6 @@
     "defaultMode": "auto"
   },
   "skipDangerousModePermissionPrompt": true,
-  "theme": "auto",
+  "theme": "dark-ansi",
   "skipAutoPermissionPrompt": true
 }
