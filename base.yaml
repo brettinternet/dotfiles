@@ -77,16 +77,41 @@
     # - ['[ -x "$(command -v vim)" ] && /usr/bin/vim +PlugInstall +qall > /dev/null || true']
     - ['command -v nvim >/dev/null 2>&1 && nvim --headless "+Lazy! sync" -c "quitall" || true']
     - ["command -v doom >/dev/null 2>&1 && doom upgrade || true"]
-    - # https://github.com/tmux-plugins/tpm/blob/master/docs/managing_plugins_via_cmd_line.md
-      - >-
-        if command -v tmux >/dev/null 2>&1; then
-          if [ ! -x "$HOME/.tmux/plugins/tpm/tpm" ] && command -v git >/dev/null 2>&1; then
-            git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm";
-          fi;
-          tmux start-server;
-          tmux new-session -d -s dotfiles-setup;
-          tmux source-file ~/.tmux.conf;
-          ~/.tmux/plugins/tpm/bin/install_plugins;
-          ~/.tmux/plugins/tpm/bin/update_plugins all;
-          tmux kill-server;
+    - command: |
+        set -e
+
+        if ! command -v tmux >/dev/null 2>&1; then
+          exit 0
         fi
+
+        tmux_was_running=0
+        if tmux has-session >/dev/null 2>&1; then
+          tmux_was_running=1
+        else
+          tmux start-server
+          tmux new-session -d -s dotfiles-setup
+        fi
+
+        cleanup() {
+          if [ "$tmux_was_running" -eq 0 ]; then
+            tmux kill-server || true
+          fi
+        }
+        trap cleanup EXIT
+
+        tpm_dir="$HOME/.tmux/plugins/tpm"
+        if [ -d "$tpm_dir" ] && ! git -C "$tpm_dir" remote get-url origin >/dev/null 2>&1; then
+          rm -rf "$tpm_dir"
+        fi
+
+        if [ ! -x "$tpm_dir/tpm" ]; then
+          git clone https://github.com/tmux-plugins/tpm "$tpm_dir"
+        fi
+
+        tmux set-environment -g TMUX_PLUGIN_MANAGER_PATH "$HOME/.tmux/plugins/"
+        tmux source-file "$HOME/.tmux.conf"
+        "$HOME/.tmux/plugins/tpm/bin/install_plugins"
+        "$HOME/.tmux/plugins/tpm/bin/update_plugins" all
+      description: Install tmux plugins
+      stdout: true
+      stderr: true
