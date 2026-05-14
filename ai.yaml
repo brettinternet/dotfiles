@@ -19,6 +19,10 @@
     # Codex
     ~/.codex/AGENTS.md:
       path: ai/AGENTS.md
+    # pi
+    ~/.omp/agent/config.yml:
+      path: ai/pi/config.yml
+      # OMP already reads ~/.claude/CLAUDE.md
     # OpenCode
     ~/.config/opencode/AGENTS.md:
       path: ai/AGENTS.md
