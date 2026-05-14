@@ -5,8 +5,9 @@
 return {
   "AstroNvim/astrolsp",
   ---@type AstroLSPOpts
-  opts = {
-    servers = {
+  opts = function(_, opts)
+    opts.servers = opts.servers or {}
+    vim.list_extend(opts.servers, {
       "elixirls",
       "gopls",
       "ts_ls",
@@ -16,6 +17,15 @@ return {
       "ruff",
       "marksman",
       "lua_ls",
-    },
-  },
+    })
+
+    opts.config = opts.config or {}
+    opts.config.ts_ls = vim.tbl_deep_extend("force", opts.config.ts_ls or {}, {
+      init_options = {
+        tsserver = {
+          path = vim.fn.fnamemodify(vim.fn.resolve(vim.fn.exepath "tsserver"), ":h:h") .. "/lib/tsserver.js",
+        },
+      },
+    })
+  end,
 }
