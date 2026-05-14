@@ -78,40 +78,48 @@
     - ['command -v nvim >/dev/null 2>&1 && nvim --headless "+Lazy! sync" -c "quitall" || true']
     - ["command -v doom >/dev/null 2>&1 && doom upgrade || true"]
     - command: |
-        set -e
+        set -eu
 
         if ! command -v tmux >/dev/null 2>&1; then
           exit 0
         fi
 
-        tmux_was_running=0
-        if tmux has-session >/dev/null 2>&1; then
-          tmux_was_running=1
-        else
-          tmux start-server
-          tmux new-session -d -s dotfiles-setup
+        tmux_conf="$HOME/.tmux.conf"
+        plugins_dir="$HOME/.tmux/plugins"
+
+        if [ ! -f "$tmux_conf" ]; then
+          exit 0
         fi
 
-        cleanup() {
-          if [ "$tmux_was_running" -eq 0 ]; then
-            tmux kill-server || true
+        mkdir -p "$plugins_dir"
+
+        awk '/^[[:space:]]*set(-option)?[[:space:]]+-g[[:space:]]+@plugin[[:space:]]+/ {
+          plugin = $4
+          gsub(/["'"'"']/, "", plugin)
+          print plugin
+        }' "$tmux_conf" | while IFS= read -r plugin; do
+          [ -n "$plugin" ] || continue
+
+          plugin_name="${plugin##*/}"
+          plugin_name="${plugin_name%.git}"
+          plugin_dir="$plugins_dir/$plugin_name"
+
+          case "$plugin" in
+            *://*|git@*) plugin_url="$plugin" ;;
+            *) plugin_url="https://github.com/$plugin" ;;
+          esac
+
+          if [ -d "$plugin_dir" ] && ! git -C "$plugin_dir" remote get-url origin >/dev/null 2>&1; then
+            rm -rf "$plugin_dir"
           fi
-        }
-        trap cleanup EXIT
 
-        tpm_dir="$HOME/.tmux/plugins/tpm"
-        if [ -d "$tpm_dir" ] && ! git -C "$tpm_dir" remote get-url origin >/dev/null 2>&1; then
-          rm -rf "$tpm_dir"
-        fi
-
-        if [ ! -x "$tpm_dir/tpm" ]; then
-          git clone https://github.com/tmux-plugins/tpm "$tpm_dir"
-        fi
-
-        tmux set-environment -g TMUX_PLUGIN_MANAGER_PATH "$HOME/.tmux/plugins/"
-        tmux source-file "$HOME/.tmux.conf"
-        "$HOME/.tmux/plugins/tpm/bin/install_plugins"
-        "$HOME/.tmux/plugins/tpm/bin/update_plugins" all
+          if [ -d "$plugin_dir" ]; then
+            git -C "$plugin_dir" pull --ff-only --recurse-submodules
+            git -C "$plugin_dir" submodule update --init --recursive
+          else
+            GIT_TERMINAL_PROMPT=0 git clone --single-branch --recursive "$plugin_url" "$plugin_dir"
+          fi
+        done
       description: Install tmux plugins
       stdout: true
       stderr: true
