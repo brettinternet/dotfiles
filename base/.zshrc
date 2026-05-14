@@ -177,8 +177,9 @@ if [ -x "$(command -v emacs)" ]; then
 fi
 
 zinit ice as"command" from"gh-r" bpick"atuin-*.tar.gz" mv"atuin*/atuin -> atuin" \
-    atclone"./atuin init zsh > init.zsh; ./atuin gen-completions --shell zsh > _atuin" \
-    atpull"%atclone" src"init.zsh"
+    atclone"./atuin gen-completions --shell zsh > _atuin" \
+    atpull"%atclone" \
+    atload'[[ -x ./atuin ]] && eval "$(./atuin init zsh)"'
 
 zinit light atuinsh/atuin
 
@@ -191,7 +192,7 @@ zinit as="command" lucid from="gh-r" for \
     id-as="mise" mv="mise* -> mise" \
     atclone="./mise* completion zsh > _mise" \
     atpull="%atclone" \
-    atload='eval "$(mise activate zsh)"' \
+    atload='[[ -x ./mise ]] && eval "$(./mise activate zsh)"' \
     jdx/mise
 
 # -- Prompt
