@@ -15,7 +15,7 @@ cosign = "latest"
 claude = "latest"
 opencode = "latest"
 "npm:ocx" = "latest"
-"npm:@rynfar/meridian" = "1.42.1"
+"npm:@rynfar/meridian" = "latest"
 "github:can1357/oh-my-pi" = "latest"
 
 # dev
@@ -65,12 +65,9 @@ ln -sf "$compose_plugin" ~/.docker/cli-plugins/docker-compose
 ln -sf "$compose_plugin" ~/.local/bin/docker-compose
 '''
 
-[tasks.meridian]
-description = "Start the Meridian proxy server"
-run = "meridian"
-
 [settings]
 disable_backends = ["asdf", "pipx"]
 pipx.uvx = true
 npm.package_manager = "bun"
 experimental = true
+github.credential_command = "gh auth token"
