@@ -1,0 +1,22 @@
+{
+  "name": "kaile-theme",
+  "displayName": "Kaile Theme",
+  "description": "High-contrast dark theme derived from the Kaile Neovim and iTerm palettes.",
+  "version": "0.0.1",
+  "publisher": "local",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Themes"
+  ],
+  "contributes": {
+    "themes": [
+      {
+        "label": "Kaile",
+        "uiTheme": "vs-dark",
+        "path": "./themes/kaile-color-theme.json"
+      }
+    ]
+  }
+}
