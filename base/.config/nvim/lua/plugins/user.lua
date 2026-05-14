@@ -1,9 +1,7 @@
 ---@type LazySpec
 return {
-
-  -- Disable Aerial's symbols outline. AstroNvim v4 pins Aerial to v2, which is
-  -- not compatible with Neovim 0.12's Tree-sitter APIs, and this config does not
-  -- use the outline sidebar.
+  -- Keep the default AstroNvim setup lean; the symbols outline is not part of the
+  -- workflow and has been a source of Tree-sitter compatibility churn.
   { "stevearc/aerial.nvim", enabled = false },
 
   {
@@ -19,13 +17,13 @@ return {
     },
   },
 
-  -- Keep a small personal dashboard customization and otherwise stay close to
-  -- AstroNvim defaults.
+  -- AstroNvim v6 uses snacks.nvim for the dashboard.
   {
-    "goolord/alpha-nvim",
+    "folke/snacks.nvim",
     opts = function(_, opts)
-      -- customize the dashboard header
-      opts.section.header.val = {
+      opts.dashboard = opts.dashboard or {}
+      opts.dashboard.preset = opts.dashboard.preset or {}
+      opts.dashboard.preset.header = table.concat({
         "                                                     ",
         "  ███╗   ██╗███████╗ ██████╗ ██╗   ██╗██╗███╗   ███╗ ",
         "  ████╗  ██║██╔════╝██╔═══██╗██║   ██║██║████╗ ████║ ",
@@ -34,8 +32,7 @@ return {
         "  ██║ ╚████║███████╗╚██████╔╝ ╚████╔╝ ██║██║ ╚═╝ ██║ ",
         "  ╚═╝  ╚═══╝╚══════╝ ╚═════╝   ╚═══╝  ╚═╝╚═╝     ╚═╝ ",
         "                                                     ",
-      }
-      return opts
+      }, "\n")
     end,
   },
 }
