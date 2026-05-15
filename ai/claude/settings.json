@@ -3,12 +3,11 @@
   "permissions": {
     "defaultMode": "auto"
   },
-  "model": "sonnet[1m]",
   "statusLine": {
     "type": "command",
     "command": "bash ~/.claude/statusline-command.sh"
   },
-  "effortLevel": "high",
+  "effortLevel": "xhigh",
   "skipDangerousModePermissionPrompt": true,
   "theme": "dark-ansi",
   "skipAutoPermissionPrompt": true

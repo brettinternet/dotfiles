@@ -18,7 +18,6 @@ opencode = "latest"
 "npm:ocx" = "latest"
 "npm:@rynfar/meridian" = "latest"
 "github:can1357/oh-my-pi" = "latest"
-"npm:@tobilu/qmd" = "latest"
 ast-grep = "latest"
 
 # lsp
