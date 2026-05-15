@@ -2,6 +2,17 @@
 
 [tools]
 # ai
+# dev
+go = "latest"
+rust = "latest"
+python = "latest"
+uv = "latest"
+node = "latest"
+bun = "latest"
+biome = "latest"
+k9s = "latest"
+gh = "latest"
+
 claude = "latest"
 opencode = "latest"
 "npm:ocx" = "latest"
@@ -41,4 +52,8 @@ ln -sf "$compose_plugin" ~/.local/bin/docker-compose
 '''
 
 [settings]
+disable_backends = ["asdf", "pipx"]
+pipx.uvx = true
+npm.package_manager = "bun"
+experimental = true
 github.credential_command = "gh auth token"
