@@ -364,7 +364,7 @@
       "name": "Strings",
       "scope": ["string", "constant.other.symbol"],
       "settings": {
-        "foreground": "#ff0000"
+        "foreground": "#00ff00"
       }
     },
     {
@@ -407,7 +407,7 @@
       "name": "YAML keys",
       "scope": ["entity.name.tag.yaml", "meta.map.key.yaml entity.name.tag.yaml", "meta.flow-pair.key.yaml entity.name.tag.yaml"],
       "settings": {
-        "foreground": "#ff0000",
+        "foreground": "#00aaff",
         "fontStyle": "bold"
       }
     },
@@ -464,7 +464,7 @@
       "name": "TOML keys",
       "scope": ["support.type.property-name.toml", "support.type.property-name.array.toml", "support.type.property-name.table.toml"],
       "settings": {
-        "foreground": "#ff0000",
+        "foreground": "#00aaff",
         "fontStyle": "bold"
       }
     },
