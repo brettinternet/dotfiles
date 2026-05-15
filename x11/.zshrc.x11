@@ -1,0 +1,70 @@
+#!/bin/zsh
+
+[[ -o interactive ]] || return
+[[ -z "$SSH_CLIENT" && -z "$SSH_TTY" ]] || return
+(( $+commands[xset] && $+commands[xprop] && $+commands[notify-send] )) || return
+xset q >/dev/null 2>&1 || return
+
+zmodload zsh/datetime || return
+autoload -Uz add-zsh-hook || return
+
+(( ${+bgnotify_threshold} )) || bgnotify_threshold=5
+
+bgnotify_current_window_id() {
+  xprop -root 2>/dev/null \
+    | command awk '/_NET_ACTIVE_WINDOW/{print $5; found=1; exit} END{if (!found) exit 1}' \
+    || print -r -- "0"
+}
+
+bgnotify_current_window_class() { ## args: window ID
+  local window_id="$1"
+  [[ -n "$window_id" && "$window_id" != "0" ]] || return 0
+
+  xprop -id "$window_id" WM_CLASS 2>/dev/null \
+    | command awk -F'"' '/WM_CLASS/{print $(NF - 1); exit}'
+}
+
+bgnotify() { ## args: notify-send arguments
+  command notify-send "$@" >/dev/null 2>&1 &!
+}
+
+bgnotify_formatted() { ## args: exit_status, command, elapsed_seconds, window_class
+  local elapsed="$(( $3 % 60 ))s"
+  local class="${4:-Terminal}"
+  local icon
+
+  (( $3 >= 60 )) && elapsed="$((( $3 % 3600) / 60 ))m $elapsed"
+  (( $3 >= 3600 )) && elapsed="$(( $3 / 3600 ))h $elapsed"
+
+  if (( $1 == 0 )); then
+    icon="terminal"
+  else
+    icon="error"
+  fi
+
+  bgnotify "$class ($elapsed)" "$2" -i "$icon" -a "$class"
+}
+
+bgnotify_begin() {
+  bgnotify_timestamp=$EPOCHSECONDS
+  bgnotify_lastcmd="$1"
+  bgnotify_windowid="$(bgnotify_current_window_id)"
+  bgnotify_windowclass="$(bgnotify_current_window_class "$bgnotify_windowid")"
+}
+
+bgnotify_end() {
+  local didexit=$?
+  local elapsed=$(( EPOCHSECONDS - ${bgnotify_timestamp:-0} ))
+
+  if (( ${bgnotify_timestamp:-0} > 0 && elapsed >= bgnotify_threshold )); then
+    if [[ "$(bgnotify_current_window_id)" != "${bgnotify_windowid:-}" ]]; then
+      print -n "\a"
+      bgnotify_formatted "$didexit" "${bgnotify_lastcmd:-}" "$elapsed" "${bgnotify_windowclass:-Terminal}"
+    fi
+  fi
+
+  bgnotify_timestamp=0
+}
+
+add-zsh-hook preexec bgnotify_begin
+add-zsh-hook precmd bgnotify_end

@@ -14,6 +14,8 @@
     #   path: x11/.xprofile
     ~/.Xresources:
       path: x11/.Xresources
+    ~/.zshrc.x11:
+      path: x11/.zshrc.x11
     ~/.config/:
       glob: true
       path: x11/.config/*

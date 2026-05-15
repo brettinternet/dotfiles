@@ -277,7 +277,7 @@ case "$OSTYPE" in
   *) DOTFILES_ZSH_PLATFORM_CONFIG="" ;;
 esac
 
-for DOTFILES_ZSH_CONFIG in "$DOTFILES_ZSH_PLATFORM_CONFIG" "$HOME/.zshrc.local"; do
+for DOTFILES_ZSH_CONFIG in "$DOTFILES_ZSH_PLATFORM_CONFIG" "$HOME/.zshrc.x11" "$HOME/.zshrc.local"; do
   if [[ -n "$DOTFILES_ZSH_CONFIG" ]] && [[ -f "$DOTFILES_ZSH_CONFIG" ]]; then
     source "$DOTFILES_ZSH_CONFIG"
   fi
