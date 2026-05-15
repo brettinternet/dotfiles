@@ -425,15 +425,17 @@
       }
     },
     {
-      "name": "YAML numbers and booleans",
-      "scope": [
-        "constant.language.boolean.yaml",
-        "constant.language.null.yaml",
-        "constant.numeric.float.yaml",
-        "constant.numeric.integer.yaml"
-      ],
+      "name": "YAML numbers",
+      "scope": ["constant.numeric.float.yaml", "constant.numeric.integer.yaml"],
       "settings": {
-        "foreground": "#00ff00"
+        "foreground": "#ffff00"
+      }
+    },
+    {
+      "name": "YAML booleans and null",
+      "scope": ["constant.language.boolean.yaml", "constant.language.null.yaml"],
+      "settings": {
+        "foreground": "#ff5faf"
       }
     },
     {
@@ -486,6 +488,28 @@
       ],
       "settings": {
         "foreground": "#00ff00"
+      }
+    },
+    {
+      "name": "TOML numbers",
+      "scope": [
+        "constant.numeric.bin.toml",
+        "constant.numeric.float.toml",
+        "constant.numeric.hex.toml",
+        "constant.numeric.inf.toml",
+        "constant.numeric.integer.toml",
+        "constant.numeric.nan.toml",
+        "constant.numeric.oct.toml"
+      ],
+      "settings": {
+        "foreground": "#ffff00"
+      }
+    },
+    {
+      "name": "TOML booleans",
+      "scope": ["constant.language.boolean.toml"],
+      "settings": {
+        "foreground": "#ff5faf"
       }
     },
     {
