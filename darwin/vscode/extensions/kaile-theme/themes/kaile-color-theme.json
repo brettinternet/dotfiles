@@ -336,7 +336,7 @@
       "name": "Comment",
       "scope": ["comment", "punctuation.definition.comment"],
       "settings": {
-        "foreground": "#cccccc"
+        "foreground": "#eeeeee"
       }
     },
     {
