@@ -60,21 +60,28 @@ local actions = {
   ["/claude"] = getLaunchFocusOrHideAndSwitchBackFn("com.anthropic.claudefordesktop"),
 }
 
-local server = hs.httpserver.new(false)
+if streamDeckHttpServer then
+  streamDeckHttpServer:stop()
+end
 
-server:setInterface("localhost")
-server:setPort(1337)
+streamDeckHttpServer = hs.httpserver.new(false, false)
 
-server:setCallback(function(method, path)
+streamDeckHttpServer:setInterface("localhost")
+streamDeckHttpServer:setPort(1337)
+
+streamDeckHttpServer:setCallback(function(method, path)
   if method ~= "GET" then
     return "", 405, {}
   end
   local action = actions[path]
   if action ~= nil then
-    action()
-    return "OK", 204, {}
+    local ok, err = pcall(action)
+    if not ok then
+      return tostring(err), 500, {}
+    end
+    return "", 204, {}
   end
   return "", 404, {}
 end)
 
-server:start()
+streamDeckHttpServer:start()
