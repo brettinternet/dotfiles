@@ -1,7 +1,6 @@
 #:schema https://mise.en.dev/schema/mise.json
 
 [tools]
-# ai
 # dev
 go = "latest"
 rust = "latest"
@@ -9,10 +8,11 @@ python = "latest"
 uv = "latest"
 node = "latest"
 bun = "latest"
-biome = "latest"
 k9s = "latest"
 gh = "latest"
+biome = "latest"
 
+# ai
 claude = "latest"
 opencode = "latest"
 "npm:ocx" = "latest"
