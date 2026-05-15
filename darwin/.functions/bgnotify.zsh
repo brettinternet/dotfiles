@@ -30,18 +30,23 @@ currentWindowId() {
 }
 
 bgnotify() { ## args: (title, subtitle)
+  (( $+commands[terminal-notifier] )) || return 0
+
   local term_id=""
+  local -a notify_args=(-message "$2" -title "$1")
+
   case "$TERM_PROGRAM" in
     iTerm.app) term_id='com.googlecode.iterm2' ;;
     Apple_Terminal) term_id='com.apple.terminal' ;;
     ghostty) term_id='com.mitchellh.ghostty' ;;
   esac
-  ## now call terminal-notifier, (hopefully with $term_id!)
-  if [[ -z "$term_id" ]]; then
-    terminal-notifier -message "$2" -title "$1" >/dev/null
-  else
-    terminal-notifier -message "$2" -title "$1" -activate "$term_id" -sender "$term_id" >/dev/null
+
+  if [[ -n "$term_id" ]]; then
+    notify_args+=(-activate "$term_id")
   fi
+
+  # terminal-notifier can block in LaunchServices; never wait from precmd.
+  command terminal-notifier "${notify_args[@]}" >/dev/null 2>&1 &!
 }
 
 
