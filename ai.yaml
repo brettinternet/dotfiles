@@ -10,6 +10,8 @@
       path: ai/AGENTS.md
     ~/.claude/settings.json:
       path: ai/claude/settings.json
+    ~/.claude/statusline-command.sh:
+      path: ai/claude/statusline-command.sh
     ~/.claude/commands/:
       glob: true
       path: ai/commands/*
