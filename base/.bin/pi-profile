@@ -1,0 +1,115 @@
+#!/bin/sh
+# pi-profile — manage omp (pi) config profiles
+# Usage: pi-profile [show|list|use <name>|path [<name>]|edit [<name>]|new <name> [--from <other>]]
+set -eu
+
+# Resolve dotfiles root: $DOTFILES env, or walk up from this script's realpath
+if [ -n "${DOTFILES:-}" ]; then
+  DOTFILES="$DOTFILES"
+else
+  _self="$(cd "$(dirname "$0")" && pwd -P)"
+  # base/.bin -> base -> dotfiles root
+  DOTFILES="$(cd "$_self/../.." && pwd -P)"
+fi
+
+PROFILES_DIR="$DOTFILES/ai/pi/profiles"
+CONFIG_LINK="$DOTFILES/ai/pi/config.yml"
+ACTIVE_FILE="$DOTFILES/ai/pi/.active"
+
+die() { printf '%s\n' "$*" >&2; exit 1; }
+
+active_profile() {
+  if [ -f "$ACTIVE_FILE" ]; then
+    cat "$ACTIVE_FILE"
+  elif [ -L "$CONFIG_LINK" ]; then
+    # Derive from symlink target basename
+    basename "$(readlink "$CONFIG_LINK")" .yml
+  else
+    echo "personal"
+  fi
+}
+
+cmd_show() {
+  profile="$(active_profile)"
+  printf '%s\t%s\n' "$profile" "$PROFILES_DIR/${profile}.yml"
+}
+
+cmd_list() {
+  active="$(active_profile)"
+  for f in "$PROFILES_DIR"/*.yml; do
+    [ -f "$f" ] || continue
+    name="$(basename "$f" .yml)"
+    if [ "$name" = "$active" ]; then
+      printf '* %s\n' "$name"
+    else
+      printf '  %s\n' "$name"
+    fi
+  done
+}
+
+cmd_use() {
+  name="${1:-}"
+  [ -n "$name" ] || die "usage: pi-profile use <name>"
+  target="$PROFILES_DIR/${name}.yml"
+  [ -f "$target" ] || die "pi-profile: profile '${name}' not found (${target})"
+  ln -sfn "profiles/${name}.yml" "$CONFIG_LINK"
+  printf '%s\n' "$name" > "$ACTIVE_FILE"
+  default_role="$(awk '/^  default:/{print $2; exit}' "$target")"
+  printf 'switched to %s  (modelRoles.default = %s)\n' "$name" "${default_role:-unknown}"
+}
+
+cmd_path() {
+  name="${1:-$(active_profile)}"
+  target="$PROFILES_DIR/${name}.yml"
+  [ -f "$target" ] || die "pi-profile: profile '${name}' not found (${target})"
+  printf '%s\n' "$target"
+}
+
+cmd_edit() {
+  name="${1:-$(active_profile)}"
+  target="$PROFILES_DIR/${name}.yml"
+  [ -f "$target" ] || die "pi-profile: profile '${name}' not found (${target})"
+  "${EDITOR:-vi}" "$target"
+}
+
+cmd_new() {
+  name="${1:-}"
+  [ -n "$name" ] || die "usage: pi-profile new <name> [--from <other>]"
+  shift
+  from="personal"
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --from) from="${2:-}"; shift 2 ;;
+      *) die "pi-profile new: unknown option '$1'" ;;
+    esac
+  done
+  src="$PROFILES_DIR/${from}.yml"
+  dst="$PROFILES_DIR/${name}.yml"
+  [ -f "$src" ] || die "pi-profile: source profile '${from}' not found (${src})"
+  [ ! -f "$dst" ] || die "pi-profile: profile '${name}' already exists (${dst})"
+  cp "$src" "$dst"
+  printf 'created %s\n' "$dst"
+}
+
+usage() {
+  cat <<EOF
+usage: pi-profile [show]             print active profile and path
+       pi-profile list               list all profiles (active marked with *)
+       pi-profile use <name>         switch to profile <name>
+       pi-profile path [<name>]      print path of profile file (default: active)
+       pi-profile edit [<name>]      open profile in \$EDITOR (default: active)
+       pi-profile new <name> [--from <other>]  create new profile (copy from other)
+       pi-profile -h|--help          show this help
+EOF
+}
+
+case "${1:-show}" in
+  show)       shift; cmd_show "$@" ;;
+  list)       shift; cmd_list "$@" ;;
+  use)        shift; cmd_use "$@" ;;
+  path)       shift; cmd_path "$@" ;;
+  edit)       shift; cmd_edit "$@" ;;
+  new)        shift; cmd_new "$@" ;;
+  -h|--help)  usage ;;
+  *)          die "pi-profile: unknown command '${1}'. Try: pi-profile --help" ;;
+esac
