@@ -1,0 +1,21 @@
+modelRoles: 
+  default: openrouter/anthropic/claude-sonnet-4.6:high
+  smol: openrouter/openai/gpt-5.4-mini:medium
+  slow: openrouter/anthropic/claude-opus-4.7:high
+  designer: claude-opus:high
+  vision: openai-codex/gpt-5.5:high
+  task: gpt-5.5:medium
+  commit: gpt-5.4-nano:medium
+  plan: openrouter/anthropic/claude-opus-4.7:medium
+hideThinkingBlock: false
+autoContinue: true
+browser: 
+  headless: false
+theme: 
+  dark: dark-terminal
+symbolPreset: unicode
+statusLine: 
+  preset: default
+  separator: powerline-thin
+display: 
+  showTokenUsage: false

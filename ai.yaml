@@ -4,6 +4,24 @@
       create: true
       relink: true
 
+- shell:
+    - command: |
+        set -eu
+        if [ ! -e ai/pi/config.yml ]; then
+          profile="$(cat ai/pi/.active 2>/dev/null || echo personal)"
+          target="ai/pi/profiles/${profile}.yml"
+          if [ ! -f "$target" ]; then
+            printf 'pi-profile: profile %s missing; falling back to personal\n' "$profile" >&2
+            profile=personal
+            target="ai/pi/profiles/personal.yml"
+          fi
+          ln -sfn "profiles/${profile}.yml" ai/pi/config.yml
+          printf '%s\n' "$profile" > ai/pi/.active
+        fi
+      description: Initialize pi profile symlink
+      stdout: true
+      stderr: true
+
 - link:
     # Claude
     ~/.claude/CLAUDE.md:
