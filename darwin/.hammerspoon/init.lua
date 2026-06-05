@@ -221,6 +221,14 @@ local function enforceCaffeineAllowed()
   end
   caffeineLastDisabledReason = disabledReason
 end
+local function disableCaffeineOnSleep(event)
+  if event ~= hs.caffeinate.watcher.systemWillSleep then
+    return
+  end
+
+  setCaffeine(false)
+end
+
 
 caffeineScreenWatcher = hs.screen.watcher.new(function()
   enforceCaffeineAllowed()
@@ -228,6 +236,7 @@ end):start()
 caffeineBatteryWatcher = hs.battery.watcher.new(function()
   enforceCaffeineAllowed()
 end):start()
+caffeineSleepWatcher = hs.caffeinate.watcher.new(disableCaffeineOnSleep):start()
 enforceCaffeineAllowed()
 prefix:bind('cmd', 'C', prefixFn(function()
   hs.pasteboard.clearContents()
