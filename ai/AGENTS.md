@@ -6,6 +6,10 @@
 - Lead with the answer or action, not the reasoning.
 - Use plain text over bullet lists when a sentence suffices.
 
+## Development
+
+When implementing something that could be represented as a reusable coding pattern, you MUST tell the user "CODE PATTERN:" and _very_ briefly describe the pattern you're using and whether the pattern matches an existing implementation in the repository. Evaluate if it can share code with the existing pattern and refactor to implement the sharing if possible.
+
 ## Tools
 
 - Use `gh` CLI for all GitHub operations. Never construct raw API calls or open browser URLs.
