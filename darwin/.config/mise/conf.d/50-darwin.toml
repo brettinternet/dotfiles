@@ -15,6 +15,7 @@ biome = "latest"
 # ai
 claude = "latest"
 opencode = "latest"
+codex = "latest"
 "npm:ocx" = "latest"
 "npm:@rynfar/meridian" = "latest"
 "github:can1357/oh-my-pi" = "latest"
@@ -56,3 +57,11 @@ pipx.uvx = true
 npm.package_manager = "bun"
 experimental = true
 github.credential_command = "gh auth token"
+
+# minimum_release_age = "12h"
+# minimum_release_age_excludes = [
+#   "biome",
+#   "claude",
+#   "opencode",
+#   "github:can1357/oh-my-pi",
+# ]
