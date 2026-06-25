@@ -1,0 +1,24 @@
+---
+modelRoles:
+  default: github-copilot/claude-sonnet-4-6
+  smol: github-copilot/claude-haiku-4-5
+  slow: github-copilot/claude-opus-4-8
+  designer: github-copilot/claude-opus-4-8
+  vision: github-copilot/gpt-5.5
+  task: github-copilot/claude-sonnet-4-6
+  commit: github-copilot/gpt-5.4-mini
+  plan: github-copilot/claude-opus-4-8
+  advisor: github-copilot/gpt-5.5
+  title: github-copilot/gpt-5.4-mini
+hideThinkingBlock: false
+autoContinue: true
+browser:
+  headless: false
+theme:
+  dark: dark-terminal
+symbolPreset: unicode
+statusLine:
+  preset: default
+  separator: powerline-thin
+display:
+  showTokenUsage: false
