@@ -21,4 +21,3 @@ statusLine:
   separator: powerline-thin
 display: 
   showTokenUsage: false
-setupVersion: 1
