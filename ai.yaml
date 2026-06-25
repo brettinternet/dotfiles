@@ -35,7 +35,6 @@
       stdout: true
       stderr: true
 
-
 - link:
     ~/.bin/:
       glob: true
