@@ -21,6 +21,20 @@
       description: Initialize pi profile symlink
       stdout: true
       stderr: true
+    - command: |
+        set -eu
+        DOTFILES="$(pwd -P)"
+        for src in "$DOTFILES/ai/pi/profiles"/*.yml; do
+          [ -f "$src" ] || continue
+          name="$(basename "$src" .yml)"
+          dir="$HOME/.omp/profiles/$name/agent"
+          mkdir -p "$dir"
+          ln -sfn "$src" "$dir/config.yml"
+        done
+      description: Symlink pi profiles into ~/.omp/profiles/*/agent/config.yml
+      stdout: true
+      stderr: true
+
 
 - link:
     ~/.bin/:
