@@ -23,6 +23,9 @@
       stderr: true
 
 - link:
+    ~/.bin/:
+      glob: true
+      path: ai/.bin/*
     # Claude
     ~/.claude/CLAUDE.md:
       path: ai/AGENTS.md
