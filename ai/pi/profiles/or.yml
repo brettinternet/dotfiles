@@ -1,4 +1,4 @@
-modelRoles: 
+modelRoles:
   default: openrouter/anthropic/claude-sonnet-4-6:high
   smol: openrouter/google/gemini-3-flash
   slow: openrouter/anthropic/claude-opus-4-8:xhigh
@@ -11,13 +11,35 @@ modelRoles:
   title: openrouter/google/gemini-3-flash
 hideThinkingBlock: false
 autoContinue: true
-browser: 
+browser:
   headless: false
-theme: 
+theme:
   dark: dark-terminal
 symbolPreset: unicode
-statusLine: 
+statusLine:
   preset: default
   separator: powerline-thin
-display: 
+display:
   showTokenUsage: false
+steeringMode: one-at-a-time
+loop:
+  mode: reset
+doubleEscapeAction: tree
+startup:
+  quiet: true
+  checkUpdate: false
+renderMermaid:
+  enabled: true
+github:
+  enabled: true
+tools:
+  intentTracing: true
+commands:
+  enableOpencodeUser: true
+  enableOpencodeProject: true
+  enableClaudeProject: false
+  enableClaudeUser: false
+dev:
+  autoqa:
+    consent: granted
+setupVersion: 1

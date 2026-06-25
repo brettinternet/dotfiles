@@ -1,4 +1,3 @@
----
 modelRoles:
   default: openai-codex/gpt-5.5:medium
   smol: openai-codex/gpt-5.4-mini:low
@@ -14,11 +13,35 @@ hideThinkingBlock: false
 autoContinue: true
 browser:
   headless: false
+  enabled: false
 theme:
   dark: dark-terminal
-symbolPreset: unicode
+  light: light
+symbolPreset: nerd
 statusLine:
   preset: default
   separator: powerline-thin
 display:
   showTokenUsage: false
+steeringMode: one-at-a-time
+loop:
+  mode: reset
+doubleEscapeAction: tree
+startup:
+  quiet: true
+  checkUpdate: false
+renderMermaid:
+  enabled: true
+github:
+  enabled: false
+tools:
+  intentTracing: true
+commands:
+  enableOpencodeUser: true
+  enableOpencodeProject: true
+  enableClaudeProject: false
+  enableClaudeUser: false
+dev:
+  autoqa:
+    consent: granted
+setupVersion: 1
