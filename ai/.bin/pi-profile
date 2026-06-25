@@ -3,12 +3,24 @@
 # Usage: pi-profile [show|list|use <name>|path [<name>]|edit [<name>]|new <name> [--from <other>]]
 set -eu
 
-# Resolve dotfiles root: $DOTFILES env, or walk up from this script's realpath
+# Resolve dotfiles root: $DOTFILES env, or walk up from this script's realpath.
+# The script is typically invoked via a symlink (stow), so resolve symlinks
+# on $0 before walking up — otherwise we'd land in the symlink's dir.
 if [ -n "${DOTFILES:-}" ]; then
   DOTFILES="$DOTFILES"
 else
-  _self="$(cd "$(dirname "$0")" && pwd -P)"
-  # base/.bin -> base -> dotfiles root
+  _src="$0"
+  # Follow symlinks to the real script location (portable; no realpath dep).
+  while [ -L "$_src" ]; do
+    _dir="$(cd "$(dirname "$_src")" && pwd -P)"
+    _src="$(readlink "$_src")"
+    case "$_src" in
+      /*) ;;                 # absolute target
+      *) _src="$_dir/$_src" ;; # relative target, resolve against link dir
+    esac
+  done
+  _self="$(cd "$(dirname "$_src")" && pwd -P)"
+  # ai/.bin -> ai -> dotfiles root
   DOTFILES="$(cd "$_self/../.." && pwd -P)"
 fi
 
