@@ -1,7 +1,7 @@
 ---
 modelRoles:
   default: openai-codex/gpt-5.5:medium
-  smol: openai-codex/gpt-5.4-mini:medium
+  smol: openai-codex/gpt-5.4-mini:low
   slow: openai-codex/gpt-5.5:xhigh
   designer: openai-codex/gpt-5.5:xhigh
   vision: openai-codex/gpt-5.5:high
