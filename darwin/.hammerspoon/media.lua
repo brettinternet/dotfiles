@@ -1,17 +1,11 @@
 -- A more specific play/pause to only toggle Spotify
 local spotifyBundleID = "com.spotify.client"
 local function playSpotify()
-  local spotify = hs.application.get(spotifyBundleID)
-  -- No other way to check if app is in "background" state (closed but not quit)
-  -- `newKeyEvent` only works on apps that are hidden or open 🤔
-  local isBackgroundOrClosed = not (spotify and spotify:focusedWindow())
-  if isBackgroundOrClosed then
-    hs.application.launchOrFocusByBundleID(spotifyBundleID)
-    spotify = hs.application.get(spotifyBundleID)
-    spotify:hide()
-  end
-  local playKey = hs.eventtap.event.newKeyEvent(nil, "space", true)
-  playKey:post(spotify)
+  return hs.osascript.applescript('tell application id "com.spotify.client" to playpause')
+end
+
+local function nextSpotify()
+  return hs.osascript.applescript('tell application id "com.spotify.client" to next track')
 end
 
 local focusingSpotify = false
@@ -49,6 +43,148 @@ local function playOrPauseSpotify()
   spotifyPressReleased = true
 end
 
+-- YouTube
+
+local youtubeBrowserBundleID = "org.chromium.Chromium"
+local youtubeTabPattern = "youtube\\.com|youtu\\.be"
+local youtubeHomeUrl = "https://www.youtube.com"
+
+local function findYoutubeVideoTab()
+  local browserApp = hs.application.get(youtubeBrowserBundleID)
+  if not browserApp or not browserApp:isRunning() then
+    return nil
+  end
+
+  local script = ([[(function() {
+    var browser = Application('%s');
+    var firstPaused = null;
+
+    function isYoutubeVideoUrl(url) {
+      return /^https?:\/\/([^\/]+\.)?youtube\.com\/watch\b/.test(url)
+        || /^https?:\/\/([^\/]+\.)?youtube\.com\/shorts\//.test(url)
+        || /^https?:\/\/youtu\.be\//.test(url);
+    }
+
+    for (var win of browser.windows()) {
+      var tabs = win.tabs();
+      for (var index = 0; index < tabs.length; index++) {
+        var tab = tabs[index];
+        var url = String(tab.url() || "");
+        if (!isYoutubeVideoUrl(url)) {
+          continue;
+        }
+
+        var state = "paused";
+        try {
+          state = String(tab.execute({ javascript: "(function(){var video=document.querySelector('video');if(!video){return 'paused';}return (!video.paused && !video.ended) ? 'playing' : 'paused';})()" }) || "paused");
+        } catch (err) {}
+
+        var result = String(win.id()) + "|" + String(index + 1) + "|" + state;
+        if (state === "playing") {
+          return result;
+        }
+        if (firstPaused === null) {
+          firstPaused = result;
+        }
+      }
+    }
+
+    return firstPaused || "";
+  })();
+  ]]):format(youtubeBrowserBundleID)
+
+  local success, result = hs.osascript.javascript(script)
+  if not success or result == nil or result == "" then
+    return nil
+  end
+
+  local windowId, tabIndex, state = tostring(result):match("^(%d+)|(%d+)|(%w+)$")
+  if not windowId or not tabIndex then
+    return nil
+  end
+
+  return {
+    windowId = windowId,
+    tabIndex = tabIndex,
+    state = state,
+  }
+end
+
+local function focusBrowserTabByIndex(browser, windowId, tabIndex)
+  local script = ([[(function() {
+    var browser = Application('%s');
+    var windowId = Number('%s');
+    var tabIndex = Number('%s');
+
+    for (var win of browser.windows()) {
+      if (win.id() === windowId) {
+        win.activeTabIndex = tabIndex;
+        win.index = 1;
+        return win.id();
+      }
+    }
+  })();
+  ]]):format(browser, windowId, tabIndex)
+
+  return hs.osascript.javascript(script)
+end
+
+local function youtubeVideoShortcutIfOpen(modifiers, key)
+  local youtubeTab = findYoutubeVideoTab()
+  if not youtubeTab then
+    return false
+  end
+
+  local currentApp = hs.application.frontmostApplication()
+  local success = focusBrowserTabByIndex(youtubeBrowserBundleID, youtubeTab.windowId, youtubeTab.tabIndex)
+  local browserApp = hs.application.get(youtubeBrowserBundleID)
+  if success and browserApp then
+    browserApp:activate()
+    hs.eventtap.keyStroke(modifiers or {}, key, 0, browserApp)
+  end
+  if currentApp then
+    currentApp:activate()
+  end
+
+  return success and browserApp ~= nil
+end
+
+local function playOrPauseYoutubeVideoIfOpen()
+  return youtubeVideoShortcutIfOpen({}, "k")
+end
+
+local function nextYoutubeVideoIfOpen()
+  return youtubeVideoShortcutIfOpen({ "shift" }, "n")
+end
+
+function playPauseMedia()
+  if playOrPauseYoutubeVideoIfOpen() then
+    return true
+  end
+
+  local spotify = hs.application.get(spotifyBundleID)
+  if spotify and spotify:isRunning() then
+    playSpotify()
+    return true
+  end
+
+  return false
+end
+
+function playNextMedia()
+  if nextYoutubeVideoIfOpen() then
+    return true
+  end
+
+  local spotify = hs.application.get(spotifyBundleID)
+  if spotify and spotify:isRunning() then
+    nextSpotify()
+    return true
+  end
+
+  return false
+end
+
 hs.hotkey.bind(nil, "f20", nil, playOrPauseSpotify, longPressSpotify)
 
 
@@ -72,11 +208,8 @@ end
 
 hs.hotkey.bind(nil, "f13", toggleAudioOutput)
 
--- YouTube
+-- YouTube shortcuts
 
-local youtubeBrowserBundleID = "org.chromium.Chromium"
-local youtubeTabPattern = "youtube\\.com|youtu\\.be"
-local youtubeHomeUrl = "https://www.youtube.com"
 
 function openBrowserTab(browser, url)
   local script = ([[(function() {
