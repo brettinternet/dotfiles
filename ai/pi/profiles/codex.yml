@@ -45,3 +45,5 @@ dev:
   autoqa:
     consent: granted
 setupVersion: 1
+codexResets:
+  autoRedeem: "no"
