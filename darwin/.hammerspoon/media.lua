@@ -72,7 +72,11 @@ end
 
 hs.hotkey.bind(nil, "f13", toggleAudioOutput)
 
--- Play/Pause YouTube
+-- YouTube
+
+local youtubeBrowserBundleID = "org.chromium.Chromium"
+local youtubeTabPattern = "youtube\\.com|youtu\\.be"
+local youtubeHomeUrl = "https://www.youtube.com"
 
 function openBrowserTab(browser, url)
   local script = ([[(function() {
@@ -103,23 +107,82 @@ function openNewBrowserWindow(browser, url)
   return hs.osascript.javascript(script)
 end
 
-function playPauseOrOpenYoutube()
-  local currentApp = hs.application.frontmostApplication()
-  local browser = "org.chromium.Chromium"
-  local chrome = hs.application.get(browser)
-  local success, windowId = openBrowserTab(browser, "youtube.com")
-  if success then
-    if windowId then
-      local playKey = hs.eventtap.event.newKeyEvent(nil, "k", true)
-      playKey:post(chrome)
-    else
-      local success = openNewBrowserWindow(browser, "https://youtube.com")
-      if success then
-        chrome:activate()
-      end
+local function focusBrowserTabOrOpen(browser, urlPattern, fallbackUrl)
+  local success, windowId = openBrowserTab(browser, urlPattern)
+  local browserApp = hs.application.get(browser)
+
+  if success and windowId then
+    if browserApp then
+      browserApp:activate()
     end
+    return browserApp, windowId
   end
-  currentApp:activate()
+
+  success = openNewBrowserWindow(browser, fallbackUrl)
+  browserApp = hs.application.get(browser)
+  if success and browserApp then
+    browserApp:activate()
+  end
+  return browserApp, nil
+end
+
+local youtubeShortcuts = {
+  play_pause = { key = "k" },
+  next = { modifiers = { "shift" }, key = "n" },
+  previous = { modifiers = { "shift" }, key = "p" },
+  rewind = { key = "j" },
+  forward = { key = "l" },
+  mute = { key = "m" },
+  captions = { key = "c" },
+  fullscreen = { key = "f" },
+  theater = { key = "t" },
+  miniplayer = { key = "i" },
+  volume_up = { key = "up" },
+  volume_down = { key = "down" },
+  speed_up = { modifiers = { "shift" }, key = "." },
+  speed_down = { modifiers = { "shift" }, key = "," },
+  frame_next = { key = "." },
+  frame_previous = { key = "," },
+  beginning = { key = "0" },
+  seek_10 = { key = "1" },
+  seek_20 = { key = "2" },
+  seek_30 = { key = "3" },
+  seek_40 = { key = "4" },
+  seek_50 = { key = "5" },
+  seek_60 = { key = "6" },
+  seek_70 = { key = "7" },
+  seek_80 = { key = "8" },
+  seek_90 = { key = "9" },
+}
+
+function openYoutubeLocation(url, urlPattern)
+  focusBrowserTabOrOpen(youtubeBrowserBundleID, urlPattern or url, url)
+end
+
+function focusYoutube()
+  return focusBrowserTabOrOpen(youtubeBrowserBundleID, youtubeTabPattern, youtubeHomeUrl)
+end
+
+function youtubeShortcut(action)
+  local shortcut = youtubeShortcuts[action]
+  if not shortcut then
+    hs.alert.show("Unknown YouTube action: " .. tostring(action))
+    return false
+  end
+
+  local currentApp = hs.application.frontmostApplication()
+  local browserApp, windowId = focusYoutube()
+  if browserApp and windowId then
+    hs.eventtap.keyStroke(shortcut.modifiers or {}, shortcut.key, 0, browserApp)
+  end
+  if currentApp then
+    currentApp:activate()
+  end
+  return browserApp ~= nil and windowId ~= nil
+end
+
+function playPauseOrOpenYoutube()
+  return youtubeShortcut("play_pause")
 end
 
 hs.hotkey.bind(nil, "f19", playPauseOrOpenYoutube)
