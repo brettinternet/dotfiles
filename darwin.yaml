@@ -29,6 +29,7 @@
     ~/.hammerspoon/:
       glob: true
       path: darwin/.hammerspoon/*
+      if: "[ -d /Applications/Hammerspoon.app ]"
     ~/.config/ghostty/:
       glob: true
       path: darwin/.config/ghostty/*
