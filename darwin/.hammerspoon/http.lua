@@ -2,7 +2,6 @@
 -- localhost GET requests to run actions in background
 
 local actions = {
-  ["/reload"] = hs.reload,
   ["/chrome"] = getLaunchFocusOrHideAndSwitchBackFn("org.chromium.Chromium"),
   ["/zed"] = getLaunchFocusOrHideAndSwitchBackFn("dev.zed.Zed"),
   ["/github"] = getLaunchFocusOrHideAndSwitchBackFn("com.github.GitHubClient"),
@@ -99,24 +98,69 @@ if streamDeckHttpServer then
   streamDeckHttpServer:stop()
 end
 
+local function responseHeaders(extra)
+  local headers = {
+    ["Cache-Control"] = "no-store",
+    ["Content-Type"] = "text/plain; charset=utf-8",
+    ["X-Content-Type-Options"] = "nosniff",
+  }
+
+  if extra then
+    for key, value in pairs(extra) do
+      headers[key] = value
+    end
+  end
+
+  return headers
+end
+
+local function requestHeader(headers, name)
+  if type(headers) ~= "table" then
+    return nil
+  end
+
+  local lowerName = name:lower()
+  for key, value in pairs(headers) do
+    if type(key) == "string" and key:lower() == lowerName then
+      return value
+    end
+  end
+
+  return nil
+end
+
+local function isBrowserCrossOriginRequest(headers)
+  if requestHeader(headers, "Origin") or requestHeader(headers, "Referer") then
+    return true
+  end
+
+  local fetchSite = requestHeader(headers, "Sec-Fetch-Site")
+  return fetchSite ~= nil and fetchSite ~= "none" and fetchSite ~= "same-origin"
+end
+
 streamDeckHttpServer = hs.httpserver.new(false, false)
 
 streamDeckHttpServer:setInterface("localhost")
 streamDeckHttpServer:setPort(1337)
 
-streamDeckHttpServer:setCallback(function(method, path)
+streamDeckHttpServer:setCallback(function(method, path, headers)
   if method ~= "GET" then
-    return "", 405, {}
+    return "", 405, responseHeaders({ ["Allow"] = "GET" })
   end
+
+  if isBrowserCrossOriginRequest(headers) then
+    return "", 403, responseHeaders()
+  end
+
   local action = actions[path]
   if action ~= nil then
     local ok, err = pcall(action)
     if not ok then
-      return tostring(err), 500, {}
+      return tostring(err), 500, responseHeaders()
     end
-    return "", 204, {}
+    return "", 204, responseHeaders()
   end
-  return "", 404, {}
+  return "", 404, responseHeaders()
 end)
 
 streamDeckHttpServer:start()
