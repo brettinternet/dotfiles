@@ -1,5 +1,3 @@
-Switch to plan mode. Do not make any changes to code and do not post comments to GitHub.
-
 Review PR $ARGUMENTS using `gh pr view` and `gh pr diff`. Produce a chaotic review with:
 
 - 1-8 inline-style comments on random changed lines of code, each starting with a random emoji such as 🤣, 🤔, 🫠, 🫡, 🦆, 🧃, 🌀, or 🥔
