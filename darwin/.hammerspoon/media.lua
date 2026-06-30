@@ -4,6 +4,10 @@ local function playSpotify()
   return hs.osascript.applescript('tell application id "com.spotify.client" to playpause')
 end
 
+local function startSpotify()
+  return hs.osascript.applescript('tell application id "com.spotify.client" to play')
+end
+
 local function nextSpotify()
   return hs.osascript.applescript('tell application id "com.spotify.client" to next track')
 end
@@ -25,6 +29,20 @@ end
 local function isSpotifyOpen()
   local spotify = hs.application.get(spotifyBundleID)
   return spotify ~= nil and spotify:isRunning()
+end
+
+local function openSpotifyAndPlay()
+  if isSpotifyOpen() then
+    return startSpotify()
+  end
+
+  local currentApp = hs.application.frontmostApplication()
+  hs.application.open(spotifyBundleID)
+  if currentApp then
+    currentApp:activate()
+  end
+  hs.timer.doAfter(1, startSpotify)
+  return true
 end
 
 local focusingSpotify = false
@@ -49,13 +67,13 @@ local function playOrPauseSpotify()
   if not focusingSpotify then
     local isSpotifyRunning = spotify ~= nil and spotify:isRunning() or false
     if isSpotifyRunning then
-      playSpotify()
+      if spotifyPlayerState() == "playing" then
+        playSpotify()
+      else
+        startSpotify()
+      end
     else
-      local currentApp = hs.application.frontmostApplication()
-      hs.application.open(spotifyBundleID)
-      currentApp:activate()
-      hs.timer.doAfter(1, playSpotify)
-      currentApp:activate()
+      openSpotifyAndPlay()
     end
   end
   focusingSpotify = false
@@ -187,15 +205,15 @@ function playPauseMedia()
     return success
   end
 
-  if lastPausedMedia == "spotify" and isSpotifyOpen() then
-    return playSpotify()
+  if lastPausedMedia == "spotify" then
+    return openSpotifyAndPlay()
   end
 
   if lastPausedMedia == "youtube" and isYoutubeVideoOpen() then
     return playOrPauseYoutubeVideoIfOpen()
   end
 
-  return false
+  return openSpotifyAndPlay()
 end
 
 function playNextMedia()
