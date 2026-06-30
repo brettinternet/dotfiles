@@ -8,6 +8,25 @@ local function nextSpotify()
   return hs.osascript.applescript('tell application id "com.spotify.client" to next track')
 end
 
+local function spotifyPlayerState()
+  local spotify = hs.application.get(spotifyBundleID)
+  if not spotify or not spotify:isRunning() then
+    return nil
+  end
+
+  local success, state = hs.osascript.applescript('tell application id "com.spotify.client" to player state as string')
+  if not success then
+    return nil
+  end
+
+  return tostring(state):lower()
+end
+
+local function isSpotifyOpen()
+  local spotify = hs.application.get(spotifyBundleID)
+  return spotify ~= nil and spotify:isRunning()
+end
+
 local focusingSpotify = false
 local spotifyPressReleased = true
 local function longPressSpotify()
@@ -48,6 +67,8 @@ end
 local youtubeBrowserBundleID = "org.chromium.Chromium"
 local youtubeTabPattern = "youtube\\.com|youtu\\.be"
 local youtubeHomeUrl = "https://www.youtube.com"
+local lastPausedMedia = nil
+local pendingYoutubePause = false
 
 local function findYoutubeVideoTab()
   local browserApp = hs.application.get(youtubeBrowserBundleID)
@@ -110,76 +131,88 @@ local function findYoutubeVideoTab()
   }
 end
 
-local function focusBrowserTabByIndex(browser, windowId, tabIndex)
-  local script = ([[(function() {
-    var browser = Application('%s');
-    var windowId = Number('%s');
-    var tabIndex = Number('%s');
-
-    for (var win of browser.windows()) {
-      if (win.id() === windowId) {
-        win.activeTabIndex = tabIndex;
-        win.index = 1;
-        return win.id();
-      }
-    }
-  })();
-  ]]):format(browser, windowId, tabIndex)
-
-  return hs.osascript.javascript(script)
+local function isYoutubeVideoOpen()
+  return findYoutubeVideoTab() ~= nil
 end
 
-local function youtubeVideoShortcutIfOpen(modifiers, key)
+local function isYoutubePlaying()
   local youtubeTab = findYoutubeVideoTab()
-  if not youtubeTab then
+  return youtubeTab ~= nil and youtubeTab.state == "playing"
+end
+
+local function youtubeVideoShortcutIfOpen(action)
+  if not findYoutubeVideoTab() then
     return false
   end
 
-  local currentApp = hs.application.frontmostApplication()
-  local success = focusBrowserTabByIndex(youtubeBrowserBundleID, youtubeTab.windowId, youtubeTab.tabIndex)
-  local browserApp = hs.application.get(youtubeBrowserBundleID)
-  if success and browserApp then
-    browserApp:activate()
-    hs.eventtap.keyStroke(modifiers or {}, key, 0, browserApp)
-  end
-  if currentApp then
-    currentApp:activate()
-  end
-
-  return success and browserApp ~= nil
+  return youtubeShortcut(action)
 end
 
 local function playOrPauseYoutubeVideoIfOpen()
-  return youtubeVideoShortcutIfOpen({}, "k")
+  return youtubeVideoShortcutIfOpen("play_pause")
 end
 
 local function nextYoutubeVideoIfOpen()
-  return youtubeVideoShortcutIfOpen({ "shift" }, "n")
+  return youtubeVideoShortcutIfOpen("next")
 end
 
+-- If Spotify pauses while a YouTube video tab is open, the next press targets
+-- YouTube before resume logic. This handles the common "both are playing" case
+-- even when Chromium does not expose reliable playing state for the tab.
 function playPauseMedia()
-  if playOrPauseYoutubeVideoIfOpen() then
-    return true
+  if spotifyPlayerState() == "playing" then
+    local shouldPauseYoutubeNext = isYoutubeVideoOpen()
+    local success = playSpotify()
+    if success then
+      lastPausedMedia = "spotify"
+      pendingYoutubePause = shouldPauseYoutubeNext
+    end
+    return success
   end
 
-  local spotify = hs.application.get(spotifyBundleID)
-  if spotify and spotify:isRunning() then
-    playSpotify()
-    return true
+  if pendingYoutubePause then
+    local success = playOrPauseYoutubeVideoIfOpen()
+    if success then
+      lastPausedMedia = "youtube"
+      pendingYoutubePause = false
+    end
+    return success
+  end
+
+  if isYoutubePlaying() then
+    local success = playOrPauseYoutubeVideoIfOpen()
+    if success then
+      lastPausedMedia = "youtube"
+    end
+    return success
+  end
+
+  if lastPausedMedia == "spotify" and isSpotifyOpen() then
+    return playSpotify()
+  end
+
+  if lastPausedMedia == "youtube" and isYoutubeVideoOpen() then
+    return playOrPauseYoutubeVideoIfOpen()
   end
 
   return false
 end
 
 function playNextMedia()
-  if nextYoutubeVideoIfOpen() then
-    return true
+  if spotifyPlayerState() == "playing" and isSpotifyOpen() then
+    return nextSpotify()
   end
 
-  local spotify = hs.application.get(spotifyBundleID)
-  if spotify and spotify:isRunning() then
-    nextSpotify()
-    return true
+  if isYoutubePlaying() then
+    return nextYoutubeVideoIfOpen()
+  end
+
+  if lastPausedMedia == "spotify" and isSpotifyOpen() then
+    return nextSpotify()
+  end
+
+  if lastPausedMedia == "youtube" and isYoutubeVideoOpen() then
+    return nextYoutubeVideoIfOpen()
   end
 
   return false
@@ -305,13 +338,22 @@ function youtubeShortcut(action)
 
   local currentApp = hs.application.frontmostApplication()
   local browserApp, windowId = focusYoutube()
-  if browserApp and windowId then
+  if not (browserApp and windowId) then
+    if currentApp then
+      currentApp:activate()
+    end
+    return false
+  end
+
+  -- Schedule the keystroke after Chromium becomes frontmost; true means scheduled.
+  hs.timer.doAfter(0.2, function()
     hs.eventtap.keyStroke(shortcut.modifiers or {}, shortcut.key, 0, browserApp)
-  end
-  if currentApp then
-    currentApp:activate()
-  end
-  return browserApp ~= nil and windowId ~= nil
+    if currentApp then
+      currentApp:activate()
+    end
+  end)
+
+  return true
 end
 
 function playPauseOrOpenYoutube()
