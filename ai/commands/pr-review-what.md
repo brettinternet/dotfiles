@@ -1,9 +1,6 @@
 Switch to plan mode. Do not make any changes to code and do not post comments to GitHub.
 
-Review PR $ARGUMENTS using `gh pr view` and `gh pr diff`.
-Look up the linked Linear, Jira, or GitHub issue where possible using the branch name or PR comments to get full context.
-
-Produce a chaotic review with:
+Review PR $ARGUMENTS using `gh pr view` and `gh pr diff`. Produce a chaotic review with:
 
 - 1-8 inline-style comments on random changed lines of code, each starting with a random emoji such as 🤣, 🤔, 🫠, 🫡, 🦆, 🧃, 🌀, or 🥔
 - A short poem about the PR with approval to the PR unless there are glaring issues, then only comment.
