@@ -88,6 +88,115 @@ local youtubeHomeUrl = "https://www.youtube.com"
 local lastPausedMedia = nil
 local pendingYoutubePause = false
 
+
+-- Plex
+
+local plexBrowserBundleID = youtubeBrowserBundleID
+local plexDesktopBundleID = "tv.plex.desktop"
+
+local function plexTabScript(activate)
+  local activateTab = ""
+  if activate then
+    activateTab = [[
+        win.activeTabIndex = (index + 1);
+        win.index = 1;
+]]
+  end
+
+  return ([[(function() {
+    var browser = Application('%s');
+
+    function isPlexTabTitle(title) {
+      return title === "Plex" || /^\s*(?:▶|⏸|Ⅱ|❚❚)\s+/.test(title) || /\s-\sS\d+\s·\sE\d+$/.test(title);
+    }
+
+    for (var win of browser.windows()) {
+      var tabs = win.tabs();
+      for (var index = 0; index < tabs.length; index++) {
+        var tab = tabs[index];
+        var title = String(tab.title() || "");
+        if (!isPlexTabTitle(title)) {
+          continue;
+        }
+%s
+        return String(win.id()) + "|" + String(index + 1) + "|" + title;
+      }
+    }
+
+    return "";
+  })();
+  ]]):format(plexBrowserBundleID, activateTab)
+end
+
+local function plexTab(activate)
+  local browserApp = hs.application.get(plexBrowserBundleID)
+  if not browserApp or not browserApp:isRunning() then
+    return nil
+  end
+
+  local success, result = hs.osascript.javascript(plexTabScript(activate))
+  if not success or result == nil or result == "" then
+    return nil
+  end
+
+  local windowId, tabIndex, title = tostring(result):match("^(%d+)|(%d+)|(.+)$")
+  if not windowId or not tabIndex then
+    return nil
+  end
+
+  return {
+    windowId = windowId,
+    tabIndex = tabIndex,
+    title = title,
+  }
+end
+
+local function isPlexOpen()
+  return plexTab(false) ~= nil
+end
+
+local function plexShortcutIfOpen(shortcut)
+  local currentApp = hs.application.frontmostApplication()
+  local focusedTab = plexTab(true)
+  local browserApp = hs.application.get(plexBrowserBundleID)
+  if not (focusedTab and browserApp) then
+    if currentApp then
+      currentApp:activate()
+    end
+    return false
+  end
+
+  browserApp:activate()
+  hs.timer.doAfter(0.2, function()
+    hs.eventtap.keyStroke(shortcut.modifiers or {}, shortcut.key, 0)
+    if currentApp then
+      currentApp:activate()
+    end
+  end)
+
+  return true
+end
+
+local function playOrPausePlexIfOpen()
+  return plexShortcutIfOpen({ key = "space" })
+end
+
+local function nextPlexIfOpen()
+  return plexShortcutIfOpen({ key = "end" })
+end
+
+function focusPlex()
+  local browserApp = hs.application.get(plexBrowserBundleID)
+  local focusedTab = plexTab(true)
+  if focusedTab and browserApp then
+    browserApp:activate()
+    return browserApp, focusedTab.windowId
+  end
+
+  getLaunchFocusOrHideAndSwitchBackFn(plexDesktopBundleID)()
+  return hs.application.get(plexDesktopBundleID), nil
+end
+
 local function findYoutubeVideoTab()
   local browserApp = hs.application.get(youtubeBrowserBundleID)
   if not browserApp or not browserApp:isRunning() then
@@ -188,6 +297,24 @@ function playPauseMedia()
     return success
   end
 
+  if isPlexOpen() then
+    local success = playOrPausePlexIfOpen()
+    if success then
+      lastPausedMedia = "plex"
+      pendingYoutubePause = false
+      return true
+    end
+  end
+
+  if isYoutubePlaying() then
+    local success = playOrPauseYoutubeVideoIfOpen()
+    if success then
+      lastPausedMedia = "youtube"
+      pendingYoutubePause = false
+    end
+    return success
+  end
+
   if pendingYoutubePause then
     local success = playOrPauseYoutubeVideoIfOpen()
     if success then
@@ -197,26 +324,33 @@ function playPauseMedia()
     return success
   end
 
-  if isYoutubePlaying() then
+  if lastPausedMedia == "youtube" and isYoutubeVideoOpen() then
+    return playOrPauseYoutubeVideoIfOpen()
+  end
+
+  if isYoutubeVideoOpen() then
     local success = playOrPauseYoutubeVideoIfOpen()
     if success then
       lastPausedMedia = "youtube"
+      return true
     end
-    return success
   end
 
   if lastPausedMedia == "spotify" then
     return openSpotifyAndPlay()
   end
 
-  if lastPausedMedia == "youtube" and isYoutubeVideoOpen() then
-    return playOrPauseYoutubeVideoIfOpen()
-  end
-
   return openSpotifyAndPlay()
 end
 
 function playNextMedia()
+  if isPlexOpen() then
+    local success = nextPlexIfOpen()
+    if success then
+      return true
+    end
+  end
+
   if spotifyPlayerState() == "playing" and isSpotifyOpen() then
     return nextSpotify()
   end
