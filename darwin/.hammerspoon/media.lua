@@ -168,7 +168,12 @@ local function plexShortcutIfOpen(shortcut)
 
   browserApp:activate()
   hs.timer.doAfter(0.2, function()
-    hs.eventtap.keyStroke(shortcut.modifiers or {}, shortcut.key, 0)
+    if shortcut.systemKey then
+      hs.eventtap.event.newSystemKeyEvent(shortcut.systemKey, true):post()
+      hs.eventtap.event.newSystemKeyEvent(shortcut.systemKey, false):post()
+    else
+      hs.eventtap.keyStroke(shortcut.modifiers or {}, shortcut.key, 0)
+    end
     if currentApp then
       currentApp:activate()
     end
@@ -182,7 +187,7 @@ local function playOrPausePlexIfOpen()
 end
 
 local function nextPlexIfOpen()
-  return plexShortcutIfOpen({ key = "end" })
+  return plexShortcutIfOpen({ systemKey = "NEXT" })
 end
 
 function focusPlex()
