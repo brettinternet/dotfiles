@@ -79,6 +79,7 @@ Guardrails:
   the source, re-validate, commit, push, and re-poll.
 - Poll periodically (checks take minutes) until the relevant set is all `pass`.
   Don't busy-spin; sleep between polls.
+- Resolve conflicts by rebasing main.
 
 ## 3. Request the reviewer
 
