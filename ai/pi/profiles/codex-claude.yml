@@ -1,11 +1,11 @@
 ---
 modelRoles:
-  default: anthropic/claude-sonnet-5:high
+  default: anthropic/claude-opus-4-8:medium
   smol: openai-codex/gpt-5.4-mini:low
   slow: anthropic/claude-opus-4-8:xhigh
   designer: anthropic/claude-opus-4-8:xhigh
   vision: openai-codex/gpt-5.5:high
-  task: anthropic/claude-sonnet-5:medium
+  task: anthropic/claude-sonnet-4-6:medium
   commit: openai-codex/gpt-5.4-mini:low
   plan: anthropic/claude-opus-4-8:high
   advisor: openai-codex/gpt-5.5:medium
