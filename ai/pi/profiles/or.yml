@@ -1,10 +1,10 @@
 modelRoles:
-  default: openrouter/anthropic/claude-sonnet-4-6:high
+  default: openrouter/anthropic/claude-sonnet-5:high
   smol: openrouter/google/gemini-3-flash
   slow: openrouter/anthropic/claude-opus-4-8:xhigh
   designer: openrouter/anthropic/claude-opus-4-8:medium
   vision: openrouter/openai/gpt-5.5:high
-  task: openrouter/anthropic/claude-sonnet-4-6:medium
+  task: openrouter/anthropic/claude-sonnet-5:medium
   commit: openrouter/anthropic/claude-haiku-4-5:high
   plan: openrouter/anthropic/claude-opus-4-8:high
   advisor: openrouter/openai/gpt-5.4
