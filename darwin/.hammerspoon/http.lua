@@ -22,19 +22,7 @@ local actions = {
       getLaunchFocusOrHideAndSwitchBackFn("io.robbie.HomeAssistant")()
     end
   end,
-  ["/plex"] = function()
-    local plex = hs.application.get("tv.plex.desktop")
-    if plex and plex:isRunning() then
-      getLaunchFocusOrHideAndSwitchBackFn("tv.plex.desktop")()
-    else
-      local success, windowId = openBrowserTab("org.chromium.Chromium", "plex.gardiner")
-      if success and windowId then
-        hs.application.get("org.chromium.Chromium"):activate()
-      else
-        getLaunchFocusOrHideAndSwitchBackFn("tv.plex.desktop")()
-      end
-    end
-  end,
+  ["/plex"] = focusPlex,
   ["/play_pause_youtube"] = playPauseOrOpenYoutube,
   ["/youtube"] = focusYoutube,
   ["/youtube/home"] = function() openYoutubeLocation("https://www.youtube.com", "youtube\\.com/?$") end,
