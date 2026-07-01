@@ -6,9 +6,10 @@ You are running a **continuous review loop**. You do not stop after one pass —
 
 ## Arguments
 
-- `$1` — GitHub author handle (e.g. `brettinternet`). Required.
-- `$2` — Linear project identifier (e.g. `TICK`). Required.
-- `$@` — anything after `$2` is treated as extra `gh search prs` qualifiers (e.g. `draft:false`, `label:bug`). Pass them through verbatim. Ignore a bare `PRs`/`prs` token — that's just a trigger word the user typed, not a qualifier.
+- `$1`: GitHub author handle
+- `$2`: Linear project identifier
+- `$@`: `gh search prs` qualifiers to pass them through verbatim. Ignore a bare `PRs`/`prs` token — that's just a trigger word the user typed, not a qualifier.
+<!-- (e.g. `draft:false`, `label:bug`). -->
 
 If `$1` or `$2` is empty, stop immediately and tell the user the usage:
 `/pr-review-loop <github-author> <linear-project> [extra gh qualifiers...]`
