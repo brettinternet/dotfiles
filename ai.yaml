@@ -52,13 +52,18 @@
     ~/.claude/agents/:
       glob: true
       path: ai/claude/agents/*
+    ~/.claude/skills/:
+      glob: true
+      path: ai/skills/*
     # Codex
     ~/.codex/AGENTS.md:
       path: ai/AGENTS.md
     # pi
+    # OMP already reads ~/.claude/CLAUDE.md
     ~/.omp/agent/config.yml:
       path: ai/pi/config.yml
-      # OMP already reads ~/.claude/CLAUDE.md
+    ~/.omp/agent/skills:
+      path: ai/skills
     # OpenCode
     ~/.config/opencode/AGENTS.md:
       path: ai/AGENTS.md
