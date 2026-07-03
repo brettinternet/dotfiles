@@ -11,6 +11,8 @@ modelRoles:
   title: openai-codex/gpt-5.4-mini:low
 hideThinkingBlock: false
 autoContinue: true
+advisor:
+  enabled: true
 browser:
   headless: false
   enabled: false

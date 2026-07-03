@@ -1,6 +1,6 @@
 ---
 modelRoles:
-  default: github-copilot/claude-sonnet-5
+  default: github-copilot/claude-sonnet-4-6
   smol: github-copilot/claude-haiku-4-5
   slow: github-copilot/claude-opus-4-8
   designer: github-copilot/claude-opus-4-8
