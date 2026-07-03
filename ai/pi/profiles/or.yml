@@ -10,6 +10,8 @@ modelRoles:
   advisor: openrouter/openai/gpt-latest
   title: openrouter/google/gemini-flash-latest
 hideThinkingBlock: false
+advisor:
+  enabled: true
 autoContinue: true
 browser:
   headless: false
