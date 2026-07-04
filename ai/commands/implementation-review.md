@@ -28,6 +28,12 @@ Review process:
    - simple names, types, invariants, and failure modes
    - tests that defend behavior instead of implementation trivia
    - no unnecessary abstractions, comments, TODOs, compatibility shims, or drive-by rewrites
+6. Evaluate latent failure modes:
+   - answer: `If this breaks in 3 months, what’s the most likely reason?`
+   - make the answer actionable by tying it to a concrete mechanism: ownership
+     drift, unchecked edge case, schema/API change, concurrency, permissions,
+     data volume, dependency behavior, missing test coverage, or an unclear
+     invariant
 
 Fix policy:
 
@@ -41,4 +47,5 @@ After review:
 
 - Run the specific tests, linters, typechecks, or manual QA that cover reviewed or fixed behavior.
 - Commit any fixes with a concise message.
-- Report what was reviewed, what changed, what was verified, and any remaining product decisions or risks.
+- Report what was reviewed, what changed, what was verified, the most likely
+  3-month breakage reason, and any remaining product decisions or risks.
