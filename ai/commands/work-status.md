@@ -24,11 +24,11 @@ Output exactly:
 - Pending verification:
 - Next recommended action:
 
-## Add-on
+## Add-ons
 
 - Least confident:
 - Biggest thing you may be missing:
-- Outstanding unrequested idea:
+- Outstanding unrequested idea, if genuinely useful:
 
 Rules:
 
@@ -36,5 +36,7 @@ Rules:
   failing checks, and test names when observed.
 - Mark unobserved fields as `not observed`; never invent state.
 - Mark inferred claims with `[INFERENCE]`.
-- Keep the add-on short: one sentence per bullet.
+- Add-ons are secondary: answer the first two every time, one sentence per
+  bullet. Include an outstanding idea only when there is a concrete, grounded
+  candidate; otherwise write `none observed` rather than inventing one.
 - Do not summarize away unfinished acceptance criteria or known failing checks.

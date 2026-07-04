@@ -13,9 +13,20 @@ For each backlog item:
    - edge cases, data states, migrations, permissions, and failure modes
    - acceptance criteria that can be verified without guessing
    - the specific tests, checks, or manual QA expected
-4. Remove ambiguity, duplicated tasks, stale assumptions, and solution-shaped instructions that are not required.
-5. Keep tasks outcome-focused. Do not over-prescribe implementation unless the repo already has a clear matching pattern.
-6. If a backlog item is blocked by missing product information, mark the exact question needed and refine everything else around it.
+   - an item-scoped implementation snapshot in that item's existing structure:
+     - goal / product intent
+     - target file area, components, APIs, or data model involved
+     - open risks, blockers, missing decisions, and product questions
+     - last known validation or evidence from the backlog text, if any
+     - pending verification required before the item can be considered done
+     - next recommended implementation action
+4. Add a short item-specific add-on only when it helps the implementer:
+   - least confident assumption
+   - biggest non-obvious thing the implementer may be missing
+   - one optional outstanding idea that is explicitly out of scope unless chosen
+5. Remove ambiguity, duplicated tasks, stale assumptions, and solution-shaped instructions that are not required.
+6. Keep tasks outcome-focused. Do not over-prescribe implementation unless the repo already has a clear matching pattern.
+7. If a backlog item is blocked by missing product information, mark the exact question needed and refine everything else around it.
 
 After editing:
 
