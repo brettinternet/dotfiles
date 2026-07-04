@@ -1,11 +1,40 @@
 ---
-description: Provide work status
+description: Emit compact work-state snapshot
 ---
 
-Answer:
+Emit a compact, concrete work-state report for a user checking in mid-task.
 
-What are you least confident about right now with this work?
+Use current conversation/tool state first. Run only safe read-only checks when
+needed to avoid guessing, such as todo/job/subagent state, branch/PR status, and
+changed files. Do not continue implementation, edit files, commit, push, or run
+broad validation just to answer status.
 
-What's the biggest thing I'm missing about the situation right now? What don't I realize?
+Output exactly:
 
-If you could add one unrequested thing to this plan/application/module, what would be really outstanding and unique, and that would make this work truly industry leading or bleeding edge, what would that thing be?
+## Work snapshot
+
+- Current task:
+- Acceptance criteria:
+- Last concrete action:
+- Active branch / PR / task:
+- Active file area:
+- Changed files:
+- Open risks / blockers:
+- Last verification result / coverage:
+- Pending verification:
+- Next recommended action:
+
+## Add-on
+
+- Least confident:
+- Biggest thing you may be missing:
+- Outstanding unrequested idea:
+
+Rules:
+
+- Prefer facts over commentary. Include paths, commands, PR numbers, job IDs,
+  failing checks, and test names when observed.
+- Mark unobserved fields as `not observed`; never invent state.
+- Mark inferred claims with `[INFERENCE]`.
+- Keep the add-on short: one sentence per bullet.
+- Do not summarize away unfinished acceptance criteria or known failing checks.
