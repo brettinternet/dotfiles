@@ -28,10 +28,11 @@ For each backlog item:
    - one optional outstanding idea that is explicitly out of scope unless chosen
 5. Remove ambiguity, duplicated tasks, stale assumptions, and solution-shaped instructions that are not required.
 6. Keep tasks outcome-focused. Do not over-prescribe implementation unless the repo already has a clear matching pattern.
-7. If a backlog item is blocked by missing product information, mark the exact question needed and refine everything else around it.
+7. If a backlog item is blocked by missing product information, resolve the missing decision from existing backlog context when the answer is already explicit. If any product question remains open, mark the exact question needed, refine everything else around it, and do not describe that item as implementation-ready.
 
 After editing:
 
 - Verify the refined backlog still covers every item from `$ARGUMENTS`.
+- If any product question remains open after refinement, list the unresolved question(s) in the output, identify the affected backlog item(s), and stop short of claiming those item(s) are implementation-ready.
 - Run only formatting or validation that applies to the edited backlog files.
 - Commit the changes with a concise message.
