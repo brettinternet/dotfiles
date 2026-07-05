@@ -2,7 +2,7 @@ Fan out subagents and orchestrate to implement the next open backlog items from 
 
 Treat `$ARGUMENTS` as the exact backlog file, item IDs, titles, or ranges to implement. Do not implement unrelated backlog items.
 
-Before creating a worktree/subtree or editing anything, identify any explicit file paths in `$ARGUMENTS` (do not treat backlog item IDs, titles, or ranges as paths). If any explicit file path does not exist, stop immediately and report the missing path(s) to the user; do not implement or commit anything.
+Before creating a worktree/subtree or editing anything, identify any explicit file paths in `$ARGUMENTS` (do not treat backlog item IDs, titles, or ranges as paths). If an explicit file path does not exist, check for nearby existing paths only in path-like locations: the same directory, the nearest existing parent directory, or the same basename after a directory move/rename. Auto-substitute only when exactly one candidate is unambiguous and clearly adjacent; report the substitution to the user. Otherwise stop immediately and report the missing path(s) plus nearby candidate(s). Do not implement or commit anything when stopped.
 
 Before editing:
 
