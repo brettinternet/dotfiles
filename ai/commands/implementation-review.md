@@ -1,13 +1,13 @@
-Review my implementation of `$1` for code quality, security, performance, maintainability, and whether it actually solves the intended work. Commit any fixes.
+Review my implementation of `$ARGUMENTS` for code quality, security, performance, maintainability, and whether it actually solves the intended work. Commit any fixes.
 
-Treat `$1` as the exact implementation, branch, PR, commit range, backlog item, or file set to review. Do not review unrelated work except where needed to understand callsites or behavior.
+Treat `$ARGUMENTS` as the exact implementation, branch, PR, commit range, backlog item, or file set to review. Do not review unrelated work except where needed to understand callsites or behavior.
 
 Review process:
 
 1. Establish intent before judging the code:
    - read the relevant backlog item, issue, PR description, commit messages, or nearby documentation
    - identify the expected user-visible behavior and non-goals
-   - map the files, callsites, data flows, and tests affected by `$1`
+   - map the files, callsites, data flows, and tests affected by `$ARGUMENTS`
 2. Evaluate correctness first:
    - verify the implementation satisfies every stated requirement
    - check edge cases, error paths, empty states, retries, concurrency, permissions, migrations, and rollback behavior
@@ -38,7 +38,7 @@ Review process:
 Fix policy:
 
 - Fix valid issues at the source, not by suppressing warnings or narrowing tests.
-- Keep fixes limited to `$1` and directly required callsites.
+- Keep fixes limited to `$ARGUMENTS` and directly required callsites.
 - Add or update targeted tests for behavioral fixes.
 - If a finding needs product input, leave the code unchanged for that point and state the exact decision needed.
 - If the implementation is already sound, make no code changes.

@@ -1,11 +1,11 @@
-Fan out subagents and orchestrate to implement the next open backlog items from `$1` in an isolated worktree/subtree. Preserve existing unstaged work, use the smallest targeted verification loop, commit only task-related work, merge back to local main when done, and clean up the worktree.
+Fan out subagents and orchestrate to implement the next open backlog items from `$ARGUMENTS` in an isolated worktree/subtree. Preserve existing unstaged work, use the smallest targeted verification loop, commit only task-related work, merge back to local main when done, and clean up the worktree.
 
-Treat `$1` as the exact backlog file, item IDs, titles, or ranges to implement. Do not implement unrelated backlog items.
+Treat `$ARGUMENTS` as the exact backlog file, item IDs, titles, or ranges to implement. Do not implement unrelated backlog items.
 
 Before editing:
 
 1. Inspect the current worktree status and preserve unrelated unstaged or untracked work.
-2. Identify the next open item or items from `$1`.
+2. Identify the next open item or items from `$ARGUMENTS`.
 3. Read the full item text, acceptance criteria, nearby backlog context, and relevant existing code patterns.
 4. Confirm the item is small enough to complete safely. If it is oversized, split only the execution plan; do not silently shrink the requested acceptance.
 5. Create or switch to an isolated worktree/subtree for the implementation so local user work is not disturbed.
@@ -33,7 +33,7 @@ Completion criteria:
 - If any required acceptance is not done, leave the item open and state exactly what remains.
 - At the end, make the continuation status unambiguous:
   - `NEXT CONTEXT REQUIRED` when there is any remaining open backlog work, blocker, missing product decision, failed verification, or unarchived backlog file. Include the exact next item to start from and what context the next agent needs.
-  - `BACKLOG COMPLETE AND ARCHIVED` only when every item from `$1` is complete, verified, committed, merged back, and the backlog file has been archived. Include the exact final item completed and where it was archived.
+  - `BACKLOG COMPLETE AND ARCHIVED` only when every item from `$ARGUMENTS` is complete, verified, committed, merged back, and the backlog file has been archived. Include the exact final item completed and where it was archived.
 
 Verification:
 

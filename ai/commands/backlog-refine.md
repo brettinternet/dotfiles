@@ -1,6 +1,6 @@
-Refine the backlog items in `$1` into implementation-ready work for a lesser coding agent, then commit changes.
+Refine the backlog items in `$ARGUMENTS` into implementation-ready work for a lesser coding agent, then commit changes.
 
-Treat `$1` as the exact backlog item IDs, titles, or ranges to refine. Do not refine unrelated backlog.
+Treat `$ARGUMENTS` as the exact backlog item IDs, titles, or ranges to refine. Do not refine unrelated backlog.
 
 For each backlog item:
 
@@ -30,6 +30,6 @@ For each backlog item:
 
 After editing:
 
-- Verify the refined backlog still covers every item from `$1`.
+- Verify the refined backlog still covers every item from `$ARGUMENTS`.
 - Run only formatting or validation that applies to the edited backlog files.
 - Commit the changes with a concise message.
