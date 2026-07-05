@@ -27,13 +27,14 @@ Before creating a worktree/subtree, reviewing, or editing anything, identify eve
 Determine exactly one current target:
 
 1. Inspect the current worktree status and preserve unrelated unstaged or untracked work.
-2. Read the backlog file or files in the order supplied, including matching item text, acceptance criteria, nearby backlog context, and any existing implementation or review notes.
-3. Identify the first scoped backlog file, then the first scoped item in that file, that is still open, incomplete, blocked, or missing a valid completed review marker.
-4. Determine the pass state:
+2. Read the backlog file or files in the order supplied, including matching item text, acceptance criteria, nearby backlog context, and any existing implementation, review, or blocker notes.
+3. Identify the first scoped backlog file, then the first scoped item in that file, that is still open, incomplete, unreviewed, or blocked without a still-valid blocker marker.
+4. Skip an item with a valid `blocked:` marker only when its unblock condition is still unmet and the evidence has not changed. Record the skip in the handoff and continue to the next scoped item in order.
+5. Determine the pass state:
    - `IMPLEMENT` when required behavior is absent, incomplete, failing verification, or not traceable to a commit.
    - `REVIEW` when the behavior appears implemented, has an implementation commit or changed files to inspect, and lacks a valid review marker for that exact implementation.
-   - `BLOCKED` only when a required product decision, unavailable dependency, or unsafe ambiguity prevents both implementation and review.
-5. If multiple files or items are explicitly requested, preserve the supplied backlog file order and process only the smallest safe batch whose acceptance criteria and verification can be completed in this pass. Leave the next exact file and item in the handoff.
+   - `BLOCKED` only when a required product decision, unavailable dependency, or unsafe ambiguity prevents both implementation and review and no valid blocker marker already records the same blocker.
+6. If multiple files or items are explicitly requested, preserve the supplied backlog file order and process only the smallest safe batch whose acceptance criteria and verification can be completed in this pass. Leave the next exact file and item in the handoff.
 
 Do not skip an open item because a later item or later backlog file looks easier. If the next item is oversized, split only the execution plan; do not silently shrink acceptance.
 
@@ -47,7 +48,7 @@ At the end of every pass, write the next step clearly enough for another agent t
 - implementation commit(s), review-fix commit(s), or changed files to inspect
 - acceptance criteria already verified
 - verification commands already run and exact results
-- remaining acceptance criteria, risks, blockers, or product decisions
+- remaining acceptance criteria, risks, blockers, product decisions, and any blocked items skipped this pass
 - exact next backlog file, item, and command invocation to start from
 
 Use `NEXT CONTEXT REQUIRED` whenever any scoped backlog work remains open, blocked, unreviewed, unarchived, or not merged back. Use `BACKLOG COMPLETE AND ARCHIVED` only when every scoped item across every supplied backlog file is implemented, reviewed, verified, committed, merged back, and each backlog file has been archived.
@@ -61,6 +62,16 @@ Store the marker inside the item’s existing notes, status, or conclusion area.
 `reviewed: <implementation-commit> [review-fix: <commit>]; verified: <brief command/result>`
 
 A review marker is valid only for the exact implementation commit it names, plus the review-fix commit when present. If the implementation commit changes, review-fix commit changes, acceptance criteria change, or relevant files change without an updated marker, treat the item as `REVIEW` again. If the marker is valid and the item is complete, do not re-review it; move to the next unfinished scoped item in the ordered backlog list.
+
+## Blocker markers
+
+To avoid repeating the same blocker forever, mark the backlog item itself as blocked only after exhausting repository context, attempting all safe unblocked work, and consulting the oracle/smart agent for a second opinion.
+
+Store the marker inside the item’s existing notes, status, or conclusion area. Follow the backlog file’s existing style; if there is no style, add one concise item-local line:
+
+`blocked: <short reason>; tried: <brief attempted path>; unblock: <specific decision/dependency/evidence needed>`
+
+A blocker marker is valid only while the reason, attempted path, and unblock condition still match the current code, backlog text, dependencies, and verification evidence. Skip a blocked item only when its marker is still valid. Re-enter it automatically when new information appears, dependencies become available, acceptance criteria change, relevant code changes, or the unblock condition no longer matches; then clear or replace the marker and continue with `IMPLEMENT` or `REVIEW`. If every remaining scoped item is blocked by still-valid markers, stop with `NEXT CONTEXT REQUIRED` and report the blocker list.
 
 ## IMPLEMENT pass
 
@@ -155,10 +166,12 @@ Use `BLOCKED` only after exhausting repository context and consulting the oracle
 
 When blocked:
 
+- Implement and verify any acceptance criteria that are safely unblocked before marking the item blocked.
 - Do not mark the item complete.
+- Write or update the item-local `blocked:` marker with the exact missing decision, unavailable dependency, failed acceptance criterion, or unsafe ambiguity; include what was tried and the next concrete unblock action.
 - Commit only if the committed state is coherent and useful; otherwise leave the worktree uncommitted and explain why.
-- State the exact missing decision, unavailable dependency, failed acceptance criterion, or unsafe ambiguity.
-- Leave `NEXT CONTEXT REQUIRED` with the blocked item as the next target.
+- Move the next pass to the next scoped item whose blocker marker is absent, stale, or resolved. Do not keep selecting the same still-blocked item.
+- Leave `NEXT CONTEXT REQUIRED` with the skipped blocker list and the next unblocked target. If no unblocked target remains, report the human-required blocker queue instead of archiving.
 
 ## Verification
 
@@ -195,4 +208,4 @@ Then report:
 - archive location if applicable
 - exact next item and state for the next pass, if any
 - copy-pasteable next prompt that invokes this command with the backlog file, item, and commit/files to inspect when relevant
-- remaining blockers, risks, or product decisions
+- remaining blockers, skipped blocked items, risks, or product decisions
