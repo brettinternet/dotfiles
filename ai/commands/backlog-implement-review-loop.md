@@ -5,7 +5,7 @@ This command alternates between two states for each backlog item:
 1. `IMPLEMENT` — build the next open item that is not demonstrably implemented.
 2. `REVIEW` — when the item appears implemented already, review that implementation for correctness, security, performance, and code design before marking it complete.
 
-Treat `$ARGUMENTS` as the exact backlog file or ordered list of backlog files, plus optional item IDs, titles, or ranges to work through. Do not implement or review unrelated backlog items.
+Treat `$ARGUMENTS` as the exact local backlog file, ordered list of local backlog files, or remote backlog references such as Linear project/issue IDs, plus optional item IDs, titles, or ranges to work through. Do not implement or review unrelated backlog items.
 
 Each pass must be prepared to either implement the next unfinished scoped backlog work in order or review an implementation that already appears present.
 
@@ -20,15 +20,33 @@ This is a handoff-style loop, not a forever-running process. A single pass ends 
 
 Do not assume prior chat. Start by finding the next unfinished scoped backlog work in the listed backlog order or the implementation that needs review.
 
-Before creating a worktree/subtree, reviewing, or editing anything, identify every explicit backlog file path and any other explicit file paths in `$ARGUMENTS` (do not treat backlog item IDs, titles, or ranges as paths). Validate listed backlog files left-to-right before editing any of them. If an explicit file path does not exist, check for nearby existing paths only in path-like locations: the same directory or the same basename after a directory move/rename. Auto-substitute only when exactly one candidate is unambiguous and clearly adjacent; report the substitution to the user. Otherwise stop immediately and report the missing path(s) plus nearby candidate(s). Do not implement, review, fix, or commit anything when stopped.
+Before creating a worktree/subtree, reviewing, or editing anything, identify every explicit local backlog file path, remote backlog reference, and any other explicit file paths in `$ARGUMENTS` (do not treat backlog item IDs, titles, or ranges as paths). Validate listed local backlog files left-to-right before editing any of them. If an explicit file path does not exist, check for nearby existing paths only in path-like locations: the same directory or the same basename after a directory move/rename. Auto-substitute only when exactly one candidate is unambiguous and clearly adjacent; report the substitution to the user. Otherwise stop immediately and report the missing path(s) plus nearby candidate(s). Do not implement, review, fix, or commit anything when stopped.
+
+## Remote backlog sources
+
+Remote backlog references, such as Linear project identifiers, issue IDs, or issue URLs, are discovery inputs only. Do not run the implementation loop directly against a moving remote source.
+
+Before implementation or review:
+
+1. Resolve each remote reference using the available first-party tool for that system. For Linear, use the Linear MCP/tooling when available; if no authenticated tool is available, stop and report the missing integration.
+2. Fetch the exact remote items in the order implied by `$ARGUMENTS`.
+3. Pin each remote item into a concrete local backlog entry or snapshot before code edits:
+   - prefer an existing local backlog file/item that already references the remote ID
+   - otherwise create or update a repo-conventional local backlog snapshot that records the remote ID, title, fetched acceptance criteria, remote URL/key, and fetch timestamp/version if available
+4. Commit the local backlog snapshot or update only when it is task-related and useful for the loop; otherwise keep it as a clearly scoped local working snapshot and do not mix it with unrelated changes.
+5. Apply `reviewed:` and `blocked:` markers only to the local backlog entry or snapshot, not only to the remote system.
+
+If the remote item changes later, update the local backlog snapshot first, then re-evaluate review and blocker markers against the new local text. Ordered runs may mix local backlog files and remote references, but the loop operates only on the resolved local backlog entries after this step.
+
+Local repo markdown backlogs remain first-class inputs. When `$ARGUMENTS` names local markdown backlog files, use them directly after path validation; do not force remote resolution or snapshot creation.
 
 ## Target selection
 
 Determine exactly one current target:
 
 1. Inspect the current worktree status and preserve unrelated unstaged or untracked work.
-2. Read the backlog file or files in the order supplied, including matching item text, acceptance criteria, nearby backlog context, and any existing implementation, review, or blocker notes.
-3. Identify the first scoped backlog file, then the first scoped item in that file, that is still open, incomplete, unreviewed, or blocked without a still-valid blocker marker.
+2. Read the resolved backlog file or files in the order supplied, including matching item text, acceptance criteria, nearby backlog context, remote-source snapshots if present, and any existing implementation, review, or blocker notes.
+3. Identify the first scoped resolved backlog file, then the first scoped item in that file, that is still open, incomplete, unreviewed, or blocked without a still-valid blocker marker.
 4. Skip an item with a valid `blocked:` marker only when its unblock condition is still unmet and the evidence has not changed. Record the skip in the handoff and continue to the next scoped item in order.
 5. Determine the pass state:
    - `IMPLEMENT` when required behavior is absent, incomplete, failing verification, or not traceable to a commit.
@@ -42,8 +60,8 @@ Do not skip an open item because a later item or later backlog file looks easier
 
 At the end of every pass, write the next step clearly enough for another agent to continue:
 
-- current backlog file and item ID/title
-- ordered backlog file list, when more than one file was supplied
+- current resolved backlog file and item ID/title
+- ordered backlog source list and local resolution map, when more than one source was supplied
 - state to run next: `IMPLEMENT`, `REVIEW`, `BLOCKED`, or `ARCHIVE`
 - implementation commit(s), review-fix commit(s), or changed files to inspect
 - acceptance criteria already verified
@@ -199,7 +217,7 @@ or
 
 Then report:
 
-- backlog file list and item ID/title processed
+- backlog source list, resolved local backlog file list, and item ID/title processed
 - pass state completed: `IMPLEMENT`, `REVIEW`, `BLOCKED`, or `ARCHIVE`
 - commits made
 - verification run
