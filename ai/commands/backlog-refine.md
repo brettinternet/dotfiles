@@ -8,31 +8,33 @@ For each backlog item:
 
 1. Read the existing backlog text and nearby context before editing.
 2. Preserve the product intent, but split vague or oversized work into small, independently executable tasks.
-3. Add enough implementation context for a lesser coding agent:
+3. Add enough implementation context for a lesser coding agent to start without follow-up questions:
    - target files, components, commands, and existing patterns to inspect
    - explicit non-goals and scope boundaries
-   - dependencies and required ordering
+   - dependencies and required ordering, with prerequisite work split into earlier ready items when needed
    - edge cases, data states, migrations, permissions, and failure modes
    - acceptance criteria that can be verified without guessing
    - the specific tests, checks, or manual QA expected
+   - a strict available-to-begin status: only items with all blockers, dependencies, decisions, risks, product questions, and assumptions resolved from cited evidence may be marked ready
    - an item-scoped implementation snapshot in that item's existing structure:
      - goal / product intent
      - target file area, components, APIs, or data model involved
-     - open risks, blockers, missing decisions, and product questions
+     - resolved decisions and assumptions, with the source evidence used for each
      - last known validation or evidence from the backlog text, if any
      - pending verification required before the item can be considered done
      - next recommended implementation action
 4. Add a short item-specific add-on only when it helps the implementer:
-   - least confident assumption
+   - least confident resolved assumption and the evidence supporting it
    - biggest non-obvious thing the implementer may be missing
    - one optional outstanding idea that is explicitly out of scope unless chosen
 5. Remove ambiguity, duplicated tasks, stale assumptions, and solution-shaped instructions that are not required.
 6. Keep tasks outcome-focused. Do not over-prescribe implementation unless the repo already has a clear matching pattern.
-7. If a backlog item is blocked by missing product information, resolve the missing decision from existing backlog context when the answer is already explicit. If any product question remains open, mark the exact question needed, refine everything else around it, and do not describe that item as implementation-ready.
+7. Eliminate blockers before making an item available. "Available to begin" means a lesser coding agent can start and complete the item without asking product, design, or architecture questions; without discovering unknown dependencies; and without relying on uncited or unresolved assumptions. Resolve missing decisions from existing backlog, repository, issue, product, or design context when the answer is already explicit. If a blocker cannot be resolved from available context, do not leave the item in the ready implementation queue: either split out a prerequisite decision/research item with concrete acceptance criteria, or clearly mark the affected item as blocked/unavailable and state the exact missing decision needed. Do not describe any item with unresolved blockers, open product questions, unknown dependencies, ambiguous acceptance criteria, or latent assumptions as implementation-ready.
 
 After editing:
 
 - Verify the refined backlog still covers every item from `$ARGUMENTS`.
-- If any product question remains open after refinement, list the unresolved question(s) in the output, identify the affected backlog item(s), and stop short of claiming those item(s) are implementation-ready.
+- Perform a final readiness check for each refined item before committing: confirm every item marked available to begin has resolved evidence for scope, dependencies, decisions, assumptions, acceptance criteria, and verification.
+- If any blocker, latent assumption, dependency, or product question remains unresolved after refinement, list the unresolved issue(s) in the output, identify the affected backlog item(s), and confirm those item(s) were left blocked/unavailable rather than implementation-ready.
 - Run only formatting or validation that applies to the edited backlog files.
 - Commit the changes with a concise message.
