@@ -36,6 +36,8 @@ Review process:
      drift, unchecked edge case, schema/API change, concurrency, permissions,
      data volume, dependency behavior, missing test coverage, or an unclear
      invariant
+   - include whether the risk should be addressed now or left as a follow-up,
+     with the reason for that timing
 
 Fix policy:
 
@@ -50,4 +52,5 @@ After review:
 - Run the specific tests, linters, typechecks, or manual QA that cover reviewed or fixed behavior.
 - Commit any fixes with a concise message.
 - Report what was reviewed, what changed, what was verified, the most likely
-  3-month breakage reason, and any remaining product decisions or risks.
+  3-month breakage reason, whether to address that risk now or as a follow-up,
+  and any remaining product decisions or risks.
