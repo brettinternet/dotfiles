@@ -2,7 +2,7 @@ Refine the backlog items in `$ARGUMENTS` into implementation-ready work for a le
 
 Treat `$ARGUMENTS` as the exact backlog item IDs, titles, or ranges to refine. Do not refine unrelated backlog.
 
-Before reading or editing backlog content, identify any explicit file paths in `$ARGUMENTS` (do not treat backlog item IDs, titles, or ranges as paths). If any explicit file path does not exist, stop immediately and report the missing path(s) to the user; do not refine or commit anything.
+Before reading or editing backlog content, identify any explicit file paths in `$ARGUMENTS` (do not treat backlog item IDs, titles, or ranges as paths). If an explicit file path does not exist, check for nearby existing paths only in path-like locations: the same directory, the nearest existing parent directory, or the same basename after a directory move/rename. Auto-substitute only when exactly one candidate is unambiguous and clearly adjacent; report the substitution to the user. Otherwise stop immediately and report the missing path(s) plus nearby candidate(s). Do not refine or commit anything when stopped.
 
 For each backlog item:
 

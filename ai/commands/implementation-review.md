@@ -2,7 +2,7 @@ Review my implementation of `$ARGUMENTS` for code quality, security, performance
 
 Treat `$ARGUMENTS` as the exact implementation, branch, PR, commit range, backlog item, or file set to review. Do not review unrelated work except where needed to understand callsites or behavior.
 
-Before reviewing, identify any explicit file paths in `$ARGUMENTS`. If any referenced file path does not exist, stop immediately and report the missing path(s) to the user; do not review, fix, or commit anything.
+Before reviewing, identify any explicit file paths in `$ARGUMENTS`. If an explicit file path does not exist, check for nearby existing paths only in path-like locations: the same directory, the nearest existing parent directory, or the same basename after a directory move/rename. Auto-substitute only when exactly one candidate is unambiguous and clearly adjacent; report the substitution to the user. Otherwise stop immediately and report the missing path(s) plus nearby candidate(s). Do not review, fix, or commit anything when stopped.
 
 Review process:
 
