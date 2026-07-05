@@ -5,9 +5,9 @@ This command alternates between two states for each backlog item:
 1. `IMPLEMENT` — build the next open item that is not demonstrably implemented.
 2. `REVIEW` — when the item appears implemented already, review that implementation for correctness, security, performance, and code design before marking it complete.
 
-Treat `$ARGUMENTS` as the exact backlog file plus optional item IDs, titles, or ranges to work through. Do not implement or review unrelated backlog items.
+Treat `$ARGUMENTS` as the exact backlog file or ordered list of backlog files, plus optional item IDs, titles, or ranges to work through. Do not implement or review unrelated backlog items.
 
-Each pass must be prepared to either implement the next unfinished scoped backlog work or review an implementation that already appears present.
+Each pass must be prepared to either implement the next unfinished scoped backlog work in order or review an implementation that already appears present.
 
 ## Loop driver
 
@@ -15,41 +15,52 @@ This is a handoff-style loop, not a forever-running process. A single pass ends 
 
 - after an `IMPLEMENT` pass, review the same backlog item and implementation commit
 - after a `REVIEW` pass that commits fixes, review the same item again using the review-fix commit
-- after a clean `REVIEW` pass with no remaining findings, find and implement the next unfinished scoped backlog item, or archive when none remain
+- after a clean `REVIEW` pass with no remaining findings, find and implement the next unfinished scoped backlog item in the current backlog file, then the next listed backlog file, or archive when none remain
 - after `ARCHIVE`, stop only when the final status is `BACKLOG COMPLETE AND ARCHIVED`
 
-Do not assume prior chat. Start by finding the next unfinished scoped backlog work or the implementation that needs review.
+Do not assume prior chat. Start by finding the next unfinished scoped backlog work in the listed backlog order or the implementation that needs review.
 
-Before creating a worktree/subtree, reviewing, or editing anything, identify any explicit file paths in `$ARGUMENTS` (do not treat backlog item IDs, titles, or ranges as paths). If an explicit file path does not exist, check for nearby existing paths only in path-like locations: the same directory or the same basename after a directory move/rename. Auto-substitute only when exactly one candidate is unambiguous and clearly adjacent; report the substitution to the user. Otherwise stop immediately and report the missing path(s) plus nearby candidate(s). Do not implement, review, fix, or commit anything when stopped.
+Before creating a worktree/subtree, reviewing, or editing anything, identify every explicit backlog file path and any other explicit file paths in `$ARGUMENTS` (do not treat backlog item IDs, titles, or ranges as paths). Validate listed backlog files left-to-right before editing any of them. If an explicit file path does not exist, check for nearby existing paths only in path-like locations: the same directory or the same basename after a directory move/rename. Auto-substitute only when exactly one candidate is unambiguous and clearly adjacent; report the substitution to the user. Otherwise stop immediately and report the missing path(s) plus nearby candidate(s). Do not implement, review, fix, or commit anything when stopped.
 
 ## Target selection
 
 Determine exactly one current target:
 
 1. Inspect the current worktree status and preserve unrelated unstaged or untracked work.
-2. Read the backlog file, matching item text, acceptance criteria, nearby backlog context, and any existing completion/review notes.
-3. Identify the first scoped item that is still open, incomplete, blocked, or missing a completed review gate.
+2. Read the backlog file or files in the order supplied, including matching item text, acceptance criteria, nearby backlog context, and any existing implementation or review notes.
+3. Identify the first scoped backlog file, then the first scoped item in that file, that is still open, incomplete, blocked, or missing a valid completed review marker.
 4. Determine the pass state:
    - `IMPLEMENT` when required behavior is absent, incomplete, failing verification, or not traceable to a commit.
-   - `REVIEW` when the behavior appears implemented, has an implementation commit or changed files to inspect, and needs validation before completion.
+   - `REVIEW` when the behavior appears implemented, has an implementation commit or changed files to inspect, and lacks a valid review marker for that exact implementation.
    - `BLOCKED` only when a required product decision, unavailable dependency, or unsafe ambiguity prevents both implementation and review.
-5. If multiple items are explicitly requested, process only the smallest safe batch whose acceptance criteria and verification can be completed in this pass. Leave the next exact item in the handoff.
+5. If multiple files or items are explicitly requested, preserve the supplied backlog file order and process only the smallest safe batch whose acceptance criteria and verification can be completed in this pass. Leave the next exact file and item in the handoff.
 
-Do not skip an open item because a later item looks easier. If the next item is oversized, split only the execution plan; do not silently shrink acceptance.
+Do not skip an open item because a later item or later backlog file looks easier. If the next item is oversized, split only the execution plan; do not silently shrink acceptance.
 
 ## Handoff contract
 
 At the end of every pass, write the next step clearly enough for another agent to continue:
 
 - current backlog file and item ID/title
+- ordered backlog file list, when more than one file was supplied
 - state to run next: `IMPLEMENT`, `REVIEW`, `BLOCKED`, or `ARCHIVE`
-- implementation commit(s) or changed files to inspect
+- implementation commit(s), review-fix commit(s), or changed files to inspect
 - acceptance criteria already verified
 - verification commands already run and exact results
 - remaining acceptance criteria, risks, blockers, or product decisions
-- exact next command invocation or item to start from
+- exact next backlog file, item, and command invocation to start from
 
-Use `NEXT CONTEXT REQUIRED` whenever any scoped backlog work remains open, blocked, unreviewed, unarchived, or not merged back. Use `BACKLOG COMPLETE AND ARCHIVED` only when every scoped item is implemented, reviewed, verified, committed, merged back, and the backlog file has been archived.
+Use `NEXT CONTEXT REQUIRED` whenever any scoped backlog work remains open, blocked, unreviewed, unarchived, or not merged back. Use `BACKLOG COMPLETE AND ARCHIVED` only when every scoped item across every supplied backlog file is implemented, reviewed, verified, committed, merged back, and each backlog file has been archived.
+
+## Review markers
+
+To avoid reviewing the same implementation repeatedly, mark the backlog item itself as reviewed only after a clean `REVIEW` pass verifies every acceptance criterion and either makes no changes or verifies all review fixes.
+
+Store the marker inside the item’s existing notes, status, or conclusion area. Follow the backlog file’s existing style; if there is no style, add one concise item-local line:
+
+`reviewed: <implementation-commit> [review-fix: <commit>]; verified: <brief command/result>`
+
+A review marker is valid only for the exact implementation commit it names, plus the review-fix commit when present. If the implementation commit changes, review-fix commit changes, acceptance criteria change, or relevant files change without an updated marker, treat the item as `REVIEW` again. If the marker is valid and the item is complete, do not re-review it; move to the next unfinished scoped item in the ordered backlog list.
 
 ## IMPLEMENT pass
 
@@ -131,11 +142,12 @@ After review:
 
 1. Run the specific tests, linters, typechecks, or manual QA that cover reviewed or fixed behavior.
 2. Commit any review fixes with a concise message.
-3. Mark the backlog item complete only when every acceptance criterion is implemented, reviewed, and verified.
-4. If any required acceptance is not done, leave the item open and state exactly what remains.
-5. Merge completed work back to local main when the scoped item or safe batch is complete.
-6. Clean up the temporary worktree/subtree after merge.
-7. If all scoped backlog items are complete, verified, committed, merged back, and reviewed, archive the backlog file according to existing repo conventions.
+3. Write or update the item-local `reviewed:` marker when every acceptance criterion is implemented, reviewed, and verified.
+4. Mark the backlog item complete only after the valid review marker is present.
+5. If any required acceptance is not done, leave the item open and state exactly what remains.
+6. Merge completed work back to local main when the scoped item or safe batch is complete.
+7. Clean up the temporary worktree/subtree after merge.
+8. If all scoped backlog items across all supplied backlog files are complete, verified, committed, merged back, and reviewed, archive each backlog file according to existing repo conventions.
 
 ## BLOCKED pass
 
@@ -174,7 +186,7 @@ or
 
 Then report:
 
-- backlog file and item ID/title processed
+- backlog file list and item ID/title processed
 - pass state completed: `IMPLEMENT`, `REVIEW`, `BLOCKED`, or `ARCHIVE`
 - commits made
 - verification run
