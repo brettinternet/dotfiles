@@ -2,6 +2,8 @@ Refine the backlog items in `$ARGUMENTS` into implementation-ready work for a le
 
 Treat `$ARGUMENTS` as the exact backlog item IDs, titles, or ranges to refine. Do not refine unrelated backlog.
 
+Before reading or editing backlog content, identify any explicit file paths in `$ARGUMENTS` (do not treat backlog item IDs, titles, or ranges as paths). If any explicit file path does not exist, stop immediately and report the missing path(s) to the user; do not refine or commit anything.
+
 For each backlog item:
 
 1. Read the existing backlog text and nearby context before editing.

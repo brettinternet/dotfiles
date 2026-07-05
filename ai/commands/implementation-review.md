@@ -2,6 +2,8 @@ Review my implementation of `$ARGUMENTS` for code quality, security, performance
 
 Treat `$ARGUMENTS` as the exact implementation, branch, PR, commit range, backlog item, or file set to review. Do not review unrelated work except where needed to understand callsites or behavior.
 
+Before reviewing, identify any explicit file paths in `$ARGUMENTS`. If any referenced file path does not exist, stop immediately and report the missing path(s) to the user; do not review, fix, or commit anything.
+
 Review process:
 
 1. Establish intent before judging the code:

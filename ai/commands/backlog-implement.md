@@ -2,6 +2,8 @@ Fan out subagents and orchestrate to implement the next open backlog items from 
 
 Treat `$ARGUMENTS` as the exact backlog file, item IDs, titles, or ranges to implement. Do not implement unrelated backlog items.
 
+Before creating a worktree/subtree or editing anything, identify any explicit file paths in `$ARGUMENTS` (do not treat backlog item IDs, titles, or ranges as paths). If any explicit file path does not exist, stop immediately and report the missing path(s) to the user; do not implement or commit anything.
+
 Before editing:
 
 1. Inspect the current worktree status and preserve unrelated unstaged or untracked work.
