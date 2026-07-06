@@ -7,7 +7,7 @@ modelRoles:
   task: openai-codex/gpt-5.5:medium
   commit: openai-codex/gpt-5.4-mini:low
   plan: openai-codex/gpt-5.5:high
-  advisor: openai-codex/gpt-5.4-mini:low
+  advisor: openai-codex/gpt-5.4-mini:medium
   title: openai-codex/gpt-5.4-mini:low
 hideThinkingBlock: false
 autoContinue: true
