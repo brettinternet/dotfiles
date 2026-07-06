@@ -74,7 +74,7 @@ At the end of every pass, write the next step clearly enough for another agent t
 - remaining acceptance criteria, risks, blockers, product decisions, and any blocked items skipped this pass
 - exact next backlog file, item, and command invocation to start from
 
-Use `NEXT CONTEXT REQUIRED` whenever any scoped backlog work remains open, blocked, unreviewed, unarchived, or not merged back. Use `BACKLOG COMPLETE AND ARCHIVED` only when every scoped item across every supplied backlog file is implemented, reviewed, verified, committed, merged back, and each backlog file has been archived.
+Use `NEXT CONTEXT REQUIRED` whenever any scoped backlog work remains open, blocked, unreviewed, unarchived, or not integrated. Use `BACKLOG COMPLETE AND ARCHIVED` only when every scoped item across every supplied backlog file is implemented, reviewed, verified, committed, integrated (merged locally or PR opened), and each backlog file has been archived.
 
 ## Review markers
 
@@ -179,9 +179,9 @@ After review:
 3. Write or update the item-local `reviewed:` marker when every acceptance criterion is implemented, reviewed, and verified.
 4. Mark the backlog item complete only after the valid review marker is present.
 5. If any required acceptance is not done, leave the item open and state exactly what remains.
-6. Merge completed work back to local main when the scoped item or safe batch is complete.
-7. Clean up the temporary worktree/subtree after merge.
-8. If all scoped backlog items across all supplied backlog files are complete, verified, committed, merged back, and reviewed, archive each backlog file according to existing repo conventions.
+6. Integrate completed work using the resolved flow (see Integration) when the scoped item or safe batch is complete.
+7. Clean up the temporary worktree/subtree after integration; keep the pushed branch under `pull-request`.
+8. If all scoped backlog items across all supplied backlog files are complete, verified, committed, integrated, and reviewed, archive each backlog file according to existing repo conventions.
 
 ## BLOCKED pass
 
@@ -203,6 +203,17 @@ When blocked:
 - Do not claim project-wide health unless project-wide checks were actually run.
 - Formatting, linting, and broad validation happen once at the end unless needed earlier to unblock work.
 
+## Integration
+
+Resolve the finish flow before pushing, merging, or opening anything:
+
+1. If the repo's `CLAUDE.md`, `AGENTS.md`, or backlog config declares a flow (e.g. an `Integration: pull-request` or `Integration: local-merge` line), obey it. For `pull-request`, use the declared base branch (default `main`) and branch prefix if given.
+2. Otherwise auto-detect: if you lack push access to the base branch, the base branch is protected, or `origin` is a shared remote you do not own, use `pull-request`. Otherwise use `local-merge`.
+3. When still ambiguous, default to `local-merge`.
+
+- `local-merge`: merge the completed, verified work back to local `main`; clean up the temporary worktree/subtree; do not push.
+- `pull-request`: push the task branch to `origin` and open a PR against the base branch with `gh`, using a concise title and body summarizing the item and verification; clean up the worktree but keep the pushed branch; do not merge locally and do not merge the PR; report the PR URL. Invoking this command is the standing instruction to push and open the PR for this task's own branch only — it overrides the global "never push / never open PRs without explicit instruction" rule for that branch, and does not authorize force-pushing, merging, or touching unrelated branches.
+
 ## Finish
 
 Commit behavior:
@@ -210,7 +221,7 @@ Commit behavior:
 - Commit only task-related work.
 - Use concise commit messages.
 - Do not include unrelated preserved user work.
-- Do not push unless explicitly instructed.
+- Do not push unrelated work. Under `pull-request` flow, pushing the task branch and opening its PR is authorized by invoking this command (see Integration); do nothing beyond that branch.
 
 Final response must start with exactly one status line:
 
@@ -225,6 +236,7 @@ Then report:
 - backlog source list, resolved local backlog file list, and item ID/title processed
 - pass state completed: `IMPLEMENT`, `REVIEW`, `BLOCKED`, or `ARCHIVE`
 - commits made
+- integration result: local merge or PR URL, when the scoped item or batch was integrated this pass
 - verification run
 - review result, including correctness/security/performance/design findings
 - most likely 3-month breakage reason and whether to address it now or later

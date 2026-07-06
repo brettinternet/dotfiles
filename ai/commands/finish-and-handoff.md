@@ -31,7 +31,21 @@ Finish the work:
    QA, or manual scenario as appropriate.
 5. Run formatting and linting that applies to the edited files or project
    conventions. Do not claim project-wide health unless project-wide checks ran.
-6. Commit only task-related changes with a concise message. Do not push.
+6. Commit only task-related changes with a concise message.
+7. Integrate only on `HANDOFF READY`, using the repo's flow: obey an
+   `Integration: pull-request` or `Integration: local-merge` line in the repo's
+   `CLAUDE.md`, `AGENTS.md`, or backlog config; else auto-detect (no push access
+   to the base branch, a protected base branch, or an `origin` you do not own
+   implies `pull-request`); else default to `local-merge`.
+   - `local-merge`: merge the completed work back to local `main`; do not push.
+   - `pull-request`: push the task branch and open a PR against the base branch
+     (default `main`) with `gh`; do not merge locally and do not merge the PR;
+     report the PR URL. Invoking this command is the standing instruction to push
+     and open the PR for this task's own branch only — it overrides the global
+     "never push / never open PRs without explicit instruction" rule for that
+     branch, and does not authorize force-pushing, merging, or touching unrelated
+     branches.
+   On `HANDOFF BLOCKED`, do not push, merge, or open a PR.
 
 If completion is blocked:
 
@@ -53,6 +67,7 @@ Final response must be a transition artifact, not a recap. Output exactly:
 - Active branch / commit:
 - Changed files:
 - Verification:
+- Integration: local merge, PR URL, or not integrated
 - Remaining work:
 - Risks / blockers:
 - Next recommended action:

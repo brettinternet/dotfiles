@@ -1,13 +1,31 @@
 ---
 description: Refine backlog items into implementation-ready work for a lesser coding agent, then commit
-argument-hint: <backlog-file> [item-ids|titles|ranges]
+argument-hint: <backlog-file|remote-refs> [item-ids|titles|ranges]
 ---
 
 Refine the backlog items in `$ARGUMENTS` into implementation-ready work for a lesser coding agent, then commit changes.
 
-Treat `$ARGUMENTS` as the exact backlog item IDs, titles, or ranges to refine. Do not refine unrelated backlog.
+Treat `$ARGUMENTS` as the exact local backlog file, remote backlog references (such as Linear project identifiers, issue IDs, or issue URLs), item IDs, titles, or ranges to refine. Do not refine unrelated backlog.
 
-Before reading or editing backlog content, identify explicit file paths in `$ARGUMENTS` (do not treat backlog item IDs, titles, or ranges as paths). Only verify paths that are actually listed in `$ARGUMENTS`; do not require or infer the presence of any other files. If a listed path does not exist, check for nearby existing paths only in path-like locations: the same directory or the same basename after a directory move/rename. Auto-substitute only when exactly one candidate is unambiguous and clearly adjacent; report the substitution to the user. Otherwise stop immediately and report the missing listed path(s) plus nearby candidate(s). Do not refine or commit anything when stopped.
+Before reading or editing backlog content, identify explicit file paths in `$ARGUMENTS` (do not treat backlog item IDs, titles, ranges, or remote backlog references as paths). Only verify paths that are actually listed in `$ARGUMENTS`; do not require or infer the presence of any other files. If a listed path does not exist, check for nearby existing paths only in path-like locations: the same directory or the same basename after a directory move/rename. Auto-substitute only when exactly one candidate is unambiguous and clearly adjacent; report the substitution to the user. Otherwise stop immediately and report the missing listed path(s) plus nearby candidate(s). Do not refine or commit anything when stopped.
+
+## Remote backlog sources
+
+Remote backlog references, such as Linear project identifiers, issue IDs, or issue URLs, are discovery inputs only. Do not refine against a moving remote source in place.
+
+Before refining:
+
+1. Resolve each remote reference using the available first-party tool for that system. For Linear, use the Linear MCP/tooling when available; if no authenticated tool is available, stop and report the missing integration.
+2. Fetch the exact remote items in the order implied by `$ARGUMENTS`.
+3. Pin each remote item into a concrete local backlog entry or snapshot before refining:
+   - prefer an existing local backlog file/item that already references the remote ID
+   - otherwise create or update a repo-conventional local backlog snapshot that records the remote ID, title, fetched description/acceptance criteria, remote URL/key, and fetch timestamp/version if available
+4. Refine the pinned local backlog entry or snapshot, not the remote text. Mirror the refined result back to the remote item only when the repo's convention and available tooling support it and the user expects it; otherwise keep refinement local and note that the remote item is unchanged.
+5. Commit the local backlog snapshot and refinements only when task-related; do not mix them with unrelated changes.
+
+If the remote item changes later, update the local backlog snapshot first, then re-refine against the new local text.
+
+Local repo markdown backlogs remain first-class inputs. When `$ARGUMENTS` names local markdown backlog files, use them directly after path validation; do not force remote resolution or snapshot creation.
 
 For each backlog item:
 

@@ -56,6 +56,10 @@ After review:
 
 - Run the specific tests, linters, typechecks, or manual QA that cover reviewed or fixed behavior.
 - Commit any fixes with a concise message.
-- Report what was reviewed, what changed, what was verified, the most likely
-  3-month breakage reason, whether to address that risk now or as a follow-up,
-  and any remaining product decisions or risks.
+- Integrate fixes per the repo's flow, resolved from the repo's `CLAUDE.md`, `AGENTS.md`, or backlog config (an `Integration: pull-request` or `Integration: local-merge` line), else auto-detected (no push access to the base branch, a protected base branch, or an `origin` you do not own implies `pull-request`), else defaulting to `local-merge`:
+  - `local-merge`, or when `$ARGUMENTS` is a local branch/commit range/file set: commit the fixes on the current branch and do not push.
+  - `pull-request`, or when `$ARGUMENTS` is a PR: push the fix commits to that PR's branch and do not merge the PR. Invoking this command is the standing instruction to push those fixes for this task's own branch only — it overrides the global "never push without explicit instruction" rule for that branch, and does not authorize force-pushing, merging, or touching unrelated branches.
+- Report what was reviewed, what changed, what was verified, where fixes landed
+  (local branch or pushed PR), the most likely 3-month breakage reason, whether
+  to address that risk now or as a follow-up, and any remaining product decisions
+  or risks.
