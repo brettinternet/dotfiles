@@ -48,6 +48,7 @@ Implementation rules:
 - Delete obsolete code paths created by the change. Do not leave compatibility shims unless the item explicitly requires them.
 - Add or update tests for behavior, edge cases, and failure modes implied by the item.
 - If product information is missing, implement everything not blocked and record the exact remaining decision instead of guessing.
+- Before committing to a new architectural pattern or choosing between materially different designs, consult the oracle agent for a second opinion on the tradeoff. This is proactive design input, separate from the blocker escalation below.
 - Before raising any notable blocker, missing product decision, failed acceptance, risky ambiguity, or inability to proceed to the user, consult the oracle agent for a second opinion on whether the blocker is real and whether there is a safe implementation path. If the oracle agent confirms or cannot resolve it, explicitly report it as a human-required blocker.
 
 Completion criteria:
