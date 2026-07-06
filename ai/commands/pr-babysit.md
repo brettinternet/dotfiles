@@ -18,7 +18,7 @@ branch, validation gate, and test commands from the repo itself (git remote,
 
 ## Voice
 
-Write everything you post as me, casually:
+Write **everything** you post to GitHub as me — review-thread replies, inline comment replies, top-level PR comments, the reviewer-request summary, request-changes/approval bodies, all of it. All communication, no exceptions. Casually:
 
 - NO emdashes.
 - Concise and informal, like a teammate's quick note rather than a formal reviewer.
@@ -139,7 +139,8 @@ gh pr edit <n> --add-reviewer $1
 
 Confirm it landed (`gh pr view <n> --json reviewRequests`). Then post a short PR
 comment summarizing: feedback addressed + threads resolved, CI status, and that
-`@$1` is requested. NO emdashes and be succinct.
+`@$1` is requested. Write it in my voice (see Voice above) — NO emdashes, casual,
+succinct.
 
 ## 3. Requested reviewer feedback loop (repeat until $1 approves)
 
