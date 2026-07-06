@@ -1,18 +1,18 @@
 ---
-description: Continuously loop, reviewing PRs by an author that reference a Linear project — posts casual comments/approval as needed
-argument-hint: <github-author> <linear-project> [gh-search-qualifiers...]
+description: Continuously loop, reviewing PRs by an author, optionally scoped to a Linear project — posts casual comments/approval as needed
+argument-hint: <github-author> [linear-project] [gh-search-qualifiers...]
 ---
 
 You are running a **continuous review loop**. You do not stop after one pass — you loop until the user interrupts you.
 
 ## Arguments
 
-- `$1`: GitHub author handle
-- `$2`: Linear project identifier
+- `$1`: GitHub author handle (required)
+- `$2`: Linear project identifier (optional). If omitted, or if it's actually a `gh search prs` qualifier (contains `:` or looks like a flag rather than a project identifier), treat it as absent and shift it into `$@` instead — skip the Linear lookup entirely and review **all** open PRs by `$1` in the repo.
 - `$@`: `gh search prs` qualifiers passed through verbatim (e.g. `draft:false`, `label:bug`). Ignore a bare `PRs`/`prs` token — that's just a trigger word the user typed, not a qualifier.
 
-If `$1` or `$2` is empty, stop immediately and tell the user the usage:
-`/pr-review-loop <github-author> <linear-project> [extra gh qualifiers...]`
+If `$1` is empty, stop immediately and tell the user the usage:
+`/pr-review-loop <github-author> [linear-project] [extra gh qualifiers...]`
 
 ## Loop state
 
@@ -28,13 +28,13 @@ Run this cycle forever. Between iterations, wait **5 minutes** using whatever wa
 
 ### 1. Discover PRs to review
 
-a. Use the **linear** MCP tools to fetch open, in-progress issues in the `$2` project. The goal is to identify the set of Linear ticket identifiers (e.g. `TICK-42`) that the author is actively working on. If the linear tool isn't available or fails, fall back to **all** open PRs by `$1` in this repo and infer ticket refs from PR titles/bodies.
+a. If `$2` (a Linear project) was given, use the **linear** MCP tools to fetch open, in-progress issues in that project. The goal is to identify the set of Linear ticket identifiers (e.g. `TICK-42`) that the author is actively working on. If the linear tool isn't available or fails, fall back to **all** open PRs by `$1` in this repo and infer ticket refs from PR titles/bodies. If `$2` was omitted, skip this step entirely — there's no project scoping, just review all of the author's open PRs.
 
 b. Use `gh search prs` (via `bash`) to find **open** PRs authored by `$1` in the current repo's remote (`gh repo view --json nameWithOwner` to resolve owner/repo). Combine:
 
 - `--author "$1" --state open`
 - any user-supplied qualifiers from `$@`
-- scope to PRs whose title/body reference a ticket from step (a) when the linear lookup succeeded
+- scope to PRs whose title/body reference a ticket from step (a) only when a Linear project was given and the lookup succeeded
 
 c. For each candidate PR, fetch `gh pr view <N> --json number,title,headRefOid,state,isDraft,headRefName,author,body`. Skip drafts unless the user passed `draft:false` (i.e. respect their qualifier choice — by default skip drafts since they're not ready).
 
