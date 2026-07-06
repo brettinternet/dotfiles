@@ -1,9 +1,9 @@
 ---
-description: Implement the next open backlog items in an isolated worktree with parallel subagents, verify, commit, and merge back to local main
+description: Implement the next open backlog items in an isolated worktree with parallel subagents, verify, commit, and integrate per the repo's flow (merge to local main or open a PR)
 argument-hint: <backlog-file> [item-ids|titles|ranges]
 ---
 
-Fan out subagents and orchestrate to implement the next open backlog items from `$ARGUMENTS` in an isolated worktree/subtree. Preserve existing unstaged work, use the smallest targeted verification loop, commit only task-related work, merge back to local main when done, and clean up the worktree.
+Fan out subagents and orchestrate to implement the next open backlog items from `$ARGUMENTS` in an isolated worktree/subtree. Preserve existing unstaged work, use the smallest targeted verification loop, commit only task-related work, integrate it per the repo's flow (merge to local main or open a PR), and clean up the worktree.
 
 Treat `$ARGUMENTS` as the exact backlog file, item IDs, titles, or ranges to implement. Do not implement unrelated backlog items.
 
@@ -41,7 +41,7 @@ Completion criteria:
 - If any required acceptance is not done, leave the item open and state exactly what remains.
 - At the end, make the continuation status unambiguous:
   - `NEXT CONTEXT REQUIRED` when there is any remaining open backlog work, blocker, missing product decision, failed verification, or unarchived backlog file. Include the exact next item to start from and what context the next agent needs.
-  - `BACKLOG COMPLETE AND ARCHIVED` only when every item from `$ARGUMENTS` is complete, verified, committed, merged back, and the backlog file has been archived. Include the exact final item completed and where it was archived.
+  - `BACKLOG COMPLETE AND ARCHIVED` only when every item from `$ARGUMENTS` is complete, verified, committed, integrated (merged locally or PR opened), and the backlog file has been archived. Include the exact final item completed and where it was archived.
 
 Verification:
 
@@ -49,10 +49,20 @@ Verification:
 - Re-run targeted verification after fixes.
 - Do not claim project-wide health unless project-wide checks were actually run.
 
+Integration:
+
+Resolve the finish flow before pushing, merging, or opening anything:
+
+1. If the repo's `CLAUDE.md`, `AGENTS.md`, or backlog config declares a flow (e.g. an `Integration: pull-request` or `Integration: local-merge` line), obey it. For `pull-request`, use the declared base branch (default `main`) and branch prefix if given.
+2. Otherwise auto-detect: if you lack push access to the base branch, the base branch is protected, or `origin` is a shared remote you do not own, use `pull-request`. Otherwise use `local-merge`.
+3. When still ambiguous, default to `local-merge`.
+
+- `local-merge`: merge the completed, verified work back to local `main`; clean up the temporary worktree/subtree; do not push.
+- `pull-request`: push the task branch to `origin` and open a PR against the base branch with `gh`, using a concise title and body summarizing the item and verification; clean up the worktree but keep the pushed branch; do not merge locally and do not merge the PR; report the PR URL. Invoking this command is the standing instruction to push and open the PR for this task's own branch only — it overrides the global "never push / never open PRs without explicit instruction" rule for that branch, and does not authorize force-pushing, merging, or touching unrelated branches.
+
 Finish:
 
 - Commit only task-related work with a concise message.
-- Merge the completed work back to local main.
-- Clean up the temporary worktree/subtree.
+- Integrate the completed work using the resolved flow above.
 - Start the final report with exactly one status line: `NEXT CONTEXT REQUIRED` or `BACKLOG COMPLETE AND ARCHIVED`.
-- Then report the completed item IDs/titles, commits made, verification run, archive location if applicable, and any remaining blockers or product decisions.
+- Then report the completed item IDs/titles, commits made, verification run, integration result (local merge or PR URL), archive location if applicable, and any remaining blockers or product decisions.
