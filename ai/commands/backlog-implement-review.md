@@ -1,13 +1,15 @@
 ---
 description: Review an implementation for correctness, security, performance, and maintainability; fix valid findings and commit
-argument-hint: <branch|pr|commit-range|files|backlog-item>
+argument-hint: <branch|pr|commit-range|files|backlog-item|remote-ref>
 ---
 
 Fan out subagents to orchestrate a review my implementation of `$ARGUMENTS` for code quality, security, performance, maintainability, and whether it actually solves the intended work. Commit any fixes.
 
-Treat `$ARGUMENTS` as the exact implementation, branch, PR, commit range, backlog item, or file set to review. Do not review unrelated work except where needed to understand callsites or behavior.
+Treat `$ARGUMENTS` as the exact implementation, branch, PR, commit range, backlog item, remote backlog reference (such as a Linear issue), or file set to review. Do not review unrelated work except where needed to understand callsites or behavior.
 
 Before reviewing, identify any explicit file paths in `$ARGUMENTS`. If an explicit file path does not exist, check for nearby existing paths only in path-like locations: the same directory or the same basename after a directory move/rename. Auto-substitute only when exactly one candidate is unambiguous and clearly adjacent; report the substitution to the user. Otherwise stop immediately and report the missing path(s) plus nearby candidate(s). Do not review, fix, or commit anything when stopped.
+
+If `$ARGUMENTS` is a remote backlog reference (such as a Linear issue), first resolve it with the available first-party tool (the Linear MCP/tooling for Linear; if none is authenticated, stop and report the missing integration) to the associated PR, branch, commits, or local backlog snapshot, then review that implementation.
 
 Review process:
 

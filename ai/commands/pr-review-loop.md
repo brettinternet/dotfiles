@@ -16,11 +16,11 @@ If `$1` or `$2` is empty, stop immediately and tell the user the usage:
 
 ## Loop state
 
-Persist a state file so you don't re-review unchanged PRs and so the loop survives between iterations:
+Persist a state file so you don't re-review unchanged PRs and so the loop survives between iterations. Scope it to the current repo so concurrent loops on different repos don't clobber each other:
 
-- `/tmp/pr-review-loop-state.json` — a JSON object keyed by PR number, each entry `{ "head_sha": "...", "reviewed": true }`.
+- `/tmp/pr-review-loop-state.json` — a JSON object keyed by `<owner>/<repo>`, whose value is an object keyed by PR number, each entry `{ "head_sha": "...", "reviewed": true }`. Resolve `<owner>/<repo>` once per run via `gh repo view --json nameWithOwner`.
 
-Load it at the start of each iteration. Update it after each review.
+Load it at the start of each iteration and read only the current repo's sub-object. Update that sub-object after each review; never drop other repos' entries.
 
 ## The loop
 
@@ -59,24 +59,24 @@ gh pr view <N> --json files,additions,deletions,commits
 
 Review the actual changes with the lens of: correctness, regressions, breaking changes, security, and whether the tests cover the new/changed behavior. Read the surrounding code in the repo when context is needed — use `read`/`grep` to ground your review, don't review blind.
 
-### 4. Post comments / approval in MY voice
+### 4. Post comments / approval in my voice
 
-This is critical: **everything you post is written as me, casually.** My tone is:
+Write everything you post as me, casually:
 
-- _NO_ emdashes.
-- Concise and informal. Talk like a teammate leaving a quick PR comment, not a formal reviewer.
-- Mostly lowercase most but not all sentences, light on punctuation, no corporate polish.
-- No headers, no bullet-point scaffolding for short comments, no "Overall," / "Great work!" / "Nice catch!" openers.
-- Praise sparingly and only when something's genuinely clever.
-- Lead with the point. If something's a real blocker, say so plainly.
-- A trivial nit isn't worth a comment so skip it. Only comment if it actually matters.
+- NO emdashes.
+- Concise and informal, like a teammate's quick note rather than a formal reviewer.
+- Mostly lowercase, light punctuation, no corporate polish.
+- No headers, no bullet scaffolding for short comments, and no "Overall," / "Great work!" / "Nice catch!" / "Thanks for the review!" openers.
+- Praise sparingly, only when something is genuinely clever.
+- Lead with the point; if something is a real blocker, say so plainly.
+- Skip trivial nits. Only say it if it actually matters.
 
-_Examples_ of the voice (but don't copy):
+Examples for review comments (don't copy):
 
-- `hmm this N+1s on every row — can we batch the lookup before the loop?`
+- `hmm this N+1s on every row, can we batch the lookup before the loop?`
 - `the timeout here swallows the real error, mind re-raising after logging?`
 - `lgtm, the migration is reversible too 🙌`
-- `think this misses the org_id scoping — devices from other orgs would leak in`
+- `think this misses the org_id scoping, devices from other orgs would leak in`
 
 Posting mechanics (`bash` with `gh`):
 
@@ -101,10 +101,10 @@ If you already reviewed this PR before (head SHA changed = new push), post fresh
 
 ### 5. Update state
 
-After processing each PR, write to `/tmp/pr-review-loop-state.json`:
+After processing each PR, update the current repo's sub-object in `/tmp/pr-review-loop-state.json`, preserving other repos' entries:
 
 ```json
-{ "<N>": { "head_sha": "<current headRefOid>", "reviewed": true } }
+{ "<owner>/<repo>": { "<N>": { "head_sha": "<current headRefOid>", "reviewed": true } } }
 ```
 
 ### 6. Sleep and repeat

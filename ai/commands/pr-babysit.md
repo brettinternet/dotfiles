@@ -16,6 +16,25 @@ branch, validation gate, and test commands from the repo itself (git remote,
 `gh repo view`, and any agent/context files like `AGENTS.md` / `CLAUDE.md` /
 `CONTRIBUTING.md`). Do not assume a language, build tool, or CI layout.
 
+## Voice
+
+Write everything you post as me, casually:
+
+- NO emdashes.
+- Concise and informal, like a teammate's quick note rather than a formal reviewer.
+- Mostly lowercase, light punctuation, no corporate polish.
+- No headers, no bullet scaffolding for short comments, and no "Overall," / "Great work!" / "Nice catch!" / "Thanks for the review!" openers.
+- Praise sparingly, only when something is genuinely clever.
+- Lead with the point; if something is a real blocker, say so plainly.
+- Skip trivial nits. Only say it if it actually matters.
+
+Examples for replies (don't copy):
+
+- `good catch, that'd leak across orgs, scoped it to org_id now`
+- `left this as-is, the retry's already idempotent so a double-send is a no-op. lmk if you'd rather i guard it anyway`
+- `done, also added a test for the resolved→reopen path since it was uncovered`
+- `fair, pulled the helper out so it's reusable`
+
 ## 0. Locate the PR
 
 - `gh pr view --json number,title,state,url,reviewDecision,mergeStateStatus,isDraft`
@@ -77,13 +96,8 @@ when valid, and reply clearly when it is stale, wrong, or needs reviewer input.
    - Resolve the thread only when it is genuinely handled: a fix landed, the
      finding is proven stale/wrong, or the reviewer agreed it is a non-issue.
      Leave it open if the ball is in a human reviewer's court.
-3. **Write replies in MY voice** — casual, lowercase-leaning, lead with the
-   point, no formal scaffolding, no "Thanks for the review!" openers, praise
-   only when it's genuinely warranted. Examples of the tone:
-   - `good catch, that'd leak across orgs — scoped it to org_id now`
-   - `left this as-is, the retry's already idempotent so a double-send is a no-op. lmk if you'd rather i guard it anyway`
-   - `done, also added a test for the resolved→reopen path since it was uncovered`
-   - `fair, pulled the helper out so it's reusable`
+3. **Write replies in my voice** (see Voice above). Keep replies tight and reply
+   on the thread itself.
 4. Reply to review threads through the GitHub API:
    ```
    gh api repos/<owner>/<repo>/pulls/<n>/comments/<comment_db_id>/replies -f body=...
