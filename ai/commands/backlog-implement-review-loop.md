@@ -88,7 +88,7 @@ A review marker is valid only for the exact implementation commit it names, plus
 
 ## Blocker markers
 
-To avoid repeating the same blocker forever, mark the backlog item itself as blocked only after exhausting repository context, attempting all safe unblocked work, and consulting the oracle/smart agent for a second opinion.
+To avoid repeating the same blocker forever, mark the backlog item itself as blocked only after exhausting repository context, attempting all safe unblocked work, and consulting the oracle/smart/slow agent for a second opinion.
 
 Store the marker inside the item’s existing notes, status, or conclusion area. Follow the backlog file’s existing style; if there is no style, add one concise item-local line:
 
@@ -120,7 +120,7 @@ Implementation rules:
 - Delete obsolete code paths created by the change. Do not leave compatibility shims unless the item explicitly requires them.
 - Add or update tests for behavior, edge cases, and failure modes implied by the item.
 - If product information is missing, implement everything not blocked and record the exact remaining decision instead of guessing.
-- Before raising any notable blocker, missing product decision, failed acceptance, risky ambiguity, or inability to proceed to the user, consult the oracle/smart agent for a second opinion on whether the blocker is real and whether there is a safe implementation path. If the oracle/smart agent confirms or cannot resolve it, explicitly report it as a human-required blocker.
+- Before raising any notable blocker, missing product decision, failed acceptance, risky ambiguity, or inability to proceed to the user, consult the oracle/smart/slow agent for a second opinion on whether the blocker is real and whether there is a safe implementation path. If the oracle/smart/slow agent confirms or cannot resolve it, explicitly report it as a human-required blocker.
 
 After implementation:
 
@@ -185,7 +185,7 @@ After review:
 
 ## BLOCKED pass
 
-Use `BLOCKED` only after exhausting repository context and consulting the oracle/smart agent for a second opinion.
+Use `BLOCKED` only after exhausting repository context and consulting the oracle/smart/slow agent for a second opinion.
 
 When blocked:
 

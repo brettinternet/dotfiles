@@ -48,7 +48,7 @@ Implementation rules:
 - Delete obsolete code paths created by the change. Do not leave compatibility shims unless the item explicitly requires them.
 - Add or update tests for behavior, edge cases, and failure modes implied by the item.
 - If product information is missing, implement everything not blocked and record the exact remaining decision instead of guessing.
-- Before raising any notable blocker, missing product decision, failed acceptance, risky ambiguity, or inability to proceed to the user, consult the oracle/smart agent for a second opinion on whether the blocker is real and whether there is a safe implementation path. If the oracle/smart agent confirms or cannot resolve it, explicitly report it as a human-required blocker.
+- Before raising any notable blocker, missing product decision, failed acceptance, risky ambiguity, or inability to proceed to the user, consult the oracle/smart/slow agent for a second opinion on whether the blocker is real and whether there is a safe implementation path. If the oracle/smart/slow agent confirms or cannot resolve it, explicitly report it as a human-required blocker.
 
 Completion criteria:
 
