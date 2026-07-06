@@ -53,6 +53,11 @@ threads before moving on.
 
 ### 1a. CI
 
+- Delegate watching to the **pr-watcher** subagent when available: dispatch it in
+  the background with the PR number and the last head SHA you processed, and let
+  it report check results, failure log excerpts, and new feedback while you keep
+  working. Fall back to the inline `gh` flow below when subagents aren't
+  available.
 - `gh pr checks <n>` — inspect every check.
 - Ignore async/UI-only suites that aren't gating and aren't affected by this
   change (e.g. E2E/browser shards on a backend-only PR) **unless one fails** —
@@ -146,9 +151,13 @@ succinct.
 
 After `$1` is requested, keep working their feedback until they **approve**.
 
-1. Poll the review state on an interval — humans aren't instant. Wait a few
+1. Poll the review state on an interval — humans aren't instant. Prefer
+   dispatching the **pr-watcher** subagent in the background with the PR number
+   and a baseline (the review/comment IDs and head SHA you've already
+   processed); it reports back only the delta: new reviews, new threads, new
+   commits, and CI changes. Where subagents aren't available, wait a few
    minutes between checks using whatever wait mechanism the harness allows (a
-   scheduled wake-up, a monitored timer, or `sleep 180` where permitted), print
+   scheduled wake-up, a monitored timer, or `sleep 180` where permitted). Print
    a one-line heartbeat each pass
    (`[babysit] waiting on $1 review — <timestamp>`), and don't spam the API.
    ```

@@ -1,6 +1,6 @@
 modelRoles:
   default: openrouter/anthropic/claude-opus-latest:medium
-  smol: openrouter/google/gemini-flash-latest
+  smol: openrouter/anthropic/claude-sonnet-4-6:medium
   slow: openrouter/anthropic/claude-fable-latest:xhigh
   designer: openrouter/anthropic/claude-opus-latest:medium
   vision: openrouter/openai/gpt-latest:high
