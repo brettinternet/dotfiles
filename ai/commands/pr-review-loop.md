@@ -42,7 +42,7 @@ c. For each candidate PR, fetch `gh pr view <N> --json number,title,headRefOid,s
 
 First, resolve **my** handle once per run: `gh api user --jq .login` (this is the reviewer identity — the loop reviews _as me_).
 
-**Re-review only on genuinely new commits to the PR — never on a rebase or a merge/update from main.** A head SHA change alone is not enough: a rebase onto main or a "Merge branch 'main'" rewrites SHAs without adding any of the author's work, and you MUST NOT re-review or re-comment for that. To distinguish, build the PR's current commit list and reduce it to the author's real work:
+**Re-review only on genuinely new commits to the PR — never on a rebase or a merge/update from main.** A head SHA change alone is not enough: a rebase onto main or a "Merge branch 'main'" rewrites SHAs without adding any of the author's work, and you MUST NOT re-review or re-comment for that. When the **pr-watcher** subagent is available, delegate this check: hand it each candidate PR number plus its `reviewed_commits` baseline from the state file (dispatch the batch in parallel) and use its verdict — new PR-authored subjects vs "rebase/main-sync only". Otherwise distinguish inline: build the PR's current commit list and reduce it to the author's real work:
 
 ```bash
 gh pr view <N> --json commits --jq '.commits[] | {subject: (.messageHeadline), parents: (.parents|length)}'
@@ -119,7 +119,7 @@ Store the PR's current `commit_subjects` (the filtered, main-sync-excluded list 
 
 ### 6. Sleep and repeat
 
-After every candidate PR in this iteration is processed (or skipped), print a one-line summary: `[pr-review-loop] iteration N done — reviewed X, skipped Y, sleeping 5m`. Then wait 5 minutes (same wait mechanism as above) and start the next iteration from step 1.
+After every candidate PR in this iteration is processed (or skipped), print a one-line summary: `[pr-review-loop] iteration N done — reviewed X, skipped Y, sleeping 5m`. Then wait 5 minutes (same wait mechanism as above) and start the next iteration from step 1. When the **pr-watcher** subagent is available, you may instead dispatch it in the background against the candidate PRs with their `reviewed_commits` baselines and start the next iteration when it reports real new work — but never tighter than the 5-minute cadence.
 
 ## Rules
 
