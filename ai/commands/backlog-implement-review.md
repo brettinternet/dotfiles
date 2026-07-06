@@ -3,7 +3,7 @@ description: Review an implementation for correctness, security, performance, an
 argument-hint: <branch|pr|commit-range|files|backlog-item>
 ---
 
-Review my implementation of `$ARGUMENTS` for code quality, security, performance, maintainability, and whether it actually solves the intended work. Commit any fixes.
+Fan out subagents to orchestrate a review my implementation of `$ARGUMENTS` for code quality, security, performance, maintainability, and whether it actually solves the intended work. Commit any fixes.
 
 Treat `$ARGUMENTS` as the exact implementation, branch, PR, commit range, backlog item, or file set to review. Do not review unrelated work except where needed to understand callsites or behavior.
 
