@@ -5,6 +5,8 @@ argument-hint: <backlog-file|remote-refs> [item-ids|titles|ranges]
 
 Refine the backlog items in `$ARGUMENTS` into implementation-ready work for a lesser coding agent, then commit changes.
 
+Your goal is to make every refined item 100% ready for development: resolve the item's own open questions during refinement instead of handing them off. Investigate the repository, backlog, issue, product, and design context, decide each open question, and record the decision with its supporting evidence and rationale. Only escalate a question you genuinely cannot resolve — one that depends on information outside all available context and cannot be settled by a defensible default.
+
 Treat `$ARGUMENTS` as the exact local backlog file, remote backlog references (such as Linear project identifiers, issue IDs, or issue URLs), item IDs, titles, or ranges to refine. Do not refine unrelated backlog.
 
 Before reading or editing backlog content, identify explicit file paths in `$ARGUMENTS` (do not treat backlog item IDs, titles, ranges, or remote backlog references as paths). Only verify paths that are actually listed in `$ARGUMENTS`; do not require or infer the presence of any other files. If a listed path does not exist, check for nearby existing paths only in path-like locations: the same directory or the same basename after a directory move/rename. Auto-substitute only when exactly one candidate is unambiguous and clearly adjacent; report the substitution to the user. Otherwise stop immediately and report the missing listed path(s) plus nearby candidate(s). Do not refine or commit anything when stopped.
@@ -38,11 +40,12 @@ For each backlog item:
    - edge cases, data states, migrations, permissions, and failure modes
    - acceptance criteria that can be verified without guessing
    - the specific tests, checks, or manual QA expected
-   - a strict available-to-begin status: only items with all blockers, dependencies, decisions, risks, product questions, and assumptions resolved from cited evidence may be marked ready
+   - a strict available-to-begin status: only items with all blockers, dependencies, decisions, risks, product questions, and assumptions resolved may be marked ready — resolve them during refinement so the item reaches this state rather than leaving it short
    - an item-scoped implementation snapshot in that item's existing structure:
      - goal / product intent
      - target file area, components, APIs, or data model involved
-     - resolved decisions and assumptions, with the source evidence used for each
+     - resolved decisions and assumptions, with the source evidence or rationale used for each
+     - open questions the item raised and how each was resolved, with the evidence or default reasoning behind the decision
      - last known validation or evidence from the backlog text, if any
      - pending verification required before the item can be considered done
      - next recommended implementation action
@@ -52,12 +55,17 @@ For each backlog item:
    - one optional outstanding idea that is explicitly out of scope unless chosen
 5. Remove ambiguity, duplicated tasks, stale assumptions, and solution-shaped instructions that are not required.
 6. Keep tasks outcome-focused. Do not over-prescribe implementation unless the repo already has a clear matching pattern.
-7. Eliminate blockers before making an item available. "Available to begin" means a lesser coding agent can start and complete the item without asking product, design, or architecture questions; without discovering unknown dependencies; and without relying on uncited or unresolved assumptions. Resolve missing decisions from existing backlog, repository, issue, product, or design context when the answer is already explicit. If a blocker cannot be resolved from available context, do not leave the item in the ready implementation queue: either split out a prerequisite decision/research item with concrete acceptance criteria, or clearly mark the affected item as blocked/unavailable and state the exact missing decision needed. Do not describe any item with unresolved blockers, open product questions, unknown dependencies, ambiguous acceptance criteria, or latent assumptions as implementation-ready.
+7. Resolve every open question and eliminate blockers before making an item available. "Available to begin" means a lesser coding agent can start and complete the item without asking product, design, or architecture questions; without discovering unknown dependencies; and without relying on unresolved assumptions.
+   - Actively investigate to answer each open question: read the surrounding backlog, the repository code and conventions, the linked issue, and any product or design context. Prefer an answer that is already explicit in that context.
+   - When no explicit answer exists but a defensible choice can be made, decide it yourself using the repository's established patterns and the item's product intent as the default. Record the decision, the evidence or pattern it follows, and a one-line rationale so the implementer inherits a settled choice, not a question.
+   - When an open question implies prerequisite work, split that work into an earlier ready item with concrete acceptance criteria and order it ahead, so the dependent item still reaches ready.
+   - Escalate only a question you genuinely cannot resolve: one whose answer lives outside all available context (backlog, repo, issue, product, design) and cannot be settled by a defensible default without risking wrong or irreversible product behavior. For such a question, mark the affected item blocked/unavailable and state the exact missing decision needed; do not fabricate an answer.
+   - Do not describe any item with unresolved blockers, open product questions, unknown dependencies, ambiguous acceptance criteria, or latent assumptions as implementation-ready.
 
 After editing:
 
 - Verify the refined backlog still covers every item from `$ARGUMENTS`.
-- Perform a final readiness check for each refined item before committing: confirm every item marked available to begin has resolved evidence for scope, dependencies, decisions, assumptions, acceptance criteria, and verification.
-- If any blocker, latent assumption, dependency, or product question remains unresolved after refinement, list the unresolved issue(s) in the output, identify the affected backlog item(s), and confirm those item(s) were left blocked/unavailable rather than implementation-ready.
+- Perform a final readiness check for each refined item before committing: confirm every open question the item raised was resolved and recorded, and that every item marked available to begin has resolved evidence or rationale for scope, dependencies, decisions, assumptions, acceptance criteria, and verification.
+- Expect every item to reach implementation-ready. If a question survived only because it could not be resolved from any available context, list each such question in the output, identify the affected backlog item(s), state the exact missing decision, and confirm those item(s) were left blocked/unavailable rather than implementation-ready. Do not leave a question unresolved for any other reason.
 - Run only formatting or validation that applies to the edited backlog files.
 - Commit the changes with a concise message.
