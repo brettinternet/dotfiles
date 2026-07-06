@@ -1,5 +1,6 @@
 ---
 description: Babysit the current branch's PR — keep CI green, address PR feedback, request a reviewer, then work their feedback until they approve
+argument-hint: [reviewer]
 ---
 
 Babysit the pull request for the current branch through to ready-to-merge.
@@ -41,8 +42,10 @@ threads before moving on.
   analysis, "enforce no warnings", generated-artifact freshness, migration
   safety, security scan, etc.): open the failing job, reproduce locally, fix at
   the source, re-validate, commit, push, and re-poll.
-- Poll periodically (checks take minutes) until the relevant set is all `pass`.
-  Don't busy-spin; sleep between polls.
+- Wait for checks with `gh pr checks <n> --watch` when available; otherwise
+  poll on an interval using whatever wait mechanism the harness allows (a
+  scheduled wake-up, a monitored timer, or `sleep` where permitted). Don't
+  busy-spin.
 - Resolve conflicts by rebasing main.
 
 ### 1b. PR feedback
@@ -128,8 +131,10 @@ comment summarizing: feedback addressed + threads resolved, CI status, and that
 
 After `$1` is requested, keep working their feedback until they **approve**.
 
-1. Poll the review state on an interval — humans aren't instant. Sleep a few
-   minutes between checks (`sleep 180`), print a one-line heartbeat each pass
+1. Poll the review state on an interval — humans aren't instant. Wait a few
+   minutes between checks using whatever wait mechanism the harness allows (a
+   scheduled wake-up, a monitored timer, or `sleep 180` where permitted), print
+   a one-line heartbeat each pass
    (`[babysit] waiting on $1 review — <timestamp>`), and don't spam the API.
    ```
    gh pr view <n> --json reviewDecision,reviews

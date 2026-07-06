@@ -1,3 +1,8 @@
+---
+description: Refine backlog items into implementation-ready work for a lesser coding agent, then commit
+argument-hint: <backlog-file> [item-ids|titles|ranges]
+---
+
 Refine the backlog items in `$ARGUMENTS` into implementation-ready work for a lesser coding agent, then commit changes.
 
 Treat `$ARGUMENTS` as the exact backlog item IDs, titles, or ranges to refine. Do not refine unrelated backlog.

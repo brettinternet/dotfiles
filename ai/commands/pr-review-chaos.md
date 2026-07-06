@@ -1,3 +1,8 @@
+---
+description: Post a chaotic joke review — emoji micro-comments on real diff lines plus a poem, approving unless something is glaring
+argument-hint: <pr-number|url>
+---
+
 Review PR $ARGUMENTS using `gh pr view` and `gh pr diff`. Produce a chaotic review with:
 
 - 1-8 inline-style 0-3 word comments on random changed lines of code, each with a random emoji such as 🤣, 🤔, 🫠, 🫡, 🤠, 👽, 🤯, 😬, 🆗, 💀, 😳, 🫦, 💔, or 🥔

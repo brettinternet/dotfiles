@@ -1,3 +1,8 @@
+---
+description: Run one pass of the backlog implement→review loop — implement or review the next scoped item, commit, and hand off the next state
+argument-hint: <backlog-files|remote-refs> [item-ids|titles|ranges]
+---
+
 Run one pass of the backlog implementation/review loop for `$ARGUMENTS`, commit any task-related change, and leave a concise handoff for the next pass.
 
 This command alternates between two states for each backlog item:
