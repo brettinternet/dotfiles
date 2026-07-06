@@ -1,3 +1,8 @@
+---
+description: Implement the next open backlog items in an isolated worktree with parallel subagents, verify, commit, and merge back to local main
+argument-hint: <backlog-file> [item-ids|titles|ranges]
+---
+
 Fan out subagents and orchestrate to implement the next open backlog items from `$ARGUMENTS` in an isolated worktree/subtree. Preserve existing unstaged work, use the smallest targeted verification loop, commit only task-related work, merge back to local main when done, and clean up the worktree.
 
 Treat `$ARGUMENTS` as the exact backlog file, item IDs, titles, or ranges to implement. Do not implement unrelated backlog items.

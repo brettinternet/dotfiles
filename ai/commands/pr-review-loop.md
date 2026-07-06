@@ -1,5 +1,6 @@
 ---
 description: Continuously loop, reviewing PRs by an author that reference a Linear project — posts casual comments/approval as needed
+argument-hint: <github-author> <linear-project> [gh-search-qualifiers...]
 ---
 
 You are running a **continuous review loop**. You do not stop after one pass — you loop until the user interrupts you.
@@ -8,8 +9,7 @@ You are running a **continuous review loop**. You do not stop after one pass —
 
 - `$1`: GitHub author handle
 - `$2`: Linear project identifier
-- `$@`: `gh search prs` qualifiers to pass them through verbatim. Ignore a bare `PRs`/`prs` token — that's just a trigger word the user typed, not a qualifier.
-<!-- (e.g. `draft:false`, `label:bug`). -->
+- `$@`: `gh search prs` qualifiers passed through verbatim (e.g. `draft:false`, `label:bug`). Ignore a bare `PRs`/`prs` token — that's just a trigger word the user typed, not a qualifier.
 
 If `$1` or `$2` is empty, stop immediately and tell the user the usage:
 `/pr-review-loop <github-author> <linear-project> [extra gh qualifiers...]`
@@ -24,7 +24,7 @@ Load it at the start of each iteration. Update it after each review.
 
 ## The loop
 
-Run this cycle forever. Between iterations, sleep for **5 minutes** (`bash` with `sleep 300`), then start the next iteration. Print a one-line status line at the top of each iteration like `[pr-review-loop] iteration N — <timestamp>` so the user can see it's alive.
+Run this cycle forever. Between iterations, wait **5 minutes** using whatever wait mechanism the harness allows (a scheduled wake-up, a monitored timer, or `sleep 300` where permitted), then start the next iteration. Print a one-line status line at the top of each iteration like `[pr-review-loop] iteration N — <timestamp>` so the user can see it's alive.
 
 ### 1. Discover PRs to review
 
@@ -80,7 +80,7 @@ _Examples_ of the voice (but don't copy):
 
 Posting mechanics (`bash` with `gh`):
 
-- **Inline comments on specific lines:** `gh pr review <N> --request --body "<comment>"` won't target lines; for line-specific notes use the GitHub API via `gh api` to post review comments on the diff. Prefer a single review payload with inline comments when there are multiple findings:
+- **Inline comments on specific lines:** `gh pr review` can't target individual lines; use the GitHub API via `gh api` instead. Prefer a single review payload with inline comments when there are multiple findings:
   ```bash
   gh api repos/:owner/:repo/pulls/<N>/reviews \
     -f event=COMMENT \
@@ -109,13 +109,7 @@ After processing each PR, write to `/tmp/pr-review-loop-state.json`:
 
 ### 6. Sleep and repeat
 
-After every candidate PR in this iteration is processed (or skipped), print a one-line summary: `[pr-review-loop] iteration N done — reviewed X, skipped Y, sleeping 5m`. Then:
-
-```bash
-sleep 300
-```
-
-Then start the next iteration from step 1.
+After every candidate PR in this iteration is processed (or skipped), print a one-line summary: `[pr-review-loop] iteration N done — reviewed X, skipped Y, sleeping 5m`. Then wait 5 minutes (same wait mechanism as above) and start the next iteration from step 1.
 
 ## Rules
 

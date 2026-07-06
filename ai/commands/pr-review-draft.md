@@ -1,4 +1,9 @@
-Switch to plan mode. Do not make any changes to code and do not post comments to GitHub.
+---
+description: Read-only draft PR review — summary plus at most 4 priority findings, nothing posted to GitHub
+argument-hint: <pr-number|url>
+---
+
+Switch to plan mode (or otherwise operate strictly read-only). Do not make any changes to code and do not post comments to GitHub.
 
 Review PR $ARGUMENTS using `gh pr view` and `gh pr diff`.
 Look up the linked Linear, Jira, or GitHub issue where possible using the branch name or PR comments to get full context.

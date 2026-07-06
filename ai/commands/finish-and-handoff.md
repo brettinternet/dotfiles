@@ -1,3 +1,8 @@
+---
+description: Finish the scoped task, leave the repo clean and committed, and emit a handoff snapshot plus a copy-pasteable next-agent prompt
+argument-hint: [task]
+---
+
 Finish `$ARGUMENTS` or, if empty, the current task. Leave the repo in a clean,
 committed state when completion is possible, then provide a copy-pasteable prompt
 for the next recommended work item.
