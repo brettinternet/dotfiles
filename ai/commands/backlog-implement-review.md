@@ -52,6 +52,7 @@ Fix policy:
 - Keep fixes limited to `$ARGUMENTS` and directly required callsites.
 - Add or update targeted tests for behavioral fixes.
 - If a finding needs product input, leave the code unchanged for that point and state the exact decision needed.
+- When a finding is an architectural judgment call, or the implementation appears to have drifted from the item's intended design, consult the oracle agent for a second opinion before finalizing that finding.
 - If the implementation is already sound, make no code changes.
 
 After review:
