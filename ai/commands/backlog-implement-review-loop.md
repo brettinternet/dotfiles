@@ -74,6 +74,7 @@ At the end of every pass, write the next step clearly enough for another agent t
 - acceptance criteria already verified
 - verification commands already run and exact results
 - remaining acceptance criteria, risks, blockers, product decisions, and any blocked items skipped this pass
+- oracle consultations used for blockers, accepted or rejected recommendations, and item-local marker changes
 - exact next backlog file, item, and command invocation to start from
 
 Use `NEXT CONTEXT REQUIRED` whenever any scoped backlog work remains open, blocked, unreviewed, unarchived, or not integrated. Use `BACKLOG COMPLETE AND ARCHIVED` only when every scoped item across every supplied backlog file is implemented, reviewed, verified, committed, integrated (merged locally or PR opened), and each backlog file has been archived.
@@ -97,6 +98,23 @@ Store the marker inside the item’s existing notes, status, or conclusion area.
 `blocked: <short reason>; tried: <brief attempted path>; unblock: <specific decision/dependency/evidence needed>`
 
 A blocker marker is valid only while the reason, attempted path, and unblock condition still match the current code, backlog text, dependencies, and verification evidence. Skip a blocked item only when its marker is still valid. Re-enter it automatically when new information appears, dependencies become available, acceptance criteria change, relevant code changes, or the unblock condition no longer matches; then clear or replace the marker and continue with `IMPLEMENT` or `REVIEW`. If every remaining scoped item is blocked by still-valid markers, stop with `NEXT CONTEXT REQUIRED` and report the blocker list.
+
+## Oracle unblock protocol
+
+The oracle agent is advisory and read-only. It must not edit code, mutate local or remote backlog files, push, commit, or mark an item complete. The active command agent owns every backlog edit and must verify the oracle recommendation against repository/backlog evidence before resuming.
+
+Use this protocol whenever a subagent or pass is blocked by a decision, stale blocker, unsafe ambiguity, or failed acceptance criterion that might be resolvable without human input:
+
+1. Finish all safe unblocked work first, then capture the exact blocker, attempted paths, evidence, affected files, acceptance criteria, and any existing `blocked:` marker.
+2. Ask the oracle for exactly one outcome and, when it recommends `RESUME` or `BLOCKED`, an exact item-local patch:
+   - `RESUME`: a safe, repo-evidenced decision or implementation path within the current acceptance criteria.
+   - `BLOCKED`: the blocker is real; provide the exact item-local `blocked:` marker and unblock condition.
+   - `HUMAN_DECISION`: the decision would change product scope, user-visible behavior, data policy, security posture, external dependency terms, or acceptance criteria without first-party evidence.
+3. Treat `RESUME` as a proposed patch, not authority. Apply it only if the active agent can point to the backing backlog text, code convention, dependency documentation, or verification evidence. The patch may only clear a stale `blocked:` marker or replace it with an updated `blocked:` marker when the blocker still applies. It must not add a durable oracle/unblock lifecycle state, change acceptance criteria, mark the item reviewed/complete, or modify remote state.
+4. After applying or rejecting the patch, re-run Target selection from current backlog text, code, dependencies, and verification evidence. If the prior blocker no longer matches, continue as `IMPLEMENT` or `REVIEW`; otherwise keep/update `blocked:` and move on per `BLOCKED` rules.
+5. Record accepted or rejected oracle reasoning in the handoff, not as a selection state. If backlog text, relevant code, dependencies, or verification evidence changes, normal Target selection and blocker-validity rules decide the next state.
+6. If the oracle returns `BLOCKED` or `HUMAN_DECISION`, write/update the normal `blocked:` marker and move on per `BLOCKED` rules.
+7. For remote backlog sources, write markers only to the local pinned snapshot unless an explicit first-party remote update flow is already authorized for the command.
 
 ## IMPLEMENT pass
 
@@ -123,7 +141,7 @@ Implementation rules:
 - Add or update tests for behavior, edge cases, and failure modes implied by the item.
 - If product information is missing, implement everything not blocked and record the exact remaining decision instead of guessing.
 - Before committing to a new architectural pattern or choosing between materially different designs, consult the oracle agent for a second opinion on the tradeoff. This is proactive design input, separate from the blocker escalation below.
-- Before raising any notable blocker, missing product decision, failed acceptance, risky ambiguity, or inability to proceed to the user, consult the oracle agent for a second opinion on whether the blocker is real and whether there is a safe implementation path. If the oracle agent confirms or cannot resolve it, explicitly report it as a human-required blocker.
+- Before raising any notable blocker, missing product decision, failed acceptance, risky ambiguity, or inability to proceed to the user, use the Oracle unblock protocol. If the oracle returns a repo-evidenced safe path, apply the verified item-local patch, re-run Target selection, and resume; if it confirms or cannot resolve the blocker, explicitly report it as a human-required blocker.
 
 After implementation:
 
@@ -189,7 +207,7 @@ After review:
 
 ## BLOCKED pass
 
-Use `BLOCKED` only after exhausting repository context and consulting the oracle agent for a second opinion.
+Use `BLOCKED` only after exhausting repository context, consulting the oracle agent for a second opinion, and applying the Oracle unblock protocol without finding a safe `RESUME` path.
 
 When blocked:
 
@@ -248,3 +266,4 @@ Then report:
 - exact next item and state for the next pass, if any
 - copy-pasteable next prompt that invokes this command with the backlog file, item, and commit/files to inspect when relevant
 - remaining blockers, skipped blocked items, risks, or product decisions
+- oracle unblock consultations and item-local marker updates
