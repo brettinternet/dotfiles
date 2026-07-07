@@ -67,7 +67,13 @@ gh pr view <N> --json files,additions,deletions,commits
 
 Review the actual changes with the lens of: correctness, regressions, breaking changes, security, and whether the tests cover the new/changed behavior. Read the surrounding code in the repo when context is needed — use `read`/`grep` to ground your review, don't review blind.
 
-### 4. Post comments / approval / replies in my voice
+### 4. Consult the oracle for load-bearing review decisions
+
+Before approving, requesting changes, or posting a blocker based on a load-bearing assumption, consult the **oracle** agent when the finding depends on architecture, design intent, security posture, ownership, invariants, or a broad blast radius. Record the assumption and the oracle's read in your private notes; keep posted GitHub comments concise and in my voice.
+
+Consult the oracle when competing interpretations of the diff both look plausible, when surrounding code suggests an intentional tradeoff you don't understand, or before declaring a PR human-blocked because the right fix requires an architecture, product, or design decision.
+
+### 5. Post comments / approval / replies in my voice
 
 Write everything you post as me — review comments, approval/request-changes bodies, top-level PR comments, and any reply to an existing comment or review thread — casually:
 
@@ -107,7 +113,7 @@ Posting mechanics (`bash` with `gh`):
 
 If you already reviewed this PR before (new PR-authored commits since = the trigger for this pass), post fresh comments only on the diff introduced by the **new** commits (the entries in `commit_subjects` that weren't in `reviewed_commits`), not on unchanged code the author only rebased. If scoping to just those commits is hard to determine, review the full current diff but skip posting findings you've already raised (check the PR's existing comments via `gh pr view <N> --json comments` to avoid duplicates).
 
-### 5. Update state
+### 6. Update state
 
 After processing each PR, update the current repo's sub-object in `/tmp/pr-review-loop-state.json`, preserving other repos' entries:
 
@@ -117,7 +123,7 @@ After processing each PR, update the current repo's sub-object in `/tmp/pr-revie
 
 Store the PR's current `commit_subjects` (the filtered, main-sync-excluded list from step 2) as `reviewed_commits` so the next iteration can tell a real new commit from a rebase.
 
-### 6. Sleep and repeat
+### 7. Sleep and repeat
 
 After every candidate PR in this iteration is processed (or skipped), print a one-line summary: `[pr-review-loop] iteration N done — reviewed X, skipped Y, sleeping 5m`. Then wait 5 minutes (same wait mechanism as above) and start the next iteration from step 1. When the **pr-watcher** subagent is available, you may instead dispatch it in the background against the candidate PRs with their `reviewed_commits` baselines and start the next iteration when it reports real new work — but never tighter than the 5-minute cadence.
 
@@ -131,6 +137,7 @@ After every candidate PR in this iteration is processed (or skipped), print a on
 - **MUST NOT** re-review a PR whose PR-authored commit subjects match what you've already reviewed — check the state file.
 - **MUST NOT** duplicate comments already on the PR — check existing comments first.
 - **MUST NOT** approve a PR that has real blockers. Request changes instead.
+- **MUST** consult the oracle before making a load-bearing architecture, design, security, or product judgment that determines approval, request-changes, or a human-required blocker.
 - **MUST NOT** push, merge, or close PRs. You only comment and approve/request-changes.
 - **MUST NOT** expand scope beyond review — don't check out branches or edit files.
 - **MUST** keep each iteration's console output short — one status line + per-PR one-liners. Don't dump diffs or reviews into the terminal.
