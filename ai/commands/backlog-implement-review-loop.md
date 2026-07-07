@@ -51,14 +51,14 @@ Local repo markdown backlogs remain first-class inputs. When `$ARGUMENTS` names 
 
 Determine exactly one current target:
 
-1. Inspect the current worktree status and preserve unrelated unstaged or untracked work.
+1. Inspect the current worktree status, preserve unrelated unstaged or untracked work, and do not block on unrelated dirty changes unless they prevent safe isolation; document ignored unrelated changes in the handoff.
 2. Read the resolved backlog file or files in the order supplied, including matching item text, acceptance criteria, nearby backlog context, remote-source snapshots if present, and any existing implementation, review, or blocker notes.
 3. Identify the first scoped resolved backlog file, then the first scoped item in that file, that is still open, incomplete, unreviewed, or blocked without a still-valid blocker marker.
 4. Skip an item with a valid `blocked:` marker only when its unblock condition is still unmet and the evidence has not changed. Record the skip in the handoff and continue to the next scoped item in order.
 5. Determine the pass state:
-   - `IMPLEMENT` when required behavior is absent, incomplete, failing verification, or not traceable to a commit.
+   - `IMPLEMENT` when required behavior is absent, incomplete, failing item-scoped verification, or not traceable to a commit.
    - `REVIEW` when the behavior appears implemented, has an implementation commit or changed files to inspect, and lacks a valid review marker for that exact implementation.
-   - `BLOCKED` only when a required product decision, unavailable dependency, or unsafe ambiguity prevents both implementation and review and no valid blocker marker already records the same blocker.
+   - `BLOCKED` only when a required product decision, unavailable dependency, or unsafe ambiguity prevents both implementation and review and no valid blocker marker already records the same blocker. In-scope verification failures, missing required code, and flaky or outdated tests are not blockers unless they depend on such external input; unrelated failures or dirty changes are ignored and reported separately.
 6. If multiple files or items are explicitly requested, preserve the supplied backlog file order and process only the smallest safe batch whose acceptance criteria and verification can be completed in this pass. Leave the next exact file and item in the handoff.
 
 Do not skip an open item because a later item or later backlog file looks easier. If the next item is oversized, split only the execution plan; do not silently shrink acceptance.
@@ -73,7 +73,7 @@ At the end of every pass, write the next step clearly enough for another agent t
 - implementation commit(s), review-fix commit(s), or changed files to inspect
 - acceptance criteria already verified
 - verification commands already run and exact results
-- remaining acceptance criteria, risks, blockers, product decisions, and any blocked items skipped this pass
+- remaining acceptance criteria, risks, blockers, product decisions, ignored unrelated failures or dirty changes, and any blocked items skipped this pass
 - oracle consultations used for blockers, accepted or rejected recommendations, and item-local marker changes
 - exact next backlog file, item, and command invocation to start from
 
@@ -91,7 +91,7 @@ A review marker is valid only for the exact implementation commit it names, plus
 
 ## Blocker markers
 
-To avoid repeating the same blocker forever, mark the backlog item itself as blocked only after exhausting repository context, attempting all safe unblocked work, and consulting the oracle agent for a second opinion.
+To avoid repeating the same blocker forever, mark the backlog item itself as blocked only after exhausting repository context, fixing every in-scope verification failure, missing required code path, and flaky or outdated test, attempting all safe unblocked work, and consulting the oracle agent for a second opinion.
 
 Store the marker inside the item’s existing notes, status, or conclusion area. Follow the backlog file’s existing style; if there is no style, add one concise item-local line:
 
@@ -139,6 +139,7 @@ Implementation rules:
 - Keep changes limited to the backlog item and required callsites.
 - Delete obsolete code paths created by the change. Do not leave compatibility shims unless the item explicitly requires them.
 - Add or update tests for behavior, edge cases, and failure modes implied by the item.
+- Hard anti-blocking rule: failed checks, item-scoped verification failures, missing required code, and flaky or outdated tests caused by or required for the current backlog item are implementation work to resolve immediately. Fix them in-repo, update code/tests/fixtures/config as needed, and rerun targeted verification; unrelated failures or dirty changes may be ignored only after recording why they are unrelated to `$ARGUMENTS`; stop only for a truly external product decision, unavailable dependency, or unsafe ambiguity after exhausting repo fixes and the oracle check.
 - If product information is missing, implement everything not blocked and record the exact remaining decision instead of guessing.
 - Before committing to a new architectural pattern or choosing between materially different designs, consult the oracle agent for a second opinion on the tradeoff. This is proactive design input, separate from the blocker escalation below.
 - Before raising any notable blocker, missing product decision, failed acceptance, risky ambiguity, or inability to proceed to the user, use the Oracle unblock protocol. If the oracle returns a repo-evidenced safe path, apply the verified item-local patch, re-run Target selection, and resume; if it confirms or cannot resolve the blocker, explicitly report it as a human-required blocker.
@@ -188,6 +189,7 @@ Review process:
 Fix policy:
 
 - Fix valid issues at the source, not by suppressing warnings or narrowing tests.
+- Hard anti-blocking rule: failed checks, item-scoped verification failures, missing required code, and flaky or outdated tests caused by or required for the current backlog item are review-fix work to resolve immediately. Fix them in-repo, update code/tests/fixtures/config as needed, and rerun targeted verification; unrelated failures or dirty changes may be ignored only after recording why they are unrelated to `$ARGUMENTS`; stop only for a truly external product decision, unavailable dependency, or unsafe ambiguity after exhausting repo fixes and the oracle check.
 - Keep fixes limited to `$ARGUMENTS` and directly required callsites.
 - Add or update targeted tests for behavioral fixes.
 - If a finding needs product input, leave the code unchanged for that point and state the exact decision needed.
@@ -207,13 +209,13 @@ After review:
 
 ## BLOCKED pass
 
-Use `BLOCKED` only after exhausting repository context, consulting the oracle agent for a second opinion, and applying the Oracle unblock protocol without finding a safe `RESUME` path.
+Use `BLOCKED` only after exhausting repository context, fixing every in-scope verification failure, missing required code path, and flaky or outdated test required by the current item, consulting the oracle agent for a second opinion, and applying the Oracle unblock protocol without finding a safe `RESUME` path.
 
 When blocked:
 
-- Implement and verify any acceptance criteria that are safely unblocked before marking the item blocked.
+- Implement and verify any acceptance criteria that are safely unblocked before marking the item blocked; fix in-scope failing checks, missing required code, and flaky or outdated tests instead of recording them as blockers, and report unrelated failures or dirty changes separately.
 - Do not mark the item complete.
-- Write or update the item-local `blocked:` marker with the exact missing decision, unavailable dependency, failed acceptance criterion, or unsafe ambiguity; include what was tried and the next concrete unblock action.
+- Write or update the item-local `blocked:` marker with the exact missing decision, unavailable dependency, failed acceptance criterion plus its external input/dependency root cause, or unsafe ambiguity; include what was tried and the next concrete unblock action.
 - Commit only if the committed state is coherent and useful; otherwise leave the worktree uncommitted and explain why.
 - Move the next pass to the next scoped item whose blocker marker is absent, stale, or resolved. Do not keep selecting the same still-blocked item.
 - Leave `NEXT CONTEXT REQUIRED` with the skipped blocker list and the next unblocked target. If no unblocked target remains, report the human-required blocker queue instead of archiving.
@@ -221,7 +223,8 @@ When blocked:
 ## Verification
 
 - Use the smallest targeted verification loop that proves the change or review finding: specific tests, typecheck, lint, build, migration check, browser QA, or manual scenario as appropriate.
-- Re-run targeted verification after fixes.
+- Re-run targeted verification after fixes. If verification fails, diagnose the root cause, fix all in-scope code/tests/checks in-repo, and rerun before reporting a blocker; if the failure is unrelated to the current item, record the evidence and continue with targeted verification.
+- Unrelated failing tests or unrelated dirty changes do not block finishing the item or reporting it complete; note them separately, and do not fix or commit them as part of this work.
 - Do not claim project-wide health unless project-wide checks were actually run.
 - Formatting, linting, and broad validation happen once at the end unless needed earlier to unblock work.
 
@@ -242,6 +245,7 @@ Commit behavior:
 
 - Commit only task-related work.
 - Use concise commit messages.
+- Unrelated failing checks or unrelated dirty changes do not block handoff or completion for a done scoped item; report them as out-of-scope observations only.
 - Do not include unrelated preserved user work.
 - Do not push unrelated work. Under `pull-request` flow, pushing the task branch and opening its PR is authorized by invoking this command (see Integration); do nothing beyond that branch.
 
@@ -265,5 +269,5 @@ Then report:
 - archive location if applicable
 - exact next item and state for the next pass, if any
 - copy-pasteable next prompt that invokes this command with the backlog file, item, and commit/files to inspect when relevant
-- remaining blockers, skipped blocked items, risks, or product decisions
+- remaining blockers, skipped blocked items, risks, product decisions, or ignored unrelated failures or dirty changes
 - oracle unblock consultations and item-local marker updates
