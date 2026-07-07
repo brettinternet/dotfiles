@@ -37,10 +37,10 @@ github:
 tools:
   intentTracing: true
 commands:
-  enableOpencodeUser: true
-  enableOpencodeProject: true
-  enableClaudeProject: false
-  enableClaudeUser: false
+  enableOpencodeUser: false
+  enableOpencodeProject: false
+  enableClaudeProject: true
+  enableClaudeUser: true
 dev:
   autoqa:
     consent: granted
