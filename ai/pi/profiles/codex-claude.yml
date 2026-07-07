@@ -22,3 +22,8 @@ statusLine:
   separator: powerline-thin
 display:
   showTokenUsage: false
+commands:
+  enableOpencodeUser: false
+  enableOpencodeProject: false
+  enableClaudeProject: true
+  enableClaudeUser: true
