@@ -26,7 +26,7 @@ Local repo markdown backlogs remain first-class inputs. When `$ARGUMENTS` names 
 
 Before editing:
 
-1. Inspect the current worktree status and preserve unrelated unstaged or untracked work.
+1. Inspect the current worktree status, preserve unrelated unstaged or untracked work, and do not block on unrelated dirty changes unless they prevent safe isolation; document ignored unrelated changes in the final report.
 2. Identify the next open item or items from `$ARGUMENTS`.
 3. Read the full item text, acceptance criteria, nearby backlog context, and relevant existing code patterns.
 4. Confirm the item is small enough to complete safely. If it is oversized, split only the execution plan; do not silently shrink the requested acceptance.
@@ -47,6 +47,7 @@ Implementation rules:
 - Keep changes limited to the backlog item and required callsites.
 - Delete obsolete code paths created by the change. Do not leave compatibility shims unless the item explicitly requires them.
 - Add or update tests for behavior, edge cases, and failure modes implied by the item.
+- Hard anti-blocking rule: failed checks, item-scoped verification failures, missing required code, and flaky or outdated tests caused by or required for the current backlog item are implementation work to resolve immediately. Fix them in-repo, update code/tests/fixtures/config as needed, and rerun targeted verification; unrelated failures or dirty changes may be ignored only after recording why they are unrelated to `$ARGUMENTS`; stop only for a truly external product decision, unavailable dependency, or unsafe ambiguity after exhausting repo fixes and the oracle check.
 - If product information is missing, implement everything not blocked and record the exact remaining decision instead of guessing.
 - Before committing to a new architectural pattern or choosing between materially different designs, consult the oracle agent for a second opinion on the tradeoff. This is proactive design input, separate from the blocker escalation below.
 - Before raising any notable blocker, missing product decision, failed acceptance, risky ambiguity, or inability to proceed to the user, consult the oracle agent for a second opinion on whether the blocker is real and whether there is a safe implementation path. If the oracle agent confirms or cannot resolve it, explicitly report it as a human-required blocker.
@@ -56,13 +57,14 @@ Completion criteria:
 - Mark a backlog item complete only when every stated or implied acceptance criterion is implemented and verified.
 - If any required acceptance is not done, leave the item open and state exactly what remains.
 - At the end, make the continuation status unambiguous:
-  - `NEXT CONTEXT REQUIRED` when there is any remaining open backlog work, blocker, missing product decision, failed verification, or unarchived backlog file. Include the exact next item to start from and what context the next agent needs.
+  - `NEXT CONTEXT REQUIRED` when there is any remaining open backlog work, oracle-confirmed blocker, missing product decision, scoped verification failure that cannot be fixed in-repo, or unarchived backlog file. Include the exact next item to start from and what context the next agent needs.
   - `BACKLOG COMPLETE AND ARCHIVED` only when every item from `$ARGUMENTS` is complete, verified, committed, integrated (merged locally or PR opened), and the backlog file has been archived. Include the exact final item completed and where it was archived.
 
 Verification:
 
 - Use the smallest targeted verification loop that proves the change: specific tests, typecheck, lint, build, migration check, browser QA, or manual scenario as appropriate.
-- Re-run targeted verification after fixes.
+- Re-run targeted verification after fixes. If verification fails, diagnose the root cause, fix all in-scope code/tests/checks in-repo, and rerun before reporting a blocker; if the failure is unrelated to the current item, record the evidence and continue with targeted verification.
+- Unrelated failing tests or unrelated dirty changes do not block finishing the item or reporting it complete; note them separately, and do not fix or commit them as part of this work.
 - Do not claim project-wide health unless project-wide checks were actually run.
 
 Integration:
@@ -81,4 +83,4 @@ Finish:
 - Commit only task-related work with a concise message.
 - Integrate the completed work using the resolved flow above.
 - Start the final report with exactly one status line: `NEXT CONTEXT REQUIRED` or `BACKLOG COMPLETE AND ARCHIVED`.
-- Then report the completed item IDs/titles, commits made, verification run, integration result (local merge or PR URL), archive location if applicable, and any remaining blockers or product decisions.
+- Then report the completed item IDs/titles, commits made, verification run, integration result (local merge or PR URL), archive location if applicable, any ignored unrelated failures or dirty changes, and any remaining blockers or product decisions.
