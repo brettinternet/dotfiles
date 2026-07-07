@@ -1,11 +1,25 @@
 ---
-description: Babysit the current branch's PR — keep CI green, address PR feedback, request a reviewer, then work their feedback until they approve
-argument-hint: [reviewer]
+description: Babysit a PR — keep CI green, address PR feedback, request a reviewer, then work their feedback until they approve
+argument-hint: [pr-number] [reviewer]
 ---
 
-Babysit the pull request for the current branch through to ready-to-merge.
-The reviewer to request is: **$1** (if `$1` is empty, skip the
-reviewer-request and reviewer-feedback steps and say so).
+Babysit a pull request through to ready-to-merge.
+
+Parse `$ARGUMENTS` to decide the PR and reviewer instead of relying on fixed
+positions:
+
+- Any token that is only digits, or `#` followed by digits, is the PR number.
+- Any non-PR token is the reviewer to request; strip one leading `@` if present.
+- If there is no PR number, use the current branch's PR.
+- If there is no reviewer, skip the reviewer-request and reviewer-feedback steps
+  and say so.
+- If there is more than one PR-number token, or more than one reviewer token,
+  stop and tell the user the usage:
+  `/pr-babysit [pr-number] [reviewer]`.
+
+Resolve PR numbers in the current directory's GitHub repo only. Do not accept a
+PR URL or `owner/repo#N` shorthand here; using a bare number avoids ambiguity
+with the optional reviewer.
 
 You are driving this autonomously. Do not stop at the first status check —
 loop until the exit condition below is met or you hit a genuine blocker that
@@ -37,13 +51,22 @@ Examples for replies (don't copy):
 
 ## 0. Locate the PR
 
-- `gh pr view --json number,title,state,url,reviewDecision,mergeStateStatus,isDraft`
-  for the current branch. If there is no PR, stop and say so.
 - Resolve `<owner>/<repo>` from the remote (`gh repo view --json owner,name`)
-  for the API calls below.
-- Confirm local `HEAD` matches the pushed branch tip
-  (`git rev-parse HEAD` vs `git rev-parse @{u}`). If local is ahead, tell the
-  user there are unpushed commits and stop — do not push without being asked.
+  before looking up the PR.
+- If a PR number was parsed, run
+  `gh pr view <n> --json number,title,state,url,reviewDecision,mergeStateStatus,isDraft,headRefName,headRefOid`
+  in the current repo. If it does not resolve, stop and say the PR number is not
+  in this repo.
+- If no PR number was parsed, run
+  `gh pr view --json number,title,state,url,reviewDecision,mergeStateStatus,isDraft,headRefName,headRefOid`
+  for the current branch. If there is no PR, stop and say so.
+- Confirm local `HEAD` matches the pushed branch tip only when the selected PR is
+  the current branch's PR (`git rev-parse HEAD` vs `git rev-parse @{u}`). If
+  local is ahead, tell the user there are unpushed commits and stop — do not push
+  without being asked. If a PR number selected a different branch than the
+  current branch, do not make code changes until you have a clean worktree and
+  the PR head branch checked out locally; otherwise stop and say which branch is
+  needed.
 
 ## 1. Keep CI green while clearing current PR feedback
 
@@ -133,23 +156,34 @@ Guardrails for all PR feedback:
   unblock.
 - Only touch what the findings require.
 
+## Consult the oracle
+
+- Before choosing a fix direction that depends on architecture, design intent,
+  security posture, ownership, product behavior, or a broad blast radius, consult
+  the **oracle** agent. Record the assumption and the oracle's read in your
+  private notes; keep GitHub replies concise and in my voice.
+- Consult the oracle when a reviewer finding is plausible but conflicts with an
+  existing invariant or design tradeoff, when competing fixes both fit the
+  evidence, or before saying a finding needs a human architecture, product, or
+  design decision.
+
 ## 2. Request the reviewer
 
 Once current feedback is cleared and CI is green or still running without known
-failures, request the reviewer if `$1` was provided:
+failures, request the reviewer if one was provided:
 
 ```
-gh pr edit <n> --add-reviewer $1
+gh pr edit <n> --add-reviewer <reviewer>
 ```
 
 Confirm it landed (`gh pr view <n> --json reviewRequests`). Then post a short PR
 comment summarizing: feedback addressed + threads resolved, CI status, and that
-`@$1` is requested. Write it in my voice (see Voice above) — NO emdashes, casual,
+`@<reviewer>` is requested. Write it in my voice (see Voice above) — NO emdashes, casual,
 succinct.
 
-## 3. Requested reviewer feedback loop (repeat until $1 approves)
+## 3. Requested reviewer feedback loop (repeat until reviewer approves)
 
-After `$1` is requested, keep working their feedback until they **approve**.
+After the reviewer is requested, keep working their feedback until they **approve**.
 
 1. Poll the review state on an interval — humans aren't instant. Prefer
    dispatching the **pr-watcher** subagent in the background with the PR number
@@ -159,7 +193,7 @@ After `$1` is requested, keep working their feedback until they **approve**.
    minutes between checks using whatever wait mechanism the harness allows (a
    scheduled wake-up, a monitored timer, or `sleep 180` where permitted). Print
    a one-line heartbeat each pass
-   (`[babysit] waiting on $1 review — <timestamp>`), and don't spam the API.
+   (`[babysit] waiting on <reviewer> review — <timestamp>`), and don't spam the API.
    ```
    gh pr view <n> --json reviewDecision,reviews
    gh api graphql -f query='{ repository(owner:"<owner>", name:"<repo>") {
@@ -171,19 +205,19 @@ After `$1` is requested, keep working their feedback until they **approve**.
    guardrails from step 1.
 3. After any push, re-clear CI and all current PR feedback before considering
    the requested reviewer loop settled.
-4. If `$1` **requests changes**, that's a hard gate — keep iterating until they
+4. If the reviewer **requests changes**, that's a hard gate — keep iterating until they
    re-review to approval. If they approve, this phase is done.
 
 ## 4. Exit condition & report
 
-You are done when: all current PR feedback is cleared, all gating CI is green
-(note any async suites still running), `$1` is requested, **and `$1` has
-approved** (or, if `$1` was empty, through the current-feedback step only).
-Report the final `reviewDecision`/`mergeStateStatus` and state plainly what (if
-anything) still blocks merge.
+You are done when: all current PR feedback is cleared and all gating CI is green
+(note any async suites still running). If a reviewer was provided, they must be
+requested and must have approved. If no reviewer was provided, you are done
+after the current-feedback step.
+Report the final `reviewDecision`/`mergeStateStatus` and state plainly what still blocks merge, if anything.
 
-**You cannot merge or approve on a human's behalf.** Once `$1` has approved and
-everything's green, say it's ready to merge and stop — don't merge it yourself
+**You cannot merge or approve on a human's behalf.** Once the reviewer has
+approved and everything's green, say it's ready to merge and stop — don't merge it yourself
 unless the user asks. Stop and surface to the user if you hit a real blocker (CI
 failure you can't fix, a finding that needs a product decision, merge conflicts,
 unpushed local commits, or a reviewer ask you can't resolve without a call).
