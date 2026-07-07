@@ -64,7 +64,7 @@
       path: ai/pi/config.yml
     ~/.omp/agent/skills:
       path: ai/skills
-    ~/.omp/agent/agents/:
+    ~/.omp/agents/:
       glob: true
       path: ai/pi/agents/*
     # OpenCode

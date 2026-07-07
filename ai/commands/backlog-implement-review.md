@@ -11,6 +11,12 @@ Before reviewing, identify any explicit file paths in `$ARGUMENTS`. If an explic
 
 If `$ARGUMENTS` is a remote backlog reference (such as a Linear issue), first resolve it with the available first-party tool (the Linear MCP/tooling for Linear; if none is authenticated, stop and report the missing integration) to the associated PR, branch, commits, or local backlog snapshot, then review that implementation.
 
+## Oracle unblock protocol
+
+The oracle agent is advisory and read-only. It must not edit code, mutate backlog files, push, commit, or decide product scope. When review hits a blocking product decision, unsafe ambiguity, stale blocker, or failed acceptance that may be resolvable, finish safe review work first, then consult the oracle with intent, acceptance criteria, implementation evidence, attempted paths, and the exact decision needed.
+
+Accept an oracle `RESUME` recommendation only when the reviewing agent can verify it from backlog text, existing repo patterns, dependency docs, or test evidence. The oracle may return a proposed item-local patch, but the reviewing agent applies it only to the local backlog item or pinned remote snapshot after verification. The patch may only clear a stale `blocked:` marker or replace it with an updated `blocked:` marker when the blocker still applies. It must not add a durable oracle/unblock lifecycle state, rewrite acceptance criteria, mark the item complete/reviewed, or update remote backlog state. Re-run review state selection from current evidence; if the blocker still matches, keep/update `blocked:` and record the oracle reasoning only in the report or handoff.
+
 Review process:
 
 1. Establish intent before judging the code:
@@ -51,8 +57,8 @@ Fix policy:
 - Fix valid issues at the source, not by suppressing warnings or narrowing tests.
 - Keep fixes limited to `$ARGUMENTS` and directly required callsites.
 - Add or update targeted tests for behavioral fixes.
-- If a finding needs product input, leave the code unchanged for that point and state the exact decision needed.
-- When a finding is an architectural judgment call, or the implementation appears to have drifted from the item's intended design, consult the oracle agent for a second opinion before finalizing that finding.
+- Before treating a finding as product-input-blocked, use the Oracle unblock protocol. If the oracle cannot provide a repo-evidenced safe path, leave the code unchanged for that point and state the exact decision needed.
+- When a finding is an architectural judgment call, or the implementation appears to have drifted from the item's intended design, consult the oracle agent for a second opinion before finalizing that finding; if it resolves the concern safely, apply any verified item-local patch when a backlog item is in scope and continue review.
 - If the implementation is already sound, make no code changes.
 
 After review:
@@ -64,5 +70,5 @@ After review:
   - `pull-request`, or when `$ARGUMENTS` is a PR: push the fix commits to that PR's branch and do not merge the PR. Invoking this command is the standing instruction to push those fixes for this task's own branch only — it overrides the global "never push without explicit instruction" rule for that branch, and does not authorize force-pushing, merging, or touching unrelated branches.
 - Report what was reviewed, what changed, what was verified, where fixes landed
   (local branch or pushed PR), the most likely 3-month breakage reason, whether
-  to address that risk now or as a follow-up, and any remaining product decisions
-  or risks.
+  to address that risk now or as a follow-up, any oracle unblock consultations
+  or backlog marker updates, and any remaining product decisions or risks.
