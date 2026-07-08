@@ -11,6 +11,18 @@ Treat `$ARGUMENTS` as the exact local backlog file, remote backlog references (s
 
 Before reading or editing backlog content, identify explicit file paths in `$ARGUMENTS` (do not treat backlog item IDs, titles, ranges, or remote backlog references as paths). Only verify paths that are actually listed in `$ARGUMENTS`; do not require or infer the presence of any other files. If a listed path does not exist, check for nearby existing paths only in path-like locations: the same directory or the same basename after a directory move/rename. Auto-substitute only when exactly one candidate is unambiguous and clearly adjacent; report the substitution to the user. Otherwise stop immediately and report the missing listed path(s) plus nearby candidate(s). Do not refine or commit anything when stopped.
 
+## Backlog storage policy
+
+Before resolving backlog sources, derive `backlog_storage_mode` only from repository context. Because storage behavior is repo-constant, the mode must come from existing local backlog files, matching remote IDs in backlog markdown, or established backlog/spec snapshot conventions already present in the repo.
+
+Derivation rules:
+
+- use `local-existing-only` when `$ARGUMENTS` names an existing local markdown backlog file or a remote item has an unambiguous existing local markdown backlog entry
+- use `remote-only` when the scoped sources are remote references and no existing local markdown backlog entry is found
+- use `local-readwrite` only when existing repo context already shows a concrete convention for creating backlog/spec/planning markdown for remote items; otherwise do not synthesize files
+
+`remote-only` never writes repo markdown, `local-existing-only` may edit existing local backlog markdown but must not create new backlog/spec/planning markdown, and `local-readwrite` may create or update repo-conventional backlog/spec/planning markdown.
+
 ## Remote backlog sources
 
 Remote backlog references, such as Linear project identifiers, issue IDs, or issue URLs, are discovery inputs only. Do not refine against a moving remote source in place.
@@ -19,15 +31,13 @@ Before refining:
 
 1. Resolve each remote reference using the available first-party tool for that system. For Linear, use the Linear MCP/tooling when available; if no authenticated tool is available, stop and report the missing integration.
 2. Fetch the exact remote items in the order implied by `$ARGUMENTS`.
-3. Pin each remote item into a concrete local backlog entry or snapshot before refining:
-   - prefer an existing local backlog file/item that already references the remote ID
-   - otherwise create or update a repo-conventional local backlog snapshot that records the remote ID, title, fetched description/acceptance criteria, remote URL/key, and fetch timestamp/version if available
-4. Refine the pinned local backlog entry or snapshot, not the remote text. Mirror the refined result back to the remote item only when the repo's convention and available tooling support it and the user expects it; otherwise keep refinement local and note that the remote item is unchanged.
-5. Commit the local backlog snapshot and refinements only when task-related; do not mix them with unrelated changes.
+3. Pin each remote item into an exact resolved backlog source according to `backlog_storage_mode` before any snapshot or refinement language. Never create or modify repo backlog/spec/planning markdown unless the policy explicitly permits it; when local repo writes are not permitted, keep the pinned remote text and refinement state in handoff notes, command-local notes, or a temporary file outside the worktree.
+4. Refine the pinned source, not the moving remote text. Mirror the refined result back to the remote item only when an explicit first-party remote update flow is authorized; otherwise record whether the remote item is unchanged.
+5. Commit local backlog refinements only where `backlog_storage_mode` permits writing and the changes are task-related; do not mix them with unrelated changes.
 
-If the remote item changes later, update the local backlog snapshot first, then re-refine against the new local text.
+If the remote item changes later, refresh the pinned source first, then re-refine against the new pinned text.
 
-Local repo markdown backlogs remain first-class inputs. When `$ARGUMENTS` names local markdown backlog files, use them directly after path validation; do not force remote resolution or snapshot creation.
+Local repo markdown backlogs remain first-class inputs when `backlog_storage_mode` is `local-existing-only` or `local-readwrite`. When `$ARGUMENTS` names local markdown backlog files in those modes, use them directly after path validation and modify them following their existing style. In `remote-only`, treat local markdown as read-only context unless the user explicitly changes the policy.
 
 For each backlog item:
 
