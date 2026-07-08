@@ -3,7 +3,9 @@ description: Trace the bug described in $ARGUMENTS to its true root cause with e
 argument-hint: <bug-description|failing-test|error|repro-steps|remote-ref> [files|suspected-area]
 ---
 
-Find the true source of the bug described in `$ARGUMENTS`, prove it with evidence, and fix it only when the fix is small and unambiguous; otherwise stop and hand off a precise diagnosis. Preserve unrelated unstaged work, keep any change limited to the root cause, and make the continuation status unambiguous.
+<!-- "Fan out subagents" and "orchestrate" are keywords for Claude Code and OMP -->
+
+Fan out subagents and orchestrate to find the true source of the bug described in `$ARGUMENTS`, prove it with evidence, and fix it only when the fix is small and unambiguous; otherwise stop and hand off a precise diagnosis. Preserve unrelated unstaged work, keep any change limited to the root cause, and make the continuation status unambiguous.
 
 Treat `$ARGUMENTS` as the exact symptom to diagnose: a bug description, failing test, error message, stack trace, reproduction steps, or a remote reference (such as a Linear issue ID or URL) that reports the bug, plus any files or suspected area that scope the search. Do not diagnose unrelated behavior except where needed to trace the cause. Any files named in `$ARGUMENTS` are a scope hint for where to look first, not a limit — follow the cause wherever it leads. If `$ARGUMENTS` names an explicit file path that does not exist, check for nearby existing paths only in path-like locations (same directory, or same basename after a move/rename); auto-substitute only when exactly one candidate is unambiguous and clearly adjacent and report it, otherwise stop and report the missing path plus candidates.
 

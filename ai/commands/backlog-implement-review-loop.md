@@ -3,7 +3,9 @@ description: Run one pass of the backlog implement→review loop — implement o
 argument-hint: <backlog-files|remote-refs> [item-ids|titles|ranges]
 ---
 
-Run one pass of the backlog implementation/review loop for `$ARGUMENTS`, commit any task-related change, and leave a concise handoff for the next pass.
+<!-- "Fan out subagents" and "orchestrate" are keywords for Claude Code and OMP -->
+
+Fan out subagents and orchestrate to run one pass of the backlog implementation/review loop for `$ARGUMENTS`, commit any task-related change, and leave a concise handoff for the next pass.
 
 This command alternates between two states for each backlog item:
 
