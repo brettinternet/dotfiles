@@ -9,39 +9,3 @@ modelRoles:
   plan: openrouter/anthropic/claude-fable-latest:high
   advisor: openrouter/openai/gpt-latest
   title: openrouter/google/gemini-flash-latest
-hideThinkingBlock: false
-advisor:
-  enabled: true
-autoContinue: true
-browser:
-  headless: false
-theme:
-  dark: dark-terminal
-symbolPreset: unicode
-statusLine:
-  preset: default
-  separator: powerline-thin
-display:
-  showTokenUsage: false
-steeringMode: one-at-a-time
-loop:
-  mode: reset
-doubleEscapeAction: tree
-startup:
-  quiet: true
-  checkUpdate: false
-renderMermaid:
-  enabled: true
-github:
-  enabled: true
-tools:
-  intentTracing: true
-commands:
-  enableOpencodeUser: false
-  enableOpencodeProject: false
-  enableClaudeProject: true
-  enableClaudeUser: true
-dev:
-  autoqa:
-    consent: granted
-setupVersion: 1

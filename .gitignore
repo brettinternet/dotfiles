@@ -13,6 +13,11 @@ mise.local.yaml
 *.dump
 .trees
 
+# python
+__pycache__/
+*.py[cod]
+*$py.class
+
 # AI
 AGENTS.local.md
 .claude/settings.local.json
@@ -24,3 +29,4 @@ CLAUDE.md
 # pi (omp) per-machine active profile
 /ai/pi/config.yml
 /ai/pi/.active
+/ai/pi/config.yml.tmp.*
