@@ -3,7 +3,9 @@ description: Review an implementation for correctness, security, performance, an
 argument-hint: <branch|pr|commit-range|files|backlog-item|remote-ref>
 ---
 
-Fan out subagents to orchestrate a review my implementation of `$ARGUMENTS` for code quality, security, performance, maintainability, and whether it actually solves the intended work. Commit any fixes.
+<!-- "Fan out subagents" and "orchestrate" are keywords for Claude Code and OMP -->
+
+Fan out subagents and orchestrate to review my implementation of `$ARGUMENTS` for code quality, security, performance, maintainability, and whether it actually solves the intended work. Commit any fixes.
 
 Treat `$ARGUMENTS` as the exact implementation, branch, PR, commit range, backlog item, remote backlog reference (such as a Linear issue), or file set to review. Do not review unrelated work except where needed to understand callsites or behavior.
 

@@ -3,7 +3,9 @@ description: Refine backlog items into implementation-ready work for a lesser co
 argument-hint: <backlog-file|remote-refs> [item-ids|titles|ranges]
 ---
 
-Refine the backlog items in `$ARGUMENTS` into implementation-ready work for a lesser coding agent, then commit changes.
+<!-- "Fan out subagents" and "orchestrate" are keywords for Claude Code and OMP -->
+
+Fan out subagents and orchestrate to refine the backlog items in `$ARGUMENTS` into implementation-ready work for a lesser coding agent, then commit changes.
 
 Your goal is to make every refined item 100% ready for development: resolve the item's own open questions during refinement instead of handing them off. Investigate the repository, backlog, issue, product, and design context, decide each open question, and record the decision with its supporting evidence and rationale. Only escalate a question you genuinely cannot resolve — one that depends on information outside all available context and cannot be settled by a defensible default.
 
