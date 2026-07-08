@@ -11,11 +11,13 @@ Before reviewing, identify any explicit file paths in `$ARGUMENTS`. If an explic
 
 If `$ARGUMENTS` is a remote backlog reference (such as a Linear issue), first resolve it with the available first-party tool (the Linear MCP/tooling for Linear; if none is authenticated, stop and report the missing integration) to the associated PR, branch, commits, or local backlog snapshot, then review that implementation.
 
+Backlog sources — local markdown backlogs and remote items — are read-only context for this command: do not create or edit backlog/spec/planning markdown, and do not update remote items. Record recommended backlog-state changes in the final report instead.
+
 ## Oracle unblock protocol
 
 The oracle agent is advisory and read-only. It must not edit code, mutate backlog files, push, commit, or decide product scope. When review hits a blocking product decision, unsafe ambiguity, stale blocker, or failed acceptance that may be resolvable, finish safe review work first, then consult the oracle with intent, acceptance criteria, implementation evidence, attempted paths, and the exact decision needed.
 
-Accept an oracle `RESUME` recommendation only when the reviewing agent can verify it from backlog text, existing repo patterns, dependency docs, or test evidence. The oracle may return a proposed item-local patch, but the reviewing agent applies it only to the local backlog item or pinned remote snapshot after verification. The patch may only clear a stale `blocked:` marker or replace it with an updated `blocked:` marker when the blocker still applies. It must not add a durable oracle/unblock lifecycle state, rewrite acceptance criteria, mark the item complete/reviewed, or update remote backlog state. Re-run review state selection from current evidence; if the blocker still matches, keep/update `blocked:` and record the oracle reasoning only in the report or handoff.
+Accept an oracle `RESUME` recommendation only when the reviewing agent can verify it from backlog text, existing repo patterns, dependency docs, or test evidence. The oracle may return a proposed item-local patch, but backlog sources are read-only for this command: after verifying the patch, record it in the report or handoff as a recommended marker change instead of applying it. A valid patch may only clear a stale `blocked:` marker or replace it with an updated `blocked:` marker when the blocker still applies. It must not add a durable oracle/unblock lifecycle state, rewrite acceptance criteria, mark the item complete/reviewed, or update remote backlog state. Re-run review state selection from current evidence; if the blocker still matches, keep the `blocked:` recommendation and record the oracle reasoning only in the report or handoff.
 
 Review process:
 
@@ -71,4 +73,4 @@ After review:
 - Report what was reviewed, what changed, what was verified, where fixes landed
   (local branch or pushed PR), the most likely 3-month breakage reason, whether
   to address that risk now or as a follow-up, any oracle unblock consultations
-  or backlog marker updates, and any remaining product decisions or risks.
+  or recommended backlog marker changes, and any remaining product decisions or risks.

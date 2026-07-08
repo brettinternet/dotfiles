@@ -13,31 +13,31 @@ Before reading or editing backlog content, identify explicit file paths in `$ARG
 
 ## Backlog storage policy
 
-Before resolving backlog sources, derive `backlog_storage_mode` only from repository context. Because storage behavior is repo-constant, the mode must come from existing local backlog files, matching remote IDs in backlog markdown, or established backlog/spec snapshot conventions already present in the repo.
+Derive storage behavior per resolved backlog source from repository context:
 
-Derivation rules:
+- a local markdown backlog file named in `$ARGUMENTS` is a writable backlog source
+- a remote item makes an existing local backlog entry writable only when exactly one repo markdown file matches it structurally as a backlog — an item list or item headings carrying the item's ID — not merely any file that mentions the ID
+- every other remote item is remote-only: never write repo backlog/spec/planning markdown for it
 
-- use `local-existing-only` when `$ARGUMENTS` names an existing local markdown backlog file or a remote item has an unambiguous existing local markdown backlog entry
-- use `remote-only` when the scoped sources are remote references and no existing local markdown backlog entry is found
-- use `local-readwrite` only when existing repo context already shows a concrete convention for creating backlog/spec/planning markdown for remote items; otherwise do not synthesize files
-
-`remote-only` never writes repo markdown, `local-existing-only` may edit existing local backlog markdown but must not create new backlog/spec/planning markdown, and `local-readwrite` may create or update repo-conventional backlog/spec/planning markdown.
+Never create new backlog/spec/planning markdown unless the repo already demonstrates that exact convention, such as existing snapshot or spec files matching remote item IDs. When in doubt, do not create files; write only to writable backlog sources. Moving or renaming an existing backlog file into the repo's archive location per repo convention is an edit to an existing source, not creation.
 
 ## Remote backlog sources
 
 Remote backlog references, such as Linear project identifiers, issue IDs, or issue URLs, are discovery inputs only. Do not refine against a moving remote source in place.
 
+Invoking this command with remote backlog references is the standing authorization to update those exact remote items' content through the first-party tool — writing the refined result back is the default outcome, not an exception. It does not authorize changing item workflow status, creating or deleting remote items, or touching items outside `$ARGUMENTS`.
+
 Before refining:
 
 1. Resolve each remote reference using the available first-party tool for that system. For Linear, use the Linear MCP/tooling when available; if no authenticated tool is available, stop and report the missing integration.
 2. Fetch the exact remote items in the order implied by `$ARGUMENTS`.
-3. Pin each remote item into an exact resolved backlog source according to `backlog_storage_mode` before any snapshot or refinement language. Never create or modify repo backlog/spec/planning markdown unless the policy explicitly permits it; when local repo writes are not permitted, keep the pinned remote text and refinement state in handoff notes, command-local notes, or a temporary file outside the worktree.
-4. Refine the pinned source, not the moving remote text. Mirror the refined result back to the remote item only when an explicit first-party remote update flow is authorized; otherwise record whether the remote item is unchanged.
-5. Commit local backlog refinements only where `backlog_storage_mode` permits writing and the changes are task-related; do not mix them with unrelated changes.
+3. Pin each remote item into an exact resolved backlog source: its writable local backlog entry when one exists, a new snapshot file only when the repo's creation convention permits it, otherwise handoff notes, command-local notes, or a temporary file outside the worktree.
+4. Refine the pinned source, not the moving remote text, then mirror the refined result back to the remote item through the authorized first-party flow. Report any item whose write-back failed and do not describe it as refined.
+5. Commit refinements made to writable backlog sources with only task-related changes; do not mix them with unrelated changes.
 
 If the remote item changes later, refresh the pinned source first, then re-refine against the new pinned text.
 
-Local repo markdown backlogs remain first-class inputs when `backlog_storage_mode` is `local-existing-only` or `local-readwrite`. When `$ARGUMENTS` names local markdown backlog files in those modes, use them directly after path validation and modify them following their existing style. In `remote-only`, treat local markdown as read-only context unless the user explicitly changes the policy.
+Local repo markdown backlogs remain first-class inputs. When `$ARGUMENTS` names local markdown backlog files, use them directly after path validation and modify them following their existing style. Local markdown that is not a writable backlog source is read-only context.
 
 For each backlog item:
 
@@ -79,4 +79,4 @@ After editing:
 - Perform a final readiness check for each refined item before committing: confirm every open question the item raised was resolved and recorded, and that every item marked available to begin has resolved evidence or rationale for scope, dependencies, decisions, assumptions, acceptance criteria, and verification.
 - Expect every item to reach implementation-ready. If a question survived only because it could not be resolved from any available context, list each such question in the output, identify the affected backlog item(s), state the exact missing decision, and confirm those item(s) were left blocked/unavailable rather than implementation-ready. Do not leave a question unresolved for any other reason.
 - Run only formatting or validation that applies to the edited backlog files.
-- Commit the changes with a concise message.
+- Commit any local backlog changes with a concise message; when only remote items changed, state that there is nothing to commit.

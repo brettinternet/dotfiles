@@ -11,29 +11,29 @@ Before creating a worktree/subtree or editing anything, identify any explicit fi
 
 ## Backlog storage policy
 
-Before resolving backlog sources, derive `backlog_storage_mode` only from repository context. Because storage behavior is repo-constant, the mode must come from existing local backlog files, matching remote IDs in backlog markdown, or established backlog/spec snapshot conventions already present in the repo.
+Derive storage behavior per resolved backlog source from repository context:
 
-Derivation rules:
+- a local markdown backlog file named in `$ARGUMENTS` is a writable backlog source
+- a remote item makes an existing local backlog entry writable only when exactly one repo markdown file matches it structurally as a backlog — an item list or item headings carrying the item's ID — not merely any file that mentions the ID
+- every other remote item is remote-only: never write repo backlog/spec/planning markdown for it
 
-- use `local-existing-only` when `$ARGUMENTS` names an existing local markdown backlog file or a remote item has an unambiguous existing local markdown backlog entry
-- use `remote-only` when the scoped sources are remote references and no existing local markdown backlog entry is found
-- use `local-readwrite` only when existing repo context already shows a concrete convention for creating backlog/spec/planning markdown for remote items; otherwise do not synthesize files
-
-`remote-only` never writes repo markdown, `local-existing-only` may edit existing local backlog markdown but must not create new backlog/spec/planning markdown, and `local-readwrite` may create or update repo-conventional backlog/spec/planning markdown.
+Never create new backlog/spec/planning markdown unless the repo already demonstrates that exact convention, such as existing snapshot or spec files matching remote item IDs. When in doubt, do not create files; write only to writable backlog sources. Moving or renaming an existing backlog file into the repo's archive location per repo convention is an edit to an existing source, not creation.
 
 Remote backlog sources:
 
 Remote backlog references, such as Linear project identifiers, issue IDs, or issue URLs, are discovery inputs only. Do not implement directly against a moving remote source.
 
+Invoking this command with remote backlog references is the standing authorization to update those exact remote items' status through the first-party tool — mark an item done or merged when its work is integrated. It does not authorize editing remote item content, creating or deleting remote items, or touching items outside `$ARGUMENTS`.
+
 Before implementing:
 
 1. Resolve each remote reference using the available first-party tool for that system. For Linear, use the Linear MCP/tooling when available; if no authenticated tool is available, stop and report the missing integration.
 2. Fetch the exact remote items in the order implied by `$ARGUMENTS`.
-3. Pin each remote item into an exact resolved backlog source according to `backlog_storage_mode` before any snapshot or marker language. Never create or modify repo backlog/spec/planning markdown unless the policy explicitly permits it; when local repo writes are not permitted, keep the pinned remote text and marker state in handoff notes, command-local notes, or a temporary file outside the worktree.
+3. Pin each remote item into an exact resolved backlog source: its writable local backlog entry when one exists, a new snapshot file only when the repo's creation convention permits it, otherwise handoff notes, command-local notes, or a temporary file outside the worktree.
 4. Implement against the pinned source, not the moving remote text. If the remote item changes later, refresh the pinned source first, then re-evaluate implementation state against the new pinned text.
-5. Update backlog state only where `backlog_storage_mode` permits writing. When repo markdown writes are not permitted, update the remote item only when an explicit first-party remote update flow is authorized, otherwise record the state in the final report.
+5. Record backlog state in the item's writable backlog source; for remote-only items, update the remote item's status through the authorized first-party flow and record everything else in the final report.
 
-Local repo markdown backlogs remain first-class inputs when `backlog_storage_mode` is `local-existing-only` or `local-readwrite`. When `$ARGUMENTS` names local markdown backlog files in those modes, use them directly after path validation and modify, complete, or archive them following their existing style. In `remote-only`, treat local markdown as read-only context unless the user explicitly changes the policy.
+Local repo markdown backlogs remain first-class inputs. When `$ARGUMENTS` names local markdown backlog files, use them directly after path validation and modify, complete, or archive them following their existing style. Local markdown that is not a writable backlog source is read-only context.
 
 Before editing:
 
@@ -66,11 +66,11 @@ Implementation rules:
 Completion criteria:
 
 - Treat a backlog item as complete only when every stated or implied acceptance criterion is implemented and verified.
-- Write completion state only where `backlog_storage_mode` permits it. For non-writable remote sources without authorized write-back, do not create local markdown; report the complete/verified state and exact pinned remote source in the final response.
+- Record completion in the item's writable backlog source. For remote-only items, mark the item done or merged through the first-party tool; when the tool cannot express that status, skip the update and report it. Do not create local markdown to record completion; report the complete/verified state and exact pinned remote source in the final response.
 - If any required acceptance is not done, leave the item open and state exactly what remains.
 - At the end, make the continuation status unambiguous:
-  - `NEXT CONTEXT REQUIRED` when there is any remaining open backlog work, oracle-confirmed blocker, missing product decision, scoped verification failure that cannot be fixed in-repo, or local markdown backlog file that remains unarchived when archiving is required by `backlog_storage_mode`. Include the exact next item to start from and what context the next agent needs.
-  - `BACKLOG COMPLETE AND ARCHIVED` only when every item from `$ARGUMENTS` is complete, verified, committed, integrated (merged locally or PR opened), and each local markdown backlog file writable under `backlog_storage_mode` has been archived; remote-only sources require no local archive. Include the exact final item completed and where it was archived, or state that archiving was not applicable for remote-only sources.
+  - `NEXT CONTEXT REQUIRED` when there is any remaining open backlog work, oracle-confirmed blocker, missing product decision, scoped verification failure that cannot be fixed in-repo, or writable local markdown backlog file that remains unarchived when archiving is required. Include the exact next item to start from and what context the next agent needs.
+  - `BACKLOG COMPLETE AND ARCHIVED` only when every item from `$ARGUMENTS` is complete, verified, committed, integrated (merged locally or PR opened), each writable local markdown backlog file has been archived, and each remote-only item is marked done or merged through the first-party tool or its skipped status update is reported. Include the exact final item completed and where it was archived, or the remote status applied for remote-only sources.
 
 Verification:
 
