@@ -35,6 +35,24 @@
       stdout: true
       stderr: true
 
+    - command: |
+        set -eu
+        mkdir -p "$HOME/.claude"
+        target="$HOME/.claude/settings.json"
+        if [ -L "$target" ]; then
+          rm "$target"
+        fi
+        if [ -e "$target" ] && [ ! -f "$target" ]; then
+          printf 'Claude settings target exists but is not a regular file: %s\n' "$target" >&2
+          exit 1
+        fi
+        if [ ! -e "$target" ]; then
+          cp ai/claude/settings.json "$target"
+        fi
+      description: Seed Claude Code settings as a local copy
+      stdout: true
+      stderr: true
+
 - link:
     ~/.bin/:
       glob: true
@@ -42,8 +60,6 @@
     # Claude
     ~/.claude/CLAUDE.md:
       path: ai/AGENTS.md
-    ~/.claude/settings.json:
-      path: ai/claude/settings.json
     ~/.claude/statusline-command.sh:
       path: ai/claude/statusline-command.sh
     ~/.claude/commands/:
