@@ -31,36 +31,36 @@ The required target is the resolved backlog source plus the requested backlog it
 
 ## Backlog storage policy
 
-Before resolving backlog sources, derive `backlog_storage_mode` only from repository context. Because storage behavior is repo-constant, the mode must come from existing local backlog files, matching remote IDs in backlog markdown, or established backlog/spec snapshot conventions already present in the repo.
+Derive storage behavior per resolved backlog source from repository context:
 
-Derivation rules:
+- a local markdown backlog file named in `$ARGUMENTS` is a writable backlog source
+- a remote item makes an existing local backlog entry writable only when exactly one repo markdown file matches it structurally as a backlog — an item list or item headings carrying the item's ID — not merely any file that mentions the ID
+- every other remote item is remote-only: never write repo backlog/spec/planning markdown for it
 
-- use `local-existing-only` when `$ARGUMENTS` names an existing local markdown backlog file or a remote item has an unambiguous existing local markdown backlog entry
-- use `remote-only` when the scoped sources are remote references and no existing local markdown backlog entry is found
-- use `local-readwrite` only when existing repo context already shows a concrete convention for creating backlog/spec/planning markdown for remote items; otherwise do not synthesize files
-
-`remote-only` never writes repo markdown, `local-existing-only` may edit existing local backlog markdown but must not create new backlog/spec/planning markdown, and `local-readwrite` may create or update repo-conventional backlog/spec/planning markdown.
+Never create new backlog/spec/planning markdown unless the repo already demonstrates that exact convention, such as existing snapshot or spec files matching remote item IDs. When in doubt, do not create files; write only to writable backlog sources. Moving or renaming an existing backlog file into the repo's archive location per repo convention is an edit to an existing source, not creation.
 
 ## Remote backlog sources
 
 Remote backlog references, such as Linear project identifiers, issue IDs, or issue URLs, are discovery inputs only. Do not run the implementation loop directly against a moving remote source.
 
+Invoking this command with remote backlog references is the standing authorization to write loop state back to those exact remote items through the first-party tool: mark an item done or merged when its work is integrated, and post `reviewed:`/`blocked:` marker lines as item comments when the tool supports comments. It does not authorize editing remote item content otherwise, creating or deleting remote items, or touching items outside `$ARGUMENTS`.
+
 Before implementation or review:
 
 1. Resolve each remote reference using the available first-party tool for that system. For Linear, use the Linear MCP/tooling when available; if no authenticated tool is available, stop and report the missing integration.
-2. Fetch the exact remote items in the order implied by `$ARGUMENTS`.
-3. Pin each remote item into an exact resolved backlog source according to `backlog_storage_mode` before any snapshot or marker language. Never create or modify repo backlog/spec/planning markdown unless the policy explicitly permits it; when local repo writes are not permitted, keep the pinned remote text and marker state in handoff notes, command-local notes, or a temporary file outside the worktree.
+2. Fetch the exact remote items in the order implied by `$ARGUMENTS`, including their existing marker comments.
+3. Pin each remote item into an exact resolved backlog source: its writable local backlog entry when one exists, a new snapshot file only when the repo's creation convention permits it, otherwise handoff notes, command-local notes, or a temporary file outside the worktree.
 4. Apply code edits against that pinned text, not the moving remote source. If the remote item changes later, refresh the pinned source first, then re-evaluate review and blocker state against the new pinned text.
-5. Apply `reviewed:` and `blocked:` markers only where `backlog_storage_mode` permits writing. When repo markdown writes are not permitted, update the remote item only when an explicit first-party remote update flow is authorized, otherwise record the marker-equivalent state in the handoff.
+5. Record `reviewed:` and `blocked:` markers in the item's writable backlog source; for remote-only items, post the marker line as a comment on the remote item when the first-party tool supports comments, otherwise record the marker-equivalent state in the handoff.
 
-Local repo markdown backlogs remain first-class inputs when `backlog_storage_mode` is `local-existing-only` or `local-readwrite`. When `$ARGUMENTS` names local markdown backlog files in those modes, use them directly after path validation and modify, complete, or archive them following their existing style. In `remote-only`, treat local markdown as read-only context unless the user explicitly changes the policy.
+Local repo markdown backlogs remain first-class inputs. When `$ARGUMENTS` names local markdown backlog files, use them directly after path validation and modify, complete, or archive them following their existing style. Local markdown that is not a writable backlog source is read-only context.
 
 ## Target selection
 
 Determine exactly one current target:
 
 1. Inspect the current worktree status, preserve unrelated unstaged or untracked work, and do not block on unrelated dirty changes unless they prevent safe isolation; document ignored unrelated changes in the handoff.
-2. Read the resolved backlog source or sources in the order supplied, including matching item text, acceptance criteria, nearby backlog context, remote-source snapshots if present, and any existing implementation, review, or blocker notes.
+2. Read the resolved backlog source or sources in the order supplied, including matching item text, acceptance criteria, nearby backlog context, remote-source snapshots and remote item marker comments if present, and any existing implementation, review, or blocker notes.
 3. Identify the first scoped resolved backlog source, then the first scoped item in that source, that is still open, incomplete, unreviewed, or blocked without a still-valid blocker marker.
 4. Skip an item with a valid `blocked:` marker only when its unblock condition is still unmet and the evidence has not changed. Record the skip in the handoff and continue to the next scoped item in order.
 5. Determine the pass state:
@@ -85,31 +85,31 @@ At the end of every pass, write the next step clearly enough for another agent t
 - oracle consultations used for blockers, accepted or rejected recommendations, and item-local marker changes
 - exact next backlog source, item, and command invocation to start from
 
-Use `NEXT CONTEXT REQUIRED` whenever any scoped backlog work remains open, blocked, unreviewed, not integrated, or any local markdown backlog file remains unarchived when archiving is required. Use `BACKLOG COMPLETE AND ARCHIVED` only when every scoped item across every supplied source is implemented, reviewed, verified, committed, integrated (merged locally or PR opened), and each local markdown backlog file writable under `backlog_storage_mode` has been archived; remote-only sources require no local archive.
+Use `NEXT CONTEXT REQUIRED` whenever any scoped backlog work remains open, blocked, unreviewed, not integrated, or any writable local markdown backlog file remains unarchived when archiving is required. Use `BACKLOG COMPLETE AND ARCHIVED` only when every scoped item across every supplied source is implemented, reviewed, verified, committed, integrated (merged locally or PR opened), each writable local markdown backlog file has been archived, and each remote-only item is marked done or merged through the first-party tool or its skipped status update is reported.
 
 ## Review markers
 
 To avoid reviewing the same implementation repeatedly, record a review marker only after a clean `REVIEW` pass verifies every acceptance criterion and either makes no changes or verifies all review fixes.
 
-For writable local markdown backlog entries permitted by `backlog_storage_mode`, store the marker inside the item’s existing notes, status, or conclusion area. Follow the backlog file’s existing style; if there is no style, add one concise item-local line:
+For writable backlog sources, store the marker inside the item’s existing notes, status, or conclusion area. Follow the backlog file’s existing style; if there is no style, add one concise item-local line:
 
 `reviewed: <implementation-commit> [review-fix: <commit>]; verified: <brief command/result>`
 
-For non-writable remote snapshots, do not create local markdown solely to store review state. Update the remote item only when explicitly authorized by a first-party remote update flow; otherwise record the same marker text in the handoff/final response and use that marker-equivalent handoff state for the next pass.
+For remote-only items, do not create local markdown solely to store review state. Post the marker line as a comment on the remote item when the first-party tool supports comments; otherwise record the same marker text in the handoff/final response and use that marker-equivalent handoff state for the next pass.
 
-A review marker or marker-equivalent handoff entry is valid only for the exact implementation commit it names, plus the review-fix commit when present. If the implementation commit changes, review-fix commit changes, acceptance criteria change, or relevant files change without an updated marker, treat the item as `REVIEW` again. If the marker is valid and the item is complete, do not re-review it; move to the next unfinished scoped item in the ordered backlog list.
+A review marker — in a writable backlog source, a remote item comment, or marker-equivalent handoff state — is valid only for the exact implementation commit it names, plus the review-fix commit when present. If the implementation commit changes, review-fix commit changes, acceptance criteria change, or relevant files change without an updated marker, treat the item as `REVIEW` again. If the marker is valid and the item is complete, do not re-review it; move to the next unfinished scoped item in the ordered backlog list.
 
 ## Blocker markers
 
 To avoid repeating the same blocker forever, record a blocker marker only after exhausting repository context, fixing every in-scope verification failure, missing required code path, and flaky or outdated test, attempting all safe unblocked work, and consulting the oracle agent for a second opinion.
 
-For writable local markdown backlog entries permitted by `backlog_storage_mode`, store the marker inside the item’s existing notes, status, or conclusion area. Follow the backlog file’s existing style; if there is no style, add one concise item-local line:
+For writable backlog sources, store the marker inside the item’s existing notes, status, or conclusion area. Follow the backlog file’s existing style; if there is no style, add one concise item-local line:
 
 `blocked: <short reason>; tried: <brief attempted path>; unblock: <specific decision/dependency/evidence needed>`
 
-For non-writable remote snapshots, do not create local markdown solely to store blocker state. Update the remote item only when explicitly authorized by a first-party remote update flow; otherwise record the same `blocked:` text in the handoff/final response and move on per `BLOCKED` rules.
+For remote-only items, do not create local markdown solely to store blocker state. Post the `blocked:` line as a comment on the remote item when the first-party tool supports comments; otherwise record the same `blocked:` text in the handoff/final response and move on per `BLOCKED` rules.
 
-A blocker marker or marker-equivalent handoff entry is valid only while the reason, attempted path, and unblock condition still match the current code, backlog text, dependencies, and verification evidence. Skip a blocked item only when its marker is still valid. Re-enter it automatically when new information appears, dependencies become available, acceptance criteria change, relevant code changes, or the unblock condition no longer matches; then clear or replace the marker where writable, or supersede the handoff state where not writable, and continue with `IMPLEMENT` or `REVIEW`. If every remaining scoped item is blocked by still-valid markers, stop with `NEXT CONTEXT REQUIRED` and report the blocker list.
+A blocker marker — in a writable backlog source, a remote item comment, or marker-equivalent handoff state — is valid only while the reason, attempted path, and unblock condition still match the current code, backlog text, dependencies, and verification evidence. Skip a blocked item only when its marker is still valid. Re-enter it automatically when new information appears, dependencies become available, acceptance criteria change, relevant code changes, or the unblock condition no longer matches; then clear, replace, or supersede the marker where it was recorded, and continue with `IMPLEMENT` or `REVIEW`. If every remaining scoped item is blocked by still-valid markers, stop with `NEXT CONTEXT REQUIRED` and report the blocker list.
 
 ## Oracle unblock protocol
 
@@ -125,8 +125,8 @@ Use this protocol whenever a subagent or pass is blocked by a decision, stale bl
 3. Treat `RESUME` as a proposed patch, not authority. Apply it only if the active agent can point to the backing backlog text, code convention, dependency documentation, or verification evidence. The patch may only clear a stale `blocked:` marker or replace it with an updated `blocked:` marker when the blocker still applies. It must not add a durable oracle/unblock lifecycle state, change acceptance criteria, mark the item reviewed/complete, or modify remote state.
 4. After applying or rejecting the patch, re-run Target selection from current backlog text, code, dependencies, and verification evidence. If the prior blocker no longer matches, continue as `IMPLEMENT` or `REVIEW`; otherwise keep/update `blocked:` and move on per `BLOCKED` rules.
 5. Record accepted or rejected oracle reasoning in the handoff, not as a selection state. If backlog text, relevant code, dependencies, or verification evidence changes, normal Target selection and blocker-validity rules decide the next state.
-6. If the oracle returns `BLOCKED` or `HUMAN_DECISION`, write/update the normal `blocked:` marker only where `backlog_storage_mode` permits it and otherwise record the marker-equivalent state in the handoff.
-7. For remote backlog sources, write markers only where `backlog_storage_mode` permits it; otherwise write no repo markdown and use the authorized remote update flow or handoff marker-equivalent state.
+6. If the oracle returns `BLOCKED` or `HUMAN_DECISION`, write/update the normal `blocked:` marker in the item's writable backlog source, post it as a remote item comment for remote-only items when the tool supports comments, or record the marker-equivalent state in the handoff.
+7. For remote-only items, never write repo markdown for marker state; use the authorized remote comment flow or the handoff marker-equivalent state.
 
 ## IMPLEMENT pass
 
@@ -212,12 +212,12 @@ After review:
 
 1. Run the specific tests, linters, typechecks, or manual QA that cover reviewed or fixed behavior.
 2. Commit any review fixes with a concise message.
-3. Write or update the item-local `reviewed:` marker when permitted by `backlog_storage_mode`; for non-writable remote snapshots without authorized write-back, record the marker-equivalent state in the handoff/final response instead.
-4. Mark the backlog item complete only after the valid review marker is present, the authorized remote flow records completion, or the marker-equivalent handoff state is recorded for a non-writable remote snapshot.
+3. Write or update the item-local `reviewed:` marker in the item's writable backlog source; for remote-only items, post it as a remote item comment when the tool supports comments, otherwise record the marker-equivalent state in the handoff/final response.
+4. Mark the backlog item complete only after the valid review marker is present in its writable backlog source, remote item comment, or marker-equivalent handoff state.
 5. If any required acceptance is not done, leave the item open and state exactly what remains.
 6. Integrate completed work using the resolved flow (see Integration) when the scoped item or safe batch is complete.
 7. Clean up the temporary worktree/subtree after integration; keep the pushed branch under `pull-request`.
-8. If all scoped backlog items across all supplied sources are complete, verified, committed, integrated, and reviewed, archive each local markdown backlog file according to existing repo conventions; remote-only sources require no local archive.
+8. If all scoped backlog items across all supplied sources are complete, verified, committed, integrated, and reviewed, archive each writable local markdown backlog file according to existing repo conventions and mark each remote-only item done or merged through the first-party tool; when the tool cannot express that status, skip the update and report it.
 
 ## BLOCKED pass
 
@@ -227,7 +227,7 @@ When blocked:
 
 - Implement and verify any acceptance criteria that are safely unblocked before marking the item blocked; fix in-scope failing checks, missing required code, and flaky or outdated tests instead of recording them as blockers, and report unrelated failures or dirty changes separately.
 - Do not mark the item complete.
-- Write or update the item-local `blocked:` marker when permitted by `backlog_storage_mode`; for non-writable remote snapshots without authorized write-back, record the same `blocked:` text in the handoff/final response. Include the exact missing decision, unavailable dependency, failed acceptance criterion plus its external input/dependency root cause, or unsafe ambiguity; include what was tried and the next concrete unblock action.
+- Write or update the item-local `blocked:` marker in the item's writable backlog source; for remote-only items, post it as a remote item comment when the tool supports comments, otherwise record the same `blocked:` text in the handoff/final response. Include the exact missing decision, unavailable dependency, failed acceptance criterion plus its external input/dependency root cause, or unsafe ambiguity; include what was tried and the next concrete unblock action.
 - Commit only if the committed state is coherent and useful; otherwise leave the worktree uncommitted and explain why.
 - Move the next pass to the next scoped item whose blocker marker is absent, stale, or resolved. Do not keep selecting the same still-blocked item.
 - Leave `NEXT CONTEXT REQUIRED` with the skipped blocker list and the next unblocked target. If no unblocked target remains, report the human-required blocker queue instead of archiving.
@@ -271,14 +271,14 @@ or
 
 Then report:
 
-- backlog source list, resolved backlog source list (local markdown files or non-repo pinned remote snapshots), and item ID/title processed
+- backlog source list, resolved backlog source list (local markdown files or pinned remote snapshots), and item ID/title processed
 - pass state completed: `IMPLEMENT`, `REVIEW`, `BLOCKED`, or `ARCHIVE`
 - commits made
 - integration result: local merge or PR URL, when the scoped item or batch was integrated this pass
 - verification run
 - review result, including correctness/security/performance/design findings
 - most likely 3-month breakage reason and whether to address it now or later
-- archive location if applicable; state not applicable for remote-only sources
+- archive location if applicable; for remote-only sources, the remote status transition applied or skipped
 - exact next item and state for the next pass, if any
 - copy-pasteable next prompt that invokes this command with the backlog file, item, and commit/files to inspect when relevant
 - remaining blockers, skipped blocked items, risks, product decisions, or ignored unrelated failures or dirty changes
