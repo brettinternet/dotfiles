@@ -35,11 +35,12 @@ branch, validation gate, and test commands from the repo itself (git remote,
 Write **everything** you post to GitHub as me — review-thread replies, inline comment replies, top-level PR comments, the reviewer-request summary, request-changes/approval bodies, all of it. All communication, no exceptions. Casually:
 
 - NO emdashes.
-- Concise and informal, like a teammate's quick note rather than a formal reviewer.
+- Succinct, direct, and informal, like a teammate's quick note rather than a formal reviewer. One or two sentences beats a paragraph.
 - Mostly lowercase, light punctuation, no corporate polish.
 - No headers, no bullet scaffolding for short comments, and no "Overall," / "Great work!" / "Nice catch!" / "Thanks for the review!" openers.
 - Praise sparingly, only when something is genuinely clever.
 - Lead with the point; if something is a real blocker, say so plainly.
+- Pose suggestions and uncertain findings as honest questions the author can push back on (`would batching work here?`, `is the org scope intentional?`), not directives. Save flat assertions for real blockers.
 - Skip trivial nits. Only say it if it actually matters.
 
 Examples for replies (don't copy):
@@ -124,8 +125,8 @@ when valid, and reply clearly when it is stale, wrong, or needs reviewer input.
    - Resolve the thread only when it is genuinely handled: a fix landed, the
      finding is proven stale/wrong, or the reviewer agreed it is a non-issue.
      Leave it open if the ball is in a human reviewer's court.
-3. **Write replies in my voice** (see Voice above). Keep replies tight and reply
-   on the thread itself.
+3. **Write replies in my voice** (see Voice above) and reply on the thread
+   itself.
 4. Reply to review threads through the GitHub API:
    ```
    gh api repos/<owner>/<repo>/pulls/<n>/comments/<comment_db_id>/replies -f body=...
@@ -161,7 +162,7 @@ Guardrails for all PR feedback:
 - Before choosing a fix direction that depends on architecture, design intent,
   security posture, ownership, product behavior, or a broad blast radius, consult
   the **oracle** agent. Record the assumption and the oracle's read in your
-  private notes; keep GitHub replies concise and in my voice.
+  private notes; keep GitHub replies in my voice (see Voice above).
 - Consult the oracle when a reviewer finding is plausible but conflicts with an
   existing invariant or design tradeoff, when competing fixes both fit the
   evidence, or before saying a finding needs a human architecture, product, or
@@ -178,8 +179,7 @@ gh pr edit <n> --add-reviewer <reviewer>
 
 Confirm it landed (`gh pr view <n> --json reviewRequests`). Then post a short PR
 comment summarizing: feedback addressed + threads resolved, CI status, and that
-`@<reviewer>` is requested. Write it in my voice (see Voice above) — NO emdashes, casual,
-succinct.
+`@<reviewer>` is requested. Write it in my voice (see Voice above).
 
 ## 3. Requested reviewer feedback loop (repeat until reviewer approves)
 
