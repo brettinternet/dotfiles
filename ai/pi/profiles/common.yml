@@ -1,0 +1,30 @@
+# https://github.com/can1357/oh-my-pi/blob/3f0c2c63a0d53a9d2587f7405ea65b8ceb59249d/docs/settings.md
+---
+startup:
+  quiet: true
+  checkUpdate: false
+hideThinkingBlock: false
+advisor:
+  enabled: true
+theme:
+  dark: dark-terminal
+symbolPreset: nerd
+steeringMode: one-at-a-time
+statusLine:
+  preset: default
+  separator: powerline-thin
+display:
+  showTokenUsage: false
+loop:
+  mode: reset
+doubleEscapeAction: tree
+github:
+  enabled: false
+commands:
+  enableOpencodeUser: false
+  enableOpencodeProject: false
+  enableClaudeProject: true
+  enableClaudeUser: true
+setupVersion: 1
+codexResets:
+  autoRedeem: "no"

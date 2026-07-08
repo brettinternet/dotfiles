@@ -1,6 +1,6 @@
 #!/bin/sh
-# pi-profile — manage omp (pi) config profiles
-# Usage: pi-profile [show|list|use <name>|path [<name>]|edit [<name>]|new <name> [--from <other>]]
+# pi-profile — manage omp (pi) config profile overlays
+# Usage: pi-profile [show|list|use <name>|config|path [<name>|common]|edit [<name>|common]|new <name> [--from <other>]]
 set -eu
 
 # Resolve dotfiles root: $DOTFILES env, or walk up from this script's realpath.
@@ -25,25 +25,34 @@ else
 fi
 
 PROFILES_DIR="$DOTFILES/ai/pi/profiles"
-CONFIG_LINK="$DOTFILES/ai/pi/config.yml"
+COMMON_PROFILE="$PROFILES_DIR/common.yml"
+CONFIG_FILE="$DOTFILES/ai/pi/config.yml"
 ACTIVE_FILE="$DOTFILES/ai/pi/.active"
+MERGE_PROFILE="$DOTFILES/ai/pi/merge-profile.py"
 
 die() { printf '%s\n' "$*" >&2; exit 1; }
+
+profile_path() {
+  case "$1" in
+    common) printf '%s\n' "$COMMON_PROFILE" ;;
+    *)      printf '%s/%s.yml\n' "$PROFILES_DIR" "$1" ;;
+  esac
+}
 
 active_profile() {
   if [ -f "$ACTIVE_FILE" ]; then
     cat "$ACTIVE_FILE"
-  elif [ -L "$CONFIG_LINK" ]; then
-    # Derive from symlink target basename
-    basename "$(readlink "$CONFIG_LINK")" .yml
+  elif [ -L "$CONFIG_FILE" ]; then
+    # Legacy support: derive from the old symlink target basename.
+    basename "$(readlink "$CONFIG_FILE")" .yml
   else
-    echo "personal"
+    echo "codex"
   fi
 }
 
 cmd_show() {
   profile="$(active_profile)"
-  printf '%s\t%s\n' "$profile" "$PROFILES_DIR/${profile}.yml"
+  printf '%s\t%s\n' "$profile" "$(profile_path "$profile")"
 }
 
 cmd_list() {
@@ -51,6 +60,7 @@ cmd_list() {
   for f in "$PROFILES_DIR"/*.yml; do
     [ -f "$f" ] || continue
     name="$(basename "$f" .yml)"
+    [ "$name" = "common" ] && continue
     if [ "$name" = "$active" ]; then
       printf '* %s\n' "$name"
     else
@@ -59,27 +69,52 @@ cmd_list() {
   done
 }
 
+render_config() {
+  name="$1"
+  [ "$name" != "common" ] || die "pi-profile: 'common' is a shared base, not a selectable profile"
+  target="$(profile_path "$name")"
+  [ -f "$COMMON_PROFILE" ] || die "pi-profile: common profile not found (${COMMON_PROFILE})"
+  [ -f "$target" ] || die "pi-profile: profile '${name}' not found (${target})"
+  [ -f "$MERGE_PROFILE" ] || die "pi-profile: merge helper not found (${MERGE_PROFILE})"
+
+  tmp="${CONFIG_FILE}.tmp.$$"
+  if PYTHONPATH="$DOTFILES/dotbot/lib/pyyaml/lib${PYTHONPATH:+:$PYTHONPATH}" \
+    python3 "$MERGE_PROFILE" "$COMMON_PROFILE" "$target" "$tmp"; then
+    mv "$tmp" "$CONFIG_FILE"
+  else
+    rm -f "$tmp"
+    return 1
+  fi
+}
+
 cmd_use() {
   name="${1:-}"
   [ -n "$name" ] || die "usage: pi-profile use <name>"
-  target="$PROFILES_DIR/${name}.yml"
-  [ -f "$target" ] || die "pi-profile: profile '${name}' not found (${target})"
-  ln -sfn "profiles/${name}.yml" "$CONFIG_LINK"
+  render_config "$name"
   printf '%s\n' "$name" > "$ACTIVE_FILE"
-  default_role="$(awk '/^  default:/{print $2; exit}' "$target")"
+  default_role="$(awk '
+    /^modelRoles:/ { in_roles=1; next }
+    /^[^ ]/ { in_roles=0 }
+    in_roles && /^  default:/ { print $2; exit }
+  ' "$CONFIG_FILE")"
   printf 'switched to %s  (modelRoles.default = %s)\n' "$name" "${default_role:-unknown}"
 }
 
 cmd_path() {
   name="${1:-$(active_profile)}"
-  target="$PROFILES_DIR/${name}.yml"
+  target="$(profile_path "$name")"
   [ -f "$target" ] || die "pi-profile: profile '${name}' not found (${target})"
   printf '%s\n' "$target"
 }
 
+cmd_config() {
+  [ $# -eq 0 ] || die "usage: pi-profile config"
+  printf '%s\n' "$CONFIG_FILE"
+}
+
 cmd_edit() {
   name="${1:-$(active_profile)}"
-  target="$PROFILES_DIR/${name}.yml"
+  target="$(profile_path "$name")"
   [ -f "$target" ] || die "pi-profile: profile '${name}' not found (${target})"
   "${EDITOR:-vi}" "$target"
 }
@@ -88,14 +123,15 @@ cmd_new() {
   name="${1:-}"
   [ -n "$name" ] || die "usage: pi-profile new <name> [--from <other>]"
   shift
-  from="personal"
+  from="$(active_profile)"
   while [ $# -gt 0 ]; do
     case "$1" in
-      --from) from="${2:-}"; shift 2 ;;
+      --from) [ $# -gt 1 ] || die "usage: pi-profile new <name> [--from <other>]"; from="$2"; shift 2 ;;
       *) die "pi-profile new: unknown option '$1'" ;;
     esac
   done
-  src="$PROFILES_DIR/${from}.yml"
+  [ "$from" != "common" ] || die "pi-profile: 'common' is a shared base, not a profile template"
+  src="$(profile_path "$from")"
   dst="$PROFILES_DIR/${name}.yml"
   [ -f "$src" ] || die "pi-profile: source profile '${from}' not found (${src})"
   [ ! -f "$dst" ] || die "pi-profile: profile '${name}' already exists (${dst})"
@@ -105,12 +141,13 @@ cmd_new() {
 
 usage() {
   cat <<EOF
-usage: pi-profile [show]             print active profile and path
-       pi-profile list               list all profiles (active marked with *)
-       pi-profile use <name>         switch to profile <name>
-       pi-profile path [<name>]      print path of profile file (default: active)
-       pi-profile edit [<name>]      open profile in \$EDITOR (default: active)
-       pi-profile new <name> [--from <other>]  create new profile (copy from other)
+usage: pi-profile [show]             print active profile and source profile path
+       pi-profile list               list selectable profiles (active marked with *)
+       pi-profile use <name>         generate config from common + profile <name>
+       pi-profile config             print generated active config path
+       pi-profile path [<name>|common]  print source profile path (default: active)
+       pi-profile edit [<name>|common]  open source profile in \$EDITOR (default: active)
+       pi-profile new <name> [--from <other>]  create new profile overlay (copy from other overlay)
        pi-profile -h|--help          show this help
 EOF
 }
@@ -120,6 +157,7 @@ case "${1:-show}" in
   list)       shift; cmd_list "$@" ;;
   use)        shift; cmd_use "$@" ;;
   path)       shift; cmd_path "$@" ;;
+  config)    shift; cmd_config "$@" ;;
   edit)       shift; cmd_edit "$@" ;;
   new)        shift; cmd_new "$@" ;;
   -h|--help)  usage ;;

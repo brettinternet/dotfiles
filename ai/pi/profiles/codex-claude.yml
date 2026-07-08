@@ -10,18 +10,6 @@ modelRoles:
   plan: anthropic/claude-opus-4-8:high
   advisor: openai-codex/gpt-5.5:medium
   title: openai-codex/gpt-5.4-mini:low
-hideThinkingBlock: false
-autoContinue: true
-browser:
-  headless: false
-theme:
-  dark: dark-terminal
-symbolPreset: unicode
-statusLine:
-  preset: default
-  separator: powerline-thin
-display:
-  showTokenUsage: false
 commands:
   enableOpencodeUser: false
   enableOpencodeProject: false
