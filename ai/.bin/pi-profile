@@ -46,7 +46,7 @@ active_profile() {
     # Legacy support: derive from the old symlink target basename.
     basename "$(readlink "$CONFIG_FILE")" .yml
   else
-    echo "codex"
+    echo "openai"
   fi
 }
 
