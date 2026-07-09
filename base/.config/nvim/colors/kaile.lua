@@ -27,7 +27,7 @@ local opts = config.user_config {
         hl.Keyword = { fg = c.syntax.blue, bg = c.none }
         hl.Function = { fg = c.syntax.yellow, bg = c.none }
         hl.Identifier = { fg = c.syntax.cyan, bg = c.none }
-        hl.String = { fg = c.syntax.red, bg = c.none }
+        hl.String = { fg = c.syntax.green, bg = c.none }
         hl.Number = { fg = c.syntax.green, bg = c.none }
         hl.Boolean = { fg = c.syntax.green, bg = c.none }
         hl.Type = { fg = c.syntax.green, bg = c.none }
@@ -38,8 +38,8 @@ local opts = config.user_config {
         hl.NormalNC = { fg = c.ui.text_inactive, bg = c.ui.base }
         hl.CursorLine = { bg = c.ui.current_line }
         hl.Visual = { fg = c.ui.text_active, bg = c.ui.selection }
-        hl.Search = { fg = c.ui.base, bg = c.ui.yellow }
-        hl.IncSearch = { fg = c.ui.base, bg = c.ui.green }
+        hl.Search = { fg = c.ui.yellow, bg = c.ui.selection }
+        hl.IncSearch = { fg = c.ui.green, bg = c.ui.selection }
         hl.LineNr = { fg = c.ui.text_inactive, bg = c.none }
         hl.CursorLineNr = { fg = c.ui.green, bg = c.none }
         hl.ColorColumn = { bg = c.ui.current_line }
@@ -50,7 +50,7 @@ local opts = config.user_config {
         hl.FloatTitle = { fg = c.ui.green, bg = c.ui.float, bold = true }
         hl.NormalFloat = { fg = c.ui.text, bg = c.ui.float }
         hl.Pmenu = { fg = c.ui.text, bg = c.ui.tool }
-        hl.PmenuSel = { fg = c.ui.base, bg = c.ui.green }
+        hl.PmenuSel = { fg = c.ui.blue, bg = c.ui.selection }
         hl.StatusLine = { fg = c.ui.text, bg = c.ui.statusline }
         hl.StatusLineNC = { fg = c.ui.text_inactive, bg = c.ui.statusline }
 
@@ -60,10 +60,10 @@ local opts = config.user_config {
         hl.DiagnosticHint = { fg = c.ui.cyan, bg = c.none }
         hl.DiagnosticOk = { fg = c.ui.green, bg = c.none }
 
-        hl.DiffAdd = { fg = c.none, bg = "#001100" }
-        hl.DiffChange = { fg = c.none, bg = "#111100" }
-        hl.DiffDelete = { fg = c.none, bg = "#110000" }
-        hl.DiffText = { fg = c.none, bg = "#333300" }
+        hl.DiffAdd = { fg = c.ui.green, bg = c.ui.selection }
+        hl.DiffChange = { fg = c.ui.yellow, bg = c.ui.selection }
+        hl.DiffDelete = { fg = c.ui.red, bg = c.ui.selection }
+        hl.DiffText = { fg = c.ui.yellow, bg = c.ui.current_line, bold = true }
 
         hl.NeoTreeNormal = { fg = c.ui.text, bg = c.ui.base }
         hl.NeoTreeNormalNC = { fg = c.ui.text, bg = c.ui.base }

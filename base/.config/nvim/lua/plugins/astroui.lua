@@ -45,7 +45,36 @@ return {
         MiniTabLineFill = { bg = "none" },
       },
       kaile = { -- a table of overrides/changes when applying the kaile theme
-        -- Normal = { bg = "#050505" },
+        Normal = { bg = "#121212" },
+        SignColumn = { bg = "#121212" },
+        FoldColumn = { bg = "#121212" },
+        NormalFloat = { bg = "#181818" },
+        NormalNC = { bg = "#121212" },
+        NormalSB = { bg = "#121212" },
+        FloatBorder = { bg = "#181818" },
+        FloatTitle = { bg = "#181818" },
+
+        CursorLineNr = { bg = "#202020" },
+        CursorLine = { bg = "#202020" },
+        ColorColumn = { bg = "#202020" },
+
+        TelescopeBorder = { bg = "#181818" },
+        TelescopePromptTitle = { bg = "#181818" },
+        TelescopePromptBorder = { bg = "#181818" },
+        TelescopeNormal = { bg = "#181818" },
+
+        TabLine = { bg = "#202020" },
+        TabLineSel = { bg = "#121212" },
+        TabLineFill = { bg = "#202020" },
+
+        NeoTreeNormal = { bg = "#121212" },
+        NeoTreeNormalNC = { bg = "#121212" },
+        NeoTreeTabInactive = { bg = "#202020" },
+        NeoTreeTabSeperatorActive = { bg = "#202020" },
+        NeoTreeTabSeperatorInactive = { bg = "#202020" },
+        NvimTreeTabSeperatorActive = { bg = "#202020" },
+        NvimTreeTabSeperatorInactive = { bg = "#202020" },
+        MiniTabLineFill = { bg = "#202020" },
       },
     },
     -- Icons can be configured throughout the interface
