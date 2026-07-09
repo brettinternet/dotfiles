@@ -18,6 +18,12 @@ When implementing something that could be represented as a reusable coding patte
 - Prefer fast local CLIs for code navigation: use `rg`/ripgrep for content search, `fd` for file discovery, and `ast-grep` for structural code search/refactors before falling back to fragile regex edits.
 - Use `bun` and `bunx` instead of `npm` or `npx`.
 
+## Subagents
+
+- Delegate high-volume, low-judgment work to cheap subagents when available: `explore` (or the built-in Explore) for repo discovery and evidence gathering, `pr-watcher` for CI/review watching. Keep the orchestrating context for decisions, synthesis, and shared-interface coordination.
+- Verify independently: before declaring implementation work complete, run the `verifier` agent with the acceptance criteria and the commits/diff — not your conclusions — and treat any FAIL or UNVERIFIED criterion as open work. Skip it only when an independent review pass is already part of the workflow.
+- Consult the `oracle` agent for judgment-dense calls: architecture tradeoffs, competing diagnoses, blockers that may be stale. The weaker the model you are running as, the earlier you should consult it.
+
 ## Git
 
 - Never run `git push` without explicit instruction.

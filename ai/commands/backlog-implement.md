@@ -1,9 +1,7 @@
 ---
-description: Implement the next open backlog items in an isolated worktree with parallel subagents, verify, commit, and integrate per the repo's flow (merge to local main or open a PR)
+description: Implement the next open backlog items in an isolated worktree with parallel subagents, verify, commit, and integrate per the repo's flow (merge to local main or open a PR) (subagent escalation pattern)
 argument-hint: <backlog-file|remote-refs> [item-ids|titles|ranges]
 ---
-
-<!-- "Fan out subagents" and "orchestrate" are keywords for Claude Code and OMP -->
 
 Fan out subagents and orchestrate to implement the next open backlog items from `$ARGUMENTS` in an isolated worktree/subtree. Preserve existing unstaged work, use the smallest targeted verification loop, commit only task-related work, integrate it per the repo's flow (merge to local main or open a PR), and clean up the worktree.
 
@@ -48,6 +46,7 @@ Before editing:
 Parallelization:
 
 - Fan out subagents for independent file areas, tests, UI, migrations, or investigation.
+- Use explore agents for read-only discovery and evidence gathering; keep the orchestrating context for decisions, synthesis, and shared-interface coordination.
 - Give each subagent the exact target, scope boundaries, acceptance criteria, and non-goals.
 - Do not serialize work that can safely happen in parallel.
 - Coordinate shared interfaces before parallel edits when tasks touch the same API, schema, type, or command.
@@ -77,6 +76,7 @@ Completion criteria:
 Verification:
 
 - Use the smallest targeted verification loop that proves the change: specific tests, typecheck, lint, build, migration check, browser QA, or manual scenario as appropriate.
+- Before marking an item complete, run the verifier agent with the item's acceptance criteria and the implementation commits — not your conclusions — and treat any FAIL or UNVERIFIED criterion as open work.
 - Re-run targeted verification after fixes. If verification fails, diagnose the root cause, fix all in-scope code/tests/checks in-repo, and rerun before reporting a blocker; if the failure is unrelated to the current item, record the evidence and continue with targeted verification.
 - Unrelated failing tests or unrelated dirty changes do not block finishing the item or reporting it complete; note them separately, and do not fix or commit them as part of this work.
 - Do not claim project-wide health unless project-wide checks were actually run.
