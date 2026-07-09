@@ -1,11 +1,11 @@
 modelRoles:
   default: openrouter/anthropic/claude-sonnet-latest:medium
-  smol: openrouter/anthropic/claude-haiku-latest:high
+  smol: openrouter/openai/gpt-5.6-luna:high
   slow: openrouter/anthropic/claude-fable-latest:xhigh
   designer: openrouter/anthropic/claude-opus-latest:medium
   vision: openrouter/openai/gpt-latest:high
   task: openrouter/anthropic/claude-sonnet-latest:medium
   commit: openrouter/anthropic/claude-haiku-latest:high
   plan: openrouter/anthropic/claude-fable-latest:high
-  advisor: openrouter/openai/gpt-latest
+  advisor: openrouter/openai/gpt-5.6-luna:medium
   title: openrouter/google/gemini-flash-latest

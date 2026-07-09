@@ -4,11 +4,11 @@ modelRoles:
   smol: openai-codex/gpt-5.4-mini:low
   slow: anthropic/claude-opus-4-8:xhigh
   designer: anthropic/claude-opus-4-8:xhigh
-  vision: openai-codex/gpt-5.5:high
+  vision: openai-codex/gpt-5.6-sol:high
   task: anthropic/claude-sonnet-4-6:medium
   commit: openai-codex/gpt-5.4-mini:low
   plan: anthropic/claude-opus-4-8:high
-  advisor: openai-codex/gpt-5.5:medium
+  advisor: openai-codex/gpt-5.6-sol:medium
   title: openai-codex/gpt-5.4-mini:low
 commands:
   enableOpencodeUser: false
