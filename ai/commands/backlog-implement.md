@@ -3,7 +3,7 @@ description: Implement the next open backlog items in an isolated worktree with 
 argument-hint: <backlog-file|remote-refs> [item-ids|titles|ranges]
 ---
 
-Fan out subagents and orchestrate to implement the next open backlog items from `$ARGUMENTS` in an isolated worktree/subtree. Preserve existing unstaged work, use the smallest targeted verification loop, commit only task-related work, integrate it per the repo's flow (merge to local main or open a PR), and clean up the worktree.
+Implement the next open backlog items from `$ARGUMENTS` in an isolated worktree/subtree. Preserve existing unstaged work, use the smallest targeted verification loop, commit only task-related work, integrate it per the repo's flow (merge to local main or open a PR), and clean up the worktree.
 
 Treat `$ARGUMENTS` as the exact local backlog file, remote backlog references (such as Linear project identifiers, issue IDs, or issue URLs), item IDs, titles, or ranges to implement. Do not implement unrelated backlog items.
 
@@ -45,7 +45,7 @@ Before editing:
 
 Parallelization:
 
-- Fan out subagents for independent file areas, tests, UI, migrations, or investigation.
+- Fan out subagents and orchestrate executor subagents for independent, well-specified file areas, tests, UI, or migrations.
 - Use explore agents for read-only discovery and evidence gathering; keep the orchestrating context for decisions, synthesis, and shared-interface coordination.
 - Give each subagent the exact target, scope boundaries, acceptance criteria, and non-goals.
 - Do not serialize work that can safely happen in parallel.

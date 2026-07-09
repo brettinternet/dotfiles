@@ -3,7 +3,7 @@ description: Review an implementation for correctness, security, performance, an
 argument-hint: <branch|pr|commit-range|files|backlog-item|remote-ref>
 ---
 
-Fan out subagents and orchestrate to review my implementation of `$ARGUMENTS` for code quality, security, performance, maintainability, and whether it actually solves the intended work. Commit any fixes.
+Review my implementation of `$ARGUMENTS` for code quality, security, performance, maintainability, and whether it actually solves the intended work. Commit any fixes.
 
 Treat `$ARGUMENTS` as the exact implementation, branch, PR, commit range, backlog item, remote backlog reference (such as a Linear issue), or file set to review. Do not review unrelated work except where needed to understand callsites or behavior.
 
@@ -21,7 +21,7 @@ Accept an oracle `RESUME` recommendation only when the reviewing agent can verif
 
 Review process:
 
-Fan out explore agents to map files, callsites, and data flows, and cheap finder subagents per dimension (correctness, security, performance, maintainability) to surface candidate findings; judge, verify, and synthesize the findings in the orchestrating context.
+Fan out subagents and orchestrate explore agents to map files, callsites, and data flows, and cheap finder subagents per dimension (correctness, security, performance, maintainability) to surface candidate findings; judge, verify, and synthesize the findings in the orchestrating context.
 
 1. Establish intent before judging the code:
    - read the relevant backlog item, issue, PR description, commit messages, or nearby documentation
