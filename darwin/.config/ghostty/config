@@ -3,28 +3,28 @@ font-size = 16
 font-family = "Fira Code"
 macos-titlebar-style = tabs
 macos-titlebar-proxy-icon = hidden
-palette = 0=#111111
+palette = 0=#2a2a2a
 palette = 1=#ff0000
 palette = 2=#00ff00
 palette = 3=#ffff00
-palette = 4=#00aaff
+palette = 4=#008ed6
 palette = 5=#ff5faf
 palette = 6=#00ffcc
-palette = 7=#cccccc
-palette = 8=#666666
+palette = 7=#d0d0d0
+palette = 8=#858585
 palette = 9=#ff0000
 palette = 10=#00ff00
 palette = 11=#ffff00
-palette = 12=#00aaff
+palette = 12=#33b5ff
 palette = 13=#ff5faf
 palette = 14=#00ffcc
-palette = 15=#ffffff
-background = #050505
-foreground = #cccccc
+palette = 15=#f2f2f2
+background = #121212
+foreground = #d0d0d0
 cursor-color = #00ff00
-cursor-text = #050505
-selection-background = #333333
-selection-foreground = #cccccc
+cursor-text = #121212
+selection-background = #2a2a2a
+selection-foreground = #f2f2f2
 
 # Window
 window-padding-x = 12
@@ -33,8 +33,8 @@ window-padding-balance = true
 window-height = 50
 window-width = 80
 window-theme = dark
-background-opacity = 0.90
-background-blur = macos-glass-regular
+background-opacity = 1
+background-blur = false
 
 # Quick terminal
 quick-terminal-position = left
