@@ -30,7 +30,7 @@ Write the final draft in my voice:
 
 - Succinct and direct: one sentence per point where possible. No praise language, no hedging, no filler.
 - NO emdashes.
-- When a concern rests on an assumption or missing context, pose it as an honest question the author can answer, not an assertion.
+- If a comment is feedback for the PR author, phrase it as exactly one sincere question they can answer or push back on. Do not stack multiple questions in one comment; for blockers, ask one direct question that names the concern.
 
 ## Rules
 
