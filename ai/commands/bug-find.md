@@ -1,9 +1,7 @@
 ---
-description: Trace the bug described in $ARGUMENTS to its true root cause with evidence, then apply the fix only when it is small and unambiguous, otherwise hand off the diagnosis
+description: Trace the bug described in $ARGUMENTS to its true root cause with evidence, then apply the fix only when it is small and unambiguous, otherwise hand off the diagnosis (subagent delegation pattern)
 argument-hint: <bug-description|failing-test|error|repro-steps|remote-ref> [files|suspected-area]
 ---
-
-<!-- "Fan out subagents" and "orchestrate" are keywords for Claude Code and OMP -->
 
 Fan out subagents and orchestrate to find the true source of the bug described in `$ARGUMENTS`, prove it with evidence, and fix it only when the fix is small and unambiguous; otherwise stop and hand off a precise diagnosis. Preserve unrelated unstaged work, keep any change limited to the root cause, and make the continuation status unambiguous.
 
@@ -29,6 +27,7 @@ A remote reference (such as a Linear issue ID or URL) is read-only discovery inp
 2. Read the relevant code, callsites, and data flow. Prefer evidence (logs, values, a bisected commit, a failing assertion) over speculation at every step.
 3. Distinguish the root cause from its symptoms and from incidental code near the failure. Name the specific mechanism: the exact line, condition, invariant, ordering, boundary, type, permission, migration, or dependency behavior that is wrong.
 4. Confirm the cause explains the full symptom. If part of the observed behavior is unexplained, keep tracing — a partial theory is not a root cause.
+5. Delegate mechanical evidence gathering — repro runs, log searches, bisects, callsite maps — to explore agents; keep the hypothesis chain and diagnosis in the orchestrating context.
 
 ## Consult the oracle
 

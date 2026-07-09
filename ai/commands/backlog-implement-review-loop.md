@@ -3,8 +3,6 @@ description: Run one pass of the backlog implement→review loop — implement o
 argument-hint: <backlog-files|remote-refs> [item-ids|titles|ranges]
 ---
 
-<!-- "Fan out subagents" and "orchestrate" are keywords for Claude Code and OMP -->
-
 Fan out subagents and orchestrate to run one pass of the backlog implementation/review loop for `$ARGUMENTS`, commit any task-related change, and leave a concise handoff for the next pass.
 
 This command alternates between two states for each backlog item:
@@ -142,6 +140,7 @@ Before editing:
 Parallelization:
 
 - Fan out subagents for independent file areas, tests, UI, migrations, or investigation.
+- Use explore agents for read-only discovery and evidence gathering; keep the orchestrating context for decisions, synthesis, and shared-interface coordination.
 - Give each subagent the exact target, scope boundaries, acceptance criteria, and non-goals.
 - Do not serialize work that can safely happen in parallel.
 - Run formatting, linting, and broad validation once at the end unless a smaller check is needed to unblock a subagent.
@@ -170,6 +169,8 @@ After implementation:
 Use this path when the target item appears already implemented, either from a previous pass, existing commits, or current task-related changes.
 
 Review process:
+
+Fan out explore agents to map files, callsites, and data flows, and cheap finder subagents per dimension (correctness, security, performance, maintainability) to surface candidate findings; judge, verify, and synthesize the findings in the orchestrating context.
 
 1. Establish intent before judging the code:
    - read the relevant backlog item, issue, PR description, commit messages, or nearby documentation

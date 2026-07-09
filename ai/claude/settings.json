@@ -3,7 +3,8 @@
   "permissions": {
     "defaultMode": "auto"
   },
-  "model": "opus[1m]",
+  "model": "best",
+  "fallbackModel": ["opus", "sonnet"],
   "statusLine": {
     "type": "command",
     "command": "bash ~/.claude/statusline-command.sh"

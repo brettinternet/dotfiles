@@ -1,5 +1,5 @@
 ---
-description: Read-only draft PR review — summary plus at most 4 priority findings, nothing posted to GitHub
+description: Read-only draft PR review — summary plus at most 4 priority findings, nothing posted to GitHub (subagent delegation pattern)
 argument-hint: <pr-number|url>
 ---
 

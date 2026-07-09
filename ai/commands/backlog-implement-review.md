@@ -1,9 +1,7 @@
 ---
-description: Review an implementation for correctness, security, performance, and maintainability; fix valid findings and commit
+description: Review an implementation for correctness, security, performance, and maintainability; fix valid findings and commit (subagent delegation pattern)
 argument-hint: <branch|pr|commit-range|files|backlog-item|remote-ref>
 ---
-
-<!-- "Fan out subagents" and "orchestrate" are keywords for Claude Code and OMP -->
 
 Fan out subagents and orchestrate to review my implementation of `$ARGUMENTS` for code quality, security, performance, maintainability, and whether it actually solves the intended work. Commit any fixes.
 
@@ -22,6 +20,8 @@ The oracle agent is advisory and read-only. It must not edit code, mutate backlo
 Accept an oracle `RESUME` recommendation only when the reviewing agent can verify it from backlog text, existing repo patterns, dependency docs, or test evidence. The oracle may return a proposed item-local patch, but backlog sources are read-only for this command: after verifying the patch, record it in the report or handoff as a recommended marker change instead of applying it. A valid patch may only clear a stale `blocked:` marker or replace it with an updated `blocked:` marker when the blocker still applies. It must not add a durable oracle/unblock lifecycle state, rewrite acceptance criteria, mark the item complete/reviewed, or update remote backlog state. Re-run review state selection from current evidence; if the blocker still matches, keep the `blocked:` recommendation and record the oracle reasoning only in the report or handoff.
 
 Review process:
+
+Fan out explore agents to map files, callsites, and data flows, and cheap finder subagents per dimension (correctness, security, performance, maintainability) to surface candidate findings; judge, verify, and synthesize the findings in the orchestrating context.
 
 1. Establish intent before judging the code:
    - read the relevant backlog item, issue, PR description, commit messages, or nearby documentation
