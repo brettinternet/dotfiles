@@ -3,6 +3,7 @@ input=$(cat)
 
 cwd=$(echo "$input" | jq -r '.workspace.current_dir // .cwd')
 model=$(echo "$input" | jq -r '.model.display_name')
+effort=$(echo "$input" | jq -r '.effort.level // empty')
 used=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
 added=$(echo "$input" | jq -r '.cost.total_lines_added // 0')
 removed=$(echo "$input" | jq -r '.cost.total_lines_removed // 0')
@@ -75,6 +76,7 @@ if [ "$added" -gt 0 ] || [ "$removed" -gt 0 ]; then
 fi
 [ -n "$server" ] && parts+=("$server")
 parts+=("$(printf '\033[90m%s\033[0m' "$model")")
+[ -n "$effort" ] && parts+=("$(printf '\033[90m%s\033[0m' "$effort")")
 [ -n "$used" ] && [ "$used" != "null" ] && parts+=("$(printf '\033[90m%s%%\033[0m' "$(printf '%.0f' "$used")")")
 
 # Pad a little from the left so the line breathes.
