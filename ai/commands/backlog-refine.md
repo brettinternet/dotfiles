@@ -3,7 +3,7 @@ description: Refine backlog items into implementation-ready work for a lesser co
 argument-hint: <backlog-file|remote-refs> [item-ids|titles|ranges]
 ---
 
-Fan out subagents and orchestrate to refine the backlog items in `$ARGUMENTS` into implementation-ready work for a lesser coding agent, then commit changes.
+Refine the backlog items in `$ARGUMENTS` into implementation-ready work for a lesser coding agent, then commit changes.
 
 Your goal is to make every refined item 100% ready for development: resolve the item's own open questions during refinement instead of handing them off. Investigate the repository, backlog, issue, product, and design context, decide each open question, and record the decision with its supporting evidence and rationale. Only escalate a question you genuinely cannot resolve — one that depends on information outside all available context and cannot be settled by a defensible default.
 
@@ -67,7 +67,7 @@ For each backlog item:
 6. Keep tasks outcome-focused. Do not over-prescribe implementation unless the repo already has a clear matching pattern.
 7. Resolve every open question and eliminate blockers before making an item available. "Available to begin" means a lesser coding agent can start and complete the item without asking product, design, or architecture questions; without discovering unknown dependencies; and without relying on unresolved assumptions.
    - Actively investigate to answer each open question: read the surrounding backlog, the repository code and conventions, the linked issue, and any product or design context. Prefer an answer that is already explicit in that context.
-   - Fan out explore agents for the investigation legwork — repo conventions, callsites, linked issues, prior art — and keep the decisions and recorded rationale in the orchestrating context.
+   - Fan out subagents and orchestrate explore agents for the investigation legwork — repo conventions, callsites, linked issues, prior art — and keep the decisions and recorded rationale in the orchestrating context.
    - When no explicit answer exists but a defensible choice can be made, decide it yourself using the repository's established patterns and the item's product intent as the default. Record the decision, the evidence or pattern it follows, and a one-line rationale so the implementer inherits a settled choice, not a question.
    - Before recording a defensible-default decision on a consequential architecture or product question — one that is hard to reverse or that shapes multiple downstream items — consult the oracle agent for a second opinion on the tradeoff, and record its input alongside your rationale. This is proactive design input, separate from escalating a blocker.
    - When an open question implies prerequisite work, split that work into an earlier ready item with concrete acceptance criteria and order it ahead, so the dependent item still reaches ready.

@@ -3,7 +3,7 @@ description: Run one pass of the backlog implement→review loop — implement o
 argument-hint: <backlog-files|remote-refs> [item-ids|titles|ranges]
 ---
 
-Fan out subagents and orchestrate to run one pass of the backlog implementation/review loop for `$ARGUMENTS`, commit any task-related change, and leave a concise handoff for the next pass.
+Run one pass of the backlog implementation/review loop for `$ARGUMENTS`, commit any task-related change, and leave a concise handoff for the next pass.
 
 This command alternates between two states for each backlog item:
 
@@ -139,7 +139,7 @@ Before editing:
 
 Parallelization:
 
-- Fan out subagents for independent file areas, tests, UI, migrations, or investigation.
+- Fan out subagents and orchestrate executor subagents for independent, well-specified file areas, tests, UI, or migrations.
 - Use explore agents for read-only discovery and evidence gathering; keep the orchestrating context for decisions, synthesis, and shared-interface coordination.
 - Give each subagent the exact target, scope boundaries, acceptance criteria, and non-goals.
 - Do not serialize work that can safely happen in parallel.
