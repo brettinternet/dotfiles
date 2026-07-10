@@ -8,7 +8,7 @@ modelRoles:
   task: anthropic/claude-sonnet-4-6:medium
   commit: openai-codex/gpt-5.4-mini:low
   plan: anthropic/claude-opus-4-8:high
-  advisor: openai-codex/gpt-5.6-terra:medium
+  advisor: openai-codex/gpt-5.6-luna:high
   title: openai-codex/gpt-5.4-mini:low
 commands:
   enableOpencodeUser: false
