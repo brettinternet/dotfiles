@@ -7,6 +7,3 @@ gitleaks = "latest"
 lefthook = "latest"
 shellcheck = "latest"
 task = "latest"
-
-[settings]
-disable_backends = ["asdf"]
