@@ -65,6 +65,9 @@
     # Codex
     ~/.codex/AGENTS.md:
       path: ai/AGENTS.md
+    ~/.codex/prompts/:
+      glob: true
+      path: ai/commands/*
     # pi
     # OMP already reads ~/.claude/CLAUDE.md
     ~/.omp/agent/config.yml:
