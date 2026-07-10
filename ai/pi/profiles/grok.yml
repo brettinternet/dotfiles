@@ -1,0 +1,11 @@
+modelRoles:
+  default: xai-oauth/grok-4.5:medium
+  smol: xai-oauth/grok-4.5:medium
+  slow: xai-oauth/grok-4.5:xhigh
+  designer: xai-oauth/grok-4.5:xhigh
+  vision: xai-oauth/grok-4.5:high
+  task: xai-oauth/grok-4.5:xhigh
+  commit: xai-oauth/grok-4.5:low
+  plan: xai-oauth/grok-4.5:high
+  advisor: xai-oauth/grok-4.5:high
+  title: xai-oauth/grok-4.5:low
