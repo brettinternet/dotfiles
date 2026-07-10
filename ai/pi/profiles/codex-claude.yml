@@ -1,15 +1,15 @@
 ---
 modelRoles:
   default: anthropic/claude-opus-4-8:medium
-  smol: openai-codex/gpt-5.4-mini:low
+  smol: openai-codex/gpt-5.6-luna:medium
   slow: anthropic/claude-opus-4-8:xhigh
   designer: anthropic/claude-opus-4-8:xhigh
   vision: openai-codex/gpt-5.6-sol:high
   task: anthropic/claude-sonnet-4-6:medium
-  commit: openai-codex/gpt-5.4-mini:low
+  commit: openai-codex/gpt-5.6-luna:low
   plan: anthropic/claude-opus-4-8:high
   advisor: openai-codex/gpt-5.6-luna:high
-  title: openai-codex/gpt-5.4-mini:low
+  title: openai-codex/gpt-5.6-luna:low
 commands:
   enableOpencodeUser: false
   enableOpencodeProject: false
