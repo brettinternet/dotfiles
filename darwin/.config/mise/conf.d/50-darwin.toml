@@ -16,8 +16,6 @@ biome = "latest"
 claude = "latest"
 opencode = "latest"
 codex = "latest"
-"npm:ocx" = "latest"
-"npm:@rynfar/meridian" = "latest"
 "github:can1357/oh-my-pi" = "latest"
 ast-grep = "latest"
 
