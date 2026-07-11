@@ -66,6 +66,7 @@ gh pr view <N> --json files,additions,deletions,commits
 ```
 
 Review the actual changes with the lens of: correctness, regressions, breaking changes, security, and whether the tests cover the new/changed behavior. Read the surrounding code in the repo when context is needed — use `read`/`grep` to ground your review, don't review blind.
+When available, apply the `implementation-review` skill as the shared review method. This command's new-commit scope, read-only boundary, posting policy, voice, and oracle cap override the skill.
 
 ### 4. Consult the oracle for load-bearing review decisions
 

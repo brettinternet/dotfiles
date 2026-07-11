@@ -30,6 +30,7 @@ Make at most one oracle consultation in the review. Gather repository evidence f
 Accept an oracle `RESUME` recommendation only when the reviewing agent can verify it from backlog text, existing repo patterns, dependency docs, or test evidence. The oracle may return a proposed item-local patch, but backlog sources are read-only for this command: after verifying the patch, record it in the report or handoff as a recommended marker change instead of applying it. A valid patch may only clear a stale `blocked:` marker or replace it with an updated `blocked:` marker when the blocker still applies. It must not add a durable oracle/unblock lifecycle state, rewrite acceptance criteria, mark the item complete/reviewed, or update remote backlog state. Re-run review state selection from current evidence; if the blocker still matches, keep the `blocked:` recommendation and record the oracle reasoning only in the report or handoff.
 
 Review process:
+When available, apply the `implementation-review` skill as the shared review method. This command's scope, subagent budget, fix authority, read-only backlog policy, verification, and integration rules override the skill; the checklist below remains the fallback.
 
 Review directly unless the implementation has materially large, independent surfaces. When delegation is justified, use at most two `explore` agents within the budget above to map or review bounded subsystems; the active agent must still inspect the complete diff, validate every candidate finding, and synthesize the result.
 

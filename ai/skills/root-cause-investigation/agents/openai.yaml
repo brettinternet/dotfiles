@@ -1,0 +1,6 @@
+interface:
+  display_name: "Root cause investigation"
+  short_description: "Reproduce a failure and prove its first causal divergence"
+  default_prompt: "Use $root-cause-investigation to diagnose the supplied bug, failing test, error, or incorrect runtime behavior."
+policy:
+  allow_implicit_invocation: true

@@ -7,6 +7,7 @@ Switch to plan mode (or otherwise operate strictly read-only). Do not make any c
 
 Review PR $ARGUMENTS using `gh pr view` and `gh pr diff`.
 Look up the linked Linear, Jira, or GitHub issue where possible using the branch name or PR comments to get full context.
+When available, apply the `implementation-review` skill as the shared review method. This command's read-only boundary, priority threshold, output cap, and voice rules override the skill.
 
 ## Consult the oracle for load-bearing review decisions
 
