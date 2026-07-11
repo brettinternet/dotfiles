@@ -1,6 +1,6 @@
 # AI agent setup
 
-Shared config for Claude Code (`~/.claude`), oh-my-pi (`~/.omp`), and Codex, linked by [`ai.yaml`](../ai.yaml). `AGENTS.md` is the global instruction file for all three; `commands/` are shared slash commands (OMP reads Claude user commands, while install generates explicit-only `$command-name` Codex skills from them and adapts their argument placeholders); agent definitions are duplicated per tool in `claude/agents/` and `pi/agents/` — identical body, per-tool frontmatter (`model`/`effort` vs `model: pi/<role>`/`thinking-level`).
+Shared config for Claude Code (`~/.claude`), oh-my-pi (`~/.omp`), and Codex, linked by [`ai.yaml`](../ai.yaml). `AGENTS.md` is the global instruction file for all three; `commands/` are shared slash commands (OMP reads Claude user commands, while install generates explicit-only `$command-name` Codex skills from them and adapts their argument placeholders); agent definitions are duplicated per tool in `claude/agents/` and `pi/agents/` — identical body, per-tool frontmatter (`model`/`effort` vs `model: pi/<role>`/`thinking-level`). Codex profiles are generated from the Claude definitions with role-specific Codex model mappings: Sol/xhigh for oracle, Luna/high for executor and verifier, and Luna/low for PR watching.
 
 ## Orchestration strategy
 
