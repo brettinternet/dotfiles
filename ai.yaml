@@ -47,6 +47,10 @@
       description: Generate explicit-only Codex skills from shared commands
       stdout: true
       stderr: true
+    - command: ai/.bin/install-codex-agents
+      description: Generate Codex agent profiles from Claude agent definitions
+      stdout: true
+      stderr: true
 
 - link:
     ~/.bin/:
