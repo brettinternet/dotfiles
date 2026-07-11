@@ -1,0 +1,6 @@
+interface:
+  display_name: "Backlog implement review loop workflow"
+  short_description: "Run one explicit backlog loop pass with exact state and handoff"
+  default_prompt: "Use $backlog-implement-review-loop-workflow with the backlog sources and selectors for one explicit workflow pass."
+policy:
+  allow_implicit_invocation: false

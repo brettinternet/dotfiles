@@ -1,6 +1,6 @@
 # AI agent setup
 
-Shared config for Claude Code (`~/.claude`), oh-my-pi (`~/.omp`), and Codex, linked by [`ai.yaml`](../ai.yaml). `AGENTS.md` is the global instruction file for all three; `commands/` are shared slash commands (OMP reads Claude user commands, while install generates explicit-only `$command-name` Codex skills from them and adapts their argument placeholders); agent definitions are duplicated per tool in `claude/agents/` and `pi/agents/` — identical body, per-tool frontmatter (`model`/`effort` vs `model: pi/<role>`/`thinking-level`). Codex profiles are generated from the Claude definitions with role-specific Codex model mappings: Sol/xhigh for oracle, Luna/high for executor and verifier, and Luna/low for PR watching.
+Shared config for Claude Code (`~/.claude`), oh-my-pi (`~/.omp`), and Codex, installed by [`ai.yaml`](../ai.yaml). `AGENTS.md` is the global instruction file for all three. `commands/` contains shared slash-command entrypoints: OMP reads the Claude commands, while `install-codex-command-skills` generates explicit-only Codex adapters and translates their argument placeholders. Authored `skills/` packages are linked unchanged to all three tools. Agent definitions are duplicated per tool in `claude/agents/` and `pi/agents/` with identical bodies and per-tool frontmatter; Codex profiles are generated from the Claude definitions with role-specific Codex model mappings.
 
 ## Orchestration strategy
 
@@ -27,8 +27,17 @@ The complete find/do/check/judge/watch loop. No tester (executor writes tests, v
 
 - **Role + tier**: agent frontmatter — never inherited from the session.
 - **Policy** (when to delegate/escalate/verify, the two-failure escalation ladder, don't-delegate list, subagent guard): `AGENTS.md` § Subagents, one source for all tools.
-- **Workflow shape**: `commands/*.md`, referencing agents by role name only, model-agnostic.
+- **Workflow entrypoints**: `commands/*.md`, referencing agents by role name only and remaining model-agnostic.
+- **Reusable workflow methods**: `skills/*/SKILL.md` plus optional references, templates, scripts, and source-controlled tool metadata.
 - **Orchestrator tier**: chosen per session; the oracle nudge is the safety net when starting cheap.
+
+## Commands and authored skills
+
+- Keep command files as explicit workflow entrypoints. Codex receives generated command adapters; Claude and OMP use the shared command files directly.
+- Keep authored skills under `ai/skills/<distinct-name>/`. `ai.yaml` links each package to `~/.claude/skills/` and `~/.agents/skills/`, and links the common directory to `~/.omp/agent/skills`.
+- `install-codex-command-skills [commands-dir] [codex-skills-dir] [authored-skills-dir]` generates only Codex command adapters. Its third argument defaults to `ai/skills` and is used to reject command/authored-skill name collisions before any generated output is written.
+- A command adapter and an authored skill must not share a name: Claude exposes commands and skills on the same slash-command surface, and Codex stores both in its skills directory. Use a descriptive companion name such as `backlog-implement-review-loop-workflow`.
+- Keep optional Codex `agents/openai.yaml` metadata inside each authored skill package so the existing links carry it unchanged. The command installer never edits authored packages.
 
 ## Harness delegation triggers
 

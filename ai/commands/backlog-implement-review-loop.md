@@ -174,6 +174,7 @@ After implementation:
 Use this path only after the current item's implementation sweep is complete. Review its entire accumulated implementation together. When multiple scoped items are already fully implemented but unreviewed, include all safely batchable items in this single pass to avoid one review loop per item.
 
 Review process:
+When available, apply the `implementation-review` skill as the shared review method. This command's scope, subagent budget, fix authority, marker rules, verification, and integration policy override the skill; the checklist below remains the fallback.
 
 Review directly when the accumulated diff is small or tightly coupled. For a materially large batch spanning independent subsystems, use at most two `explore` agents within the shared pass budget, partitioned by subsystem or risk-bearing data flow. Do not spawn separate agents for correctness, security, performance, and maintainability; each delegated review applies every relevant lens to its bounded scope. The active agent must still read the complete accumulated diff, judge and verify candidate findings, check cross-system interactions, and synthesize the result.
 
