@@ -1,5 +1,5 @@
 ---
-description: Implement the next open backlog items in an isolated worktree with parallel subagents, verify, commit, and integrate per the repo's flow (merge to local main or open a PR) (subagent escalation pattern)
+description: Implement the next open backlog items in an isolated worktree, verify independently, commit, and integrate per the repo's flow
 argument-hint: <backlog-file|remote-refs> [item-ids|titles|ranges]
 ---
 
@@ -43,14 +43,14 @@ Before editing:
 4. Confirm the item is small enough to complete safely. If it is oversized, split only the execution plan; do not silently shrink the requested acceptance.
 5. Create or switch to an isolated worktree/subtree for the implementation so local user work is not disturbed.
 
-Parallelization:
+Subagent budget:
 
-- Fan out subagents and orchestrate executor subagents for independent, well-specified file areas, tests, UI, or migrations.
-- Use explore agents for read-only discovery and evidence gathering; keep the orchestrating context for decisions, synthesis, and shared-interface coordination.
-- Give each subagent the exact target, scope boundaries, acceptance criteria, and non-goals.
-- Do not serialize work that can safely happen in parallel.
-- Coordinate shared interfaces before parallel edits when tasks touch the same API, schema, type, or command.
-- Run formatting, linting, and broad validation once at the end unless a smaller check is needed to unblock a subagent.
+- Default to direct implementation. A small item, a tightly coupled change, or work in one subsystem does not justify delegation.
+- Delegate within this budget only when the scoped work has materially substantial, independent branches; otherwise implement directly.
+- Use at most four subagents for the entire invocation: no more than two `explore` or `executor` workers combined, one final batched `verifier` covering all completed items, and at most one `oracle` consultation when an explicit trigger below is met. This is a total budget, not a concurrency limit; do not replace finished agents with new ones.
+- Delegate only materially substantial, independent work whose target, acceptance criteria, and non-goals can be specified up front. Use an `explore` agent only when the relevant surface is genuinely unknown or spans independent subsystems; use an `executor` only for a disjoint file area with settled interfaces.
+- Keep shared-interface changes, small lookups, tests coupled to an implementation, decisions, synthesis, and integration in the active agent. Do not create one agent per backlog item, file, acceptance criterion, or test.
+- If more work is parallelizable than the budget permits, delegate the highest-risk or highest-latency branches and perform the rest directly. Run formatting, linting, and broad validation once at the end unless a smaller check is needed to unblock implementation.
 
 Implementation rules:
 
@@ -61,8 +61,8 @@ Implementation rules:
 - Add or update tests for behavior, edge cases, and failure modes implied by the item.
 - Hard anti-blocking rule: failed checks, item-scoped verification failures, missing required code, and flaky or outdated tests caused by or required for the current backlog item are implementation work to resolve immediately. Fix them in-repo, update code/tests/fixtures/config as needed, and rerun targeted verification; unrelated failures or dirty changes may be ignored only after recording why they are unrelated to `$ARGUMENTS`; stop only for a truly external product decision, unavailable dependency, or unsafe ambiguity after exhausting repo fixes and the oracle check.
 - If product information is missing, implement everything not blocked and record the exact remaining decision instead of guessing.
-- Before committing to a new architectural pattern or choosing between materially different designs, consult the oracle agent for a second opinion on the tradeoff. This is proactive design input, separate from the blocker escalation below.
-- Before raising any notable blocker, missing product decision, failed acceptance, risky ambiguity, or inability to proceed to the user, consult the oracle agent for a second opinion on whether the blocker is real and whether there is a safe implementation path. If the oracle agent confirms or cannot resolve it, explicitly report it as a human-required blocker.
+- Use the one optional oracle consultation only after gathering repository evidence, and only for consequential, hard-to-reverse design tradeoffs or a possible genuine external blocker. Batch related questions; do not consult for ordinary choices or routine check failures.
+- Before reporting a human-required blocker, include the exact blocker, attempted paths, and evidence in that consultation. Report it as human-required only if no safe, repo-evidenced path remains.
 
 Completion criteria:
 
@@ -76,7 +76,7 @@ Completion criteria:
 Verification:
 
 - Use the smallest targeted verification loop that proves the change: specific tests, typecheck, lint, build, migration check, browser QA, or manual scenario as appropriate.
-- Before marking an item complete, run the verifier agent with the item's acceptance criteria and the implementation commits — not your conclusions — and treat any FAIL or UNVERIFIED criterion as open work.
+- Before marking any item complete, run one final verifier agent over every item completed in this invocation, with each item's acceptance criteria and implementation commits — not your conclusions — and treat any FAIL or UNVERIFIED criterion as open work.
 - Re-run targeted verification after fixes. If verification fails, diagnose the root cause, fix all in-scope code/tests/checks in-repo, and rerun before reporting a blocker; if the failure is unrelated to the current item, record the evidence and continue with targeted verification.
 - Unrelated failing tests or unrelated dirty changes do not block finishing the item or reporting it complete; note them separately, and do not fix or commit them as part of this work.
 - Do not claim project-wide health unless project-wide checks were actually run.
