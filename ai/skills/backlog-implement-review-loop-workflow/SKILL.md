@@ -1,6 +1,6 @@
 ---
 name: backlog-implement-review-loop-workflow
-description: Run the explicit one-pass backlog IMPLEMENT, REVIEW, BLOCKED, or ARCHIVE state machine with exact markers and handoff state. Use only when the user invokes this workflow or asks to continue an existing backlog implementation-review loop; do not use for ordinary feature implementation or ad hoc review.
+description: Run the explicit one-pass backlog IMPLEMENT, REVIEW, BLOCKED, or ARCHIVE state machine with durable item state and a reproducible handoff. Use only when the user invokes this workflow or asks to continue an existing backlog implementation-review loop; do not use for ordinary feature implementation or ad hoc review.
 disable-model-invocation: true
 ---
 
@@ -24,13 +24,15 @@ During `REVIEW`, apply the `implementation-review` skill. The current workflow's
 ## Non-negotiable invariants
 
 - One invocation performs one `IMPLEMENT`, `REVIEW`, `BLOCKED`, or `ARCHIVE` pass; it is not an internal forever loop.
-- `IMPLEMENT` completes exactly one next coherent task in the first eligible scoped item.
+- `IMPLEMENT` completes exactly one next refined coherent task in the first eligible scoped item; one invocation never advances to the next implementation task.
+- Refinement owns task sizing: one task bundles inseparable behavior, required callsites, fixtures/migrations, and proving tests. Repair clearly unrefined or oversized local tasks durably before coding; send remote-only sizing back through `backlog-refine`. Never use an unnamed internal slice.
 - `REVIEW` runs only after that item's implementation sweep is complete and covers its complete accumulated implementation. It may batch other fully implemented, unreviewed scoped items when safe.
 - Do not alternate implementation and review after every task.
 - A review-fix commit is covered by the same review pass; do not schedule a review of the review.
 - Preserve supplied source order and skip a blocked item only while its evidence-backed blocker marker remains valid.
 - Work directly by default. Use at most two bounded `explore`/`executor` workers plus one oracle consultation in a pass, and never refill the budget.
 - The active agent owns state selection, shared interfaces, decisions, synthesis, marker edits, integration, and handoff.
+- Writable backlog item state is authoritative for local sources; authorized item comments are authoritative for remote-only sources. Handoff reproduces durable state and is never its only store.
 - Preserve unrelated user work and commit only task-related changes.
 
 If the invocation supplies no resolvable backlog source or remote item, stop with the exact missing input instead of guessing.
