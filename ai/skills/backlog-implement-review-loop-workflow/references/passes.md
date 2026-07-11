@@ -9,6 +9,7 @@ Before editing:
 1. Isolate work from unrelated user changes when the repository flow requires a worktree/subtree.
 2. Read existing patterns, callsites, tests, migrations, and UI/API behavior needed by the selected task.
 3. Settle shared interfaces before delegating disjoint work.
+4. Confirm the selected task is a refined coherent outcome. Repair and commit clearly unrefined/oversized writable local task boundaries before coding; stop and invoke `backlog-refine` for remote-only sizing repairs.
 
 Execute:
 
@@ -21,9 +22,9 @@ Execute:
 Finish:
 
 1. Run the smallest targeted verification that proves the task.
-2. Record task completion in the writable source; retain remote-only task state in the handoff.
-3. Commit implementation and task-state changes together with a concise message.
-4. Hand off `IMPLEMENT` with the exact next task while any task remains; otherwise hand off `REVIEW` with every accumulated implementation commit, changed file, criterion, and verification result.
+2. Commit the coherent implementation. Record its task name, implementation commit, verification result, current `in-progress` or `review-pending` status, exact next task or `REVIEW`, and remaining acceptance criteria in the writable backlog item. When the implementation commit cannot be named in the same commit, immediately create one state-only commit naming it.
+3. For a remote-only item, post the equivalent canonical `implemented:` comment. If write-back fails, do not claim the pass complete or substitute handoff state.
+4. Hand off `IMPLEMENT` with the exact next task while any task remains; otherwise persist and hand off `REVIEW` with every accumulated implementation commit, changed file, criterion, and verification result. Never begin the next implementation task in this invocation.
 
 ## REVIEW
 
@@ -48,9 +49,9 @@ Finish:
 
 1. Run targeted verification covering the complete reviewed/fixed behavior.
 2. Commit review fixes once. Treat that verified commit as covered by this review pass.
-3. Write one item-local marker per clean item naming its implementation commit set and review-fix commit, if any.
-4. Commit writable marker/completion state separately; this state-only commit does not invalidate the marker.
-5. Integrate only after all tasks, criteria, verification, and marker requirements are satisfied.
+3. Write one item-local `status: complete; remaining: none; reviewed:` marker per clean item naming its implementation commit set and review-fix commit, if any. Post it as a comment for a remote-only item; handoff-only markers are invalid.
+4. Commit writable marker/completion state separately; this state-only commit does not invalidate the marker. If remote marker write-back fails, leave the item incomplete.
+5. Integrate only after all tasks, criteria, verification, durable marker, and completion requirements are satisfied.
 
 ## BLOCKED
 
@@ -58,11 +59,11 @@ Use this state only after safe work, repository investigation, in-scope fixes, a
 
 - Complete and verify all unblocked acceptance criteria first.
 - Do not mark the item complete.
-- Write or report one exact `blocked:` marker with reason, tried path, and concrete unblock condition.
+- Write one exact durable `status: blocked; blocked:` marker with reason, tried path, concrete unblock condition, and remaining acceptance criteria. Commit it in a writable local item or post it as a remote-only item comment; do not substitute handoff state.
 - Commit only coherent, useful work.
 - Continue to the next eligible scoped item instead of repeatedly selecting the same valid blocker.
 - If every remaining item has a valid blocker, report the human-required blocker queue with `NEXT CONTEXT REQUIRED`.
 
 ## ARCHIVE
 
-Archive only writable local backlog sources and only according to an established repository convention. For remote-only sources, apply the authorized done/merged transition through the first-party tool or report why that status could not be expressed. Never create archive/spec Markdown solely for remote state.
+Archive only writable local backlog sources and only according to an established repository convention. For each remote-only source, first post its required durable `status: complete; remaining: none` review marker, then apply the authorized done/merged transition through the first-party tool when supported. Failed marker write-back leaves `NEXT CONTEXT REQUIRED`; an unsupported workflow transition is reported separately. Never create archive/spec Markdown solely for remote state.

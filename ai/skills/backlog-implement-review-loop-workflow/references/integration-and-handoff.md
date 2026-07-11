@@ -24,11 +24,11 @@ When no flow is declared, use a pull request for a protected/shared remote or wh
 
 ## Completion and archive
 
-A scoped item is complete only when all tasks and acceptance criteria are implemented, targeted verification passes, the exact final implementation state has a valid review marker, required commits exist, and integration is complete.
+A scoped item is complete only when all tasks and acceptance criteria are implemented, targeted verification passes, the exact final implementation state has a valid durable `status: complete; remaining: none` review marker, required commits exist, and integration is complete.
 
-Use `BACKLOG COMPLETE AND ARCHIVED` only when every scoped item across every supplied source meets that condition, writable local backlogs are archived per convention, and authorized remote-only status transitions are applied or explicitly reported as unsupported.
+Use `BACKLOG COMPLETE AND ARCHIVED` only when every scoped item across every supplied source meets that condition, writable local backlogs are archived per convention, and each remote-only item has its durable completion marker plus a done/merged transition when the first-party tool supports it. Report an unsupported workflow transition; a failed durable marker write leaves the item incomplete.
 
-Use `NEXT CONTEXT REQUIRED` whenever scoped work remains open, blocked, unreviewed, unintegrated, or unarchived.
+Use `NEXT CONTEXT REQUIRED` whenever scoped work remains open, blocked, unreviewed, unintegrated, unarchived, or lacks required durable state.
 
 ## Handoff requirements
 
@@ -37,11 +37,14 @@ Use [the handoff template](../templates/handoff.md). Include facts another fresh
 - resolved sources and source-order map
 - item/task or review batch processed
 - completed state and exact next state
+- authoritative local backlog entry or remote comment written, including status, completed task/commit, verification, exact next task/state, and remaining acceptance criteria
 - implementation, review-fix, marker, and integration commits
 - reviewed commit state and changed files
 - criteria/tasks verified and exact command results
 - remaining ordered work, blockers, risks, product decisions, and unrelated failures
 - oracle recommendation and whether it was accepted
 - exact next invocation
+
+Handoff must be reconstructible from the authoritative backlog entry or remote comments. Never use it to replace a failed or unavailable durable state write.
 
 Do not report a phase boundary as completion. The status line must reflect the entire supplied scope.
