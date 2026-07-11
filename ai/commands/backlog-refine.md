@@ -5,11 +5,11 @@ argument-hint: <backlog-file|remote-refs> [item-ids|titles|ranges]
 
 Refine the backlog items in `$ARGUMENTS` into implementation-ready work for a lesser coding agent, then commit changes.
 
-Your goal is to make every refined item 100% ready for development: resolve the item's own open questions during refinement instead of handing them off. Investigate the repository, backlog, issue, product, and design context, decide each open question, and record the decision with its supporting evidence and rationale. Only escalate a question you genuinely cannot resolve — one that depends on information outside all available context and cannot be settled by a defensible default.
+Your goal is to make every refined item's specification 100% ready for development and give it an honest execution status: available now, ready after a named prerequisite, or blocked only by a genuinely external or unresolved prerequisite. Resolve the item's own open questions during refinement instead of handing them off. Investigate the repository, backlog, issue, product, and design context, decide each open question, and record the decision with its supporting evidence and rationale. Only escalate a question you genuinely cannot resolve — one that depends on information outside all available context and cannot be settled by a defensible default.
 
 Treat `$ARGUMENTS` as the exact local backlog file, remote backlog references (such as Linear project identifiers, issue IDs, or issue URLs), item IDs, titles, or ranges to refine. Do not refine unrelated backlog.
 
-Before reading or editing backlog content, identify explicit file paths in `$ARGUMENTS` (do not treat backlog item IDs, titles, ranges, or remote backlog references as paths). Only verify paths that are actually listed in `$ARGUMENTS`; do not require or infer the presence of any other files. If a listed path does not exist, check for nearby existing paths only in path-like locations: the same directory or the same basename after a directory move/rename. Auto-substitute only when exactly one candidate is unambiguous and clearly adjacent; report the substitution to the user. Otherwise stop immediately and report the missing listed path(s) plus nearby candidate(s). Do not refine or commit anything when stopped.
+Before reading or editing backlog content, classify every path-shaped value in `$ARGUMENTS` as an explicit local backlog source or an implementation-context hint (do not treat backlog item IDs, titles, ranges, or remote backlog references as paths). Validate explicit local backlog sources left-to-right. If one does not exist, check only the same directory and the same basename after a directory move/rename; auto-substitute only one unambiguous, clearly adjacent candidate and report it. If the backlog source still cannot be resolved, stop and report it plus nearby candidates because there is no source to refine. Other explicit paths are discovery hints, not presence gates: try to resolve them, then carry any missing references into the triage below rather than stopping.
 
 ## Backlog storage policy
 
@@ -39,21 +39,37 @@ If the remote item changes later, refresh the pinned source first, then re-refin
 
 Local repo markdown backlogs remain first-class inputs. When `$ARGUMENTS` names local markdown backlog files, use them directly after path validation and modify them following their existing style. Local markdown that is not a writable backlog source is read-only context.
 
+## Missing implementation references
+
+A file or directory referenced by an item may be an existing path, a stale path, a generated artifact, an output of related work, or something the item must create. Its absence alone is never a blocker. For every missing implementation reference in a selected item or non-backlog `$ARGUMENTS` hint, triage it before assigning readiness:
+
+1. Search for the exact path, then use repository history and nearby path-like locations to find moves or renames. Update the item to an existing path only when the replacement is unambiguous; record the evidence for the correction.
+2. Inspect neighboring and linked backlog items, remote dependency relations, prerequisite tasks, repository conventions, and callsites to identify who owns the missing artifact and when it should exist. Do not assume the current item owns it merely because it names the path.
+3. Classify the reference and update the item accordingly:
+   - **Moved or renamed:** replace the stale reference with the resolved existing path.
+   - **Generated artifact:** name the source input, producer or generating command, and whether the artifact is committed; direct implementation to the producer rather than asking for hand-written generated output, and make acceptance verify generation plus downstream use.
+   - **Output of related work:** name the prerequisite item, its required artifact or interface contract, and the ordering. Reuse that work instead of duplicating creation in the current item; mark the current item ready after that prerequisite while it is incomplete.
+   - **Created by this item:** label the path as a new file or directory to create, state the responsibility and integration points it must contain, and add acceptance criteria and verification for its creation and use. Keep the item available to begin when no other dependency prevents it.
+   - **External or still unresolved:** record the evidence that no repository-owned item, generator, move, convention, or defensible item-local creation resolves it, then state the exact outside prerequisite and unblock condition.
+4. If ownership is not explicit, settle it from product boundaries and repository patterns. Assign directly necessary item-local creation to the current item; reuse or create an earlier independently verifiable prerequisite for a shared artifact. Do not invent a source file merely to satisfy a stale or speculative path.
+
+Only the final, evidence-backed external or unresolved case is a blocker. A known unfinished repository prerequisite is dependency-gated rather than ambiguous; a planned item-local file or generated artifact is implementation work, not a reason to stop refinement.
+
 For each backlog item:
 
 1. Read the existing backlog text and nearby context before editing.
 2. Preserve the product intent, but split vague or oversized work into small, independently executable tasks.
 3. Add enough implementation context for a lesser coding agent to start without follow-up questions:
-   - target files, components, commands, and existing patterns to inspect
+   - target files, components, commands, and existing patterns to inspect, with each path classified as existing to edit, new to create, generated by a named producer, or supplied by a named prerequisite
    - explicit non-goals and scope boundaries
-   - dependencies and required ordering, with prerequisite work split into earlier ready items when needed
+   - dependencies and required ordering, reusing named related work or splitting new prerequisite work into earlier ready items when needed
    - edge cases, data states, migrations, permissions, and failure modes
    - acceptance criteria that can be verified without guessing
    - the specific tests, checks, or manual QA expected
-   - a strict available-to-begin status: only items with all blockers, dependencies, decisions, risks, product questions, and assumptions resolved may be marked ready — resolve them during refinement so the item reaches this state rather than leaving it short
+   - an explicit execution status in the source's existing vocabulary: available to begin only when no incomplete prerequisite prevents a start; ready after a named item when the specification is complete but that repository-owned prerequisite is unfinished; blocked only for a genuinely external or unresolved prerequisite
    - an item-scoped implementation snapshot in that item's existing structure:
      - goal / product intent
-     - target file area, components, APIs, or data model involved
+     - target file area, components, APIs, or data model involved, including the disposition of every missing reference
      - resolved decisions and assumptions, with the source evidence or rationale used for each
      - open questions the item raised and how each was resolved, with the evidence or default reasoning behind the decision
      - last known validation or evidence from the backlog text, if any
@@ -65,19 +81,19 @@ For each backlog item:
    - one optional outstanding idea that is explicitly out of scope unless chosen
 5. Remove ambiguity, duplicated tasks, stale assumptions, and solution-shaped instructions that are not required.
 6. Keep tasks outcome-focused. Do not over-prescribe implementation unless the repo already has a clear matching pattern.
-7. Resolve every open question and eliminate blockers before making an item available. "Available to begin" means a lesser coding agent can start and complete the item without asking product, design, or architecture questions; without discovering unknown dependencies; and without relying on unresolved assumptions.
+7. Resolve every open question and eliminate unknown blockers before assigning execution status. "Available to begin" means a lesser coding agent can start and complete the item without asking product, design, or architecture questions; without waiting for a prerequisite; without discovering unknown dependencies; and without relying on unresolved assumptions. "Ready after `<item>`" means the item is fully specified and becomes available as soon as that named predecessor satisfies its recorded artifact or interface contract; it is not a blocked or ambiguous item.
    - Actively investigate to answer each open question: read the surrounding backlog, the repository code and conventions, the linked issue, and any product or design context. Prefer an answer that is already explicit in that context.
    - Fan out subagents and orchestrate explore agents for the investigation legwork — repo conventions, callsites, linked issues, prior art — and keep the decisions and recorded rationale in the orchestrating context.
    - When no explicit answer exists but a defensible choice can be made, decide it yourself using the repository's established patterns and the item's product intent as the default. Record the decision, the evidence or pattern it follows, and a one-line rationale so the implementer inherits a settled choice, not a question.
    - Before recording a defensible-default decision on a consequential architecture or product question — one that is hard to reverse or that shapes multiple downstream items — consult the oracle agent for a second opinion on the tradeoff, and record its input alongside your rationale. This is proactive design input, separate from escalating a blocker.
-   - When an open question implies prerequisite work, split that work into an earlier ready item with concrete acceptance criteria and order it ahead, so the dependent item still reaches ready.
-   - Escalate only a question you genuinely cannot resolve: one whose answer lives outside all available context (backlog, repo, issue, product, design) and cannot be settled by a defensible default without risking wrong or irreversible product behavior. For such a question, mark the affected item blocked/unavailable and state the exact missing decision needed; do not fabricate an answer.
-   - Do not describe any item with unresolved blockers, open product questions, unknown dependencies, ambiguous acceptance criteria, or latent assumptions as implementation-ready.
+   - When an open question implies prerequisite work, first look for related work that already owns it. Reuse and order after that item when found; otherwise split an earlier ready item with concrete acceptance criteria. Record the prerequisite ID and artifact or interface contract, and mark the dependent item ready after it rather than duplicating work or calling the dependency an unresolved blocker.
+   - Escalate only a question you genuinely cannot resolve: one whose answer or prerequisite lives outside all available context (backlog, repo, issue, product, design), is not owned by identifiable related work, and cannot be settled by a defensible default without risking wrong or irreversible product behavior. For such a question, mark the affected item blocked/unavailable and state the exact missing decision or external prerequisite needed; do not fabricate an answer.
+   - Do not describe any item with unresolved blockers, open product questions, unknown dependencies, ambiguous acceptance criteria, or latent assumptions as implementation-ready. A dependency-gated item may be implementation-ready only when its named predecessor and required output are exact; do not describe it as available to begin until that dependency is complete.
 
 After editing:
 
 - Verify the refined backlog still covers every item from `$ARGUMENTS`.
-- Perform a final readiness check for each refined item before committing: confirm every open question the item raised was resolved and recorded, and that every item marked available to begin has resolved evidence or rationale for scope, dependencies, decisions, assumptions, acceptance criteria, and verification.
-- Expect every item to reach implementation-ready. If a question survived only because it could not be resolved from any available context, list each such question in the output, identify the affected backlog item(s), state the exact missing decision, and confirm those item(s) were left blocked/unavailable rather than implementation-ready. Do not leave a question unresolved for any other reason.
+- Perform a final readiness check for each refined item before committing: confirm every open question and missing implementation reference was resolved and recorded, and that every item marked available to begin or ready after a named prerequisite has evidence or rationale for scope, reference disposition, dependencies, decisions, assumptions, acceptance criteria, and verification.
+- Expect every item's specification to reach implementation-ready, either available now or explicitly ordered after a fully defined repository prerequisite. If a question survived only because it could not be resolved from any available context, list each such question in the output, identify the affected backlog item(s), state the exact missing decision or external prerequisite, and confirm those item(s) were left blocked/unavailable rather than implementation-ready. Do not leave a question unresolved or mark a missing path blocked for any other reason.
 - Run only formatting or validation that applies to the edited backlog files.
 - Commit any local backlog changes with a concise message; when only remote items changed, state that there is nothing to commit.
