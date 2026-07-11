@@ -43,6 +43,10 @@
       description: Seed Claude Code settings as a local copy
       stdout: true
       stderr: true
+    - command: ai/.bin/install-codex-command-skills
+      description: Generate explicit-only Codex skills from shared commands
+      stdout: true
+      stderr: true
 
 - link:
     ~/.bin/:
