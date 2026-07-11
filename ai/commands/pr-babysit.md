@@ -82,6 +82,7 @@ threads before moving on.
   it report check results, failure log excerpts, and new feedback while you keep
   working. Fall back to the inline `gh` flow below when subagents aren't
   available.
+- Keep at most one watcher active for the selected PR and reuse it across the CI and reviewer-feedback phases; do not launch a new watcher for each poll, check, or thread.
 - `gh pr checks <n>` — inspect every check.
 - Ignore async/UI-only suites that aren't gating and aren't affected by this
   change (e.g. E2E/browser shards on a backend-only PR) **unless one fails** —
@@ -167,6 +168,7 @@ Guardrails for all PR feedback:
   existing invariant or design tradeoff, when competing fixes both fit the
   evidence, or before saying a finding needs a human architecture, product, or
   design decision.
+- Make at most one oracle consultation per head SHA and batch all related current feedback. Consult again only after a relevant commit or requirement changes the evidence.
 
 ## 2. Request the reviewer
 

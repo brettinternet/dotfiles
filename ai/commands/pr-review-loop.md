@@ -73,6 +73,8 @@ Before approving, requesting changes, or posting a blocker based on a load-beari
 
 Consult the oracle when competing interpretations of the diff both look plausible, when surrounding code suggests an intentional tradeoff you don't understand, or before declaring a PR human-blocked because the right fix requires an architecture, product, or design decision.
 
+Make at most one oracle consultation per PR for each reviewed commit set, batching all related load-bearing concerns. Do not consult when repository evidence resolves the concern or no judgment meets that bar.
+
 ### 5. Post comments / approval / replies in my voice
 
 Write everything you post as me — review comments, approval/request-changes bodies, top-level PR comments, and any reply to an existing comment or review thread — casually:

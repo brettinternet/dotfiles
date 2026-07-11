@@ -7,7 +7,7 @@ Shared config for Claude Code (`~/.claude`), oh-my-pi (`~/.omp`), and Codex, lin
 Two complementary patterns; which one is active depends only on the session model, not on config:
 
 - **Escalation (advisor)** — a cheap/mid session does the work and escalates judgment to the `oracle` (pinned to the strongest model, fresh context). Right when the plan already exists — the command file or a refined backlog item is the decomposition. Example: `/backlog-implement` on a mid-tier session.
-- **Delegation (orchestrator)** — a smart session keeps decisions, synthesis, and shared-interface coordination, and fans volume work out to cheap pinned workers. Right when judgment is continuous: refinement, review, diagnosis. Example: `/backlog-refine` on a strong session.
+- **Delegation (orchestrator)** — a smart session keeps decisions, synthesis, and shared-interface coordination, and delegates only materially substantial, independent volume branches to cheap pinned workers under an explicit per-command budget. Small or tightly coupled work stays in the session. Right when judgment is continuous and the surface is broad: refinement, review, diagnosis.
 
 The pipeline is deliberately asymmetric: smart refine → cheap implement → independent verify/review. Worker and oracle tiers are pinned in agent frontmatter, so both patterns hold from any starting tier; pick the orchestrator via `/model` (Claude) or the pi profile's `modelRoles.default`.
 
@@ -30,10 +30,12 @@ The complete find/do/check/judge/watch loop. No tester (executor writes tests, v
 - **Workflow shape**: `commands/*.md`, referencing agents by role name only, model-agnostic.
 - **Orchestrator tier**: chosen per session; the oracle nudge is the safety net when starting cheap.
 
-## Skills
+## Harness delegation triggers
 
-- Claude Code looks for "fan out subagents"
-- omp looks for `orchestrate`
+- Claude Code recognizes "fan out subagents".
+- OMP recognizes `orchestrate`.
+- These phrases activate orchestration behavior before a command can apply its own conditions. Do not put them in command prompts; name optional roles only inside conditional, explicitly capped delegation policy.
+- Specialized watcher delegation is bounded by the selected PR set and replaces polling rather than duplicating analysis. A final batched verifier is independent acceptance evidence, not a reason to fan out implementation.
 
 ## Model notes
 

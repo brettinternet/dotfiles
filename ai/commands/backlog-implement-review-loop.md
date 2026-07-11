@@ -117,6 +117,8 @@ A blocker marker — in a writable backlog source, a remote item comment, or mar
 
 The oracle agent is advisory and read-only. It must not edit code, mutate local or remote backlog files, push, commit, or mark an item complete. The active command agent owns every backlog edit and must verify the oracle recommendation against repository/backlog evidence before resuming.
 
+Make at most one oracle consultation in a pass. Gather repository evidence first and batch related unresolved tradeoffs or blockers; do not consult it for ordinary choices or as a routine confirmation step.
+
 Use this protocol whenever a subagent or pass is blocked by a decision, stale blocker, unsafe ambiguity, or failed acceptance criterion that might be resolvable without human input:
 
 1. Finish all safe unblocked work first, then capture the exact blocker, attempted paths, evidence, affected files, acceptance criteria, and any existing `blocked:` marker.
@@ -139,13 +141,14 @@ Before editing:
 3. Map required callsites, data flows, tests, migrations, and UI/API behavior from the backlog item.
 4. Coordinate shared interfaces before parallel edits when tasks touch the same API, schema, type, or command.
 
-Parallelization:
+## Subagent budget
 
-- Fan out subagents and orchestrate executor subagents for independent, well-specified file areas, tests, UI, or migrations.
-- Use explore agents for read-only discovery and evidence gathering; keep the orchestrating context for decisions, synthesis, and shared-interface coordination.
-- Give each subagent the exact target, scope boundaries, acceptance criteria, and non-goals.
-- Do not serialize work that can safely happen in parallel.
-- Run formatting, linting, and broad validation once at the end unless a smaller check is needed to unblock a subagent.
+- Default to direct work. A single coherent task, a tightly coupled change, or a review confined to one subsystem does not justify delegation.
+- Delegate within this budget only when the pass has materially substantial, independent branches; otherwise keep the work in the active agent.
+- Use at most three subagents in one pass: no more than two `explore` or `executor` workers combined, plus at most one `oracle` consultation when an explicit oracle trigger below is met. This is a total budget, not a concurrency limit; do not replace finished agents with new ones.
+- Delegate only a materially substantial, independent branch whose target and contract can be specified up front. Use an `explore` agent only when the relevant surface is genuinely unknown or spans independent subsystems; use an `executor` only for a disjoint file area with settled interfaces.
+- Keep shared-interface changes, small lookups, tests coupled to an implementation, decisions, synthesis, and final integration in the active agent. Do not create one agent per file, acceptance criterion, test, or review dimension.
+- If more work is parallelizable than the budget permits, delegate the highest-risk or highest-latency branches and perform the rest directly. Run formatting, linting, and broad validation once at the end unless a smaller check is needed to unblock implementation.
 
 Implementation rules:
 
@@ -156,7 +159,7 @@ Implementation rules:
 - Add or update tests for behavior, edge cases, and failure modes implied by the item.
 - Hard anti-blocking rule: failed checks, item-scoped verification failures, missing required code, and flaky or outdated tests caused by or required for the current backlog item are implementation work to resolve immediately. Fix them in-repo, update code/tests/fixtures/config as needed, and rerun targeted verification; unrelated failures or dirty changes may be ignored only after recording why they are unrelated to `$ARGUMENTS`; stop only for a truly external product decision, unavailable dependency, or unsafe ambiguity after exhausting repo fixes and the oracle check.
 - If product information is missing, implement everything not blocked and record the exact remaining decision instead of guessing.
-- Before committing to a new architectural pattern or choosing between materially different designs, consult the oracle agent for a second opinion on the tradeoff. This is proactive design input, separate from the blocker escalation below.
+- Include a design question in the pass's single oracle consultation only before committing to a consequential, hard-to-reverse architectural pattern or choosing between materially different designs not settled by repository evidence.
 - Before raising any notable blocker, missing product decision, failed acceptance, risky ambiguity, or inability to proceed to the user, use the Oracle unblock protocol. If the oracle returns a repo-evidenced safe path, apply the verified item-local patch, re-run Target selection, and resume; if it confirms or cannot resolve the blocker, explicitly report it as a human-required blocker.
 
 After implementation:
@@ -172,7 +175,7 @@ Use this path only after the current item's implementation sweep is complete. Re
 
 Review process:
 
-Fan out explore agents to map files, callsites, and data flows, and cheap finder subagents per dimension (correctness, security, performance, maintainability) to surface candidate findings; judge, verify, and synthesize the findings in the orchestrating context. Review the complete accumulated diff for every item in the batch, not each task or commit separately.
+Review directly when the accumulated diff is small or tightly coupled. For a materially large batch spanning independent subsystems, use at most two `explore` agents within the shared pass budget, partitioned by subsystem or risk-bearing data flow. Do not spawn separate agents for correctness, security, performance, and maintainability; each delegated review applies every relevant lens to its bounded scope. The active agent must still read the complete accumulated diff, judge and verify candidate findings, check cross-system interactions, and synthesize the result.
 
 1. Establish intent before judging the code:
    - read every backlog item in the review batch, relevant issue or PR descriptions, commit messages, and nearby documentation

@@ -1,5 +1,5 @@
 ---
-description: Implement the feature described by the user in an isolated worktree with parallel subagents, verify, commit, and integrate per the repo's flow (subagent escalation pattern)
+description: Implement the feature described by the user in an isolated worktree, verify independently, commit, and integrate per the repo's flow
 argument-hint: <feature-description> [acceptance-criteria|constraints|relevant-files]
 ---
 
@@ -14,18 +14,18 @@ Before editing:
 1. Inspect the current worktree status, preserve unrelated unstaged or untracked work, and do not block on unrelated dirty changes unless they prevent safe isolation; document ignored unrelated changes in the final report.
 2. Convert `$ARGUMENTS` into a concrete implementation contract: user-visible behavior, acceptance criteria, constraints, non-goals, and directly affected surfaces. Do not expand the request with retries, telemetry, validation, abstractions, or cleanup that the feature does not require.
 3. Read the relevant existing code, callsites, tests, configuration, and repository patterns. Use symbol-aware references before changing exported symbols.
-4. Resolve ordinary implementation details from established repository conventions. If a materially different product or architecture choice remains, consult the oracle agent before asking the user or declaring a blocker.
+4. Resolve ordinary implementation details from established repository conventions. Carry only a materially different product or architecture choice into the oracle policy below; do not escalate routine implementation choices.
 5. Confirm the feature can be completed safely. If it is large, split only the execution plan; do not silently shrink the requested acceptance.
 6. Create or switch to an isolated worktree for implementation so local user work is not disturbed.
 
-## Parallelization
+## Subagent budget
 
-- Fan out subagents and orchestrate executor subagents for independent, well-specified file areas, tests, UI, or migrations.
-- Use explore agents for read-only discovery and evidence gathering; keep the orchestrating context for decisions, synthesis, and shared-interface coordination.
-- Give each subagent the exact target, scope boundaries, acceptance criteria, and non-goals.
-- Do not serialize work that can safely happen in parallel.
-- Coordinate shared interfaces before parallel edits when tasks touch the same API, schema, type, or command.
-- Delegate test authoring to the Tester agent. Run formatting, linting, and broad validation once at the end unless a smaller check is needed to unblock implementation.
+- Default to direct implementation. A small feature, a tightly coupled change, or work in one subsystem does not justify delegation.
+- Delegate within this budget only when the feature has materially substantial, independent branches; otherwise implement directly.
+- Use at most four subagents for the entire invocation: no more than two `explore` or `executor` workers combined, one final `verifier` when completion is claimed, and at most one `oracle` consultation when an explicit trigger below is met. This is a total budget, not a concurrency limit; do not replace finished agents with new ones.
+- Delegate only materially substantial, independent work whose target, acceptance criteria, and non-goals can be specified up front. Use an `explore` agent only when the relevant surface is genuinely unknown or spans independent subsystems; use an `executor` only for a disjoint file area with settled interfaces.
+- Keep shared-interface changes, small lookups, decisions, synthesis, and integration in the active agent. The implementer that owns a behavior also owns its tests; do not create a separate test-authoring agent.
+- If more work is parallelizable than the budget permits, delegate the highest-risk or highest-latency branches and perform the rest directly. Run formatting, linting, and broad validation once at the end unless a smaller check is needed to unblock implementation.
 
 ## Implementation rules
 
@@ -37,8 +37,8 @@ Before editing:
 - When the implementation uses a reusable coding pattern, tell the user `CODE PATTERN:` followed by a brief description, whether it matches an existing repository implementation, and whether code can be shared. If sharing is practical, refactor to use the shared implementation instead of introducing a second convention.
 - Failed feature-scoped checks, missing required code, and outdated tests or fixtures caused by the feature are implementation work. Fix them in-repo and rerun targeted verification. Ignore unrelated failures only after recording evidence that they are unrelated.
 - If product information is missing, implement everything not blocked and record the exact remaining decision instead of guessing.
-- Before committing to a new architectural pattern or choosing between materially different designs, consult the oracle agent for a second opinion.
-- Before reporting any notable blocker, failed acceptance, risky ambiguity, or inability to proceed, consult the oracle agent with the feature contract, implementation evidence, attempted paths, and exact decision needed. Report a human-required blocker only if the oracle confirms it or cannot provide a safe, repo-evidenced path.
+- Use the one optional oracle consultation only after gathering repository evidence, and only for consequential, hard-to-reverse design tradeoffs or a possible genuine external blocker. Batch related questions; do not consult for ordinary choices or routine check failures.
+- Before reporting a human-required blocker, include the exact blocker, attempted paths, and evidence in that consultation. Report it as human-required only if no safe, repo-evidenced path remains.
 
 ## Completion criteria
 

@@ -1,5 +1,5 @@
 ---
-description: Read-only draft PR review — summary plus at most 4 priority findings, nothing posted to GitHub (subagent delegation pattern)
+description: Read-only draft PR review — summary plus at most 4 priority findings, nothing posted to GitHub
 argument-hint: <pr-number|url>
 ---
 
@@ -13,6 +13,8 @@ Look up the linked Linear, Jira, or GitHub issue where possible using the branch
 Before finalizing a potentially breaking concern that depends on architecture, design intent, security posture, product behavior, ownership, invariants, or broad blast radius, consult the **oracle** agent.
 
 Consult the oracle when competing interpretations of the diff both look plausible, when surrounding code suggests an intentional tradeoff you don't understand, or before calling something human-blocked because the right answer requires an architecture, product, or design decision. Keep the final draft concise and include only the conclusion, not the oracle transcript.
+
+Make at most one oracle consultation for the PR and batch all related concerns. Do not invoke it when no concern meets the load-bearing bar above.
 
 ## Output
 
@@ -34,4 +36,4 @@ Write the final draft in my voice:
 
 ## Rules
 
-- **MUST** consult the oracle before making a load-bearing architecture, design, security, or product judgment in the draft review.
+- **MUST** consult the oracle before making a load-bearing architecture, design, security, or product judgment in the draft review; use at most one consultation and batch all such judgments.

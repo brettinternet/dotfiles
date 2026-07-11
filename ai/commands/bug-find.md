@@ -1,9 +1,9 @@
 ---
-description: Trace the bug described in $ARGUMENTS to its true root cause with evidence, then apply the fix only when it is small and unambiguous, otherwise hand off the diagnosis (subagent delegation pattern)
+description: Trace the bug described in $ARGUMENTS to its true root cause with evidence, then apply the fix only when it is small and unambiguous, otherwise hand off the diagnosis
 argument-hint: <bug-description|failing-test|error|repro-steps|remote-ref> [files|suspected-area]
 ---
 
-Fan out subagents and orchestrate to find the true source of the bug described in `$ARGUMENTS`, prove it with evidence, and fix it only when the fix is small and unambiguous; otherwise stop and hand off a precise diagnosis. Preserve unrelated unstaged work, keep any change limited to the root cause, and make the continuation status unambiguous.
+Find the true source of the bug described in `$ARGUMENTS`, prove it with evidence, and fix it only when the fix is small and unambiguous; otherwise stop and hand off a precise diagnosis. Preserve unrelated unstaged work, keep any change limited to the root cause, and make the continuation status unambiguous.
 
 Treat `$ARGUMENTS` as the exact symptom to diagnose: a bug description, failing test, error message, stack trace, reproduction steps, or a remote reference (such as a Linear issue ID or URL) that reports the bug, plus any files or suspected area that scope the search. Do not diagnose unrelated behavior except where needed to trace the cause. Any files named in `$ARGUMENTS` are a scope hint for where to look first, not a limit — follow the cause wherever it leads. If `$ARGUMENTS` names an explicit file path that does not exist, check for nearby existing paths only in path-like locations (same directory, or same basename after a move/rename); auto-substitute only when exactly one candidate is unambiguous and clearly adjacent and report it, otherwise stop and report the missing path plus candidates.
 
@@ -14,6 +14,13 @@ A remote reference (such as a Linear issue ID or URL) is read-only discovery inp
 1. Resolve it with the available first-party tool for that system. For Linear, use the Linear MCP/tooling when available; if no authenticated tool is available, stop and report the missing integration.
 2. Pull the reported symptom, reproduction steps, expected vs. actual behavior, and any linked context, and use that as the symptom to diagnose. Note any repro detail the remote item omits as information you still need.
 3. Do not write status, comments, or results back to the remote item unless the repo's convention and available tooling support it and the user expects it; keep the diagnosis local and say the remote item is unchanged.
+
+## Subagent budget
+
+- Reproduce the failure directly before delegating. A clear repro, one suspected subsystem, or one linear data flow does not justify a subagent.
+- Delegate within this budget only when diagnosis has materially substantial, independent evidence branches; otherwise diagnose directly.
+- Use at most three subagents for the entire command: no more than two `explore` workers for materially substantial, independent evidence branches, plus at most one `oracle` consultation when the trigger below is met. This is a total budget, not a concurrency limit; do not replace finished agents with new ones.
+- Do not create one agent per repro command, log source, theory, bisect, or callsite map. Delegate only the highest-information independent branches; keep the hypothesis chain, experiment selection, diagnosis, fix, and verification in the active agent.
 
 ## Establish the failure first
 
@@ -27,13 +34,13 @@ A remote reference (such as a Linear issue ID or URL) is read-only discovery inp
 2. Read the relevant code, callsites, and data flow. Prefer evidence (logs, values, a bisected commit, a failing assertion) over speculation at every step.
 3. Distinguish the root cause from its symptoms and from incidental code near the failure. Name the specific mechanism: the exact line, condition, invariant, ordering, boundary, type, permission, migration, or dependency behavior that is wrong.
 4. Confirm the cause explains the full symptom. If part of the observed behavior is unexplained, keep tracing — a partial theory is not a root cause.
-5. Delegate mechanical evidence gathering — repro runs, log searches, bisects, callsite maps — to explore agents; keep the hypothesis chain and diagnosis in the orchestrating context.
+5. Delegate mechanical evidence gathering only when it is an independent, materially substantial branch within the budget above; otherwise run the repro, search, bisect, or callsite trace directly.
 
 ## Consult the oracle
 
-- Before you build further investigation on a load-bearing assumption (about intended behavior, an invariant, ownership, or why code exists), consult the oracle agent to validate it. Record the assumption and the oracle's read.
-- When you are stuck after repeated dead ends, when competing theories fit the evidence equally, or when you suspect the reproduction itself is wrong, consult the oracle agent for a second opinion on the diagnosis and the next thing to check.
-- Before declaring the root cause unfindable or the bug human-required, consult the oracle agent. If it confirms or cannot resolve it, report it as a human-required blocker with the exact missing information.
+- Make at most one oracle consultation in the command. Gather evidence first and batch unresolved load-bearing assumptions, competing theories, and the proposed next check.
+- Consult only after repeated dead ends, when multiple theories still fit the evidence, when the reproduction itself may be wrong, or before declaring the root cause unfindable or human-required. Do not consult merely to validate a hypothesis already established by code or runtime evidence.
+- If the oracle confirms or cannot resolve a genuine blocker, report it with the exact missing information.
 
 ## Fix policy
 

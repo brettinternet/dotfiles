@@ -1,5 +1,5 @@
 ---
-description: Refine backlog items into implementation-ready work for a lesser coding agent, then commit (subagent delegation pattern)
+description: Refine backlog items into implementation-ready work for a lesser coding agent, then commit
 argument-hint: <backlog-file|remote-refs> [item-ids|titles|ranges]
 ---
 
@@ -55,6 +55,14 @@ A file or directory referenced by an item may be an existing path, a stale path,
 
 Only the final, evidence-backed external or unresolved case is a blocker. A known unfinished repository prerequisite is dependency-gated rather than ambiguous; a planned item-local file or generated artifact is implementation work, not a reason to stop refinement.
 
+## Subagent budget
+
+- Default to direct investigation. One item, one subsystem, or an explicit implementation surface does not justify delegation.
+- Delegate within this budget only when refinement has materially substantial, independent investigation branches; otherwise investigate directly.
+- Use at most three subagents for the entire invocation: no more than two `explore` workers for materially substantial, independent investigation areas, plus at most one `oracle` consultation for consequential unresolved tradeoffs. This is a total budget, not a concurrency limit; do not replace finished agents with new ones.
+- Batch related items and questions by subsystem. Do not create one agent per backlog item, open question, missing path, callsite, or evidence source.
+- Keep readiness decisions, defaults, rationale, backlog edits, and final synthesis in the active agent. If more investigation is eligible than the budget permits, delegate the highest-uncertainty branches and perform the rest directly.
+
 For each backlog item:
 
 1. Read the existing backlog text and nearby context before editing.
@@ -83,9 +91,9 @@ For each backlog item:
 6. Keep tasks outcome-focused. Do not over-prescribe implementation unless the repo already has a clear matching pattern.
 7. Resolve every open question and eliminate unknown blockers before assigning execution status. "Available to begin" means a lesser coding agent can start and complete the item without asking product, design, or architecture questions; without waiting for a prerequisite; without discovering unknown dependencies; and without relying on unresolved assumptions. "Ready after `<item>`" means the item is fully specified and becomes available as soon as that named predecessor satisfies its recorded artifact or interface contract; it is not a blocked or ambiguous item.
    - Actively investigate to answer each open question: read the surrounding backlog, the repository code and conventions, the linked issue, and any product or design context. Prefer an answer that is already explicit in that context.
-   - Fan out subagents and orchestrate explore agents for the investigation legwork — repo conventions, callsites, linked issues, prior art — and keep the decisions and recorded rationale in the orchestrating context.
+   - Apply the subagent budget above: delegate only a bounded, independent investigation whose result can be checked against the repository; otherwise investigate directly.
    - When no explicit answer exists but a defensible choice can be made, decide it yourself using the repository's established patterns and the item's product intent as the default. Record the decision, the evidence or pattern it follows, and a one-line rationale so the implementer inherits a settled choice, not a question.
-   - Before recording a defensible-default decision on a consequential architecture or product question — one that is hard to reverse or that shapes multiple downstream items — consult the oracle agent for a second opinion on the tradeoff, and record its input alongside your rationale. This is proactive design input, separate from escalating a blocker.
+   - Collect consequential architecture or product questions that are hard to reverse or shape multiple downstream items, then use the invocation's single oracle consultation to evaluate them together. Record its input alongside your rationale; do not consult once per item or question.
    - When an open question implies prerequisite work, first look for related work that already owns it. Reuse and order after that item when found; otherwise split an earlier ready item with concrete acceptance criteria. Record the prerequisite ID and artifact or interface contract, and mark the dependent item ready after it rather than duplicating work or calling the dependency an unresolved blocker.
    - Escalate only a question you genuinely cannot resolve: one whose answer or prerequisite lives outside all available context (backlog, repo, issue, product, design), is not owned by identifiable related work, and cannot be settled by a defensible default without risking wrong or irreversible product behavior. For such a question, mark the affected item blocked/unavailable and state the exact missing decision or external prerequisite needed; do not fabricate an answer.
    - Do not describe any item with unresolved blockers, open product questions, unknown dependencies, ambiguous acceptance criteria, or latent assumptions as implementation-ready. A dependency-gated item may be implementation-ready only when its named predecessor and required output are exact; do not describe it as available to begin until that dependency is complete.
