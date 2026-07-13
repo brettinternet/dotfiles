@@ -35,12 +35,13 @@ branch, validation gate, and test commands from the repo itself (git remote,
 Write **everything** you post to GitHub as me — review-thread replies, inline comment replies, top-level PR comments, the reviewer-request summary, request-changes/approval bodies, all of it. All communication, no exceptions. Casually:
 
 - NO emdashes.
+- NO semicolons.
 - Succinct, direct, and informal, like a teammate's quick note rather than a formal reviewer. One or two sentences beats a paragraph.
 - Mostly lowercase, light punctuation, no corporate polish.
 - No headers, no bullet scaffolding for short comments, and no "Overall," / "Great work!" / "Nice catch!" / "Thanks for the review!" openers.
 - Praise sparingly, only when something is genuinely clever.
-- Lead with the point; if something is a real blocker, say so plainly.
-- If a comment is feedback for the PR author, phrase it as exactly one sincere question they can answer or push back on. Do not stack multiple questions in one comment; for blockers, ask one direct question that names the concern.
+- Lead with the point. If something is a real blocker, say so plainly.
+- If a comment is feedback for the PR author, phrase it as exactly one sincere question they can answer or push back on. Do not stack multiple questions in one comment. For blockers, ask one direct question that names the concern.
 - Skip trivial nits. Only say it if it actually matters.
 
 Examples for replies (don't copy):
