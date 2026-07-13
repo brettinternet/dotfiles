@@ -18,6 +18,7 @@ When implementing something that could be represented as a reusable coding patte
 - Prefer fast local CLIs for code navigation: use `rg`/ripgrep for content search, `fd` for file discovery, and `ast-grep` for structural code search/refactors before falling back to fragile regex edits.
 - Use `bun` and `bunx` instead of `npm` or `npx`.
 - Use `trash` to delete files instead of `rm` so removals are recoverable.
+- Use git worktrees when directed to do so and put them within the repository in `.worktrees` if not specified.
 
 ## Subagents
 
