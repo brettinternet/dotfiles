@@ -1,11 +1,11 @@
 ---
-description: Refine backlog items into implementation-ready work for a lesser coding agent, then commit
-argument-hint: <backlog-source|remote-refs> [item-ids|titles|ranges]
+description: Refine selected backlog items or an entire backlog source into implementation-ready work, then commit
+argument-hint: <backlog-source|remote-refs> [mode:spec-only] [item-ids|titles|ranges]
 ---
 
-Refine the backlog items in `$ARGUMENTS` into implementation-ready work for a lesser coding agent, then commit changes.
+Refine the backlog items in `$ARGUMENTS` into implementation-ready work for a lesser coding agent, then commit changes. A source-only invocation covers the entire resolved collection; use `mode:spec-only` when the invocation must edit specification content without changing provider workflow state.
 
-Your goal is to make every refined item's specification 100% ready for development and give it an honest execution status: available now, ready after a named prerequisite, or blocked only by a genuinely external or unresolved prerequisite. Resolve the item's own open questions during refinement instead of handing them off. Investigate the repository, backlog, issue, product, and design context, decide each open question, and record the decision with its supporting evidence and rationale. Only escalate a question you genuinely cannot resolve — one that depends on information outside all available context and cannot be settled by a defensible default.
+Your goal is to make every refined item's specification 100% ready for development and give it an honest execution status—or, in `mode:spec-only`, compute an honest status recommendation for reporting without writing it: available now, ready after a named prerequisite, or blocked only by a genuinely external or unresolved prerequisite. Resolve the item's own open questions during refinement instead of handing them off. Investigate the repository, backlog, issue, product, and design context, decide each open question, and record the decision with its supporting evidence and rationale. Only escalate a question you genuinely cannot resolve — one that depends on information outside all available context and cannot be settled by a defensible default.
 
 Treat `$ARGUMENTS` as the exact collection source and/or item selectors to refine: a loose Markdown backlog file, a whole Backlog.md project directory, a Linear project or issue set, a GitHub Issues repository/project/query, an item ID, title, range, or description. Do not refine unrelated backlog.
 
@@ -13,15 +13,29 @@ Apply `backlog-source-workflow` as the shared source-resolution and provider-dis
 
 Keep collection scope separate from item selection. Source-only scope means the entire resolved collection, including every item in a whole Backlog.md project; it does not mean “choose the first item.” Item IDs, titles, ranges, and descriptions narrow the immediately preceding collection source, with exact ID taking precedence over title, then description. Preserve explicit source order across unrelated sources. After dependency readiness is established, preserve explicit selector order within each preceding source; when selectors span sources, source order remains authoritative across unrelated sources. For source-only collections, provider priority/ordinal/order ranks items only within each source and never reorders sources or explicit selections. Validate explicit sources left-to-right. A missing explicit local source path may substitute only one clearly adjacent same-directory or moved/renamed-basename candidate, and the substitution must be reported; otherwise an explicit source remains unresolved and refinement must not fall back to another unrelated or derived source. Missing implementation-reference paths in a selected item or non-backlog `$ARGUMENTS` hint are discovery hints, not source presence gates; carry them into the triage below rather than stopping.
 
+## `mode:spec-only`
+
+Parse the exact `mode:spec-only` token before source and selector resolution. It is a command mode, not a source or item selector, and must be preserved in the invocation's reported arguments.
+
+When `mode:spec-only` is active:
+
+- A source-only argument still selects the entire resolved collection, including every task in a whole Backlog.md project directory. Item IDs, titles, ranges, and descriptions still narrow that collection.
+- Edit only specification-bearing content for the exact selected items: descriptions, implementation tasks, acceptance criteria, implementation snapshots, decisions, assumptions, missing-reference dispositions, and next implementation actions in the source's established structure.
+- Compute and report `available`, `ready after <item>`, or `blocked` as a readiness recommendation, but preserve any existing textual execution-status or readiness field verbatim. Do not add, remove, or rewrite that field, and do not write the provider's workflow status or state.
+- Do not mutate provider workflow status, dependency relations, priority, labels, assignee, review or progress markers, completion, archive state, or item membership. Do not create or delete items, comments, or local shadow files.
+- Preflight and use only the provider-authorized specification-content update operation, or the established direct-edit convention when the selected source is loose Markdown and no operation-specific tool exists. If the provider cannot update specification content without also changing workflow state, report the capability limitation and do not edit.
+
+Without `mode:spec-only`, preserve this command's existing authority and mutation behavior; do not infer specification-only mode from a directory source.
+
 ## Backlog storage policy
 
 Derive storage and mutation behavior per resolved collection source from repository context:
 
 - A loose Markdown backlog file named in `$ARGUMENTS` is a writable source; edit it directly and preserve its established style.
-- A whole Backlog.md project directory is a writable collection source. Discover and mutate project/task fields through the supported `backlog` CLI or MCP operations; do not edit task files directly when a provider-native operation exists.
+- A whole Backlog.md project directory is a writable collection source. Discover and mutate project/task fields through the supported `backlog` CLI or MCP operations; do not edit task files directly when a provider-native operation exists. When `mode:spec-only` is active, restrict those operations to specification-bearing fields and leave provider workflow state unchanged.
 - Every remote item is provider-owned and remote-only for refinement: never make a local Markdown backlog/spec/planning file writable as a mirror or create one for it. Use only a temporary read-only snapshot outside authoritative storage when provider-native refinement needs working context.
 
-Provider operations stay narrow: use first-party Linear tooling for Linear; use `gh` for GitHub Issues; and preserve each provider's authorization boundaries. Remote item specifications and durable state may be mutated only through the selected provider's native operations. Remote writes are limited to the exact resolved items and the refined content authorized by `$ARGUMENTS`; do not change workflow status, create or delete remote items, or touch items outside that scope. If an integration is unavailable or unauthenticated, report the exact limitation.
+Provider operations stay narrow: use first-party Linear tooling for Linear; use `gh` for GitHub Issues; and preserve each provider's authorization boundaries. Remote item specifications and durable state may be mutated only through the selected provider's native operations. Remote writes are limited to the exact resolved items and the refined content authorized by `$ARGUMENTS`; do not change workflow status, create or delete remote items, or touch items outside that scope. In `mode:spec-only`, do not use provider operations for progress, review, comments, dependency relations, or other state changes. If an integration is unavailable or unauthenticated, report the exact limitation.
 
 Moving or renaming an existing local backlog file into the repository's archive location per repository convention is an edit to an existing source, not creation. When in doubt, do not create files; write only to an explicitly writable source.
 
@@ -86,7 +100,7 @@ For each backlog item:
    - edge cases, data states, migrations, permissions, and failure modes
    - acceptance criteria mapped to the explicit task or tasks that satisfy them, without requiring every acceptance criterion to become a separate task
    - the task-specific tests, checks, or manual QA expected, bundled with the behavior they prove
-   - an explicit execution status in the source's existing vocabulary: available to begin only when no incomplete prerequisite prevents a start; ready after a named item when the specification is complete but that repository-owned prerequisite is unfinished; blocked only for a genuinely external or unresolved prerequisite
+   - an explicit execution status—or, in `mode:spec-only`, a computed status recommendation for output only—in the source's existing vocabulary: available to begin only when no incomplete prerequisite prevents a start; ready after a named item when the specification is complete but that repository-owned prerequisite is unfinished; blocked only for a genuinely external or unresolved prerequisite. In `mode:spec-only`, preserve any existing textual status or readiness field verbatim and report discrepancies instead of editing it.
    - an item-scoped implementation snapshot in that item's existing structure:
      - goal / product intent
      - target file area, components, APIs, or data model involved, including the disposition of every missing reference
@@ -101,7 +115,7 @@ For each backlog item:
    - one optional outstanding idea that is explicitly out of scope unless chosen
 5. Remove ambiguity, duplicated tasks, stale assumptions, and solution-shaped instructions that are not required.
 6. Keep tasks outcome-focused. Do not over-prescribe implementation unless the repo already has a clear matching pattern.
-7. Resolve every open question and eliminate unknown blockers before assigning execution status. "Available to begin" means a lesser coding agent can start and complete the item without asking product, design, or architecture questions; without waiting for a prerequisite; without discovering unknown dependencies; and without relying on unresolved assumptions. "Ready after `<item>`" means the item is fully specified and becomes available as soon as that named predecessor satisfies its recorded artifact or interface contract; it is not a blocked or ambiguous item.
+7. Resolve every open question and eliminate unknown blockers before assigning execution status, or before computing the status recommendation for output in `mode:spec-only`. "Available to begin" means a lesser coding agent can start and complete the item without asking product, design, or architecture questions; without waiting for a prerequisite; without discovering unknown dependencies; and without relying on unresolved assumptions. "Ready after `<item>`" means the item is fully specified and becomes available as soon as that named predecessor satisfies its recorded artifact or interface contract; it is not a blocked or ambiguous item.
    - Actively investigate to answer each open question: read the surrounding backlog, the repository code and conventions, the linked issue, and any product or design context. Prefer an answer that is already explicit in that context.
    - Apply the subagent budget above: delegate only a bounded, independent investigation whose result can be checked against the repository; otherwise investigate directly.
    - When no explicit answer exists but a defensible choice can be made, decide it yourself using the repository's established patterns and the item's product intent as the default. Record the decision, the evidence or pattern it follows, and a one-line rationale so the implementer inherits a settled choice, not a question.
@@ -118,3 +132,4 @@ After editing:
 - Expect every item's specification to reach implementation-ready, either available now or explicitly ordered after a fully defined repository prerequisite. If a question survived only because it could not be resolved from any available context, list each such question in the output, identify the affected backlog item(s), state the exact missing decision or external prerequisite, and confirm those item(s) were left blocked/unavailable rather than implementation-ready. Do not leave a question unresolved or mark a missing path blocked for any other reason.
 - Run only formatting or validation that applies to the edited backlog files.
 - Commit any local backlog changes with a concise message; when only remote items changed, state that there is nothing to commit.
+- In `mode:spec-only`, verify that provider workflow status, dependency relations, priority, labels, assignee, review/progress markers, completion, archive state, and existing textual execution-status/readiness fields are unchanged; commit only specification-content changes.
