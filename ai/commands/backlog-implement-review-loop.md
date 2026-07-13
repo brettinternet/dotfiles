@@ -308,6 +308,6 @@ Then report:
 - most likely 3-month breakage reason and whether to address it now or later
 - archive location if applicable; for remote-only sources, the remote status transition applied or skipped
 - exact next task and item for `IMPLEMENT`, or accumulated batch target for `REVIEW`, if any
-- copy-pasteable next prompt that invokes this command with the backlog file, item, task, and accumulated commits/files when relevant
+- copy-pasteable next prompt that invokes this command with the original `$ARGUMENTS` unchanged, preserving every scoped source, selector, and source order; report the exact next target separately, but let durable state select it rather than narrowing or augmenting the invocation
 - remaining blockers, skipped blocked items, risks, product decisions, or ignored unrelated failures or dirty changes
 - oracle unblock consultations and item-local marker updates
