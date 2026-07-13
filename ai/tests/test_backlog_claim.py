@@ -156,6 +156,7 @@ class BacklogClaimTests(unittest.TestCase):
             [claim["resource"] for claim in claims],
         )
         self.assertTrue(claims[0]["active"])
+        self.assertNotIn("token", claims[0])
         self.assertFalse(claims[1]["active"])
 
         filtered = self.run_claim("list", "--resource", expired_resource)
@@ -167,6 +168,47 @@ class BacklogClaimTests(unittest.TestCase):
 
         missing = self.run_claim("list", "--resource", "github:example/repo#missing")
         self.assertEqual([], missing["claims"])
+
+    def test_list_text_format_is_tabular_and_omits_tokens(self) -> None:
+        expired_resource = "github:example/repo#text-expired"
+        active_resource = "github:example/repo#text-active"
+        expired = self.acquire(expired_resource, "text-expired", ttl=0.1)
+        time.sleep(0.2)
+        active = self.acquire(active_resource, "text-active")
+        expired_claim = expired["claim"]
+        active_claim = active["claim"]
+        assert isinstance(expired_claim, dict)
+        assert isinstance(active_claim, dict)
+
+        completed = subprocess.run(
+            [
+                str(HELPER),
+                "list",
+                "--format",
+                "text",
+            ],
+            text=True,
+            capture_output=True,
+            env=self.environment,
+            check=False,
+        )
+        self.assertEqual(0, completed.returncode, completed.stderr)
+        lines = completed.stdout.splitlines()
+        self.assertEqual(
+            "STATE\tRESOURCE\tCLAIM_ID\tOWNER_ID\tEXPIRES_AT",
+            lines[0],
+        )
+        rows = [line.split("\t") for line in lines[1:]]
+        self.assertEqual(
+            [
+                ["active", active_resource, "text-active", "owner-text-active"],
+                ["expired", expired_resource, "text-expired", "owner-text-expired"],
+            ],
+            [row[:4] for row in rows],
+        )
+        self.assertTrue(all(len(row) == 5 and row[4] for row in rows))
+        self.assertNotIn(str(expired_claim["token"]), completed.stdout)
+        self.assertNotIn(str(active_claim["token"]), completed.stdout)
 
 
     def test_lease_duration_has_a_hard_upper_bound(self) -> None:

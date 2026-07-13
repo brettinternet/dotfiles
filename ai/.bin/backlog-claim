@@ -154,6 +154,22 @@ def emit(payload: dict[str, Any]) -> None:
     print(json.dumps(payload, sort_keys=True, separators=(",", ":")))
 
 
+def emit_text_claims(payload: dict[str, Any]) -> None:
+    print("STATE\tRESOURCE\tCLAIM_ID\tOWNER_ID\tEXPIRES_AT")
+    for claim in payload["claims"]:
+        print(
+            "\t".join(
+                (
+                    "active" if claim["active"] else "expired",
+                    claim["resource"],
+                    claim["claimId"],
+                    claim["ownerId"],
+                    claim["expiresAt"],
+                )
+            )
+        )
+
+
 def resource_lock_path(resource: str) -> Path:
     digest = hashlib.sha256(resource.encode()).hexdigest()
     directory = claim_home() / "locks"
@@ -585,10 +601,15 @@ def list_claims(args: argparse.Namespace) -> dict[str, Any]:
                 "SELECT * FROM claims WHERE resource = ? ORDER BY resource",
                 (args.resource,),
             ).fetchall()
+    claims = []
+    for row in rows:
+        claim = row_claim(row, now)
+        claim.pop("token", None)
+        claims.append(claim)
     return {
         "ok": True,
         "operation": "list",
-        "claims": [row_claim(row, now) for row in rows],
+        "claims": claims,
     }
 
 
@@ -986,6 +1007,12 @@ def build_parser() -> argparse.ArgumentParser:
     list_parser.add_argument(
         "--resource", help="filter claims to one exact resource"
     )
+    list_parser.add_argument(
+        "--format",
+        choices=("json", "text"),
+        default="json",
+        help="output format; JSON is the default",
+    )
 
 
     heartbeat_parser = subparsers.add_parser("heartbeat", help="renew an active lease")
@@ -1041,7 +1068,10 @@ def main() -> int:
             code = 0
         else:
             raise AssertionError(args.action)
-        emit(result)
+        if args.action == "list" and args.format == "text":
+            emit_text_claims(result)
+        else:
+            emit(result)
         return code
     except ClaimError as error:
         emit({"ok": False, "error": error.reason, **error.details})
