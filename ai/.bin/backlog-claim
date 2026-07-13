@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Same-host, fenced work claims shared by every worktree of a repository."""
+"""Same-host fenced work claims and coordination-only leases."""
 
 from __future__ import annotations
 
@@ -87,6 +87,7 @@ def connect() -> sqlite3.Connection:
                 work_key TEXT NOT NULL,
                 acquired_at REAL NOT NULL,
                 acquire_ttl REAL NOT NULL,
+                coordination_only INTEGER NOT NULL DEFAULT 0,
                 heartbeat_at REAL NOT NULL,
                 expires_at REAL NOT NULL,
                 last_operation_id TEXT,
@@ -110,6 +111,11 @@ def connect() -> sqlite3.Connection:
         }
         if "acquire_ttl" not in columns:
             connection.execute("ALTER TABLE claims ADD COLUMN acquire_ttl REAL")
+        if "coordination_only" not in columns:
+            connection.execute(
+                "ALTER TABLE claims ADD COLUMN coordination_only "
+                "INTEGER NOT NULL DEFAULT 0"
+            )
     return connection
 
 
@@ -132,6 +138,9 @@ def row_claim(row: sqlite3.Row, now: float | None = None) -> dict[str, Any]:
         "sessionId": row["session_id"],
         "ownerId": row["owner_id"],
         "workKey": row["work_key"],
+        "guarantee": (
+            "local-coordination" if row["coordination_only"] else "fenced"
+        ),
         "acquiredAt": iso8601(row["acquired_at"]),
         "acquireTtl": row["acquire_ttl"],
         "heartbeatAt": iso8601(row["heartbeat_at"]),
@@ -201,13 +210,20 @@ def acquire(args: argparse.Namespace) -> dict[str, Any]:
     now = time.time()
     with resource_lock(args.resource), connect() as connection, transaction(connection):
         row = active_row(connection, args.resource)
-        identity = (args.agent_id, args.session_id, args.owner_id, args.work_key)
+        identity = (
+            args.agent_id,
+            args.session_id,
+            args.owner_id,
+            args.work_key,
+            args.coordination_only,
+        )
         if row is not None and row["claim_id"] == args.claim_id:
             recorded = (
                 row["agent_id"],
                 row["session_id"],
                 row["owner_id"],
                 row["work_key"],
+                bool(row["coordination_only"]),
             )
             if recorded != identity:
                 raise ClaimError("claim-id-identity-mismatch", resource=args.resource)
@@ -276,6 +292,7 @@ def acquire(args: argparse.Namespace) -> dict[str, Any]:
             args.session_id,
             args.owner_id,
             args.work_key,
+            1 if args.coordination_only else 0,
             now,
             ttl,
             now,
@@ -308,13 +325,14 @@ def acquire(args: argparse.Namespace) -> dict[str, Any]:
             """
             INSERT INTO claims (
                 resource, claim_id, token, revision, agent_id, session_id, owner_id,
-                work_key, acquired_at, acquire_ttl, heartbeat_at, expires_at,
-                last_operation_id, last_operation_kind, last_receipt
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)
+                work_key, coordination_only, acquired_at, acquire_ttl, heartbeat_at,
+                expires_at, last_operation_id, last_operation_kind, last_receipt
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL)
             ON CONFLICT(resource) DO UPDATE SET
                 claim_id=excluded.claim_id, token=excluded.token, revision=excluded.revision,
                 agent_id=excluded.agent_id, session_id=excluded.session_id,
                 owner_id=excluded.owner_id, work_key=excluded.work_key,
+                coordination_only=excluded.coordination_only,
                 acquired_at=excluded.acquired_at, heartbeat_at=excluded.heartbeat_at,
                 acquire_ttl=excluded.acquire_ttl,
                 expires_at=excluded.expires_at, last_operation_id=NULL,
@@ -575,8 +593,23 @@ def renew_guard(connection: sqlite3.Connection, row: sqlite3.Row, ttl: float) ->
         raise ClaimError("claim-changed-during-guard", code=3, resource=row["resource"])
 
 
-def require_provider_command(resource: str, command: list[str]) -> None:
-    provider = resource.split(":", 1)[0]
+def require_fenced_claim(row: sqlite3.Row, operation: str) -> None:
+    parts = row["resource"].split(":", 2)
+    provider = parts[0]
+    if provider == "coordination" and len(parts) > 1 and parts[1]:
+        provider = parts[1]
+    if row["coordination_only"] or parts[0] in {"coordination", "linear"}:
+        raise ClaimError(
+            f"unsupported-coordination-{operation}",
+            provider=provider,
+        )
+
+
+def require_provider_command(row: sqlite3.Row, command: list[str]) -> None:
+    require_fenced_claim(row, "exec")
+    resource = row["resource"]
+    parts = resource.split(":", 2)
+    provider = parts[0]
     if provider == "markdown":
         raise ClaimError("unsupported-provider-exec", provider=provider)
     expected = {"backlog-md": "backlog", "github": "gh"}.get(provider)
@@ -604,6 +637,7 @@ def execute(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
     with resource_lock(args.resource), connect() as connection:
         with transaction(connection):
             row, cached = require_claim(connection, args, kind)
+            require_provider_command(row, command)
             if cached is not None:
                 if cached["command"]["argv"] != command or cached.get("ttl") != ttl:
                     raise ClaimError(
@@ -612,7 +646,6 @@ def execute(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
                         operationId=args.operation_id,
                     )
                 return cached, cached["command"]["returncode"]
-            require_provider_command(args.resource, command)
             renew_guard(connection, row, ttl)
         try:
             process = subprocess.Popen(
@@ -739,6 +772,7 @@ def replace_file(args: argparse.Namespace) -> dict[str, Any]:
     with resource_lock(args.resource), connect() as connection:
         with transaction(connection):
             row, cached = require_claim(connection, args, kind)
+            require_fenced_claim(row, "replace-file")
             if cached is not None:
                 if (
                     cached["path"] != str(target)
@@ -822,23 +856,64 @@ def local_resource(provider: str, source_path: Path, item: str) -> str:
     return f"{provider}:{authority}:{locator}:{target}"
 
 
-def resource_key(args: argparse.Namespace) -> dict[str, Any]:
-    provider = args.provider
-    if provider == "linear":
-        raise ClaimError("unsupported-provider-claim", provider=provider)
-    if provider == "github":
-        source = args.source.strip().lower().removesuffix(".git")
-        resource = f"github:{source}#{args.item}"
-    else:
-        resource = local_resource(
-            provider, Path(args.source).expanduser().resolve(), args.item
+def coordination_resource(provider: str, source: str, item: str) -> str:
+    locator = source.strip().rstrip("/")
+    target = item.strip()
+    if not locator or not target:
+        raise ClaimError(
+            "invalid-resource-identity",
+            code=64,
+            provider=provider,
         )
-    capability = "source-claim" if provider == "markdown" else "item-claim"
+    identity = json.dumps(
+        {"provider": provider, "source": locator, "item": target},
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    digest = hashlib.sha256(identity.encode()).hexdigest()
+    return f"coordination:{provider}:{digest}"
+
+
+def resource_key(args: argparse.Namespace) -> dict[str, Any]:
+    provider = args.provider.strip().lower()
+    if not provider or any(
+        not character.isascii()
+        or not (character.isalnum() or character == "-")
+        for character in provider
+    ):
+        raise ClaimError("invalid-provider", code=64, provider=args.provider)
+    source = args.source.strip()
+    item = args.item.strip()
+    if not source or not item:
+        raise ClaimError(
+            "invalid-resource-identity",
+            code=64,
+            provider=provider,
+        )
+    if provider == "github":
+        source = source.lower().removesuffix(".git")
+        resource = f"github:{source}#{item}"
+        capability = "item-claim"
+        scope = "item"
+    elif provider in {"backlog-md", "markdown"}:
+        resource = local_resource(
+            provider, Path(source).expanduser().resolve(), item
+        )
+        capability = "source-claim" if provider == "markdown" else "item-claim"
+        scope = "source" if provider == "markdown" else "item"
+    else:
+        resource = coordination_resource(provider, source, item)
+        capability = "local-coordination"
+        scope = "item"
+    if args.coordination_only:
+        capability = "local-coordination"
     return {
         "ok": True,
         "operation": "key",
         "provider": provider,
         "capability": capability,
+        "scope": scope,
+        "fencedMutations": capability != "local-coordination",
         "resource": resource,
     }
 
@@ -858,13 +933,14 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="action", required=True)
 
     key_parser = subparsers.add_parser("key", help="derive one stable resource key")
-    key_parser.add_argument(
-        "--provider",
-        choices=("backlog-md", "github", "linear", "markdown"),
-        required=True,
-    )
+    key_parser.add_argument("--provider", required=True)
     key_parser.add_argument("--source", required=True)
     key_parser.add_argument("--item", required=True)
+    key_parser.add_argument(
+        "--coordination-only",
+        action="store_true",
+        help="derive a lease that coordinates local workers without fencing writes",
+    )
 
     acquire_parser = subparsers.add_parser(
         "acquire", help="atomically acquire or reclaim a lease"
@@ -875,6 +951,11 @@ def build_parser() -> argparse.ArgumentParser:
     acquire_parser.add_argument("--session-id", required=True)
     acquire_parser.add_argument("--owner-id", required=True)
     acquire_parser.add_argument("--work-key", required=True)
+    acquire_parser.add_argument(
+        "--coordination-only",
+        action="store_true",
+        help="mark this ownership epoch as unable to fence provider writes",
+    )
     acquire_parser.add_argument("--ttl", type=float, default=DEFAULT_TTL)
 
     status_parser = subparsers.add_parser("status", help="read current lease state")

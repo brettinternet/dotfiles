@@ -53,9 +53,10 @@ class BacklogClaimTests(unittest.TestCase):
         claim_id: str,
         *,
         ttl: float = 10,
+        coordination_only: bool = False,
         expected_code: int = 0,
     ) -> dict[str, object]:
-        return self.run_claim(
+        arguments = [
             "acquire",
             "--resource",
             resource,
@@ -71,8 +72,10 @@ class BacklogClaimTests(unittest.TestCase):
             "implement:item:next",
             "--ttl",
             str(ttl),
-            expected_code=expected_code,
-        )
+        ]
+        if coordination_only:
+            arguments.append("--coordination-only")
+        return self.run_claim(*arguments, expected_code=expected_code)
 
     @staticmethod
     def claim_arguments(
@@ -448,6 +451,225 @@ class BacklogClaimTests(unittest.TestCase):
         self.assertEqual("invalid-release-reason", rejected_release["error"])
         self.assertEqual("unsupported-provider-replace-file", rejected_replace["error"])
         self.assertEqual("old\n", target.read_text())
+
+    def test_unfenced_remote_provider_defaults_to_local_coordination(self) -> None:
+        linear = self.run_claim(
+            "key",
+            "--provider",
+            "linear",
+            "--source",
+            "workspace-uuid",
+            "--item",
+            "issue-uuid",
+        )
+        repeated = self.run_claim(
+            "key",
+            "--provider",
+            "linear",
+            "--source",
+            "workspace-uuid",
+            "--item",
+            "issue-uuid",
+        )
+        other_item = self.run_claim(
+            "key",
+            "--provider",
+            "linear",
+            "--source",
+            "workspace-uuid",
+            "--item",
+            "other-issue-uuid",
+        )
+        future = self.run_claim(
+            "key",
+            "--provider",
+            "future-provider",
+            "--source",
+            "account-uuid",
+            "--item",
+            "work-uuid",
+        )
+        self.assertEqual("local-coordination", linear["capability"])
+        self.assertFalse(linear["fencedMutations"])
+        self.assertEqual(linear["resource"], repeated["resource"])
+        self.assertNotEqual(linear["resource"], other_item["resource"])
+        self.assertEqual("local-coordination", future["capability"])
+
+    def test_fenced_provider_can_explicitly_downgrade_to_local_coordination(
+        self,
+    ) -> None:
+        fenced = self.run_claim(
+            "key",
+            "--provider",
+            "github",
+            "--source",
+            "github.com/example/repo",
+            "--item",
+            "115",
+        )
+        coordination = self.run_claim(
+            "key",
+            "--provider",
+            "github",
+            "--source",
+            "github.com/example/repo",
+            "--item",
+            "115",
+            "--coordination-only",
+        )
+        self.assertEqual("item-claim", fenced["capability"])
+        self.assertTrue(fenced["fencedMutations"])
+        self.assertEqual("local-coordination", coordination["capability"])
+        self.assertFalse(coordination["fencedMutations"])
+        self.assertEqual(fenced["resource"], coordination["resource"])
+        resource = str(coordination["resource"])
+        claim = self.acquire(
+            resource,
+            "downgraded-github",
+            coordination_only=True,
+        )
+        reclassified = self.acquire(
+            resource,
+            "downgraded-github",
+            expected_code=2,
+        )
+        output = self.home / "downgraded-github.txt"
+        gh = self.fake_provider_cli(
+            "gh",
+            "import sys\n"
+            "from pathlib import Path\n"
+            "Path(sys.argv[1]).write_text('ran')",
+        )
+        rejected = self.run_claim(
+            "exec",
+            *self.claim_arguments(resource, claim, "downgraded-github-write"),
+            "--",
+            str(gh),
+            str(output),
+            expected_code=2,
+        )
+        self.assertEqual("claim-id-identity-mismatch", reclassified["error"])
+        self.assertEqual("local-coordination", claim["claim"]["guarantee"])
+        self.assertEqual("unsupported-coordination-exec", rejected["error"])
+        self.assertFalse(output.exists())
+
+    def test_coordination_only_markdown_rejects_fenced_replacement(self) -> None:
+        target = self.home / "coordination-backlog.md"
+        candidate = self.home / "coordination-candidate.md"
+        target.write_text("old\n")
+        candidate.write_text("new\n")
+        key = self.run_claim(
+            "key",
+            "--provider",
+            "markdown",
+            "--source",
+            str(target),
+            "--item",
+            "ITEM-1",
+            "--coordination-only",
+        )
+        resource = str(key["resource"])
+        claim = self.acquire(
+            resource,
+            "coordination-markdown",
+            coordination_only=True,
+        )
+        rejected = self.run_claim(
+            "replace-file",
+            *self.claim_arguments(
+                resource,
+                claim,
+                "coordination-markdown-write",
+            ),
+            "--path",
+            str(target),
+            "--expected-sha256",
+            hashlib.sha256(target.read_bytes()).hexdigest(),
+            "--content-file",
+            str(candidate),
+            expected_code=2,
+        )
+        self.assertEqual(
+            "unsupported-coordination-replace-file",
+            rejected["error"],
+        )
+        self.assertEqual("old\n", target.read_text())
+
+    def test_coordination_resources_reject_guarded_provider_execution(self) -> None:
+        key = self.run_claim(
+            "key",
+            "--provider",
+            "linear",
+            "--source",
+            "workspace-uuid",
+            "--item",
+            "issue-uuid",
+        )
+        resource = str(key["resource"])
+        claim = self.acquire(
+            resource,
+            "linear-coordination",
+            coordination_only=True,
+        )
+        contender = self.acquire(
+            resource,
+            "other-linear-worker",
+            coordination_only=True,
+            expected_code=2,
+        )
+        output = self.home / "must-not-execute.txt"
+        rejected = self.run_claim(
+            "exec",
+            *self.claim_arguments(resource, claim, "linear-write"),
+            "--",
+            sys.executable,
+            "-c",
+            f"from pathlib import Path; Path({str(output)!r}).write_text('ran')",
+            expected_code=2,
+        )
+        manual_resource = "linear:workspace-uuid:issue-uuid"
+        manual_claim = self.acquire(manual_resource, "manual-linear")
+        manual_rejected = self.run_claim(
+            "exec",
+            *self.claim_arguments(
+                manual_resource,
+                manual_claim,
+                "manual-linear-write",
+            ),
+            "--",
+            sys.executable,
+            "-c",
+            "raise SystemExit('must not execute')",
+            expected_code=2,
+        )
+        self.assertEqual("already-claimed", contender["error"])
+        self.assertEqual("unsupported-coordination-exec", rejected["error"])
+        self.assertEqual("unsupported-coordination-exec", manual_rejected["error"])
+        self.assertFalse(output.exists())
+
+    def test_coordination_key_requires_canonical_identity(self) -> None:
+        invalid_provider = self.run_claim(
+            "key",
+            "--provider",
+            "linear/mcp",
+            "--source",
+            "workspace-uuid",
+            "--item",
+            "issue-uuid",
+            expected_code=64,
+        )
+        missing_item = self.run_claim(
+            "key",
+            "--provider",
+            "linear",
+            "--source",
+            "workspace-uuid",
+            "--item",
+            " ",
+            expected_code=64,
+        )
+        self.assertEqual("invalid-provider", invalid_provider["error"])
+        self.assertEqual("invalid-resource-identity", missing_item["error"])
 
     def test_markdown_items_share_one_source_claim_key(self) -> None:
         source = self.home / "backlog.md"
