@@ -573,6 +573,25 @@ def status(args: argparse.Namespace) -> dict[str, Any]:
     }
 
 
+def list_claims(args: argparse.Namespace) -> dict[str, Any]:
+    now = time.time()
+    with connect() as connection:
+        if args.resource is None:
+            rows = connection.execute(
+                "SELECT * FROM claims ORDER BY resource"
+            ).fetchall()
+        else:
+            rows = connection.execute(
+                "SELECT * FROM claims WHERE resource = ? ORDER BY resource",
+                (args.resource,),
+            ).fetchall()
+    return {
+        "ok": True,
+        "operation": "list",
+        "claims": [row_claim(row, now) for row in rows],
+    }
+
+
 def renew_guard(connection: sqlite3.Connection, row: sqlite3.Row, ttl: float) -> None:
     now = time.time()
     cursor = connection.execute(
@@ -961,6 +980,14 @@ def build_parser() -> argparse.ArgumentParser:
     status_parser = subparsers.add_parser("status", help="read current lease state")
     status_parser.add_argument("--resource", required=True)
 
+    list_parser = subparsers.add_parser(
+        "list", help="list current and expired claims"
+    )
+    list_parser.add_argument(
+        "--resource", help="filter claims to one exact resource"
+    )
+
+
     heartbeat_parser = subparsers.add_parser("heartbeat", help="renew an active lease")
     add_claim_arguments(heartbeat_parser)
 
@@ -997,6 +1024,9 @@ def main() -> int:
             code = 0
         elif args.action == "status":
             result = status(args)
+            code = 0
+        elif args.action == "list":
+            result = list_claims(args)
             code = 0
         elif args.action == "heartbeat":
             result = heartbeat(args)
