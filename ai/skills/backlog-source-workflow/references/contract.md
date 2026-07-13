@@ -29,12 +29,36 @@ ItemState {
   dependencies: stable IDs (and unresolved references when present)
   priority: provider priority or null
   ordinal: source order or null
+  refinement: none | in-progress | complete
   review: none | pending | in-progress | complete
+  claim: WorkClaim | null
   providerData: opaque provider fields and version information
 }
 ```
 
 Do not replace provider fields with a local copy. `status`, `review`, progress comments, task checkboxes, timestamps, and completion markers remain durable in the provider source. For remote providers, any local snapshot/cache is read-only temporary context; it must never become writable shadow backlog state or a fallback mutation target.
+
+### `WorkClaim`
+
+```text
+WorkClaim {
+  targetID: stable item ID or source locator for a source-wide claim
+  workKey: exact refinement item, implementation task, review pass, or archive pass
+  mode: REFINE | IMPLEMENT | REVIEW | ARCHIVE
+  command: claiming command
+  claimID: unique ownership-epoch ID
+  revision: provider compare-and-set revision
+  agentID: agent identity
+  ownerID: unique logical worker-attempt identity
+  sessionID: current invocation/session identity
+  token: opaque fencing token
+  startedAt: provider-observed timestamp
+  heartbeatAt: provider-observed timestamp
+  expiresAt: provider-observed timestamp
+}
+```
+
+A claim is a durable, bounded lease, not an ordinary `in-progress` marker. `in-progress` records resumable workflow progress; a claim records one active ownership epoch. A new session may immediately resume unclaimed work and may atomically replace an expired claim without resetting progress, but even the same agent name or a restarted session cannot adopt or renew an unexpired claim. A handoff after a coherent checkpoint releases the claim so the next session need not wait for expiry.
 
 ### `SchedulingScope`
 
@@ -73,14 +97,18 @@ Commands use these operations for every provider. Provider sections map them to 
 
 1. `resolveSource(arguments, repositoryContext)` returns an ordered `Source[]` plus diagnostics. It must not mutate anything. Explicit source arguments are resolved in supplied order, including unrelated provider kinds.
 2. `discover(source, selector?)` returns all matching `ItemState` values, including dependencies needed for graph checks. With no selector it enumerates the complete source collection.
-3. `selectNext(scope, mode)` evaluates state and dependency readiness and returns one implementation item, or a structured blocked/empty result. It never returns a review group.
-4. `readItem(source, id)` refreshes one durable `ItemState` before a write or review.
-5. `writeState(source, id, patch, authority)` records an authorized status, task, review, or progress change and returns a provider receipt (ID/version or equivalent).
-6. `recordProgress(source, id, marker, authority)` writes the command's durable checkpoint using the provider's native comment, task-state, checkbox, or field mechanism. A handoff message alone is not a checkpoint.
-7. `reviewBoundary(scope, requestedGroup?, authority)` parses an explicit `review-group:<provider-native-selector>`, resolves it through the selected provider, and returns that group; absent a request it returns the one-item default. It must reject an implicit larger group and any provider that cannot persist the requested group marker.
-8. `archive(source, target, authority)` uses the provider's archive/close/move convention and returns a durable receipt. It must never delete a source as a substitute for archive.
+3. `selectNext(scope, mode)` evaluates terminal state, dependency readiness, blockers, and claims and returns one ordered claimable item or a structured `complete`, `blocked`, or `active-claims` result. It never returns a review group.
+4. `selectWave(scope, mode)` returns the ordered dependency-ready, unclaimed wave available for bounded caller orchestration. The caller may narrow that wave for shared-resource conflicts but must not add later or dependency-gated items.
+5. `readItem(source, id)` refreshes one durable `ItemState` before a claim, write, or review.
+6. `claim(source, id, request, authority)` atomically acquires an absent/expired claim while revalidating scope, mode eligibility, dependency versions, and provider version. `request` includes a caller-generated `claimID`, work key, mode, agent/session/owner IDs, bounded TTL, and eligibility receipt. It returns the claim, fencing token, provider time, and durable receipt, or `busy | ineligible | conflict | capability`.
+7. `heartbeat(source, id, claimID, revision, lease, authority)` conditionally extends only that matching unexpired ownership epoch from provider time and returns its new revision/receipt.
+8. `releaseClaim(source, id, claimID, revision, reason, authority)` conditionally removes only that matching ownership epoch after its durable checkpoint and returns a provider receipt.
+9. `writeState(source, id, patch, authority, claimID?, revision?)` records an authorized status, task, review, or progress change and returns a provider receipt. A claimed mutation requires the matching unexpired ownership epoch and advances its revision.
+10. `recordProgress(source, id, marker, authority, claimID?, revision?)` writes the command's durable checkpoint using the provider's native mechanism. A claimed mutation requires the matching unexpired ownership epoch and advances its revision; a handoff alone is not a checkpoint.
+11. `reviewBoundary(scope, requestedGroup?, authority)` parses an explicit `review-group:<provider-native-selector>`, resolves it through the selected provider, and returns that group; absent a request it returns the one-item default. It must reject an implicit larger group and any provider that cannot persist the requested group marker.
+12. `archive(source, target, authority, claimID?, revision?)` uses the provider's archive/close/move convention and returns a durable receipt. Claimed archive work requires the matching unexpired ownership epoch. It must never delete a source as a substitute for archive.
 
-Every operation must preserve explicit source and selector order and stable IDs. Unsupported provider mutations are an explicit capability error; do not silently edit a neighboring local file, create a local remote shadow, or invent a fallback store.
+Every operation preserves explicit source/selector order and stable IDs. Adapters declare `item-claim`, fenced `source-claim`, or `none`; partial acquire-only or unfenced support is `none`. An atomic source-wide claim may safely serialize external sessions while its holder coordinates read-only children, but reduces item-level concurrency. Unsupported mutations return explicit capability errors; never invent a local shadow or racy fallback.
 
 ## Source resolution and detection
 
@@ -98,24 +126,35 @@ After each source kind is known, load only that provider's matching section from
 
 ## Eligibility, dependencies, and scheduling
 
-Build a dependency graph over the selected collection. For each item:
+Build the complete dependency graph before choosing or delegating work. Dependency ordering is authoritative for every provider and every scheduling mode:
 
-- A dependency is ready only when its durable provider state is complete, closed, archived, or the provider's equivalent terminal state.
+- A dependency is implementation/review ready only when its durable provider state is complete, closed, archived, or the provider's equivalent terminal state. An `in-progress` dependency remains incomplete.
+- Refinement may cover incomplete dependents, but only in topological waves. A prerequisite enters `refinement: complete` only after its authorized specification write and durable, discoverable refinement-complete receipt/checkpoint are visible in provider state. Dependents cannot enter a later refinement wave before that barrier, and claim release alone never satisfies it. This refinement completion does not make the dependent implementation-ready.
 - A missing dependency ID/reference is a blocking diagnostic on the dependent item. It is not treated as complete and is not silently removed from the graph.
 - A directed cycle is a blocking diagnostic for every member of the cycle. Detect cycles (for example, strongly connected components) before choosing work; do not break a cycle by arbitrary order.
-- A dependency outside an explicit item selection may be read from the same provider to establish terminal state, but its implementation remains outside the scope.
+- A dependency outside an explicit item selection may be read to establish terminal state or its already-refined contract, but its implementation or specification mutation remains outside scope.
 - Items explicitly blocked by provider state, missing dependencies, or cycles are ineligible and must remain visible in the result.
 
-Dependency readiness is a hard gate. After blocked items, if `explicitItemIDs` is non-empty, choose the first dependency-ready item in preserved source and selector order; do not reorder it by provider priority or ordinal. For a source-only scope, preserve explicit source order across sources, then within each source choose review-pending/in-progress work that the caller's mode can advance, then other dependency-ready work, then provider priority, ordinal/source order, and stable ID. Preserve source order when no provider priority exists. A provider's display order must not override a dependency block.
+Claims are a second hard gate after dependency readiness. Exclude every item covered by an unexpired item/source claim, regardless of matching agent/session labels. An unfinished dependent of an actively claimed prerequisite remains dependency-ineligible; do not skip the prerequisite and start the dependent. Unclaimed in-progress work and work with an expired claim are resumable and rank before new work in the same dependency-ready ordering wave.
+
+After those gates, if `explicitItemIDs` is non-empty, choose in preserved source and selector order; do not reorder by provider priority or ordinal. For source-only scope, preserve explicit source order, then dependency waves within each source, then resumable review-pending/in-progress work the caller's mode can advance, then other work by provider priority, ordinal/source order, and stable ID. Multiple agents may claim different items only from the same dependency-ready wave. A provider's display order never overrides a dependency edge.
+
+When no item is claimable, return the reason rather than reaching past the gate: `complete` when all scoped work is terminal, `blocked` with every blocker when unfinished work has no satisfiable ready root, or `active-claims` with the active claim owners/expiry and dependency chains they hold when all otherwise-progressable roots are leased. Mixed blocked/claimed results report both. Never select a completed item, a dependent of unfinished work, or a later item merely to avoid returning no work.
 
 ## Durable state and authority
 
-The caller supplies an authority object describing allowed reads, writes, reviews, archive operations, and the exact command scope. Pass it unchanged to mutations. Resolution and discovery cannot expand it. A source-only invocation may enumerate the whole source, but it may write only the item/group authorized by the command; it may not turn enumeration into a source-wide review or rewrite.
+The caller supplies an authority object describing allowed reads, claims, writes, reviews, archive operations, and exact command scope. Pass it unchanged to mutations. Resolution/discovery cannot expand it. Source-only scope may enumerate the whole source and claim only the item or dependency-ready wave authorized by the command; it may not turn enumeration into a source-wide review/rewrite or claim later dependency waves.
 
 Read current durable state immediately before a mutation where the provider can change concurrently. Write through the selected provider and retain its receipt/version. If a write fails, report the durable failure and do not claim the task or review complete. Persist each command-defined checkpoint (including progress, blocked, review, and completion state) in the provider source before advancing. Remote provider state remains authoritative; local snapshots are read-only temporary context and never a writable shadow or fallback state. Do not use handoff text as durable state.
+
+Claim acquisition is one linearized compare-and-set, not a read-then-write marker. It uses provider time and atomically revalidates authority, nonterminal/mode-eligible state, dependency/eligibility receipt, provider revision, and “no claim or expired claim” while recording a caller-generated unique claim ID, identities, work key, start/heartbeat/expiry, and new fencing token. Retrying the same claim ID is idempotently recoverable after a lost response; every new acquisition, including by the same owner, uses a new ID to prevent ABA. `heartbeat`, `releaseClaim`, and every claimed mutation condition on the exact claim ID and current revision. Once expired, the former owner must acquire anew. A delayed stale worker cannot write or clear its successor's claim.
+
+Use a bounded provider/configured lease duration. The actual holder heartbeats before half elapses and around long operations, then revalidates dependencies and the claim immediately before delegation, irreversible integration, and checkpoints. If a dependency reopens or changes, stop while still fenced, checkpoint only authorized resumable state, and release. If an acquire/heartbeat/release result is ambiguous, reread by exact claim ID; do not start or transfer work while ownership is uncertain.
+
+Persist the coherent task/specification/refinement-complete/review/archive checkpoint under the valid claim before release. If checkpointing or release fails, do not advance scheduling or claim completion; retain receipts and let the claim remain until repaired or expired. A normal handoff releases while preserving `in-progress`; an unexpected stop is recovered by expiry and a fresh claim ID. If the provider cannot supply atomic claim transitions, authoritative time, linearizable recovery reads, and fencing on actual writes, return a claim-capability error before delegation, isolation, or edits.
 
 Archive is a provider operation, not a scheduling decision. It is allowed only when the caller authorizes it and the provider section defines the operation. Closing a GitHub issue, archiving a Linear item, archiving a Backlog.md task, or moving an existing loose-Markdown source to its established archive location must be recorded with the provider receipt.
 
 ## Provider extension rule
 
-A future provider adds one provider section that implements source detection, complete discovery, normalized status/dependency/order mapping, durable read/write/progress, review-boundary resolution, and archive. It may retain opaque fields in `providerData`, but it must not change these normalized values, selection precedence, default one-item review boundary, or command call sites. If a capability is unavailable, return a structured capability error rather than changing the contract.
+A future provider adds one provider section that implements source detection, complete discovery, dependency/status/order/claim mapping, atomic fenced claim/heartbeat/release, durable read/write/progress, review-boundary resolution, and archive. It may retain opaque fields in `providerData`, but it must not change these normalized values, dependency-first selection, claim semantics, default one-item review boundary, or command call sites. If a capability is unavailable, return a structured capability error rather than changing the contract.

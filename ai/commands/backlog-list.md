@@ -9,7 +9,7 @@ This is a read-only prioritization command. Do not implement work, edit or creat
 
 ## Resolve the backlog source
 
-Apply the `backlog-source-workflow` skill as the shared source-resolution and provider-dispatch contract. Load its provider-neutral contract first, then one matching provider heading for each resolved provider kind, preserving the explicit source order when sources use unrelated provider kinds. It normalizes `Source`, `SchedulingScope`, `ItemState`, and optional `ReviewGroup`, resolves explicit sources and selectors in argument order before deriving at most one unambiguous repository source, and progressively loads only those selected headings. Treat `review-group:` only as provider scope metadata when the selected provider supports it and the caller explicitly supplies it; never infer a `ReviewGroup` from source-only scope, labels, adjacency, or selector shape. The skill's default review boundary is exactly one implementation item; this command's read-only boundary, dependency-aware ordering, and output format override the skill where they are more specific.
+Apply the `backlog-source-workflow` skill as the shared source-resolution and provider-dispatch contract. Load its provider-neutral contract first, then one matching provider heading for each resolved provider kind, preserving explicit source order. It normalizes `Source`, `SchedulingScope`, `ItemState`, `WorkClaim`, and optional `ReviewGroup`; resolves explicit sources/selectors before deriving at most one unambiguous repository source; and progressively loads only selected provider headings. Treat `review-group:` only as explicit provider scope metadata. This command is read-only: inspect claims but never acquire, renew, release, or mutate one.
 
 Keep collection scope separate from item selection:
 
@@ -23,11 +23,11 @@ When `$ARGUMENTS` contains no explicit source (including selector-only or descri
 
 ## Determine units, order, and parallelism
 
-- Read enough surrounding backlog and repository context to determine each unit's boundary, status, priority, dependencies, blockers, and likely implementation surface.
-- Treat a remote ticket or issue as one unit. For local markdown, use the file's established top-level work-item boundary; if the file itself is a standalone work spec, the whole file is one unit. Nested checklist entries, acceptance criteria, implementation steps, and other subitems are never separate units in this output.
-- Include open, review-pending, and in-progress units; exclude completed, canceled, and archived units. Include blocked open units in the output, but they are not eligible or parallel-ready until their blocker is resolved.
-- After determining review/state and dependency readiness, order review-pending/in-progress eligible work before other dependency-ready work. For explicitly selected items, preserve selector order within each resolved source; when comparing unrelated resolved sources, preserve explicit source order. For source-only collections, provider priority, then provider ordinal/order, then stable ID may rank items only within one source; never use those fields to reorder sources or explicitly selected items. Keep blocked open units visible after their listed prerequisites and all eligible/ready work, with the blocker named in the ordering reason.
-- Mark units parallelizable only when they are ready in the same ordering wave, neither depends on the other, and evidence shows no shared migration, schema, central interface, stateful resource, or overlapping implementation ownership requiring coordination. Insufficient evidence means `Parallel: no`, with that reason. Blocked units always have `Parallel: no`; place them after listed prerequisites and ready work, and name the blocker in the ordering reason.
+- Read enough context to determine each unit's boundary, status, priority, dependencies, blockers, refinement/review progress, item/source claim, and implementation surface. Build the complete dependency graph before ordering.
+- Treat a remote ticket or issue as one unit. For local markdown, use the established top-level work-item boundary; if the file itself is a standalone work spec, the whole file is one unit. Nested checklist entries, acceptance criteria, implementation steps, and other subitems are never separate units.
+- Include open, review-pending, and in-progress units; exclude terminal units. Blocked units and units covered by an active item/source claim remain visible but ineligible. An expired claim is resumable only through a fresh claim ID.
+- Order prerequisites before dependents. Within the earliest dependency-ready wave, order unclaimed/expired-claim review-pending or in-progress work before new work. Explicit selector/source order remains authoritative; provider priority, ordinal/order, then stable ID rank only source-only items within one source and wave. Keep blocked or actively claimed roots visible with every dependent chain they gate; never move a dependent into an earlier wave because its prerequisite is claimed.
+- Mark parallelizable only unclaimed units ready in the same wave with no dependency/shared migration/schema/interface/stateful resource/ownership. A blocker or active item/source claim means `Parallel: no`; a source claim applies its owner/expiry to every unit in that source.
 
 ## Output
 
@@ -38,9 +38,9 @@ On successful resolution, output only:
 
 Then one numbered line per unit:
 
-`<order>. [<source>] <unit ID or backlog filename> — <title> — Parallel: <no | yes, with #N[, #N...]> — <brief ordering reason>`
+`<order>. [<source>] <unit ID or backlog filename> — <title> — Claim: <unclaimed | expired/resumable | item/source owner until expiry> — Parallel: <no | yes, with #N[, #N...]> — <brief ordering reason>`
 
-Use each source's identifiers and titles, and include the source label even when only one source was resolved. Keep the reason to one short phrase explaining only a dependency, blocker, current in-progress state, or priority/order tie-break. Do not add an implementation plan, do not expand a unit into subitems, and do not suggest sequencing within a unit. If no open units match, output the resolved sources and `No open backlog units found.`
+Use each source's identifiers/titles and include the source label even when only one source resolved. Keep the reason to one short dependency, blocker, claim, resumable-progress, or priority/order phrase. If no open units match, output the resolved sources and `No open backlog units found.` If open units exist but no item is claimable, add `No claimable backlog units: <blocked roots and/or active claim owners/expiries>.` Do not add an implementation plan, expand units into subitems, or suggest sequencing within a unit.
 
 On a source-resolution failure, unresolved selector, or ambiguous derived source, output only:
 
