@@ -33,10 +33,9 @@ The complete find/do/check/judge/watch loop. No tester (executor writes tests, v
 
 ## Commands and authored skills
 
-- Keep command files as explicit workflow entrypoints. Codex receives generated command adapters; Claude and OMP use the shared command files directly.
-- Keep authored skills under `ai/skills/<distinct-name>/`. `ai.yaml` links each package to `~/.claude/skills/` and `~/.agents/skills/`, and links the common directory to `~/.omp/agent/skills`.
-- `install-codex-command-skills [commands-dir] [codex-skills-dir] [authored-skills-dir]` generates only Codex command adapters. Its third argument defaults to `ai/skills` and is used to reject command/authored-skill name collisions before any generated output is written.
-- A command adapter and an authored skill must not share a name: Claude exposes commands and skills on the same slash-command surface, and Codex stores both in its skills directory. Use a descriptive companion name such as `backlog-implement-review-loop-workflow`.
+- Keep command files as explicit workflow entrypoints. Codex's generated command adapters are its entrypoint; Claude and OMP use the shared command files directly.
+- Keep authored skills under `ai/skills/<distinct-name>/` only for genuinely shared reusable workflow methods. `ai.yaml` links each package to `~/.claude/skills/` and `~/.agents/skills/`, and links the common directory to `~/.omp/agent/skills`.
+- `install-codex-command-skills [commands-dir] [codex-skills-dir] [authored-skills-dir]` generates only Codex command adapters and rejects command/authored-skill name collisions before any generated output is written. The command file remains authoritative for its full workflow; the generated adapter is the Codex entrypoint.
 - Keep optional Codex `agents/openai.yaml` metadata inside each authored skill package so the existing links carry it unchanged. The command installer never edits authored packages.
 
 ## Bounded backlog loop

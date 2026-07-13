@@ -1,6 +1,6 @@
 ---
 description: List the next backlog items in execution order and identify item-level parallelism
-argument-hint: [backlog-file|remote-ref] [item-ids|titles|ranges|description]
+argument-hint: [backlog-source|remote-ref] [item-ids|titles|ranges|description]
 ---
 
 List the next open backlog units in recommended execution order and indicate whether each unit can run in parallel with another listed unit. `$ARGUMENTS` is optional and may contain local backlog paths, remote backlog references (such as Linear project names, issue IDs, or URLs), or selectors such as item IDs, titles, ranges, or a natural-language description.
@@ -9,30 +9,32 @@ This is a read-only prioritization command. Do not implement work, edit or creat
 
 ## Resolve the backlog source
 
-Resolve source-shaped inputs with this precedence:
+Apply the `backlog-source-workflow` skill as the shared source-resolution and provider-dispatch contract. Load its provider-neutral contract first, then one matching provider heading for each resolved provider kind, preserving the explicit source order when sources use unrelated provider kinds. It normalizes `Source`, `SchedulingScope`, `ItemState`, and optional `ReviewGroup`, resolves explicit sources and selectors in argument order before deriving at most one unambiguous repository source, and progressively loads only those selected headings. Treat `review-group:` only as provider scope metadata when the selected provider supports it and the caller explicitly supplies it; never infer a `ReviewGroup` from source-only scope, labels, adjacency, or selector shape. The skill's default review boundary is exactly one implementation item; this command's read-only boundary, dependency-aware ordering, and output format override the skill where they are more specific.
 
-1. **Local backlog:** use each supplied path that resolves to an existing local backlog file. A local file is a backlog only when its structure represents work units, not merely because it mentions an issue ID. If a path-shaped argument does not resolve to an existing backlog file, treat it as an unresolved explicit source; do not drop it or substitute a different source.
-2. **Remote backlog:** before parsing selectors, classify a recognized remote URL, a system-qualified project reference, or a system-specific item ID as an explicit remote source. An item ID that follows an already resolved collection source is instead a selector within that source. Resolve explicit remote references with the available first-party tool for that system. For Linear, use the Linear MCP/tooling when available. If a required remote integration is unavailable or unauthenticated, report that exact limitation instead of guessing from stale local mentions.
-3. **Derived context:** when no source is supplied, or `$ARGUMENTS` contains only selectors or a description, derive and search for the active backlog from repository context. Check, in order: a repository-declared backlog source or convention; structurally recognizable local backlog files matching the current repository, branch, task, or selectors; then a remote project or issue set linked by repository metadata or matching the selectors. Use first-party remote search when the repository context identifies that system.
+Keep collection scope separate from item selection:
 
-When multiple explicit sources are supplied, include all of them in the supplied order. When several derived sources remain equally plausible, do not merge unrelated backlogs. Never silently substitute a generic TODO list, arbitrary issue search, or completed/archive file for an active backlog.
+- A collection source is a loose Markdown backlog file, a whole Backlog.md project directory, a Linear project or issue set, or a GitHub Issues repository/project/query resolved through the provider's first-party integration. Source-only scope means the entire resolved collection; do not silently choose one item.
+- An item ID, title, range, or description is a selector within the preceding collection source. An item ID that follows an already resolved source is never a second source. Exact item ID takes precedence over title, then description.
+- Classify path-shaped arguments and recognized remote references before parsing selectors. Validate explicit sources left-to-right. A missing explicit local source path may substitute only one clearly adjacent same-directory or moved/renamed-basename candidate, and the substitution must be reported; a malformed or otherwise unresolved explicit source remains unresolved. Never drop an explicit source, substitute an unrelated source, or use a partial result.
 
-Use selectors in `$ARGUMENTS` only to narrow the resolved source. An exact item ID takes precedence over a title match, which takes precedence over a description match. A source-resolution failure, unresolved selector, or ambiguous derived source uses the diagnostic output below; do not continue with a partial or guessed list.
+Provider resolution is deliberately narrow: read loose Markdown using its existing structure; discover Backlog.md projects and task IDs through the project's supported CLI/MCP surface; use first-party Linear tooling; and use `gh` for GitHub Issues. If a required integration is unavailable or unauthenticated, report that exact limitation. Do not embed provider manuals or infer state from stale local mentions.
+
+When `$ARGUMENTS` contains no explicit source (including selector-only or description-only arguments), derive at most one active source from repository context in this order: repository-declared source or convention; structurally recognizable local backlog source matching the repository, branch, task, or selectors; then a remote collection linked by repository metadata or matching the selectors. Repository derivation happens only when no explicit source was supplied. If several derived sources are equally plausible, do not merge them; emit the diagnostic output below. When explicit sources are supplied, keep them distinct and include them in their supplied order.
 
 ## Determine units, order, and parallelism
 
 - Read enough surrounding backlog and repository context to determine each unit's boundary, status, priority, dependencies, blockers, and likely implementation surface.
 - Treat a remote ticket or issue as one unit. For local markdown, use the file's established top-level work-item boundary; if the file itself is a standalone work spec, the whole file is one unit. Nested checklist entries, acceptance criteria, implementation steps, and other subitems are never separate units in this output.
-- Include open and in-progress units in scope; exclude completed, canceled, and archived units. Keep an in-progress unit first unless it is blocked.
-- Honor explicit prerequisites and blockers before priority. Otherwise preserve each source's priority/rank and stable document or remote ordering. Across multiple sources, apply status and dependency ordering globally only when evidence links their units; otherwise use source resolution order as the deterministic tie-break without comparing unrelated priority scales. Do not infer sequencing merely from the order of nested subitems.
-- Mark units parallelizable only when they are ready in the same ordering wave, neither depends on the other, and available evidence shows no shared migration, schema, central interface, stateful resource, or overlapping implementation ownership that requires coordination. Be conservative: insufficient evidence means `Parallel: no`, with that reason.
-- A blocked unit is not parallel-ready. Place it after any listed prerequisite and identify the blocker in the ordering reason.
+- Include open, review-pending, and in-progress units; exclude completed, canceled, and archived units. Include blocked open units in the output, but they are not eligible or parallel-ready until their blocker is resolved.
+- After determining review/state and dependency readiness, order review-pending/in-progress eligible work before other dependency-ready work. For explicitly selected items, preserve selector order within each resolved source; when comparing unrelated resolved sources, preserve explicit source order. For source-only collections, provider priority, then provider ordinal/order, then stable ID may rank items only within one source; never use those fields to reorder sources or explicitly selected items. Keep blocked open units visible after their listed prerequisites and all eligible/ready work, with the blocker named in the ordering reason.
+- Mark units parallelizable only when they are ready in the same ordering wave, neither depends on the other, and evidence shows no shared migration, schema, central interface, stateful resource, or overlapping implementation ownership requiring coordination. Insufficient evidence means `Parallel: no`, with that reason. Blocked units always have `Parallel: no`; place them after listed prerequisites and ready work, and name the blocker in the ordering reason.
 
 ## Output
 
 On successful resolution, output only:
 
 `Sources: <all resolved local paths and remote projects/queries, in resolution order>`
+`Substituted: <requested local path> -> <adjacent candidate>` for each permitted adjacent-path substitution, in argument order; omit this line when no substitution occurred.
 
 Then one numbered line per unit:
 
