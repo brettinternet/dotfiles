@@ -2,7 +2,8 @@
 
 ## Communication Style
 
-- Be terse and direct. Skip preamble, filler phrases, and trailing summaries.
+- Be succinct and direct. Skip preamble, filler phrases, and trailing summaries.
+- Illustrate ideas where possible.
 - Lead with the answer or action, not the reasoning.
 - Use plain text over bullet lists when a sentence suffices.
 
@@ -18,7 +19,6 @@ When implementing something that could be represented as a reusable coding patte
 - Prefer fast local CLIs for code navigation: use `rg`/ripgrep for content search, `fd` for file discovery, and `ast-grep` for structural code search/refactors before falling back to fragile regex edits.
 - Use `bun` and `bunx` instead of `npm` or `npx`.
 - Use `trash` to delete files instead of `rm` so removals are recoverable.
-- Use git worktrees when directed to do so and put them within the repository in `.worktrees` if not specified.
 
 ## Subagents
 
@@ -37,3 +37,4 @@ If you are running as a subagent (explore, executor, verifier, pr-watcher, oracl
 - Never run `git push` without explicit instruction.
 - Never open PRs without explicit instruction.
 - When committing, do not add yourself as a co-author. Omit any `Co-Authored-By` trailer. Make commit messages as concise as possible.
+- Use worktrees when directed to do so and put them within the repository in `.worktrees` if not specified.
