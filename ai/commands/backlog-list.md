@@ -23,10 +23,10 @@ When `$ARGUMENTS` contains no explicit source (including selector-only or descri
 
 ## Determine units, order, and parallelism
 
-- Read enough context to determine each unit's boundary, status, priority, dependencies, blockers, refinement/review progress, item/source claim, and implementation surface. Build the complete dependency graph before ordering.
+- Read enough context to determine each unit's boundary, status, priority, dependencies, dependency-gated readiness, blockers, refinement/review progress, item/source claim, and implementation surface. Build the complete dependency graph before ordering.
 - Treat a remote ticket or issue as one unit. For local markdown, use the established top-level work-item boundary; if the file itself is a standalone work spec, the whole file is one unit. Nested checklist entries, acceptance criteria, implementation steps, and other subitems are never separate units.
-- Include open, review-pending, and in-progress units; exclude terminal units. Blocked units and units covered by an active item/source claim remain visible but ineligible. An expired claim is resumable only through a fresh claim ID.
-- Order prerequisites before dependents. Within the earliest dependency-ready wave, order unclaimed/expired-claim review-pending or in-progress work before new work. Explicit selector/source order remains authoritative; provider priority, ordinal/order, then stable ID rank only source-only items within one source and wave. Keep blocked or actively claimed roots visible with every dependent chain they gate; never move a dependent into an earlier wave because its prerequisite is claimed.
+- Include open, review-pending, and in-progress units; exclude terminal units. A unit whose prerequisite is another defined but unfinished backlog item is dependency-gated and remains visible but ineligible; do not label it blocked. Provider-blocked units and units covered by an active item/source claim remain visible but ineligible. An expired claim is resumable only through a fresh claim ID.
+- Order prerequisites before dependents. Within the earliest dependency-ready wave, order unclaimed/expired-claim review-pending or in-progress work before new work. Explicit selector/source order remains authoritative; provider priority, ordinal/order, then stable ID rank only source-only items within one source and wave. Keep provider-blocked, missing/cyclic roots, and actively claimed roots visible with every dependent chain they gate; never move a dependent into an earlier wave because its prerequisite is claimed or label a dependent blocked solely because its prerequisite is unfinished.
 - Mark parallelizable only unclaimed units ready in the same wave with no dependency/shared migration/schema/interface/stateful resource/ownership. A blocker or active item/source claim means `Parallel: no`; a source claim applies its owner/expiry to every unit in that source.
 
 ## Output
@@ -40,7 +40,7 @@ Then one numbered line per unit:
 
 `<order>. [<source>] <unit ID or backlog filename> — <title> — Claim: <unclaimed | expired/resumable | item/source owner until expiry> — Parallel: <no | yes, with #N[, #N...]> — <brief ordering reason>`
 
-Use each source's identifiers/titles and include the source label even when only one source resolved. Keep the reason to one short dependency, blocker, claim, resumable-progress, or priority/order phrase. If no open units match, output the resolved sources and `No open backlog units found.` If open units exist but no item is claimable, add `No claimable backlog units: <blocked roots and/or active claim owners/expiries>.` Do not add an implementation plan, expand units into subitems, or suggest sequencing within a unit.
+Use each source's identifiers/titles and include the source label even when only one source resolved. Keep the reason to one short dependency, dependency-gated readiness, blocker, claim, resumable-progress, or priority/order phrase. If no open units match, output the resolved sources and `No open backlog units found.` If open units exist but no item is claimable, add `No claimable backlog units: <provider-blocked/missing/cyclic roots, dependency-gated chains, and/or active claim owners/expiries>.` Do not add an implementation plan, expand units into subitems, or suggest sequencing within a unit.
 
 On a source-resolution failure, unresolved selector, or ambiguous derived source, output only:
 
