@@ -140,6 +140,35 @@ class BacklogClaimTests(unittest.TestCase):
         self.assertEqual("already-claimed", second["error"])
         self.assertEqual(first["claim"]["claimId"], second["claim"]["claimId"])
 
+    def test_list_returns_all_claims_in_order_and_filters_by_resource(self) -> None:
+        expired_resource = "github:example/repo#expired"
+        active_resource = "github:example/repo#active"
+        self.acquire(expired_resource, "expired", ttl=0.1)
+        time.sleep(0.2)
+        self.acquire(active_resource, "active")
+
+        all_claims = self.run_claim("list")
+        claims = all_claims["claims"]
+        assert isinstance(claims, list)
+        self.assertEqual("list", all_claims["operation"])
+        self.assertEqual(
+            [active_resource, expired_resource],
+            [claim["resource"] for claim in claims],
+        )
+        self.assertTrue(claims[0]["active"])
+        self.assertFalse(claims[1]["active"])
+
+        filtered = self.run_claim("list", "--resource", expired_resource)
+        filtered_claims = filtered["claims"]
+        assert isinstance(filtered_claims, list)
+        self.assertEqual(
+            [expired_resource], [claim["resource"] for claim in filtered_claims]
+        )
+
+        missing = self.run_claim("list", "--resource", "github:example/repo#missing")
+        self.assertEqual([], missing["claims"])
+
+
     def test_lease_duration_has_a_hard_upper_bound(self) -> None:
         oversized = self.acquire(
             "github:example/repo#ttl",
