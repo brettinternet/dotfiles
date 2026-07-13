@@ -1,43 +1,45 @@
 ---
 description: Refine backlog items into implementation-ready work for a lesser coding agent, then commit
-argument-hint: <backlog-file|remote-refs> [item-ids|titles|ranges]
+argument-hint: <backlog-source|remote-refs> [item-ids|titles|ranges]
 ---
 
 Refine the backlog items in `$ARGUMENTS` into implementation-ready work for a lesser coding agent, then commit changes.
 
 Your goal is to make every refined item's specification 100% ready for development and give it an honest execution status: available now, ready after a named prerequisite, or blocked only by a genuinely external or unresolved prerequisite. Resolve the item's own open questions during refinement instead of handing them off. Investigate the repository, backlog, issue, product, and design context, decide each open question, and record the decision with its supporting evidence and rationale. Only escalate a question you genuinely cannot resolve — one that depends on information outside all available context and cannot be settled by a defensible default.
 
-Treat `$ARGUMENTS` as the exact local backlog file, remote backlog references (such as Linear project identifiers, issue IDs, or issue URLs), item IDs, titles, or ranges to refine. Do not refine unrelated backlog.
+Treat `$ARGUMENTS` as the exact collection source and/or item selectors to refine: a loose Markdown backlog file, a whole Backlog.md project directory, a Linear project or issue set, a GitHub Issues repository/project/query, an item ID, title, range, or description. Do not refine unrelated backlog.
 
-Before reading or editing backlog content, classify every path-shaped value in `$ARGUMENTS` as an explicit local backlog source or an implementation-context hint (do not treat backlog item IDs, titles, ranges, or remote backlog references as paths). Validate explicit local backlog sources left-to-right. If one does not exist, check only the same directory and the same basename after a directory move/rename; auto-substitute only one unambiguous, clearly adjacent candidate and report it. If the backlog source still cannot be resolved, stop and report it plus nearby candidates because there is no source to refine. Other explicit paths are discovery hints, not presence gates: try to resolve them, then carry any missing references into the triage below rather than stopping.
+Apply the `backlog-source-workflow` skill as the shared source-resolution and provider-dispatch contract. Load its provider-neutral contract first, then one matching provider heading for each resolved provider kind, preserving the explicit source order when sources use unrelated provider kinds. It normalizes `Source`, `SchedulingScope`, `ItemState`, and optional `ReviewGroup`, resolves explicit sources and selectors left-to-right before deriving at most one unambiguous repository source, preserves source/selector order, and progressively loads only those selected headings. Treat `review-group:` only as provider scope metadata when the selected provider supports it and the caller explicitly supplies it; never infer a `ReviewGroup` from source-only scope, labels, adjacency, or selector shape. The skill's default review boundary is exactly one implementation item; this command's refinement authority, mutation rules, and commit requirements override the skill where they are more specific.
+
+Keep collection scope separate from item selection. Source-only scope means the entire resolved collection, including every item in a whole Backlog.md project; it does not mean “choose the first item.” Item IDs, titles, ranges, and descriptions narrow the immediately preceding collection source, with exact ID taking precedence over title, then description. Preserve explicit source order across unrelated sources. After dependency readiness is established, preserve explicit selector order within each preceding source; when selectors span sources, source order remains authoritative across unrelated sources. For source-only collections, provider priority/ordinal/order ranks items only within each source and never reorders sources or explicit selections. Validate explicit sources left-to-right. A missing explicit local source path may substitute only one clearly adjacent same-directory or moved/renamed-basename candidate, and the substitution must be reported; otherwise an explicit source remains unresolved and refinement must not fall back to another unrelated or derived source. Missing implementation-reference paths in a selected item or non-backlog `$ARGUMENTS` hint are discovery hints, not source presence gates; carry them into the triage below rather than stopping.
 
 ## Backlog storage policy
 
-Derive storage behavior per resolved backlog source from repository context:
+Derive storage and mutation behavior per resolved collection source from repository context:
 
-- a local markdown backlog file named in `$ARGUMENTS` is a writable backlog source
-- a remote item makes an existing local backlog entry writable only when exactly one repo markdown file matches it structurally as a backlog — an item list or item headings carrying the item's ID — not merely any file that mentions the ID
-- every other remote item is remote-only: never write repo backlog/spec/planning markdown for it
+- A loose Markdown backlog file named in `$ARGUMENTS` is a writable source; edit it directly and preserve its established style.
+- A whole Backlog.md project directory is a writable collection source. Discover and mutate project/task fields through the supported `backlog` CLI or MCP operations; do not edit task files directly when a provider-native operation exists.
+- Every remote item is provider-owned and remote-only for refinement: never make a local Markdown backlog/spec/planning file writable as a mirror or create one for it. Use only a temporary read-only snapshot outside authoritative storage when provider-native refinement needs working context.
 
-Never create new backlog/spec/planning markdown unless the repo already demonstrates that exact convention, such as existing snapshot or spec files matching remote item IDs. When in doubt, do not create files; write only to writable backlog sources. Moving or renaming an existing backlog file into the repo's archive location per repo convention is an edit to an existing source, not creation.
+Provider operations stay narrow: use first-party Linear tooling for Linear; use `gh` for GitHub Issues; and preserve each provider's authorization boundaries. Remote item specifications and durable state may be mutated only through the selected provider's native operations. Remote writes are limited to the exact resolved items and the refined content authorized by `$ARGUMENTS`; do not change workflow status, create or delete remote items, or touch items outside that scope. If an integration is unavailable or unauthenticated, report the exact limitation.
+
+Moving or renaming an existing local backlog file into the repository's archive location per repository convention is an edit to an existing source, not creation. When in doubt, do not create files; write only to an explicitly writable source.
 
 ## Remote backlog sources
 
-Remote backlog references, such as Linear project identifiers, issue IDs, or issue URLs, are discovery inputs only. Do not refine against a moving remote source in place.
-
-Invoking this command with remote backlog references is the standing authorization to update those exact remote items' content through the first-party tool — writing the refined result back is the default outcome, not an exception. It does not authorize changing item workflow status, creating or deleting remote items, or touching items outside `$ARGUMENTS`.
+Remote backlog references are discovery inputs, not moving text to refine in place. Durable item specifications and state remain provider-owned; temporary snapshots, handoff notes, command-local notes, and temporary files outside the worktree are read-only context, never authoritative storage. Invoking this command with a remote reference authorizes updating only the exact resolved items' content through that provider's first-party flow; it does not authorize workflow-status changes, creating or deleting remote items, or touching items outside `$ARGUMENTS`.
 
 Before refining:
 
-1. Resolve each remote reference using the available first-party tool for that system. For Linear, use the Linear MCP/tooling when available; if no authenticated tool is available, stop and report the missing integration.
-2. Fetch the exact remote items in the order implied by `$ARGUMENTS`.
-3. Pin each remote item into an exact resolved backlog source: its writable local backlog entry when one exists, a new snapshot file only when the repo's creation convention permits it, otherwise handoff notes, command-local notes, or a temporary file outside the worktree.
-4. Refine the pinned source, not the moving remote text, then mirror the refined result back to the remote item through the authorized first-party flow. Report any item whose write-back failed and do not describe it as refined.
-5. Commit refinements made to writable backlog sources with only task-related changes; do not mix them with unrelated changes.
+1. Resolve each remote collection or item reference with the provider-native integration: Linear MCP/tooling for Linear, `gh` for GitHub Issues, and the supported `backlog` CLI/MCP for Backlog.md projects. Establish the exact selected item identities and source/selector order. If a required integration is unavailable or unauthenticated, stop and report that exact limitation.
+2. Before fetching or pinning selected item specification content, creating a working copy or read-only snapshot, or beginning any refinement work, preflight each selected item's exact provider-native specification content-update operation authorized by `$ARGUMENTS`. Use only a provider-native capability, authorization, scope, or non-mutating dry-run check for that exact item and content field; the preflight MUST NOT execute the update or mutate provider state. Do not use it to test or broaden authority to status changes, comments, creation, deletion, or other items.
+3. If an item's exact content-update operation is unavailable, unauthenticated, unsupported, or scope-invalid, stop that item's remote flow before any working-copy, snapshot, or refinement edit, report the item unresolved and the exact limitation, and do not describe it as refined. Process another selected item only after its own exact preflight succeeds.
+4. Fetch the selected collection or exact remote items in the source and selector order implied by `$ARGUMENTS`. A source-only invocation includes the entire resolved collection; selectors narrow it while preserving their explicit order after dependency readiness.
+5. If provider-native refinement needs a working copy, use a temporary read-only snapshot outside authoritative storage (outside the worktree unless the provider requires a transient command-local location). Never treat a snapshot, handoff note, or local Markdown file as the remote item's writable source.
+6. Refine the selected remote item through the provider-native operation and retain its receipt/version. Report any failed write and do not describe that item as refined.
+7. Commit refinements made to writable local sources with only task-related changes; remote-only provider changes have no local shadow commit.
 
-If the remote item changes later, refresh the pinned source first, then re-refine against the new pinned text.
-
-Local repo markdown backlogs remain first-class inputs. When `$ARGUMENTS` names local markdown backlog files, use them directly after path validation and modify them following their existing style. Local markdown that is not a writable backlog source is read-only context.
+If a remote item changes later, refresh the provider-owned item before refining again and use a fresh read-only snapshot when needed. Loose local Markdown files and Backlog.md project directories remain first-class inputs: preserve Markdown's existing style, and use supported Backlog.md CLI/MCP operations rather than direct task-file edits when available. Local Markdown that is not a writable backlog source is read-only context.
 
 ## Missing implementation references
 

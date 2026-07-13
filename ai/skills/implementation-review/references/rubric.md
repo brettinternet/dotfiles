@@ -1,6 +1,30 @@
 # Implementation Review Rubric
 
-Apply only sections relevant to the target, but never skip correctness.
+Use proportional coverage. Correctness is mandatory for every review; do not turn a light review into a checklist exercise for risks the change cannot affect.
+
+## Light review (default)
+
+For a small, tightly scoped, coherent change:
+
+1. Establish intent, acceptance criteria, non-goals, and compatibility constraints.
+2. Inspect the complete diff and directly affected callsites and data flow.
+3. Verify correctness against the acceptance criteria, relevant boundaries and error paths, and available targeted tests or runtime evidence.
+4. Report only actionable findings. Examine another lens below only when the changed behavior directly touches it.
+
+## Full-review triggers
+
+Use the full rubric when any of these applies:
+
+- materially large or complex diff
+- independent subsystems or risk-bearing data flows
+- authentication, authorization, security, or privacy boundary
+- schema, migration, or data-integrity change
+- concurrency or transaction behavior
+- public API or compatibility surface
+- meaningful performance risk
+- explicit request for a deep review
+
+For a triggered full review, apply every relevant section below after the light-review checks. Do not manufacture concerns from sections unrelated to the target.
 
 ## Intent and coverage
 

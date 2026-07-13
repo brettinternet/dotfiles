@@ -7,7 +7,15 @@ Switch to plan mode (or otherwise operate strictly read-only). Do not make any c
 
 Review PR $ARGUMENTS using `gh pr view` and `gh pr diff`.
 Look up the linked Linear, Jira, or GitHub issue where possible using the branch name or PR comments to get full context.
-When available, apply the `implementation-review` skill as the shared review method. This command's read-only boundary, priority threshold, output cap, and voice rules override the skill.
+For light reviews, perform the review directly without loading or applying the `implementation-review` skill. When a full-review trigger applies, load and apply the `implementation-review` skill as the shared full-review method. This command's read-only boundary, priority threshold, output cap, and voice rules override the skill.
+
+## Review mode
+
+Start in **light mode** for a small, tightly scoped, coherent diff. Establish intent and acceptance criteria, inspect the complete diff and directly affected callsites, verify correctness and available targeted tests or other evidence, and report only actionable priority findings. Do not load an exhaustive rubric for lenses the diff cannot affect.
+
+Use **full mode** when the diff is materially large or spans independent subsystems, crosses an authentication, authorization, security, or privacy boundary, changes schema, migrations, or data integrity, changes concurrency or transactions, affects a public API or compatibility surface, carries meaningful performance risk, or includes an explicit deep-review request. Full mode adds every relevant rubric section after the light-mode checks.
+
+Correctness is mandatory in both modes. Light mode may still inspect security, performance, migration, concurrency, or compatibility concerns when the changed behavior directly touches them; proportionality never permits ignoring a relevant risk.
 
 ## Consult the oracle for load-bearing review decisions
 

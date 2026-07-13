@@ -1,313 +1,65 @@
 ---
 description: Run one backlog task per implementation pass, then review the accumulated item once when implementation is complete
-argument-hint: <backlog-files|remote-refs> [item-ids|titles|ranges]
+argument-hint: <backlog-source|remote-ref> [review-group:<provider-native-selector>] [item-ids|titles|ranges]
 ---
 
-Run one pass of the backlog implementation/review loop for `$ARGUMENTS`, commit any task-related change, and leave a concise handoff for the next pass.
+Run one fresh-context pass of the backlog implementation/review loop for `$ARGUMENTS`. This command owns pass selection, implementation/review authority, fixes, commits, integration, and handoff. The `backlog-source-workflow` skill owns provider-agnostic source resolution, item/state normalization, scheduling, provider methods, and durable provider state.
 
-This command uses two ordered phases for each backlog item:
+## Source and scope contract
 
-1. `IMPLEMENT` — in one invocation, complete exactly one next coherent task within the current backlog item, verify it, persist its state, and commit it. Later invocations repeat implementation passes until the item has no unfinished tasks; a single invocation never advances to the next implementation task.
-2. `REVIEW` — after the item's implementation sweep is complete, review the entire accumulated implementation together, fix and verify findings, then record a review marker for the exact reviewed commit state.
+Load and follow `backlog-source-workflow` before interpreting `$ARGUMENTS`: read its provider-neutral contract first, resolve every provider kind represented by the explicit sources, then load one matching provider heading per resolved provider kind, preserving explicit source order when those kinds differ. Pass the original argument string unchanged to `resolveSource`; explicit sources resolve first and win across unrelated sources, preserving every supplied source and selector in argument order. For explicit item selectors, precedence is stable provider ID, then exact title, then exact description; after dependency readiness, that explicit selector order wins. Apply provider priority/ordinal only within a source-only collection. With no explicit source, resolve exactly one unambiguous repository-derived source; report ambiguity, missing paths, or unavailable first-party integration rather than guessing.
+If an explicit source or selector cannot resolve, report that argument and candidates; never fall back to another or derived source.
 
-Treat `$ARGUMENTS` as the exact local backlog file, ordered list of local backlog files, or remote backlog references such as Linear project/issue IDs, plus optional item IDs, titles, or ranges to work through. Do not implement or review unrelated backlog items.
+A source-only input resolves the whole provider collection. It is a scheduling scope, not a whole-source review boundary: on every fresh invocation, recompute dependency readiness, blockers, status, review markers, and provider priority/ordinal/order across the entire collection, then select the first eligible item/task according to the skill. Continue across later ready items on subsequent invocations; never pin scheduling to the first file or item and never silently narrow a whole-source scope. Explicit item IDs, titles, descriptions, and ranges remain the exact item scope and retain original argument/source order.
 
-Do not alternate every implementation pass with a review pass. While implementation tasks remain, the next pass implements the next task. Run one item-level `REVIEW` only after all tasks are implemented. Already-implemented unreviewed items may be reviewed together in one batch when that is safe.
+The default implementation and review boundary is one provider item. An explicit `review-group:<provider-native-selector>` is passed unchanged to `reviewBoundary`; only the provider-authorized exact member items may be reviewed, and the durable group marker must name those members and accumulated commit state. A milestone, epic, parent, or other multi-item review is permitted only when the caller explicitly supplies that selector and the skill can resolve and persist it. Never infer a ReviewGroup from source-only scope, shared labels, or adjacency. Whole-source scheduling therefore cannot be mistaken for whole-source review.
 
-## Loop driver
+Provider details are not duplicated here. Use the skill's adapter and durable state contract: Backlog.md discovery and task/notes/status/acceptance-criteria/final-summary/archive operations go through its `backlog` CLI or MCP; GitHub Issues go through `gh`; Linear uses its first-party integration; loose Markdown uses the existing direct-edit convention. Do not edit provider files or remote state directly when an adapter operation exists, and do not create a second state store. Remote-only markers are written through the authorized first-party provider operation.
 
-This is a handoff-style loop, not a forever-running process. A single pass ends by telling the next agent what to do:
+## One-pass invariant
 
-- after implementing, verifying, and committing one task, hand off the next unfinished task in the same backlog item without reviewing yet
-- when no implementation task remains in the item, hand off one `REVIEW` pass over all work accumulated for that item, not one review per task or commit
-- fix, verify, and commit review findings in that review pass; do not schedule another pass solely to review its review-fix commit
-- when multiple scoped items are already fully implemented but unreviewed, review them together and write their item-local markers in a single batch pass when safe
-- after `ARCHIVE`, stop only when the final status is `BACKLOG COMPLETE AND ARCHIVED`
+Every invocation executes exactly one of these states:
 
-Do not assume prior chat. Start by finding the next unfinished task within the first unfinished scoped backlog item. Select `REVIEW` only when that item has no implementation task left but lacks a valid marker for its accumulated implementation.
+1. `IMPLEMENT`: complete exactly one next coherent implementation task for the current item. Include inseparable production code, required callsites, fixtures/migrations, and tests, but never a second refined task. Verify it, commit only its task-related change, persist its progress through the skill, and hand off the next task. Never review while an implementation task remains.
+2. `REVIEW`: only after the current item's explicit implementation tasks and acceptance criteria are complete, review that one item's entire accumulated implementation together. A batch is allowed only for an explicit durable `ReviewGroup`; write one marker per member. A clean or fixed review does not schedule another review pass for the same exact commit state.
+3. `BLOCKED`: only after all safe work is done, in-scope verification failures are fixed or diagnosed, and an external decision, unavailable dependency/integration, or unsafe ambiguity genuinely prevents the selected pass. Persist the blocker and unblock condition through the skill; do not use blockers for ordinary code/test failures.
+4. `ARCHIVE`: after all scoped items have complete implementation and valid review markers, use provider-owned archive operations where required. Archive is not a review boundary.
 
-Before creating a worktree/subtree, reviewing, or editing anything, identify every explicit local backlog file path, remote backlog reference, backlog item selector, and any other explicit file paths in `$ARGUMENTS` (do not treat backlog item IDs, titles, or ranges as paths unless they are explicitly path-shaped). Validate listed local backlog files left-to-right before editing any of them. If a listed local backlog file does not exist, check for nearby existing paths only in path-like locations: the same directory or the same basename after a directory move/rename. Auto-substitute only when exactly one candidate is unambiguous and clearly adjacent; report the substitution to the user. Otherwise stop immediately and report the missing backlog path plus nearby candidate(s). Do not implement, review, fix, or commit anything when the required backlog source cannot be resolved.
-
-The required target is the resolved backlog source plus the requested backlog item when `$ARGUMENTS` scopes one. Find those with loose location matching: adjacent moved/renamed backlog files are acceptable only when unambiguous, and item IDs, titles, or ranges may be matched within the resolved backlog text. Other explicit file paths in `$ARGUMENTS` are discovery hints for relevant implementation or review files, not presence gates. Try to find them by exact path first, then nearby path-like locations or repository search when useful; report unresolved hint paths in the handoff, but do not stop solely because a non-backlog file hint is absent.
-
-## Backlog storage policy
-
-Derive storage behavior per resolved backlog source from repository context:
-
-- a local markdown backlog file named in `$ARGUMENTS` is a writable backlog source
-- a remote item makes an existing local backlog entry writable only when exactly one repo markdown file matches it structurally as a backlog — an item list or item headings carrying the item's ID — not merely any file that mentions the ID
-- every other remote item is remote-only: never write repo backlog/spec/planning markdown for it
-
-Never create new backlog/spec/planning markdown unless the repo already demonstrates that exact convention, such as existing snapshot or spec files matching remote item IDs. When in doubt, do not create files; write only to writable backlog sources. Moving or renaming an existing backlog file into the repo's archive location per repo convention is an edit to an existing source, not creation.
-
-## Remote backlog sources
-
-Remote backlog references, such as Linear project identifiers, issue IDs, or issue URLs, are discovery inputs only. Do not run the implementation loop directly against a moving remote source.
-
-Invoking this command with remote backlog references is the standing authorization to write loop state back to those exact remote items through the first-party tool: mark an item done or merged when its work is integrated, and post `implemented:`/`reviewed:`/`blocked:` marker lines as item comments. It does not authorize editing remote item content otherwise, creating or deleting remote items, or touching items outside `$ARGUMENTS`.
-
-Before implementation or review:
-
-1. Resolve each remote reference using the available first-party tool for that system. For Linear, use the Linear MCP/tooling when available; if no authenticated tool is available, stop and report the missing integration.
-2. Fetch the exact remote items in the order implied by `$ARGUMENTS`, including their existing progress and marker comments.
-3. Pin each remote item into an exact resolved backlog source: its writable local backlog entry when one exists, a new snapshot file only when the repo's creation convention permits it, otherwise command-local notes or a temporary file outside the worktree. Handoff text is not a durable backlog source.
-4. Apply code edits against that pinned text, not the moving remote source. If the remote item changes later, refresh the pinned source first, then re-evaluate implementation, review, and blocker state against the new pinned text.
-5. Record `implemented:`, `reviewed:`, and `blocked:` state in the item's writable backlog source; for remote-only items, post the corresponding marker as a comment. If the first-party tool cannot write comments, do not begin a multi-pass remote-only item: report that durable item-local progress storage is unavailable instead of relying on handoff.
-
-Local repo markdown backlogs remain first-class inputs. When `$ARGUMENTS` names local markdown backlog files, use them directly after path validation and modify, complete, or archive them following their existing style. Local markdown that is not a writable backlog source is read-only context.
-
-## Target selection
-
-Determine exactly one current coherent implementation task or one completed implementation review batch:
-
-1. Inspect the current worktree status, preserve unrelated unstaged or untracked work, and do not block on unrelated dirty changes unless they prevent safe isolation; document ignored unrelated changes in the handoff.
-2. Read the resolved backlog source or sources in the order supplied, including matching item text, explicit tasks, acceptance criteria, nearby backlog context, remote-source snapshots and remote item progress/marker comments if present, and any existing implementation, review, or blocker notes.
-3. Identify the first scoped resolved backlog source, then the first scoped item in that source, that is still open, incomplete, unreviewed, or blocked without a still-valid blocker marker.
-4. Within an item needing implementation, select exactly its first explicit open task. Treat a refined task as the pass boundary and include its inseparable production code, required callsites, fixtures or migrations, and tests; do not turn those implementation steps into separate passes. When a writable local item has no explicit task list, treat it as unrefined: before coding, split its unmet acceptance into named, ordered, coherent tasks in that item, commit the refinement, then select the first task. Each task must deliver one independently useful and verifiable behavioral outcome. For a remote-only unrefined item, stop and invoke `backlog-refine` because this command is not authorized to rewrite remote item content.
-5. If an explicit task is oversized because it contains multiple independently useful behaviors or crosses independent subsystems without one atomic contract, repair it before coding: split a writable local item into named ordered item-local tasks and commit the refinement, or stop and invoke `backlog-refine` for a remote-only item. Preserve every acceptance criterion. Never end a pass at an unnamed internal slice.
-6. Skip an item with a valid `blocked:` marker only when its unblock condition is still unmet and the evidence has not changed. Record the skip in durable item state and the handoff, then continue to the next scoped item in order.
-7. Determine the pass state:
-   - `IMPLEMENT` when the current item has an identified task whose required behavior is absent, incomplete, failing item-scoped verification, or not traceable to a commit. Complete exactly that coherent task, verify it, persist its progress state, and commit it. Do not review while any implementation task remains in that item.
-   - `REVIEW` when the current item has no unfinished explicit task and every acceptance criterion is implemented; its behavior has implementation commits or changed files to inspect; and it lacks a valid review marker for that exact accumulated state. Review the entire item implementation together. To avoid extra loops, include other fully implemented-but-unreviewed scoped items in the same pass when they can be reviewed safely as one batch.
-   - `BLOCKED` only when a required product decision, unavailable dependency, or unsafe ambiguity prevents both implementation and review and no valid blocker marker already records the same blocker. In-scope verification failures, missing required code, and flaky or outdated tests are not blockers unless they depend on such external input; unrelated failures or dirty changes are ignored and reported separately.
-8. If multiple files or items are explicitly requested, preserve the supplied backlog file order. An `IMPLEMENT` pass completes only one coherent task in the current item; a `REVIEW` pass covers the current item's complete accumulated implementation and may batch other fully implemented unreviewed items whose acceptance criteria and verification can be completed safely in the same pass.
-
-Do not skip an open task because a later task, item, or backlog file looks easier. Task sizing comes from refinement; only repair clearly unrefined or oversized task boundaries, and always persist that repair before implementation.
-
-## Durable progress contract
-
-The writable backlog item is the authoritative loop state; remote item comments are authoritative for remote-only items. Handoff is a reproducible summary, never the only state store. Before ending any pass, persist enough item-local state for an agent with no prior chat to select the next pass:
-
-- current status: `in-progress`, `review-pending`, `blocked`, or `complete`, following the source's existing vocabulary and style
-- completed task and its implementation commit
-- targeted verification command and exact result
-- exact next open task, or the accumulated commits awaiting review
-- remaining acceptance criteria, blocker/unblock condition, and review marker when applicable
-
-For a writable backlog source, update this state in the item and commit it with the task-related changes. If no existing style fits, use one concise line:
-
-`implemented: <task>; commit: <commit>; verified: <command/result>; status: <in-progress|review-pending>; next: <task|REVIEW>; remaining: <acceptance criteria|none>`
-
-For a remote-only item, post the same `implemented:` line as a comment. If durable write-back fails, do not claim the pass complete; retain the coherent code commit, report the write-back failure, and make repairing durable state the next action.
-
-## Handoff contract
-
-At the end of every pass, reproduce the durable item state clearly enough for another agent to continue:
-
-- current resolved backlog source, item ID/title, and task implemented, or all items in the review batch
-- ordered backlog source list and resolution map, when more than one source was supplied
-- state to run next: `IMPLEMENT`, `REVIEW`, `BLOCKED`, or `ARCHIVE`
-- implementation commit(s), review-fix commit(s), exact review target commit state, and changed files to inspect or inspected
-- acceptance criteria and completed tasks already verified
-- verification commands already run and exact results
-- remaining tasks and acceptance criteria, unreviewed completed items, risks, blockers, product decisions, ignored unrelated failures or dirty changes, and any blocked items skipped this pass
-- oracle consultations used for blockers, accepted or rejected recommendations, and item-local marker changes
-- exact next backlog source, item, task or review batch, and command invocation to start from
-
-Use `NEXT CONTEXT REQUIRED` whenever any scoped backlog work remains open, blocked, unreviewed, not integrated, lacks required durable item state, or any writable local markdown backlog file remains unarchived when archiving is required. Use `BACKLOG COMPLETE AND ARCHIVED` only when every scoped item across every supplied source is implemented, reviewed, verified, committed, integrated (merged locally or PR opened), each writable local markdown backlog file has been archived, and each remote-only item has a durable `status: complete; remaining: none` review marker and is marked done or merged when the first-party tool supports that workflow transition.
-
-## Review markers
-
-To avoid reviewing the same work repeatedly, record a review marker only after the item-level `REVIEW` pass verifies the item's entire accumulated implementation and every acceptance criterion, and either makes no changes or verifies all review fixes. A single batch review pass may write a separate marker for every clean, fully implemented item it covers.
-
-For writable backlog sources, store the marker inside the item’s existing notes, status, or conclusion area. Follow the backlog file’s existing style; if there is no style, add one concise item-local line:
-
-`status: complete; remaining: none; reviewed: <implementation-commit(s)> [review-fix: <commit>]; verified: <brief command/result>`
-
-For remote-only items, do not create local markdown solely to store review state. Post the marker line as a comment on the remote item. If comment write-back fails, do not mark the item reviewed or complete; report the write-back failure and retry it before further implementation or review.
-
-A review marker in a writable backlog source or remote item comment is valid only for the exact accumulated implementation commit or commits it names, plus the review-fix commit when present. Handoff-only markers are not valid durable state. If any implementation commit changes, the review-fix commit changes, acceptance criteria change, or relevant files change without an updated marker, treat that item as `REVIEW` again after its implementation sweep is complete. Mark the item complete only when all tasks and acceptance criteria are done and that final exact commit state has a valid marker.
-
-## Blocker markers
-
-To avoid repeating the same blocker forever, record a blocker marker only after exhausting repository context, fixing every in-scope verification failure, missing required code path, and flaky or outdated test, attempting all safe unblocked work, and consulting the oracle agent for a second opinion.
-
-For writable backlog sources, store the marker inside the item’s existing notes, status, or conclusion area. Follow the backlog file’s existing style; if there is no style, add one concise item-local line:
-
-`status: blocked; blocked: <short reason>; tried: <brief attempted path>; unblock: <specific decision/dependency/evidence needed>; remaining: <acceptance criteria>`
-
-For remote-only items, do not create local markdown solely to store blocker state. Post the `blocked:` line as a comment on the remote item. If comment write-back fails, report the failure and do not treat the item as durably blocked.
-
-A blocker marker in a writable backlog source or remote item comment is valid only while the reason, attempted path, and unblock condition still match the current code, backlog text, dependencies, and verification evidence. Handoff-only markers are not valid durable state. Skip a blocked item only when its marker is still valid. Re-enter it automatically when new information appears, dependencies become available, acceptance criteria change, relevant code changes, or the unblock condition no longer matches; then clear, replace, or supersede the marker where it was recorded, and continue with `IMPLEMENT` or `REVIEW`. If every remaining scoped item is blocked by still-valid markers, stop with `NEXT CONTEXT REQUIRED` and report the blocker list.
-
-## Oracle unblock protocol
-
-The oracle agent is advisory and read-only. It must not edit code, mutate local or remote backlog files, push, commit, or mark an item complete. The active command agent owns every backlog edit and must verify the oracle recommendation against repository/backlog evidence before resuming.
-
-Make at most one oracle consultation in a pass. Gather repository evidence first and batch related unresolved tradeoffs or blockers; do not consult it for ordinary choices or as a routine confirmation step.
-
-Use this protocol whenever a subagent or pass is blocked by a decision, stale blocker, unsafe ambiguity, or failed acceptance criterion that might be resolvable without human input:
-
-1. Finish all safe unblocked work first, then capture the exact blocker, attempted paths, evidence, affected files, acceptance criteria, and any existing `blocked:` marker.
-2. Ask the oracle for exactly one outcome and, when it recommends `RESUME` or `BLOCKED`, an exact item-local patch:
-   - `RESUME`: a safe, repo-evidenced decision or implementation path within the current acceptance criteria.
-   - `BLOCKED`: the blocker is real; provide the exact item-local `blocked:` marker and unblock condition.
-   - `HUMAN_DECISION`: the decision would change product scope, user-visible behavior, data policy, security posture, external dependency terms, or acceptance criteria without first-party evidence.
-3. Treat `RESUME` as a proposed patch, not authority. Apply it only if the active agent can point to the backing backlog text, code convention, dependency documentation, or verification evidence. The patch may only clear a stale `blocked:` marker or replace it with an updated `blocked:` marker when the blocker still applies. It must not add a durable oracle/unblock lifecycle state, change acceptance criteria, mark the item reviewed/complete, or modify remote state.
-4. After applying or rejecting the patch, re-run Target selection from current backlog text, code, dependencies, and verification evidence. If the prior blocker no longer matches, continue as `IMPLEMENT` or `REVIEW`; otherwise keep/update `blocked:` and move on per `BLOCKED` rules.
-5. Record accepted or rejected oracle reasoning in the handoff, not as a selection state. If backlog text, relevant code, dependencies, or verification evidence changes, normal Target selection and blocker-validity rules decide the next state.
-6. If the oracle returns `BLOCKED` or `HUMAN_DECISION`, write/update the normal `blocked:` marker in the item's writable backlog source or post it as a remote item comment for remote-only items. If remote comment write-back fails, report the failure and do not treat the blocker as durable.
-7. For remote-only items, never write repo markdown for marker state; use the authorized remote comment flow. Handoff-only state is not a blocker marker.
+Do not alternate implementation and review passes. An item with remaining tasks always selects `IMPLEMENT`; an item with all tasks done but no valid marker selects `REVIEW`; an item with a valid still-applicable blocker is skipped only under the skill's blocker rules and the scheduler then considers the rest of the whole collection. If every remaining candidate is blocked, stop with `NEXT CONTEXT REQUIRED` and report each blocker.
 
 ## IMPLEMENT pass
 
-Before editing:
+Validate every explicit local path before isolation. A missing explicit path may substitute only one clearly adjacent same-directory or moved/renamed-basename candidate, and must report the substitution; otherwise stop before any edit rather than falling back to another or derived source.
+Before any remote-only invocation can create or switch to a worktree/subtree or make an implementation or review edit, determine the provider-native durable writes that this invocation may require—`implemented:` progress, applicable `reviewed:` evidence, `blocked:` state, status transitions, completion, and archive—and preflight every corresponding authorized first-party operation. If any required capability is unavailable or its preflight fails, stop before isolation or edits and leave `NEXT CONTEXT REQUIRED`; a handoff or final response is not durable state. Otherwise create or switch to an isolated worktree or subtree. Preserve unrelated dirty and untracked user work in the original worktree; never claim, overwrite, or commit it. If isolation cannot be established safely, stop before code changes and report the exact reason. Then inspect the complete selected item and its refined tasks/acceptance criteria/dependencies/progress, and inspect relevant code patterns and callsites. Refinement boundaries are authoritative. Repair an unrefined or clearly oversized writable local item into named coherent tasks before implementation; for a remote-only item invoke `backlog-refine` instead of rewriting its remote specification.
 
-1. Create or switch to an isolated worktree/subtree for the implementation so local user work is not disturbed.
-2. Read relevant existing code patterns before designing a new one.
-3. Map required callsites, data flows, tests, migrations, and UI/API behavior from the backlog item.
-4. Coordinate shared interfaces before parallel edits when tasks touch the same API, schema, type, or command.
+Select exactly the first open task of the scheduled current item only after any required preflight. Run the smallest targeted verification that proves that task, fix in-scope failures, and rerun. Through the skill adapter, persist the task, implementation commit, exact command/result, `in-progress` or `review-pending` status, exact next task (or `REVIEW`), and remaining acceptance criteria. If provider write-back fails, do not claim the pass complete; retain the code commit and leave `NEXT CONTEXT REQUIRED` with repair as the next action. Remote-only items receive the equivalent marker through the authorized provider tool.
 
-## Subagent budget
+The loop driver is `/loop`, which supplies a fresh context for the next invocation. Do not run a forever-loop or invent a narrowed continuation argument. Any copy-pasteable continuation must invoke this command with the original `$ARGUMENTS` unchanged; durable state and whole-collection scheduling select the next target.
 
-- Default to direct work. A single coherent task, a tightly coupled change, or a review confined to one subsystem does not justify delegation.
-- Delegate within this budget only when the pass has materially substantial, independent branches; otherwise keep the work in the active agent.
-- Use at most three subagents in one pass: no more than two `explore` or `executor` workers combined, plus at most one `oracle` consultation when an explicit oracle trigger below is met. This is a total budget, not a concurrency limit; do not replace finished agents with new ones.
-- Delegate only a materially substantial, independent branch whose target and contract can be specified up front. Use an `explore` agent only when the relevant surface is genuinely unknown or spans independent subsystems; use an `executor` only for a disjoint file area with settled interfaces.
-- Keep shared-interface changes, small lookups, tests coupled to an implementation, decisions, synthesis, and final integration in the active agent. Do not create one agent per file, acceptance criterion, test, or review dimension.
-- If more work is parallelizable than the budget permits, delegate the highest-risk or highest-latency branches and perform the rest directly. Run formatting, linting, and broad validation once at the end unless a smaller check is needed to unblock implementation.
+## REVIEW pass and right-sized review
 
-Implementation rules:
+Before judging code in `REVIEW`, refresh the provider-owned `ItemState` for every selected item. Resolve each item's exact associated implementation target—implementation and review-fix commits, branch, PR, commit range, and changed files—using provider-native links/fields together with durable markers and repository history, and require one unambiguous association covering the intended implementation scope. If any association is missing or ambiguous, stop the review as `BLOCKED`/`NEXT CONTEXT REQUIRED`, record the exact missing evidence and candidates, and do not inspect unrelated code. Provider item text, comments, labels, status, and other metadata may establish intent or acceptance context only; they are never the code diff. Review only the resolved repository commits/files and exact ranges. Establish intent from the resolved item, acceptance criteria, relevant documentation, and verification evidence; always verify correctness and every acceptance criterion, inspect error paths and relevant edge cases, then choose the lightest review proportionate to the accumulated implementation:
 
-- Implement the real behavior required by the backlog item, not a scaffold, TODO, mock, fake fallback, or warning suppression.
-- Reuse existing repository patterns and shared code where they fit.
-- Keep changes limited to the backlog item and required callsites.
-- Delete obsolete code paths created by the change. Do not leave compatibility shims unless the item explicitly requires them.
-- Add or update tests for behavior, edge cases, and failure modes implied by the item.
-- Hard anti-blocking rule: failed checks, item-scoped verification failures, missing required code, and flaky or outdated tests caused by or required for the current backlog item are implementation work to resolve immediately. Fix them in-repo, update code/tests/fixtures/config as needed, and rerun targeted verification; unrelated failures or dirty changes may be ignored only after recording why they are unrelated to `$ARGUMENTS`; stop only for a truly external product decision, unavailable dependency, or unsafe ambiguity after exhausting repo fixes and the oracle check.
-- If product information is missing, implement everything not blocked and record the exact remaining decision instead of guessing.
-- Include a design question in the pass's single oracle consultation only before committing to a consequential, hard-to-reverse architectural pattern or choosing between materially different designs not settled by repository evidence.
-- Before raising any notable blocker, missing product decision, failed acceptance, risky ambiguity, or inability to proceed to the user, use the Oracle unblock protocol. If the oracle returns a repo-evidenced safe path, apply the verified item-local patch, re-run Target selection, and resume; if it confirms or cannot resolve the blocker, explicitly report it as a human-required blocker.
+- For a small, tightly scoped item confined to one behavior/subsystem, perform a direct lightweight correctness/acceptance review. Read the complete accumulated diff, check relevant failure paths and tests, run targeted verification, and fix valid findings at the source.
+- Load and apply the full `implementation-review` skill for any materially large or complex change; independent subsystems or other cross-subsystem changes; auth, security, or privacy-sensitive behavior; schema, migration, or data-integrity work; concurrency, transactions, or state coordination; public API or compatibility changes; meaningful performance risk; or an explicitly requested deep review. Apply all relevant rubric areas, not just style, and use the command's fix, marker, and integration authority.
 
-After implementation:
+Never skip correctness or acceptance verification merely because the lightweight path is selected. Do not load the heavy skill automatically for every quick loop review. Do not manufacture findings; valid fixes are in-scope review work, and review-fix commits are included in the same review pass.
 
-1. Run the smallest targeted verification loop that proves the completed task: specific tests, typecheck, lint, build, migration check, browser QA, or manual scenario as appropriate.
-2. Record the completed task, implementation commit, exact verification result, item status, and exact next task or `REVIEW` state in the writable backlog source using its existing style, then commit only the task-related implementation and task-state changes with a concise message. When the implementation commit cannot be named inside the same commit, immediately add and commit one item-local state-only marker naming it; that state-only commit does not become part of the accumulated implementation review target.
-3. For remote-only items, post an `implemented:` progress comment naming the completed task, implementation commit, verification, current `in-progress` or `review-pending` status, exact next task or `REVIEW`, and remaining acceptance criteria. Do not use handoff as the progress store.
-4. If another implementation task remains in the item, leave the durable next state as `IMPLEMENT` with that exact task. Do not run or hand off a review between tasks.
-5. Leave the durable next state as `REVIEW` only when no explicit task remains unfinished and every acceptance criterion is implemented. Include every implementation commit, changed file, acceptance criterion, and verification result accumulated for the item.
+After review, run targeted verification for unchanged and fixed behavior. Persist a valid item-local `reviewed:` marker through the skill naming the exact accumulated implementation commits and any review-fix commit. For an explicit `ReviewGroup`, persist a durable group marker naming the group and every member/item commit state; also retain item-level markers. A handoff-only marker is invalid. A later relevant implementation, review-fix, acceptance, or code change invalidates the marker and requires another item-level review.
 
-## REVIEW pass
+If review finds substantial missing implementation that cannot be a review fix, leave the item open and hand off its exact next task as `IMPLEMENT`. Otherwise mark the item complete only after all tasks, acceptance criteria, review evidence, and provider state are durable. Do not schedule another pass solely to review a review-fix commit.
 
-Use this path only after the current item's implementation sweep is complete. Review its entire accumulated implementation together. When multiple scoped items are already fully implemented but unreviewed, include all safely batchable items in this single pass to avoid one review loop per item.
+## Blockers, verification, and delegation
 
-Review process:
-When available, apply the `implementation-review` skill as the shared review method. This command's scope, subagent budget, fix authority, marker rules, verification, and integration policy override the skill; the checklist below remains the fallback.
+Before recording any notable genuine blocker, exhaust safe repository work and targeted verification, then use at most one evidence-backed oracle consultation for that pass, batching related questions. The oracle is advisory and read-only with no code, backlog, provider, commit, or integration mutation authority; the active agent must independently verify any recommendation and owns every mutation. Do not consult for routine choices or ordinary failures; record accepted or rejected reasoning with the blocker evidence.
+A blocker marker is durable only after repository context, safe implementation, targeted checks, and stale/missing code or test causes have been exhausted. Include the exact reason, attempted paths/evidence, and unblock condition; re-enter automatically when code, dependencies, backlog text, or evidence changes. Do not treat unrelated failures or preserved dirty work as blockers; report them separately. Use at most the command's permitted delegation budget, keeping shared interfaces, task-coupled tests, decisions, and synthesis active. Skip formatters, linters, and project-wide suites when requested; never claim those gates ran.
 
-Review directly when the accumulated diff is small or tightly coupled. For a materially large batch spanning independent subsystems, use at most two `explore` agents within the shared pass budget, partitioned by subsystem or risk-bearing data flow. Do not spawn separate agents for correctness, security, performance, and maintainability; each delegated review applies every relevant lens to its bounded scope. The active agent must still read the complete accumulated diff, judge and verify candidate findings, check cross-system interactions, and synthesize the result.
+## Integration and archive authority
 
-1. Establish intent before judging the code:
-   - read every backlog item in the review batch, relevant issue or PR descriptions, commit messages, and nearby documentation
-   - identify expected user-visible behavior and non-goals for each item
-   - map the files, callsites, data flows, tests, and shared interfaces affected by the accumulated implementation
-2. Evaluate correctness first:
-   - verify every stated or implied acceptance criterion for every item in the review batch
-   - check edge cases, error paths, empty states, retries, concurrency, permissions, migrations, and rollback behavior
-   - look for partial fixes, stale shims, dead paths, duplicated logic, behavior hidden behind feature flags or defaults, and unreviewed callsites
-3. Evaluate security:
-   - authentication and authorization boundaries
-   - tenant/org/user scoping
-   - secret handling and logging
-   - injection, traversal, SSRF, XSS, CSRF, deserialization, and unsafe shell/process use where relevant
-   - data exposure through errors, telemetry, caching, or client state
-4. Evaluate performance:
-   - avoidable allocations, copies, repeated work, N+1 queries, unbounded loops, blocking I/O, large payloads, and cache invalidation
-   - database indexes, query shapes, pagination, batching, and transaction scope where relevant
-   - frontend render churn, bundle growth, waterfalls, and unnecessary client work where relevant
-5. Evaluate code quality and maintainability:
-   - fit with existing repository patterns
-   - clear ownership boundaries and minimal surface area
-   - simple names, types, invariants, and failure modes
-   - tests that defend behavior instead of implementation trivia
-   - no unnecessary abstractions, comments, TODOs, compatibility shims, or drive-by rewrites
-6. Evaluate latent failure modes:
-   - answer: `If this breaks in 3 months, what’s the most likely reason?`
-   - tie the risk to a concrete mechanism: ownership drift, unchecked edge case, schema/API change, concurrency, permissions, data volume, dependency behavior, missing test coverage, or unclear invariant
-   - decide whether the risk must be addressed now or can be left as a follow-up, and state why
+Obey repository `CLAUDE.md`/`AGENTS.md`/backlog integration configuration. Otherwise use pull-request flow when push access, protection, or remote ownership requires it; when ambiguous, use local merge. Local merge integrates verified completed work into local `main`, then cleans up its temporary worktree without pushing. Pull-request flow pushes only this task branch and opens a PR with `gh`, without merging it; report the URL and recommend `/pr-babysit [reviewer]`. Never integrate unrelated work. When all explicitly scoped items (or all members of an explicit ReviewGroup) are complete, reviewed, integrated, and durably recorded, archive writable local sources only through the provider adapter and existing convention. Source-only completion requires the entire resolved collection to have no remaining open work; it does not authorize reviewing or archiving unrelated sources.
 
-Fix policy:
+## Handoff and final statuses
 
-- Fix valid issues at the source, not by suppressing warnings or narrowing tests.
-- Hard anti-blocking rule: failed checks, item-scoped verification failures, missing required code, and flaky or outdated tests caused by or required for the reviewed implementation are review-fix work to resolve immediately in this same pass. Fix them in-repo, update code/tests/fixtures/config as needed, and rerun targeted verification; unrelated failures or dirty changes may be ignored only after recording why they are unrelated to `$ARGUMENTS`; stop only for a truly external product decision, unavailable dependency, or unsafe ambiguity after exhausting repo fixes and the oracle check.
-- Keep fixes limited to `$ARGUMENTS` and directly required callsites.
-- Add or update targeted tests for behavioral fixes.
-- If a finding needs product input, leave the code unchanged for that point and state the exact decision needed.
-- When a finding is an architectural judgment call, or the accumulated implementation appears to have drifted from the item's intended design, consult the oracle agent for a second opinion before finalizing that finding.
-- If the reviewed implementation is already sound, make no code changes.
+Start every response with exactly one status line: `NEXT CONTEXT REQUIRED` or `BACKLOG COMPLETE AND ARCHIVED`.
 
-After review:
-
-1. Run the specific tests, linters, typechecks, or manual QA that cover all accumulated reviewed or fixed behavior.
-2. Commit any review fixes with a concise message, then treat that verified review-fix commit as covered by this same review pass. Do not schedule another review pass solely because the review changed code.
-3. Write or update a separate item-local `reviewed:` marker for every clean item, naming all implementation commits relevant to that item and any review-fix commit. For remote-only items, post the marker as a remote item comment; handoff-only markers are not valid.
-4. Commit writable backlog review-marker and completion-state changes in one concise task-state commit before integration. This state-only commit is not an implementation or review-fix commit and does not invalidate the exact marker it records. If remote marker write-back fails, do not mark the item reviewed or complete.
-5. Mark a backlog item complete only when all its tasks and acceptance criteria are done, its final exact implementation state has a valid review marker, and any writable marker or completion state is committed.
-6. If substantial required implementation remains after review and cannot be completed as a review fix, leave the affected item open, state exactly what remains, and hand off its next exact task as `IMPLEMENT`. Otherwise hand off the first task in the next scoped item.
-7. Integrate completed work using the resolved flow (see Integration) when the scoped item or safe batch is complete.
-8. Clean up the temporary worktree/subtree after integration; keep the pushed branch under `pull-request`.
-9. If all scoped backlog items across all supplied sources are complete, verified, committed, integrated, and reviewed, archive each writable local markdown backlog file according to existing repo conventions; for each remote-only item, post its durable `status: complete; remaining: none` review marker before marking it done or merged through the first-party tool. If marker write-back fails, leave the item incomplete with `NEXT CONTEXT REQUIRED`; if only the workflow transition is unsupported, report that limitation.
-
-## BLOCKED pass
-
-Use `BLOCKED` only after exhausting repository context, fixing every in-scope verification failure, missing required code path, and flaky or outdated test required by the current item, consulting the oracle agent for a second opinion, and applying the Oracle unblock protocol without finding a safe `RESUME` path.
-
-When blocked:
-
-- Implement and verify any acceptance criteria that are safely unblocked before marking the item blocked; fix in-scope failing checks, missing required code, and flaky or outdated tests instead of recording them as blockers, and report unrelated failures or dirty changes separately.
-- Do not mark the item complete.
-- Write or update the item-local `blocked:` marker in the item's writable backlog source; for remote-only items, post it as a remote item comment. Handoff-only blockers are not durable and must not cause a later pass to skip the item. Include the exact missing decision, unavailable dependency, failed acceptance criterion plus its external input/dependency root cause, or unsafe ambiguity; include what was tried and the next concrete unblock action.
-- Commit only if the committed state is coherent and useful; otherwise leave the worktree uncommitted and explain why.
-- Move the next pass to the next scoped item whose blocker marker is absent, stale, or resolved. Do not keep selecting the same still-blocked item.
-- Leave `NEXT CONTEXT REQUIRED` with the skipped blocker list and the next unblocked target. If no unblocked target remains, report the human-required blocker queue instead of archiving.
-
-## Verification
-
-- Use the smallest targeted verification loop that proves the change or review finding: specific tests, typecheck, lint, build, migration check, browser QA, or manual scenario as appropriate.
-- Re-run targeted verification after fixes. If verification fails, diagnose the root cause, fix all in-scope code/tests/checks in-repo, and rerun before reporting a blocker; if the failure is unrelated to the current item, record the evidence and continue with targeted verification.
-- Unrelated failing tests or unrelated dirty changes do not block finishing the item or reporting it complete; note them separately, and do not fix or commit them as part of this work.
-- Do not claim project-wide health unless project-wide checks were actually run.
-- Formatting, linting, and broad validation happen once at the end unless needed earlier to unblock work.
-
-## Integration
-
-Resolve the finish flow before pushing, merging, or opening anything:
-
-1. If the repo's `CLAUDE.md`, `AGENTS.md`, or backlog config declares a flow (e.g. an `Integration: pull-request` or `Integration: local-merge` line), obey it. For `pull-request`, use the declared base branch (default `main`) and branch prefix if given.
-2. Otherwise auto-detect: if you lack push access to the base branch, the base branch is protected, or `origin` is a shared remote you do not own, use `pull-request`. Otherwise use `local-merge`.
-3. When still ambiguous, default to `local-merge`.
-
-- `local-merge`: merge the completed, verified work back to local `main`; clean up the temporary worktree/subtree; do not push.
-- `pull-request`: push the task branch to `origin` and open a PR against the base branch with `gh`, using a concise title and body summarizing the item and verification; clean up the worktree but keep the pushed branch; do not merge locally and do not merge the PR; report the PR URL and recommend `/pr-babysit [reviewer]` as the follow-up to drive it to green and approval. Invoking this command is the standing instruction to push and open the PR for this task's own branch only — it overrides the global "never push / never open PRs without explicit instruction" rule for that branch, and does not authorize force-pushing, merging, or touching unrelated branches.
-
-## Finish
-
-Commit behavior:
-
-- Commit only task-related work.
-- Use concise commit messages.
-- Unrelated failing checks or unrelated dirty changes do not block handoff or completion for a done scoped item; report them as out-of-scope observations only.
-- Do not include unrelated preserved user work.
-- Do not push unrelated work. Under `pull-request` flow, pushing the task branch and opening its PR is authorized by invoking this command (see Integration); do nothing beyond that branch.
-
-Final response must start with exactly one status line:
-
-`NEXT CONTEXT REQUIRED`
-
-or
-
-`BACKLOG COMPLETE AND ARCHIVED`
-
-Then report:
-
-- backlog source list, resolved backlog source list (local markdown files or pinned remote snapshots), item ID/title, and task implemented or review batch processed
-- pass state completed: `IMPLEMENT`, `REVIEW`, `BLOCKED`, or `ARCHIVE`
-- implementation and review-fix commits made, plus the accumulated commit state reviewed when applicable
-- integration result: local merge or PR URL, when the scoped item or batch was integrated this pass
-- verification run
-- review result over the full accumulated item or batch diff, including correctness/security/performance/design findings and markers written
-- most likely 3-month breakage reason and whether to address it now or later
-- archive location if applicable; for remote-only sources, the remote status transition applied or skipped
-- exact next task and item for `IMPLEMENT`, or accumulated batch target for `REVIEW`, if any
-- copy-pasteable next prompt that invokes this command with the original `$ARGUMENTS` unchanged, preserving every scoped source, selector, and source order; report the exact next target separately, but let durable state select it rather than narrowing or augmenting the invocation
-- remaining blockers, skipped blocked items, risks, product decisions, or ignored unrelated failures or dirty changes
-- oracle unblock consultations and item-local marker updates
+Then report the resolved source list and order, original arguments, scheduled item, pass state (`IMPLEMENT`, `REVIEW`, `BLOCKED`, or `ARCHIVE`), exact task or review group, commits and changed files, targeted verification results, review depth and findings/fixes, durable item/group markers, integration/archive result, skipped valid blockers, preserved unrelated failures or dirty changes, and exact next target. Include a copy-pasteable invocation with `$ARGUMENTS` unchanged. Use `NEXT CONTEXT REQUIRED` whenever any scoped item remains unfinished, unreviewed, blocked, unintegrated, lacks durable state, has failed provider write-back, or required archive remains. Use `BACKLOG COMPLETE AND ARCHIVED` only when all scoped work is implemented, verified, reviewed at the exact commit state, durably recorded, integrated, and archived where required.
