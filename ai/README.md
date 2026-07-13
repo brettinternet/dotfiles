@@ -39,6 +39,14 @@ The complete find/do/check/judge/watch loop. No tester (executor writes tests, v
 - A command adapter and an authored skill must not share a name: Claude exposes commands and skills on the same slash-command surface, and Codex stores both in its skills directory. Use a descriptive companion name such as `backlog-implement-review-loop-workflow`.
 - Keep optional Codex `agents/openai.yaml` metadata inside each authored skill package so the existing links carry it unchanged. The command installer never edits authored packages.
 
+## Bounded backlog loop
+
+OMP's `/loop` can run this command a fixed number of times as a bounded [Ralph loop](https://ghuntley.com/ralph/):
+
+`/loop 10 /backlog-implement-review-loop path/to/backlog.md`
+
+Every iteration starts a fresh context and reconstructs state from the backlog rather than chat history. An `IMPLEMENT` pass implements, verifies, records, and commits exactly one coherent task, then exits. The `REVIEW` pass after an item has no unfinished tasks reviews and fixes that item's complete accumulated implementation (or a safe batch of completed items), not the whole backlog indiscriminately. The numeric limit caps cost; later passes finish any pending review, then advance to the next scoped item or archive the completed backlog without repeating a still-valid review.
+
 ## Harness delegation triggers
 
 - Claude Code recognizes "fan out subagents".
