@@ -7,7 +7,7 @@ Switch to plan mode (or otherwise operate strictly read-only). Do not make any c
 
 Review PR $ARGUMENTS using `gh pr view` and `gh pr diff`.
 Look up the linked Linear, Jira, or GitHub issue where possible using the branch name or PR comments to get full context.
-For light reviews, perform the review directly without loading or applying the `implementation-review` skill. When a full-review trigger applies, load and apply the `implementation-review` skill as the shared full-review method. This command's read-only boundary, priority threshold, output cap, and voice rules override the skill.
+For light reviews, perform the review directly without loading or applying the `implementation-review` skill. When a full-review trigger applies, load and apply the `implementation-review` skill as the shared full-review method. This command's read-only boundary, priority threshold, and output cap override that skill. Apply the separate `user-voice` skill to the final draft only.
 
 ## Review mode
 
@@ -35,14 +35,14 @@ Produce a review with:
 Only include the highest-priority comments. If nothing meets that bar, say there are no potentially breaking concerns.
 Reference the file and the _REAL_ line number from the file in the diff that's related to your comment.
 
-## Voice
+## Draft voice
 
-Write the final draft in my voice:
-
-- Succinct and direct: one sentence per point where possible. No praise language, no hedging, no filler.
-- NO emdashes.
-- NO semicolons.
-- If a comment is feedback for the PR author, phrase it as exactly one sincere question they can answer or push back on. Do not stack multiple questions in one comment. For blockers, ask one direct question that names the concern.
+Load and apply the `user-voice` skill to the final draft. This command remains
+read-only and permits drafting only, never posting. Use no praise, and keep each
+point to one sentence where possible. Phrase every priority comment directed at
+the PR author as exactly one sincere question they can answer or push back on.
+Do not stack questions; for a blocker, ask one direct question that names the
+concern.
 
 ## Rules
 
