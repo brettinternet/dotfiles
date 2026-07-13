@@ -61,3 +61,20 @@ for command in "$commands_dir"/*.md; do
     printf '%s\n' 'policy:' '  allow_implicit_invocation: false'
   } > "$agent"
 done
+
+# Reconcile stale adapters only after every current command validates and generates
+# successfully. Ownership requires this installer's exact marker; authored skills
+# are always preserved even if their content happens to contain the marker.
+for skill in "$skills_dir"/*/SKILL.md; do
+  [ -f "$skill" ] || continue
+  [ ! -L "$skill" ] || continue
+
+  skill_dir=$(dirname "$skill")
+  name=$(basename "$skill_dir")
+  [ ! -f "$commands_dir/$name.md" ] || continue
+  [ ! -f "$authored_skills_dir/$name/SKILL.md" ] || continue
+  grep -Fqx "$marker" "$skill" || continue
+
+  [ ! -L "$skill_dir" ] || continue
+  rm -rf "$skill_dir"
+done
