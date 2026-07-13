@@ -43,22 +43,32 @@ Do not replace provider fields with a local copy. `status`, `review`, progress c
 ```text
 WorkClaim {
   targetID: stable item ID or source locator for a source-wide claim
+  resource: coordination-authority resource key
+  authority: provider-native | local-host
   workKey: exact refinement item, implementation task, review pass, or archive pass
   mode: REFINE | IMPLEMENT | REVIEW | ARCHIVE
   command: claiming command
   claimID: unique ownership-epoch ID
-  revision: provider compare-and-set revision
+  revision: coordination compare-and-set revision
   agentID: agent identity
   ownerID: unique logical worker-attempt identity
   sessionID: current invocation/session identity
   token: opaque fencing token
-  startedAt: provider-observed timestamp
-  heartbeatAt: provider-observed timestamp
-  expiresAt: provider-observed timestamp
+  startedAt: coordination-authority timestamp
+  heartbeatAt: coordination-authority timestamp
+  expiresAt: coordination-authority timestamp
 }
 ```
 
 A claim is a durable, bounded lease, not an ordinary `in-progress` marker. `in-progress` records resumable workflow progress; a claim records one active ownership epoch. A new session may immediately resume unclaimed work and may atomically replace an expired claim without resetting progress, but even the same agent name or a restarted session cannot adopt or renew an unexpired claim. A handoff after a coherent checkpoint releases the claim so the next session need not wait for expiry.
+
+### Claim authority
+
+Claims may use provider-native fencing or the repository's same-host `backlog-claim` service. The local service stores coordination only—never provider status, progress, dependencies, review, or completion—in `BACKLOG_CLAIM_HOME` when set, otherwise `$XDG_STATE_HOME/backlog-work-claims` with `XDG_STATE_HOME` defaulting to `~/.local/state`. It combines one non-blocking OS lock per resource with SQLite compare-and-set state. Every worktree derives the same local-source resource from the common Git directory; GitHub uses canonical host/repository/issue identity. This coordinates only agents running as the same user on one host. Cross-host workers require an authorized shared CAS service and otherwise have capability `none`.
+
+Use `backlog-claim key --provider <backlog-md|github|markdown|linear> --source <locator> --item <id>` to derive the resource. `linear` intentionally returns `unsupported-provider-claim`. Loose Markdown always returns one `source-claim` key for the entire authoritative source; Backlog.md and GitHub return item keys. Generate globally unique claim, session, worker-attempt, and operation IDs. `acquire` defaults to a 900-second lease and rejects TTLs above 3600 seconds; retain its token/revision receipt. Reuse an operation ID only to recover the exact same request's lost response; changed inputs are a conflict. `exec` holds the local resource fence and renews while one `backlog` or `gh` mutation runs. `replace-file` is the only claimed loose-Markdown write path and requires expected source SHA-256. `release` requires a non-blank durable-checkpoint reason. Direct claimed edits are forbidden.
+
+An assignee, label, comment, status, branch, worktree, handoff, or ordinary lock file remains visibility only. Backlog.md projects additionally project the current agent with `backlog task edit <id> -a @<assignee>` under `backlog-claim exec`; that assignment is not the claim and never controls scheduling. Every provider write under a local claim must run through `exec`, or through `replace-file` for loose Markdown, with the current claim ID/token/revision. A stale token, expired lease, version conflict, guarded resource, failed command, or ambiguous receipt stops work. Never bypass the helper with a direct provider/file mutation.
 
 ### `SchedulingScope`
 
@@ -100,15 +110,15 @@ Commands use these operations for every provider. Provider sections map them to 
 3. `selectNext(scope, mode)` evaluates terminal state, dependency readiness, blockers, and claims and returns one ordered claimable item or a structured `complete`, `blocked`, or `active-claims` result. It never returns a review group.
 4. `selectWave(scope, mode)` returns the ordered dependency-ready, unclaimed wave available for bounded caller orchestration. The caller may narrow that wave for shared-resource conflicts but must not add later or dependency-gated items.
 5. `readItem(source, id)` refreshes one durable `ItemState` before a claim, write, or review.
-6. `claim(source, id, request, authority)` atomically acquires an absent/expired claim while revalidating scope, mode eligibility, dependency versions, and provider version. `request` includes a caller-generated `claimID`, work key, mode, agent/session/owner IDs, bounded TTL, and eligibility receipt. It returns the claim, fencing token, provider time, and durable receipt, or `busy | ineligible | conflict | capability`.
-7. `heartbeat(source, id, claimID, revision, lease, authority)` conditionally extends only that matching unexpired ownership epoch from provider time and returns its new revision/receipt.
-8. `releaseClaim(source, id, claimID, revision, reason, authority)` conditionally removes only that matching ownership epoch after its durable checkpoint and returns a provider receipt.
-9. `writeState(source, id, patch, authority, claimID?, revision?)` records an authorized status, task, review, or progress change and returns a provider receipt. A claimed mutation requires the matching unexpired ownership epoch and advances its revision.
-10. `recordProgress(source, id, marker, authority, claimID?, revision?)` writes the command's durable checkpoint using the provider's native mechanism. A claimed mutation requires the matching unexpired ownership epoch and advances its revision; a handoff alone is not a checkpoint.
+6. `claim(source, id, request, authority)` atomically acquires an absent/expired claim in the selected authority. `request` includes a caller-generated claim ID, work key, mode, agent/session/owner IDs, bounded TTL, and the caller's freshly validated eligibility receipt. A provider-native authority may revalidate provider eligibility in the same transaction; a local-host authority requires the caller to refresh provider eligibility again after acquisition. It returns the claim, token, authority time, and receipt, or `busy | ineligible | conflict | capability`.
+7. `heartbeat(source, id, claimID, token, revision, lease, authority)` conditionally extends only that matching unexpired ownership epoch and returns its new revision/receipt. A selected local-host adapter maps this to `backlog-claim heartbeat`.
+8. `releaseClaim(source, id, claimID, token, revision, reason, authority)` conditionally removes only that matching unexpired ownership epoch after its durable checkpoint and returns a receipt. A selected local-host adapter maps this to `backlog-claim release`.
+9. `writeState(source, id, patch, authority, claimID?, token?, revision?)` records an authorized status, task, review, or progress change and returns a provider receipt. Under a local-host claim, run exactly one `backlog` or `gh` mutation through `backlog-claim exec`, or one loose-Markdown CAS through `backlog-claim replace-file`; each successful guarded operation advances the claim revision.
+10. `recordProgress(source, id, marker, authority, claimID?, token?, revision?)` writes the command's durable checkpoint using the provider's native mechanism. A handoff alone is not a checkpoint. Local-host claimed writes use the same guarded paths as `writeState`.
 11. `reviewBoundary(scope, requestedGroup?, authority)` parses an explicit `review-group:<provider-native-selector>`, resolves it through the selected provider, and returns that group; absent a request it returns the one-item default. It must reject an implicit larger group and any provider that cannot persist the requested group marker.
-12. `archive(source, target, authority, claimID?, revision?)` uses the provider's archive/close/move convention and returns a durable receipt. Claimed archive work requires the matching unexpired ownership epoch. It must never delete a source as a substitute for archive.
+12. `archive(source, target, authority, claimID?, token?, revision?)` uses the provider's archive/close/move convention and returns a durable receipt. Claimed archive work requires the matching unexpired ownership epoch and guarded provider mutation. It must never delete a source as a substitute for archive.
 
-Every operation preserves explicit source/selector order and stable IDs. Adapters declare `item-claim`, fenced `source-claim`, or `none`; partial acquire-only or unfenced support is `none`. An atomic source-wide claim may safely serialize external sessions while its holder coordinates read-only children, but reduces item-level concurrency. Unsupported mutations return explicit capability errors; never invent a local shadow or racy fallback.
+Every operation preserves explicit source/selector order and stable IDs. Adapters declare `item-claim`, fenced `source-claim`, or `none`; partial acquire-only or unfenced write support is `none`. The same-host helper supplies `item-claim` for Backlog.md CLI and GitHub CLI, fenced `source-claim` for loose Markdown through `replace-file`, and `none` for Linear or any mutation that cannot execute inside its fence. Unsupported mutations return explicit capability errors; never invent a second sidecar, direct-edit escape hatch, remote shadow, or racy fallback.
 
 ## Source resolution and detection
 
@@ -147,11 +157,13 @@ The caller supplies an authority object describing allowed reads, claims, writes
 
 Read current durable state immediately before a mutation where the provider can change concurrently. Write through the selected provider and retain its receipt/version. If a write fails, report the durable failure and do not claim the task or review complete. Persist each command-defined checkpoint (including progress, blocked, review, and completion state) in the provider source before advancing. Remote provider state remains authoritative; local snapshots are read-only temporary context and never a writable shadow or fallback state. Do not use handoff text as durable state.
 
-Claim acquisition is one linearized compare-and-set, not a read-then-write marker. It uses provider time and atomically revalidates authority, nonterminal/mode-eligible state, dependency/eligibility receipt, provider revision, and “no claim or expired claim” while recording a caller-generated unique claim ID, identities, work key, start/heartbeat/expiry, and new fencing token. Retrying the same claim ID is idempotently recoverable after a lost response; every new acquisition, including by the same owner, uses a new ID to prevent ABA. `heartbeat`, `releaseClaim`, and every claimed mutation condition on the exact claim ID and current revision. Once expired, the former owner must acquire anew. A delayed stale worker cannot write or clear its successor's claim.
+Claim acquisition is one linearized compare-and-set in the selected claim authority, never a read-then-write marker. It records a caller-generated claim ID, identities, work key, authority time, bounded expiry, revision, and random token only when the resource is free or expired. Retrying one claim ID is idempotent; every new ownership epoch uses a new ID/token and higher revision to prevent ABA. Heartbeat, guarded mutation, and release require the exact current claim ID/token/revision. A stale worker cannot write through the helper or clear its successor.
 
-Use a bounded provider/configured lease duration. The actual holder heartbeats before half elapses and around long operations, then revalidates dependencies and the claim immediately before delegation, irreversible integration, and checkpoints. If a dependency reopens or changes, stop while still fenced, checkpoint only authorized resumable state, and release. If an acquire/heartbeat/release result is ambiguous, reread by exact claim ID; do not start or transfer work while ownership is uncertain.
+Provider-native fencing may transact eligibility and provider writes with the claim. The same-host authority cannot transact with GitHub or Backlog.md storage: it guarantees exclusive scheduling and guarded CLI execution only among cooperating agents using this helper on one host. Therefore refresh provider eligibility/version before acquisition, immediately after acquisition, and before each guarded mutation; preserve unrelated provider fields and treat any provider-side conflict/change as a stop/reconciliation condition. Do not describe local-host claims as cross-host exclusion or provider-side CAS.
 
-Persist the coherent task/specification/refinement-complete/review/archive checkpoint under the valid claim before release. If checkpointing or release fails, do not advance scheduling or claim completion; retain receipts and let the claim remain until repaired or expired. A normal handoff releases while preserving `in-progress`; an unexpected stop is recovered by expiry and a fresh claim ID. If the provider cannot supply atomic claim transitions, authoritative time, linearizable recovery reads, and fencing on actual writes, return a claim-capability error before delegation, isolation, or edits.
+Use a bounded authority lease duration. The holder heartbeats before half elapses and around long work; `exec` renews internally while its one CLI child owns the local fence. Revalidate dependencies before delegation, integration, and checkpoints. If a dependency reopens or a provider version changes, stop, checkpoint only still-authorized resumable state when safe, and release. Resolve ambiguous claim operations by exact claim ID and ambiguous provider writes by refreshing provider state; never start or transfer work while ownership is uncertain.
+
+Persist the coherent task/specification/refinement-complete/review/archive checkpoint through the provider under a valid claim before release. If checkpointing or release fails, do not advance scheduling; retain receipts and let the claim remain until repaired or expired. A normal handoff releases while preserving `in-progress`; an unexpected stop is recovered by expiry and a fresh claim ID. If the selected authority lacks atomic claim transitions, authority time, idempotent recovery, or enforcement on every cooperating-agent write path, return a claim-capability error before work.
 
 Archive is a provider operation, not a scheduling decision. It is allowed only when the caller authorizes it and the provider section defines the operation. Closing a GitHub issue, archiving a Linear item, archiving a Backlog.md task, or moving an existing loose-Markdown source to its established archive location must be recorded with the provider receipt.
 
