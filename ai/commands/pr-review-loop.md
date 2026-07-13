@@ -66,36 +66,25 @@ gh pr view <N> --json files,additions,deletions,commits
 ```
 
 Review the actual changes with the lens of: correctness, regressions, breaking changes, security, and whether the tests cover the new/changed behavior. Read the surrounding code in the repo when context is needed — use `read`/`grep` to ground your review, don't review blind.
-When available, apply the `implementation-review` skill as the shared review method. This command's new-commit scope, read-only boundary, posting policy, voice, and oracle cap override the skill.
+When available, apply the `implementation-review` skill as the shared review method. This command's new-commit scope, read-only boundary, posting policy, and oracle cap override that skill. Apply the separate `user-voice` skill only when drafting external GitHub communication.
 
 ### 4. Consult the oracle for load-bearing review decisions
 
-Before approving, requesting changes, or posting a blocker based on a load-bearing assumption, consult the **oracle** agent when the finding depends on architecture, design intent, security posture, ownership, invariants, or a broad blast radius. Record the assumption and the oracle's read in your private notes; keep posted GitHub comments in my voice (see Voice below).
+Before approving, requesting changes, or posting a blocker based on a load-bearing assumption, consult the **oracle** agent when the finding depends on architecture, design intent, security posture, ownership, invariants, or a broad blast radius. Record the assumption and the oracle's read in your private notes; apply the `user-voice` skill to posted GitHub comments.
 
 Consult the oracle when competing interpretations of the diff both look plausible, when surrounding code suggests an intentional tradeoff you don't understand, or before declaring a PR human-blocked because the right fix requires an architecture, product, or design decision.
 
 Make at most one oracle consultation per PR for each reviewed commit set, batching all related load-bearing concerns. Do not consult when repository evidence resolves the concern or no judgment meets that bar.
 
-### 5. Post comments / approval / replies in my voice
+### 5. Post comments / approval / replies
 
-Write everything you post as me — review comments, approval/request-changes bodies, top-level PR comments, and any reply to an existing comment or review thread — casually:
-
-- NO emdashes.
-- NO semicolons.
-- Succinct, direct, and informal, like a teammate's quick note rather than a formal reviewer. One or two sentences beats a paragraph.
-- Mostly lowercase, light punctuation, no corporate polish.
-- No headers, no bullet scaffolding for short comments, and no "Overall," / "Great work!" / "Nice catch!" / "Thanks for the review!" openers.
-- Praise sparingly, only when something is genuinely clever.
-- Lead with the point. If something is a real blocker, say so plainly.
-- If a comment is feedback for the PR author, phrase it as exactly one sincere question they can answer or push back on. Do not stack multiple questions in one comment. For blockers, ask one direct question that names the concern.
-- Skip trivial nits. Only say it if it actually matters.
-
-Examples for review comments (don't copy):
-
-- `would batching the lookup before the loop avoid N+1ing on every row?`
-- `mind re-raising after logging so the timeout doesn't swallow the real error?`
-- `lgtm, the migration is reversible too 🙌`
-- `should this include org_id scoping so devices from other orgs can't leak in?`
+Load and apply the `user-voice` skill to everything posted as me: review
+comments, approval/request-changes bodies, top-level PR comments, and replies to
+existing comments or review threads. This command grants the posting authority;
+the skill controls wording only. For each new finding directed at the PR author,
+ask exactly one sincere question they can answer or push back on. Do not stack
+questions; for a blocker, ask one direct question that names the concern. Use
+declarative forms for approvals, status updates, and explanatory replies.
 
 Posting mechanics (`bash` with `gh`):
 
@@ -135,7 +124,7 @@ After every candidate PR in this iteration is processed (or skipped), print a on
 ## Rules
 
 - **MUST** loop continuously. Do not exit after one pass. The only exit is the user interrupting.
-- **MUST** write the casual, informal voice described above for **everything** you post to GitHub — review comments, approval/request-changes bodies, top-level PR comments, and any reply to a review thread or existing comment. All communication, no exceptions. Re-read your draft and strip any formality or padding before posting.
+- **MUST** apply the `user-voice` skill to **everything** posted to GitHub: review comments, approval/request-changes bodies, top-level PR comments, and replies to review threads or existing comments. Re-run its final check immediately before posting.
 - **MUST NOT** re-review or re-comment because of a **rebase or a merge/update from main**. A head SHA change with no new PR-authored commit subjects is not new work — skip it. Only genuinely new commits to the PR trigger a fresh pass.
 - **MUST NOT** post anything on a PR I've **already approved** when there are no new PR-authored commits since — no re-approval, no new comment. Skip it (re-review only once the author pushes new work past my approval).
 - **MUST NOT** post trivial nitpicks, style nags, or "consider X" suggestions that don't matter.

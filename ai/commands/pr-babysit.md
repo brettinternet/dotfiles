@@ -30,26 +30,16 @@ branch, validation gate, and test commands from the repo itself (git remote,
 `gh repo view`, and any agent/context files like `AGENTS.md` / `CLAUDE.md` /
 `CONTRIBUTING.md`). Do not assume a language, build tool, or CI layout.
 
-## Voice
+## External communication
 
-Write **everything** you post to GitHub as me — review-thread replies, inline comment replies, top-level PR comments, the reviewer-request summary, request-changes/approval bodies, all of it. All communication, no exceptions. Casually:
-
-- NO emdashes.
-- NO semicolons.
-- Succinct, direct, and informal, like a teammate's quick note rather than a formal reviewer. One or two sentences beats a paragraph.
-- Mostly lowercase, light punctuation, no corporate polish.
-- No headers, no bullet scaffolding for short comments, and no "Overall," / "Great work!" / "Nice catch!" / "Thanks for the review!" openers.
-- Praise sparingly, only when something is genuinely clever.
-- Lead with the point. If something is a real blocker, say so plainly.
-- If a comment is feedback for the PR author, phrase it as exactly one sincere question they can answer or push back on. Do not stack multiple questions in one comment. For blockers, ask one direct question that names the concern.
-- Skip trivial nits. Only say it if it actually matters.
-
-Examples for replies (don't copy):
-
-- `good catch, that'd leak across orgs, scoped it to org_id now`
-- `left this as-is, the retry's already idempotent so a double-send is a no-op. lmk if you'd rather i guard it anyway`
-- `done, also added a test for the resolved→reopen path since it was uncovered`
-- `fair, pulled the helper out so it's reusable`
+Load and apply the `user-voice` skill to everything posted to GitHub:
+review-thread and inline-comment replies, top-level PR comments, reviewer-request
+summaries, and request-changes or approval bodies. This command grants the
+posting authority; the skill controls wording only. Skip trivial nits. Treat
+completed-fix, stale-finding, and disagreement replies as declarative replies.
+For new feedback directed at the PR author, ask exactly one sincere question
+they can answer or push back on. Do not stack questions; for a blocker, ask one
+direct question that names the concern.
 
 ## 0. Locate the PR
 
@@ -127,8 +117,7 @@ when valid, and reply clearly when it is stale, wrong, or needs reviewer input.
    - Resolve the thread only when it is genuinely handled: a fix landed, the
      finding is proven stale/wrong, or the reviewer agreed it is a non-issue.
      Leave it open if the ball is in a human reviewer's court.
-3. **Write replies in my voice** (see Voice above) and reply on the thread
-   itself.
+3. Apply the `user-voice` skill and reply on the thread itself.
 4. Reply to review threads through the GitHub API:
    ```
    gh api repos/<owner>/<repo>/pulls/<n>/comments/<comment_db_id>/replies -f body=...
@@ -164,7 +153,7 @@ Guardrails for all PR feedback:
 - Before choosing a fix direction that depends on architecture, design intent,
   security posture, ownership, product behavior, or a broad blast radius, consult
   the **oracle** agent. Record the assumption and the oracle's read in your
-  private notes; keep GitHub replies in my voice (see Voice above).
+  private notes; apply the `user-voice` skill to GitHub replies.
 - Consult the oracle when a reviewer finding is plausible but conflicts with an
   existing invariant or design tradeoff, when competing fixes both fit the
   evidence, or before saying a finding needs a human architecture, product, or
@@ -180,9 +169,9 @@ failures, request the reviewer if one was provided:
 gh pr edit <n> --add-reviewer <reviewer>
 ```
 
-Confirm it landed (`gh pr view <n> --json reviewRequests`). Then post a short PR
-comment summarizing: feedback addressed + threads resolved, CI status, and that
-`@<reviewer>` is requested. Write it in my voice (see Voice above).
+Confirm it landed (`gh pr view <n> --json reviewRequests`). Then post a short,
+declarative PR comment summarizing: feedback addressed + threads resolved, CI
+status, and that `@<reviewer>` is requested. Apply the `user-voice` skill.
 
 ## 3. Requested reviewer feedback loop (repeat until reviewer approves)
 
