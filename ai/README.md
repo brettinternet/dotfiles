@@ -44,7 +44,7 @@ OMP's `/loop` can run this command a fixed number of times as a bounded [Ralph l
 
 `/loop 10 /backlog-implement-review-loop path/to/backlog.md`
 
-Every iteration starts a fresh context and reconstructs state from the backlog rather than chat history. An `IMPLEMENT` pass implements, verifies, records, and commits exactly one coherent task, then exits. The `REVIEW` pass after an item has no unfinished tasks reviews and fixes that item's complete accumulated implementation (or a safe batch of completed items), not the whole backlog indiscriminately. The numeric limit caps cost; later passes finish any pending review, then advance to the next scoped item or archive the completed backlog without repeating a still-valid review.
+Every iteration starts a fresh context and reconstructs state from the backlog rather than chat history. An `IMPLEMENT` pass atomically claims, completes, verifies, records, and commits exactly one coherent task, then releases the claim and exits. A `REVIEW` pass claims and reviews the item's accumulated implementation, or every member of an explicit `ReviewGroup`, never an inferred batch. Active claims exclude other sessions; coherent handoffs release immediately, while abandoned claims expire and become resumable. Dependency waves remain authoritative, so another session may take an independent ready root but never a dependent of unfinished or claimed work. The numeric limit caps cost; later passes resume durable progress, finish pending review, then advance or archive without repeating a still-valid review.
 
 ## Harness delegation triggers
 
