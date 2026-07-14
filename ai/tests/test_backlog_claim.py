@@ -34,11 +34,17 @@ class BacklogClaimTests(unittest.TestCase):
         executable.chmod(0o700)
         return executable
 
-    def run_claim(self, *arguments: str, expected_code: int = 0) -> dict[str, object]:
+    def run_claim(
+        self,
+        *arguments: str,
+        expected_code: int = 0,
+        cwd: Path | None = None,
+    ) -> dict[str, object]:
         completed = subprocess.run(
             [str(HELPER), *arguments],
             text=True,
             capture_output=True,
+            cwd=cwd,
             env=self.environment,
             check=False,
         )
@@ -46,6 +52,46 @@ class BacklogClaimTests(unittest.TestCase):
             expected_code, completed.returncode, completed.stderr or completed.stdout
         )
         return json.loads(completed.stdout)
+
+    def git_repository(self, *, worktree: bool = False) -> tuple[Path, Path | None]:
+        repository = self.home / "repository"
+        repository.mkdir()
+        subprocess.run(
+            ["git", "init", str(repository)], check=True, capture_output=True
+        )
+        subprocess.run(
+            ["git", "-C", str(repository), "config", "user.name", "Test"],
+            check=True,
+        )
+        subprocess.run(
+            ["git", "-C", str(repository), "config", "user.email", "test@example.com"],
+            check=True,
+        )
+        (repository / "tracked.txt").write_text("tracked\n")
+        subprocess.run(["git", "-C", str(repository), "add", "tracked.txt"], check=True)
+        subprocess.run(
+            ["git", "-C", str(repository), "commit", "-m", "init"],
+            check=True,
+            capture_output=True,
+        )
+        if not worktree:
+            return repository, None
+        checkout = self.home / "checkout"
+        subprocess.run(
+            [
+                "git",
+                "-C",
+                str(repository),
+                "worktree",
+                "add",
+                "-b",
+                "other",
+                str(checkout),
+            ],
+            check=True,
+            capture_output=True,
+        )
+        return repository, checkout
 
     def acquire(
         self,
@@ -209,7 +255,6 @@ class BacklogClaimTests(unittest.TestCase):
         self.assertTrue(all(len(row) == 5 and row[4] for row in rows))
         self.assertNotIn(str(expired_claim["token"]), completed.stdout)
         self.assertNotIn(str(active_claim["token"]), completed.stdout)
-
 
     def test_lease_duration_has_a_hard_upper_bound(self) -> None:
         oversized = self.acquire(
@@ -607,9 +652,7 @@ class BacklogClaimTests(unittest.TestCase):
         output = self.home / "downgraded-github.txt"
         gh = self.fake_provider_cli(
             "gh",
-            "import sys\n"
-            "from pathlib import Path\n"
-            "Path(sys.argv[1]).write_text('ran')",
+            "import sys\nfrom pathlib import Path\nPath(sys.argv[1]).write_text('ran')",
         )
         rejected = self.run_claim(
             "exec",
@@ -850,6 +893,191 @@ class BacklogClaimTests(unittest.TestCase):
             "BACK-1",
         )
         self.assertEqual(first["resource"], second["resource"])
+
+    def test_backlog_command_from_worktree_runs_in_primary_checkout(self) -> None:
+        repository, checkout = self.git_repository(worktree=True)
+        assert checkout is not None
+        key = self.run_claim(
+            "key",
+            "--provider",
+            "backlog-md",
+            "--source",
+            str(checkout),
+            "--item",
+            "BACK-1",
+        )
+        resource = str(key["resource"])
+        claim = self.acquire(resource, "canonical")
+        backlog = self.fake_provider_cli(
+            "backlog",
+            "from pathlib import Path\nPath('provider-state.txt').write_text(str(Path.cwd()))",
+        )
+        receipt = self.run_claim(
+            "exec",
+            *self.claim_arguments(resource, claim, "canonical-write"),
+            "--",
+            str(backlog),
+            cwd=checkout,
+        )
+
+        self.assertEqual(str(repository.resolve()), receipt["providerCwd"])
+        self.assertEqual(
+            str(repository.resolve()), (repository / "provider-state.txt").read_text()
+        )
+        self.assertFalse((checkout / "provider-state.txt").exists())
+
+    def test_backlog_key_rejects_source_missing_from_control_checkout(self) -> None:
+        _repository, checkout = self.git_repository(worktree=True)
+        assert checkout is not None
+        source = checkout / "backlog.md"
+        source.write_text("worktree only\n")
+
+        rejected = self.run_claim(
+            "key",
+            "--provider",
+            "backlog-md",
+            "--source",
+            str(source),
+            "--item",
+            "BACK-1",
+            expected_code=2,
+        )
+
+        self.assertEqual("canonical-source-unavailable", rejected["error"])
+
+    def test_backlog_key_rejects_control_root_below_git_toplevel(self) -> None:
+        repository, _checkout = self.git_repository()
+        nested = repository / "nested"
+        nested.mkdir()
+        self.environment["BACKLOG_CONTROL_ROOT"] = str(nested)
+
+        rejected = self.run_claim(
+            "key",
+            "--provider",
+            "backlog-md",
+            "--source",
+            str(repository),
+            "--item",
+            "BACK-1",
+            expected_code=2,
+        )
+
+        self.assertEqual("canonical-control-root-mismatch", rejected["error"])
+
+    def test_backlog_key_rejects_canonical_source_kind_mismatch(self) -> None:
+        repository, checkout = self.git_repository(worktree=True)
+        assert checkout is not None
+        (repository / "backlog-source").write_text("file\n")
+        source = checkout / "backlog-source"
+        source.mkdir()
+
+        rejected = self.run_claim(
+            "key",
+            "--provider",
+            "backlog-md",
+            "--source",
+            str(source),
+            "--item",
+            "BACK-1",
+            expected_code=2,
+        )
+
+        self.assertEqual("canonical-source-kind-mismatch", rejected["error"])
+
+    def test_backlog_items_share_a_short_provider_transaction_lock(self) -> None:
+        repository, _checkout = self.git_repository()
+        resources = []
+        claims = []
+        for item in ("BACK-1", "BACK-2"):
+            key = self.run_claim(
+                "key",
+                "--provider",
+                "backlog-md",
+                "--source",
+                str(repository),
+                "--item",
+                item,
+            )
+            resource = str(key["resource"])
+            resources.append(resource)
+            claims.append(self.acquire(resource, item.lower()))
+        log = self.home / "provider.log"
+        backlog = self.fake_provider_cli(
+            "backlog",
+            "import sys\nimport time\n"
+            "from pathlib import Path\n"
+            "path = Path(sys.argv[1])\nlabel = sys.argv[2]\n"
+            "with path.open('a') as output: output.write(f'{label}-start\\n')\n"
+            "time.sleep(0.15)\n"
+            "with path.open('a') as output: output.write(f'{label}-end\\n')",
+        )
+        barrier = threading.Barrier(2)
+
+        def mutate(index: int) -> dict[str, object]:
+            barrier.wait()
+            return self.run_claim(
+                "exec",
+                *self.claim_arguments(
+                    resources[index], claims[index], f"write-{index}"
+                ),
+                "--",
+                str(backlog),
+                str(log),
+                str(index),
+            )
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            receipts = list(executor.map(mutate, (0, 1)))
+
+        self.assertTrue(all(receipt["ok"] for receipt in receipts))
+        lines = log.read_text().splitlines()
+        self.assertIn(
+            lines,
+            (
+                ["0-start", "0-end", "1-start", "1-end"],
+                ["1-start", "1-end", "0-start", "0-end"],
+            ),
+        )
+
+    def test_control_exec_runs_git_in_primary_checkout(self) -> None:
+        repository, checkout = self.git_repository(worktree=True)
+        assert checkout is not None
+        key = self.run_claim(
+            "key",
+            "--provider",
+            "backlog-md",
+            "--source",
+            str(checkout),
+            "--item",
+            "BACK-1",
+        )
+        resource = str(key["resource"])
+        claim = self.acquire(resource, "control")
+        receipt = self.run_claim(
+            "control-exec",
+            *self.claim_arguments(resource, claim, "git-status"),
+            "--",
+            "git",
+            "rev-parse",
+            "--show-toplevel",
+            cwd=checkout,
+        )
+
+        self.assertEqual(str(repository.resolve()), receipt["controlCwd"])
+        self.assertEqual(
+            str(repository.resolve()), receipt["command"]["stdout"].strip()
+        )
+        rejected = self.run_claim(
+            "control-exec",
+            *self.claim_arguments(resource, receipt, "git-cwd-override"),
+            "--",
+            "git",
+            "-C",
+            str(checkout),
+            "status",
+            expected_code=64,
+        )
+        self.assertEqual("control-command-cwd-override", rejected["error"])
 
 
 if __name__ == "__main__":

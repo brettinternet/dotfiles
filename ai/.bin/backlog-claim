@@ -16,7 +16,7 @@ import sqlite3
 import subprocess
 import tempfile
 import time
-from typing import Any, Iterator
+from typing import Any, Callable, Iterator
 
 DEFAULT_TTL = 900.0
 MAX_TTL = 3600.0
@@ -138,9 +138,7 @@ def row_claim(row: sqlite3.Row, now: float | None = None) -> dict[str, Any]:
         "sessionId": row["session_id"],
         "ownerId": row["owner_id"],
         "workKey": row["work_key"],
-        "guarantee": (
-            "local-coordination" if row["coordination_only"] else "fenced"
-        ),
+        "guarantee": ("local-coordination" if row["coordination_only"] else "fenced"),
         "acquiredAt": iso8601(row["acquired_at"]),
         "acquireTtl": row["acquire_ttl"],
         "heartbeatAt": iso8601(row["heartbeat_at"]),
@@ -178,14 +176,21 @@ def resource_lock_path(resource: str) -> Path:
 
 
 @contextlib.contextmanager
-def resource_lock(resource: str) -> Iterator[None]:
+def resource_lock(
+    resource: str, *, blocking: bool = False, wait_timeout: float = 30.0
+) -> Iterator[None]:
     path = resource_lock_path(resource)
     descriptor = os.open(path, os.O_CREAT | os.O_RDWR, 0o600)
     try:
-        try:
-            fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError as error:
-            raise ClaimError("resource-guarded", resource=resource) from error
+        deadline = time.monotonic() + wait_timeout
+        while True:
+            try:
+                fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                break
+            except BlockingIOError as error:
+                if not blocking or time.monotonic() >= deadline:
+                    raise ClaimError("resource-guarded", resource=resource) from error
+                time.sleep(0.05)
         yield
     finally:
         os.close(descriptor)
@@ -645,7 +650,7 @@ def require_fenced_claim(row: sqlite3.Row, operation: str) -> None:
         )
 
 
-def require_provider_command(row: sqlite3.Row, command: list[str]) -> None:
+def require_provider_command(row: sqlite3.Row, command: list[str]) -> str:
     require_fenced_claim(row, "exec")
     resource = row["resource"]
     parts = resource.split(":", 2)
@@ -664,90 +669,251 @@ def require_provider_command(row: sqlite3.Row, command: list[str]) -> None:
             expectedCommand=expected,
             actualCommand=actual,
         )
+    return provider
 
 
-def execute(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
-    kind = "exec"
+def backlog_control_context(resource: str) -> tuple[Path, Path, Path, str]:
+    prefix = "backlog-md:"
+    if not resource.startswith(prefix):
+        raise ClaimError(
+            "unsupported-control-resource", provider=resource.split(":", 1)[0]
+        )
+    try:
+        authority, locator, _item = resource.removeprefix(prefix).rsplit(":", 2)
+    except ValueError as error:
+        raise ClaimError(
+            "invalid-backlog-control-resource", resource=resource
+        ) from error
+
+    common = Path(authority).expanduser().resolve()
+    if common.name != ".git":
+        source = Path(locator).expanduser().resolve()
+        if source != common or not source.exists():
+            raise ClaimError("canonical-control-root-unavailable", resource=resource)
+        provider_cwd = source if source.is_dir() else source.parent
+        return provider_cwd, source, provider_cwd, f"backlog-control:{source}"
+    configured_root = os.environ.get("BACKLOG_CONTROL_ROOT")
+    control_root = (
+        Path(configured_root).expanduser().resolve()
+        if configured_root
+        else common.parent
+    )
+    actual_common = git_output(control_root, "rev-parse", "--git-common-dir")
+    actual_top = git_output(control_root, "rev-parse", "--show-toplevel")
+    if actual_common is None or actual_top is None:
+        raise ClaimError("canonical-control-root-unavailable", resource=resource)
+    if Path(actual_top).resolve() != control_root:
+        raise ClaimError("canonical-control-root-mismatch", resource=resource)
+    actual_common_path = Path(actual_common)
+    if not actual_common_path.is_absolute():
+        actual_common_path = control_root / actual_common_path
+    if actual_common_path.resolve() != common:
+        raise ClaimError("canonical-control-root-mismatch", resource=resource)
+
+    source = (control_root / locator).resolve()
+    try:
+        source.relative_to(control_root.resolve())
+    except ValueError as error:
+        raise ClaimError(
+            "canonical-source-outside-control-root", resource=resource
+        ) from error
+    if not source.exists():
+        raise ClaimError("canonical-source-unavailable", path=str(source))
+    provider_cwd = source if source.is_dir() else source.parent
+    if not provider_cwd.is_dir():
+        raise ClaimError("canonical-provider-cwd-unavailable", path=str(provider_cwd))
+    return control_root, source, provider_cwd, f"backlog-control:{common}"
+
+
+@contextlib.contextmanager
+def provider_transaction(
+    resource: str, provider: str
+) -> Iterator[tuple[Path | None, Path | None]]:
+    if provider != "backlog-md":
+        yield None, None
+        return
+    control_root, _source, provider_cwd, transaction_resource = backlog_control_context(
+        resource
+    )
+    with resource_lock(transaction_resource, blocking=True):
+        yield control_root, provider_cwd
+
+
+def require_control_command(row: sqlite3.Row, command: list[str]) -> None:
+    require_fenced_claim(row, "control-exec")
+    if not row["resource"].startswith("backlog-md:"):
+        raise ClaimError("unsupported-control-resource")
+    authority, _locator, _item = (
+        row["resource"].removeprefix("backlog-md:").rsplit(":", 2)
+    )
+    if Path(authority).name != ".git":
+        raise ClaimError("unsupported-control-resource")
+    actual = Path(command[0]).name
+    if actual != "git":
+        raise ClaimError(
+            "control-command-mismatch",
+            code=64,
+            expectedCommand="git",
+            actualCommand=actual,
+        )
+    forbidden = {"-C", "--git-dir", "--work-tree"}
+    if any(
+        argument in forbidden
+        or argument.startswith("--git-dir=")
+        or argument.startswith("--work-tree=")
+        for argument in command[1:]
+    ):
+        raise ClaimError("control-command-cwd-override", code=64)
+
+
+def parsed_command(args: argparse.Namespace) -> list[str]:
     if not args.command:
         raise ClaimError("missing-command", code=64)
     command = args.command[1:] if args.command[0] == "--" else args.command
     if not command:
         raise ClaimError("missing-command", code=64)
+    return command
+
+
+def run_guarded_command(
+    connection: sqlite3.Connection,
+    args: argparse.Namespace,
+    *,
+    kind: str,
+    command: list[str],
+    cwd: Path | None,
+    cwd_field: str,
+    validate: Callable[[sqlite3.Row, list[str]], Any],
+) -> tuple[dict[str, Any], int]:
     ttl = require_positive_ttl(args.ttl)
-    with resource_lock(args.resource), connect() as connection:
-        with transaction(connection):
-            row, cached = require_claim(connection, args, kind)
-            require_provider_command(row, command)
-            if cached is not None:
-                if cached["command"]["argv"] != command or cached.get("ttl") != ttl:
-                    raise ClaimError(
-                        "operation-id-request-mismatch",
-                        code=3,
-                        operationId=args.operation_id,
-                    )
-                return cached, cached["command"]["returncode"]
-            renew_guard(connection, row, ttl)
-        try:
-            process = subprocess.Popen(
-                command, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-            )
-            interval = max(0.01, min(ttl / 3, 5.0))
-            while True:
-                try:
-                    stdout, stderr = process.communicate(timeout=interval)
-                    break
-                except subprocess.TimeoutExpired:
-                    with transaction(connection):
-                        current = active_row(connection, args.resource)
-                        if (
-                            current is None
-                            or current["claim_id"] != row["claim_id"]
-                            or current["token"] != row["token"]
-                            or current["revision"] != row["revision"]
-                        ):
-                            process.terminate()
-                            process.wait()
-                            raise ClaimError(
-                                "claim-changed-during-guard",
-                                code=3,
-                                resource=args.resource,
-                            )
-                        renew_guard(connection, current, ttl)
-            command_receipt = {
-                "argv": command,
-                "returncode": process.returncode,
-                "stdout": stdout,
-                "stderr": stderr,
-            }
-        except FileNotFoundError as error:
-            command_receipt = {
-                "argv": command,
-                "returncode": 127,
-                "stdout": "",
-                "stderr": str(error),
-            }
-        receipt = {
-            "ok": command_receipt["returncode"] == 0,
-            "operation": kind,
-            "operationId": args.operation_id,
-            "idempotent": False,
-            "command": command_receipt,
-            "ttl": ttl,
-        }
-        with transaction(connection):
-            current = active_row(connection, args.resource)
+    expected_cwd = str(cwd) if cwd is not None else None
+    with transaction(connection):
+        row, cached = require_claim(connection, args, kind)
+        validate(row, command)
+        if cached is not None:
             if (
-                current is None
-                or current["claim_id"] != row["claim_id"]
-                or current["token"] != row["token"]
-                or current["revision"] != row["revision"]
+                cached["command"]["argv"] != command
+                or cached.get("ttl") != ttl
+                or cached.get(cwd_field) != expected_cwd
             ):
                 raise ClaimError(
-                    "claim-changed-during-guard", code=3, resource=args.resource
+                    "operation-id-request-mismatch",
+                    code=3,
+                    operationId=args.operation_id,
                 )
-            updated = update_receipt(connection, current, args, kind, receipt)
-            receipt["claim"] = row_claim(updated)
-        return receipt, command_receipt["returncode"]
+            return cached, cached["command"]["returncode"]
+        renew_guard(connection, row, ttl)
+    try:
+        process = subprocess.Popen(
+            command,
+            cwd=cwd,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        interval = max(0.01, min(ttl / 3, 5.0))
+        while True:
+            try:
+                stdout, stderr = process.communicate(timeout=interval)
+                break
+            except subprocess.TimeoutExpired:
+                with transaction(connection):
+                    current = active_row(connection, args.resource)
+                    if (
+                        current is None
+                        or current["claim_id"] != row["claim_id"]
+                        or current["token"] != row["token"]
+                        or current["revision"] != row["revision"]
+                    ):
+                        process.terminate()
+                        process.wait()
+                        raise ClaimError(
+                            "claim-changed-during-guard",
+                            code=3,
+                            resource=args.resource,
+                        )
+                    renew_guard(connection, current, ttl)
+        command_receipt = {
+            "argv": command,
+            "returncode": process.returncode,
+            "stdout": stdout,
+            "stderr": stderr,
+        }
+    except FileNotFoundError as error:
+        command_receipt = {
+            "argv": command,
+            "returncode": 127,
+            "stdout": "",
+            "stderr": str(error),
+        }
+    receipt = {
+        "ok": command_receipt["returncode"] == 0,
+        "operation": kind,
+        "operationId": args.operation_id,
+        "idempotent": False,
+        "command": command_receipt,
+        cwd_field: expected_cwd,
+        "ttl": ttl,
+    }
+    with transaction(connection):
+        current = active_row(connection, args.resource)
+        if (
+            current is None
+            or current["claim_id"] != row["claim_id"]
+            or current["token"] != row["token"]
+            or current["revision"] != row["revision"]
+        ):
+            raise ClaimError(
+                "claim-changed-during-guard", code=3, resource=args.resource
+            )
+        updated = update_receipt(connection, current, args, kind, receipt)
+        receipt["claim"] = row_claim(updated)
+    return receipt, command_receipt["returncode"]
+
+
+def execute(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
+    command = parsed_command(args)
+    provider = args.resource.split(":", 1)[0]
+    with (
+        provider_transaction(args.resource, provider) as (
+            _control_root,
+            provider_cwd,
+        ),
+        resource_lock(args.resource),
+        connect() as connection,
+    ):
+        return run_guarded_command(
+            connection,
+            args,
+            kind="exec",
+            command=command,
+            cwd=provider_cwd,
+            cwd_field="providerCwd",
+            validate=require_provider_command,
+        )
+
+
+def control_execute(args: argparse.Namespace) -> tuple[dict[str, Any], int]:
+    command = parsed_command(args)
+    with (
+        provider_transaction(args.resource, "backlog-md") as (
+            control_root,
+            provider_cwd,
+        ),
+        resource_lock(args.resource),
+        connect() as connection,
+    ):
+        assert control_root is not None
+        assert provider_cwd is not None
+        return run_guarded_command(
+            connection,
+            args,
+            kind="control-exec",
+            command=command,
+            cwd=control_root,
+            cwd_field="controlCwd",
+            validate=require_control_command,
+        )
 
 
 def file_sha256(path: Path) -> str:
@@ -917,8 +1083,7 @@ def coordination_resource(provider: str, source: str, item: str) -> str:
 def resource_key(args: argparse.Namespace) -> dict[str, Any]:
     provider = args.provider.strip().lower()
     if not provider or any(
-        not character.isascii()
-        or not (character.isalnum() or character == "-")
+        not character.isascii() or not (character.isalnum() or character == "-")
         for character in provider
     ):
         raise ClaimError("invalid-provider", code=64, provider=args.provider)
@@ -936,9 +1101,18 @@ def resource_key(args: argparse.Namespace) -> dict[str, Any]:
         capability = "item-claim"
         scope = "item"
     elif provider in {"backlog-md", "markdown"}:
-        resource = local_resource(
-            provider, Path(source).expanduser().resolve(), item
-        )
+        source_path = Path(source).expanduser().resolve()
+        resource = local_resource(provider, source_path, item)
+        if provider == "backlog-md":
+            _root, canonical_source, _cwd, _transaction = backlog_control_context(
+                resource
+            )
+            if canonical_source.is_dir() != source_path.is_dir():
+                raise ClaimError(
+                    "canonical-source-kind-mismatch",
+                    source=str(source_path),
+                    canonicalSource=str(canonical_source),
+                )
         capability = "source-claim" if provider == "markdown" else "item-claim"
         scope = "source" if provider == "markdown" else "item"
     else:
@@ -1001,19 +1175,14 @@ def build_parser() -> argparse.ArgumentParser:
     status_parser = subparsers.add_parser("status", help="read current lease state")
     status_parser.add_argument("--resource", required=True)
 
-    list_parser = subparsers.add_parser(
-        "list", help="list current and expired claims"
-    )
-    list_parser.add_argument(
-        "--resource", help="filter claims to one exact resource"
-    )
+    list_parser = subparsers.add_parser("list", help="list current and expired claims")
+    list_parser.add_argument("--resource", help="filter claims to one exact resource")
     list_parser.add_argument(
         "--format",
         choices=("json", "text"),
         default="json",
         help="output format; JSON is the default",
     )
-
 
     heartbeat_parser = subparsers.add_parser("heartbeat", help="renew an active lease")
     add_claim_arguments(heartbeat_parser)
@@ -1027,6 +1196,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     add_claim_arguments(exec_parser)
     exec_parser.add_argument("command", nargs=argparse.REMAINDER)
+
+    control_exec_parser = subparsers.add_parser(
+        "control-exec",
+        help="run git in the canonical Backlog.md checkout under its transaction lock",
+    )
+    add_claim_arguments(control_exec_parser)
+    control_exec_parser.add_argument("command", nargs=argparse.REMAINDER)
 
     replace_parser = subparsers.add_parser(
         "replace-file",
@@ -1058,6 +1234,8 @@ def main() -> int:
         elif args.action == "heartbeat":
             result = heartbeat(args)
             code = 0
+        elif args.action == "control-exec":
+            result, code = control_execute(args)
         elif args.action == "release":
             result = release(args)
             code = 0
