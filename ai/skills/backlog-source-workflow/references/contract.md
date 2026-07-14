@@ -1,6 +1,6 @@
 # Source workflow contract
 
-This contract is the provider-neutral boundary used by backlog commands. It resolves a source, enumerates work, chooses the next eligible item, and persists provider-owned state. It does not implement an `IMPLEMENT`, `REVIEW`, or `/loop` pass; those remain command responsibilities.
+This contract is the provider-neutral boundary used by backlog workflows. It resolves a source, enumerates work, chooses the next eligible item, and persists provider-owned state. It does not implement a `REFINE`, `IMPLEMENT`, `REVIEW`, or `/loop` pass; those remain caller responsibilities.
 
 ## Normalized values
 
@@ -48,7 +48,7 @@ WorkClaim {
   guarantee: fenced | local-coordination
   workKey: exact refinement item, implementation task, review pass, or archive pass
   mode: REFINE | IMPLEMENT | REVIEW | ARCHIVE
-  command: claiming command
+  workflow: claiming workflow
   claimID: unique ownership-epoch ID
   revision: coordination compare-and-set revision
   agentID: agent identity
@@ -96,7 +96,7 @@ ReviewGroup {
   label: string
   itemIDs: ordered stable IDs[]
   explicit: true
-  reason: provider-native milestone, epic, parent, or explicit command selector
+  reason: provider-native milestone, epic, parent, or explicit caller selector
 }
 ```
 
@@ -104,7 +104,7 @@ The default review boundary is exactly one implementation item (`itemIDs` contai
 
 ## Operations
 
-Commands use these operations for every provider. Provider sections map them to concrete tooling.
+Callers use these operations for every provider. Provider sections map them to concrete tooling.
 
 1. `resolveSource(arguments, repositoryContext)` returns an ordered `Source[]` plus diagnostics. It must not mutate anything. Explicit source arguments are resolved in supplied order, including unrelated provider kinds.
 2. `discover(source, selector?)` returns all matching `ItemState` values, including dependencies needed for graph checks. With no selector it enumerates the complete source collection.
@@ -115,7 +115,7 @@ Commands use these operations for every provider. Provider sections map them to 
 7. `heartbeat(source, id, claimID, token, revision, lease, authority)` conditionally extends only that matching unexpired ownership epoch and returns its new revision/receipt. A selected local-host adapter maps this to `backlog-claim heartbeat`.
 8. `releaseClaim(source, id, claimID, token, revision, reason, authority)` conditionally removes only that matching unexpired ownership epoch after its durable checkpoint and returns a receipt. A selected local-host adapter maps this to `backlog-claim release`.
 9. `writeState(source, id, patch, authority, claimID?, token?, revision?)` records an authorized status, task, review, or progress change and returns a provider receipt. Under a fenced local-host claim, run exactly one `backlog` or `gh` mutation through `backlog-claim exec`, or one loose-Markdown CAS through `backlog-claim replace-file`; each successful guarded operation advances the claim revision. Under `local-coordination`, heartbeat and validate the local claim plus provider state immediately before the direct first-party mutation, then refresh both immediately afterward and retain both receipts; never call this a fenced write.
-10. `recordProgress(source, id, marker, authority, claimID?, token?, revision?)` writes the command's durable checkpoint using the provider's native mechanism. A handoff alone is not a checkpoint. Claimed writes use the selected fenced path or the `local-coordination` pre/post-check sequence from `writeState`.
+10. `recordProgress(source, id, marker, authority, claimID?, token?, revision?)` writes the caller's durable checkpoint using the provider's native mechanism. A handoff alone is not a checkpoint. Claimed writes use the selected fenced path or the `local-coordination` pre/post-check sequence from `writeState`.
 11. `reviewBoundary(scope, requestedGroup?, authority)` parses an explicit `review-group:<provider-native-selector>`, resolves it through the selected provider, and returns that group; absent a request it returns the one-item default. It must reject an implicit larger group and any provider that cannot persist the requested group marker.
 12. `archive(source, target, authority, claimID?, token?, revision?)` uses the provider's archive/close/move convention and returns a durable receipt. Archive work requires the matching unexpired ownership epoch and the selected fenced mutation or `local-coordination` pre/post checks. It must never delete a source as a substitute for archive.
 
@@ -155,9 +155,9 @@ When no item is claimable, return the reason rather than reaching past the gate:
 
 ## Durable state and authority
 
-The caller supplies an authority object describing allowed reads, claims, writes, reviews, archive operations, and exact command scope. Pass it unchanged to mutations. Resolution/discovery cannot expand it. Source-only scope may enumerate the whole source and claim only the item or dependency-ready wave authorized by the command; it may not turn enumeration into a source-wide review/rewrite or claim later dependency waves.
+The caller supplies an authority object describing allowed reads, claims, writes, reviews, archive operations, and exact workflow scope. Pass it unchanged to mutations. Resolution/discovery cannot expand it. Source-only scope may enumerate the whole source and claim only the item or dependency-ready wave authorized by the caller; it may not turn enumeration into a source-wide review/rewrite or claim later dependency waves.
 
-Read current durable state immediately before a mutation where the provider can change concurrently. Write through the selected provider and retain its receipt/version. If a write fails, report the durable failure and do not claim the task or review complete. Persist each command-defined checkpoint (including progress, blocked, review, and completion state) in the provider source before advancing. Remote provider state remains authoritative; local snapshots are read-only temporary context and never a writable shadow or fallback state. Do not use handoff text as durable state.
+Read current durable state immediately before a mutation where the provider can change concurrently. Write through the selected provider and retain its receipt/version. If a write fails, report the durable failure and do not claim the task or review complete. Persist each caller-defined checkpoint (including progress, blocked, review, and completion state) in the provider source before advancing. Remote provider state remains authoritative; local snapshots are read-only temporary context and never a writable shadow or fallback state. Do not use handoff text as durable state.
 
 Claim acquisition is one linearized compare-and-set in the selected claim authority, never a read-then-write marker. It records a caller-generated claim ID, identities, work key, authority time, bounded expiry, revision, and random token only when the resource is free or expired. Retrying one claim ID is idempotent; every new ownership epoch uses a new ID/token and higher revision to prevent ABA. Heartbeat and release require the exact current claim ID/token/revision; fenced mutations do too. A stale worker cannot mutate through the helper or clear its successor, while a coordination-only lease relies on cooperating agents to perform the required pre/post checks around direct provider writes.
 
@@ -171,4 +171,4 @@ Archive is a provider operation, not a scheduling decision. It is allowed only w
 
 ## Provider extension rule
 
-A future provider adds one provider section that implements source detection, complete discovery, dependency/status/order/claim mapping, atomic fenced claim/heartbeat/release, durable read/write/progress, review-boundary resolution, and archive. It may retain opaque fields in `providerData`, but it must not change these normalized values, dependency-first selection, claim semantics, default one-item review boundary, or command call sites. If a capability is unavailable, return a structured capability error rather than changing the contract.
+A future provider adds one provider section that implements source detection, complete discovery, dependency/status/order/claim mapping, atomic fenced claim/heartbeat/release, durable read/write/progress, review-boundary resolution, and archive. It may retain opaque fields in `providerData`, but it must not change these normalized values, dependency-first selection, claim semantics, default one-item review boundary, or caller interfaces. If a capability is unavailable, return a structured capability error rather than changing the contract.
