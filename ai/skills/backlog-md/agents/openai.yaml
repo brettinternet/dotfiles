@@ -1,0 +1,6 @@
+interface:
+  display_name: "Backlog.md"
+  short_description: "Use Backlog.md with consistent task workflows"
+  default_prompt: "Use $backlog-md for Backlog.md task operations and ticket authoring."
+policy:
+  allow_implicit_invocation: true
