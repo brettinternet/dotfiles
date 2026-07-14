@@ -1,23 +1,23 @@
 ---
 name: backlog-source-workflow
-description: Resolve backlog sources and schedule provider-backed work through one normalized, dependency-aware interface. Use from backlog commands; do not invoke as a replacement for a command's authority or scope.
+description: Resolve backlog sources and schedule provider-backed work through one normalized, dependency-aware interface. Use from authorized backlog commands and skills; do not invoke as a replacement for the caller's authority or scope.
 disable-model-invocation: true
 ---
 
 # Backlog Source Workflow
 
-Commands remain the authority and scope entrypoints. This skill supplies the shared source-resolution, provider-discovery, scheduling, durable-state, and archive protocol; it does not perform a command's implementation, review, or loop pass.
+The invoking command or skill remains the authority and scope entrypoint. This skill supplies the shared source-resolution, provider-discovery, scheduling, durable-state, and archive protocol; it does not perform the caller's refinement, implementation, review, or loop pass.
 
 ## Progressive loading (required)
 
 1. Read [`references/contract.md`](references/contract.md) first. It is the only provider-neutral contract.
 2. Resolve the provider kind before loading provider instructions.
 3. Read exactly one selected provider section per resolved provider kind from either [`references/local-providers.md`](references/local-providers.md) or [`references/remote-providers.md`](references/remote-providers.md). Read the matching heading only (for example, `Loose Markdown`, `Backlog.md`, `Linear`, `GitHub Issues`, or `Future providers`); do not load unrelated provider sections. If explicit sources use unrelated provider kinds, load those selected headings in preserved source order.
-4. Apply that section's discovery, mutation, durable-write, and archive rules through the contract. A future provider must add one section implementing the same contract; commands do not change.
+4. Apply that section's discovery, mutation, durable-write, and archive rules through the contract. A future provider must add one section implementing the same contract; callers do not change.
 
 ## One normalized interface
 
-Treat every command as calling the same operations: `resolveSource`, `discover`, `selectNext`/`selectWave`, `readItem`, `claim`, `heartbeat`, `releaseClaim`, `writeState`, `recordProgress`, `reviewBoundary`, and `archive`. Pass the caller's authority and scope into every operation. Provider workflow state remains provider-owned. Prefer provider-native or helper-fenced claims, but automatically use the repository's same-host `backlog-claim` service as `local-coordination` when actual provider mutations cannot execute inside a fence.
+Treat every invoking workflow as calling the same operations: `resolveSource`, `discover`, `selectNext`/`selectWave`, `readItem`, `claim`, `heartbeat`, `releaseClaim`, `writeState`, `recordProgress`, `reviewBoundary`, and `archive`. Pass the caller's authority and scope into every operation. Provider workflow state remains provider-owned. Prefer provider-native or helper-fenced claims, but automatically use the repository's same-host `backlog-claim` service as `local-coordination` when actual provider mutations cannot execute inside a fence.
 
 - `Source`: the resolved provider kind, locator, display name, and opaque provider metadata.
 - `SchedulingScope`: the ordered source/item collection eligible for this invocation; source-only scope means the entire resolved collection for every resolved source.

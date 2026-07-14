@@ -27,15 +27,15 @@ The complete find/do/check/judge/watch loop. No tester (executor writes tests, v
 
 - **Role + tier**: agent frontmatter — never inherited from the session.
 - **Policy** (when to delegate/escalate/verify, the two-failure escalation ladder, don't-delegate list, subagent guard): `AGENTS.md` § Subagents, one source for all tools.
-- **Workflow entrypoints**: `commands/*.md`, referencing agents by role name only and remaining model-agnostic.
+- **Workflow entrypoints**: explicit `commands/*.md` and implicitly invocable `skills/*/SKILL.md`.
 - **Reusable workflow methods**: `skills/*/SKILL.md` plus optional references, templates, scripts, and source-controlled tool metadata.
 - **Orchestrator tier**: chosen per session; the oracle nudge is the safety net when starting cheap.
 
 ## Commands and authored skills
 
 - Keep command files as explicit workflow entrypoints. Codex's generated command adapters are its entrypoint; Claude and OMP use the shared command files directly.
-- Keep authored skills under `ai/skills/<distinct-name>/` only for genuinely shared reusable workflow methods. `ai.yaml` links each package to `~/.claude/skills/` and `~/.agents/skills/`, and links the common directory to `~/.omp/agent/skills`.
-- `install-codex-command-skills [commands-dir] [codex-skills-dir] [authored-skills-dir]` generates only Codex command adapters and rejects command/authored-skill name collisions before any generated output is written. The command file remains authoritative for its full workflow; the generated adapter is the Codex entrypoint.
+- Keep authored skills under `ai/skills/<distinct-name>/` for reusable workflow methods or intent-triggered workflows. `ai.yaml` links each package to `~/.claude/skills/` and `~/.agents/skills/`, and links the common directory to `~/.omp/agent/skills`.
+- `install-codex-command-skills [commands-dir] [codex-skills-dir] [authored-skills-dir]` generates only Codex command adapters, rejects command/authored-skill name collisions before writing output, and removes a stale generated adapter when a command becomes an authored skill.
 - Keep optional Codex `agents/openai.yaml` metadata inside each authored skill package so the existing links carry it unchanged. The command installer never edits authored packages.
 
 ## Bounded backlog loop

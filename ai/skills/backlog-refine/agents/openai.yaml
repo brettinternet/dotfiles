@@ -1,0 +1,6 @@
+interface:
+  display_name: "Backlog refinement"
+  short_description: "Refine provider-backed backlog work for implementation"
+  default_prompt: "Use $backlog-refine to turn the requested backlog source or items into implementation-ready work."
+policy:
+  allow_implicit_invocation: true
