@@ -1,0 +1,6 @@
+interface:
+  display_name: "Backlog unblock"
+  short_description: "Resolve decisions blocking backlog work"
+  default_prompt: "Use $backlog-unblock to resolve the blockers in the requested backlog items and persist the decisions."
+policy:
+  allow_implicit_invocation: true
