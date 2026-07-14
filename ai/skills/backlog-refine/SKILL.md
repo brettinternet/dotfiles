@@ -56,6 +56,8 @@ Use provider-owned state as authoritative. Never create a local mirror of remote
 
 Each implementation task must be one coherent, independently verifiable behavioral outcome a lesser agent can implement, test, record, and commit in one bounded pass. Bundle inseparable production code, callsites, migrations/fixtures, and tests. Split independently useful behaviors or separate subsystems; never split by file, layer, test-writing, or checklist trivia. Map every acceptance criterion to tasks and every task to acceptance criteria.
 
+Write implementation tasks under a `### Implementation tasks` heading as direct Markdown task-list entries with stable IDs, for example `- [ ] T1 — Add the parser`. Keep acceptance criteria in their own section and map them to these tasks; do not use arbitrary acceptance-criteria checkboxes as the implementation schedule. Preserve existing checked tasks and stable IDs when refining an item, and never reset `[x]` to `[ ]` without explicit evidence that the task was reopened.
+
 For each item, preserve product intent while adding only implementation-relevant context:
 
 - outcome-focused tasks with stable names and ordering

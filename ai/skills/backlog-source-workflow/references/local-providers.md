@@ -4,7 +4,7 @@ Load only the selected provider heading. The shared contract owns ordering, scop
 
 ## Loose Markdown
 
-Treat an existing repository Markdown backlog as one source using its established headings, checkboxes, labels, IDs, dependencies, and progress vocabulary. Do not invent a second format.
+Treat an existing repository Markdown backlog as one source using its established headings, checkboxes, labels, IDs, dependencies, and progress vocabulary. Refined items use an item-local `### Implementation tasks` section containing stable-ID Markdown task-list entries such as `- [ ] T1 — outcome`; preserve existing content outside that section rather than inventing a second progress format.
 
 **Discovery:** Validate an explicit path structurally contains backlog items. Repository detection inspects only conventional backlog paths and requires one candidate. Discover the complete file for source-only scope, retain item order as `ordinal`, and preserve source text/stable identity in `providerData`. Map state/checkpoints/dependencies from the existing vocabulary; unresolved dependencies stay unresolved. If no explicit IDs exist, keep the established file/heading identity stable. Derive and merge the source-wide helper claim status. Support explicit review groups only when the source convention has a stable selector, exact deterministic members, and writable group-marker location.
 
@@ -14,7 +14,7 @@ Treat an existing repository Markdown backlog as one source using its establishe
 
 ## Backlog.md
 
-Treat Backlog.md as a provider-owned project/task model, not ad hoc Markdown.
+Treat Backlog.md as a provider-owned project/task model, not ad hoc Markdown. The canonical implementation checklist is body content within the provider item, not a separate backlog task collection.
 
 **Discovery:** Resolve and enumerate through supported `backlog` CLI/MCP operations; never parse or edit task files directly. When the source is inside a Git worktree, map its repository-relative location to the unambiguous primary/control checkout and use that canonical checkout for every provider read, refresh, write, and receipt verification. The caller's implementation worktree is code-only. If the control checkout or mapping is absent, ambiguous, or unsafe, return `WAIT`/a capability diagnostic; never fall back to the feature-worktree copy. Source-only scope enumerates the complete project. Map provider IDs, body, status, priority/order, dependencies, and checkpoints into `ItemState`, retaining opaque fields. Merge the canonical helper item-claim status. Pass explicit review-group selectors unchanged to the supported provider operation; require exact ordered members and a stable group identity.
 

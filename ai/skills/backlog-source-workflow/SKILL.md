@@ -1,12 +1,26 @@
 ---
 name: backlog-source-workflow
-description: Resolve backlog sources and schedule provider-backed work through one normalized, dependency-aware interface. Use from authorized backlog commands and skills; do not invoke as a replacement for the caller's authority or scope.
+description: Resolve backlog sources and schedule provider-backed work through one normalized, dependency-aware interface. Apply whenever an authorized backlog command or skill reads or mutates a backlog source; do not invoke as a replacement for the caller's authority or scope.
 user-invocable: false
 ---
 
 # Backlog Source Workflow
 
 This skill supplies source resolution, discovery, dependency scheduling, provider operations, durable state, and archive mechanics. The caller retains scope and mutation authority and owns the actual refinement, implementation, review, or loop pass.
+
+Every authorized backlog entrypoint loads this skill before interpreting source or item content. This is an agent workflow contract, not a filesystem hook: a generic direct read of a file named `backlog.md` is not itself guaranteed to load the skill.
+
+## Item-local task checklists
+
+Implementation tasks belong inside the ticket/item and are not separate backlog units. When a caller refines or implements an item, use a canonical `### Implementation tasks` section with direct Markdown task-list entries in stable order:
+
+```markdown
+### Implementation tasks
+- [ ] T1 — Add the parser
+- [ ] T2 — Update callers
+```
+
+Use the stable task ID (`T1`, `T2`, and so on) when claiming, reporting, and recording progress. A checked box is durable item-local progress, not provider completion; callers must still persist the matching commit, verification, acceptance-criteria state, and provider workflow state through the selected provider operation. Preserve completed boxes and unknown item content, and never turn nested checklist entries into separately scheduled backlog items.
 
 ## Required loading
 
