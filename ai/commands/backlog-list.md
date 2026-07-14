@@ -3,7 +3,7 @@ description: List the next backlog items in execution order and identify item-le
 argument-hint: [backlog-source|remote-ref] [item-ids|titles|ranges|description]
 ---
 
-List the next open backlog units in recommended execution order and indicate whether each unit can run in parallel with another listed unit. `$ARGUMENTS` is optional and may contain local backlog paths, remote backlog references (such as Linear project names, issue IDs, or URLs), or selectors such as item IDs, titles, ranges, or a natural-language description.
+List the next open backlog units in recommended execution order and indicate whether each unit can run in parallel with another listed unit. `$ARGUMENTS` is optional and may contain local backlog paths, remote backlog references (such as `linear:TICK` or its `Linear TICK` alias, Linear project names, issue IDs, or URLs), or selectors such as item IDs, titles, ranges, or a natural-language description.
 
 This is a read-only prioritization command. Do not implement work, edit or create local backlog/spec/planning files, or update remote items, comments, or statuses.
 
