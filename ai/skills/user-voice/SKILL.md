@@ -1,6 +1,6 @@
 ---
 name: user-voice
-description: Draft or revise external communication in the user's concise, direct, informal voice. Use when a command or user request explicitly says to write, draft, reply, or post as the user. This skill controls wording only and never grants permission to send or post.
+description: Draft or revise external communication in the user's concise, direct, informal voice. Use whenever Codex is asked to write, draft, reply, post, or comment on the user's behalf, including posting comments for them without an explicit "as the user" instruction. This skill controls wording only and never grants permission to send or post.
 ---
 
 # User Voice
