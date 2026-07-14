@@ -1,7 +1,7 @@
 modelRoles:
-  default: openrouter/anthropic/claude-sonnet-latest:medium
+  default: openrouter/openai/gpt-5.6-luna:xhigh
   smol: openrouter/openai/gpt-5.6-luna:low
-  slow: openrouter/openai/gpt-5.6-sol:max
+  slow: openrouter/openai/gpt-5.6-sol:xhigh
   designer: openrouter/anthropic/claude-fable-latest:high
   vision: openrouter/openai/gpt-latest:high
   task: openrouter/openai/gpt-5.6-luna:max
