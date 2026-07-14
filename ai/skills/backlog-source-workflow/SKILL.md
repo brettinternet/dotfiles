@@ -1,7 +1,7 @@
 ---
 name: backlog-source-workflow
 description: Resolve backlog sources and schedule provider-backed work through one normalized, dependency-aware interface. Use from authorized backlog commands and skills; do not invoke as a replacement for the caller's authority or scope.
-disable-model-invocation: true
+user-invocable: false
 ---
 
 # Backlog Source Workflow
