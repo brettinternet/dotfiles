@@ -3,4 +3,4 @@ interface:
   short_description: "Run explicit full implementation reviews against behavior and high-impact risks"
   default_prompt: "Use $implementation-review only for an explicit full review of the supplied branch, PR, commit range, files, or completed backlog item."
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true
