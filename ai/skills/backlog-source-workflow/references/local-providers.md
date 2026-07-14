@@ -1,52 +1,23 @@
-# Local provider sections
+# Local Providers
 
-Load only the heading for the provider selected by `references/contract.md`.
+Load only the selected provider heading. The shared contract owns ordering, scope, dependencies, review boundaries, authority, claim semantics, and durable-state rules.
 
 ## Loose Markdown
 
-Loose Markdown is an existing repository Markdown backlog whose item headings, checkboxes, labels, IDs, dependencies, and progress markers already provide the source convention. It is not a license to invent a second backlog format.
+Treat an existing repository Markdown backlog as one source using its established headings, checkboxes, labels, IDs, dependencies, and progress vocabulary. Do not invent a second format.
 
-### Discovery
+**Discovery:** Validate an explicit path structurally contains backlog items. Repository detection inspects only conventional backlog paths and requires one candidate. Discover the complete file for source-only scope, retain item order as `ordinal`, and preserve source text/stable identity in `providerData`. Map state/checkpoints/dependencies from the existing vocabulary; unresolved dependencies stay unresolved. If no explicit IDs exist, keep the established file/heading identity stable. Derive and merge the source-wide helper claim status. Support explicit review groups only when the source convention has a stable selector, exact deterministic members, and writable group-marker location.
 
-- For an explicit path, validate that the file exists and structurally contains backlog items (for example, item headings or an item checklist). A random Markdown file that merely mentions an ID is not a source.
-- For repository-derived detection, inspect only established conventional backlog paths and accept the source only when the contract's candidate set has exactly one member. If two Markdown files are plausible, report ambiguity.
-- Discover the complete file collection for source-only scope. Parse each item into `ItemState`, retaining the heading/checklist order as `ordinal` and preserving the source text and existing stable ID in `providerData`.
-- Map status, refinement/review checkpoints, priority, and dependency references from the existing vocabulary. Derive the source-wide local claim key with `backlog-claim key --provider markdown --source <path> --item <any-selected-id>` and merge `backlog-claim status` into each normalized `ItemState`; the helper intentionally returns the same source resource for every item. An absent dependency target is unresolved, not complete. If the convention has no explicit ID, use its established file/heading identity and keep it stable across edits; do not manufacture a new format.
-- An explicit `review-group:<provider-native-selector>` is supported only when this source convention supplies a stable group identity, deterministic member enumeration, and a writable group-marker location. Resolve the selector through that convention, return the complete exact ordered member IDs in `ReviewGroup`, and reject an invalid or unsupported selector with a capability/invalid-selector diagnostic. Never infer membership from headings, labels, adjacency, or other incidental Markdown.
+**Mutation:** Normal mutation requires the fenced source claim described in [`claims.md`](claims.md); direct edits are forbidden. Build complete candidate content, hash the current authoritative file, and use `backlog-claim replace-file`. On conflict/ambiguity, reread source and ownership rather than weakening the expected hash. Preserve prose, heading levels, syntax, ordering, and unknown fields. Normal refinement writes its discoverable checkpoint in the same replacement. `mode:spec-only` uses the caller's single-mutator direct-edit convention and changes specification content only. An unavailable helper is capability `none` outside that mode. Never create a sidecar or new backlog merely to hold workflow state.
 
-### Durable mutation and progress
-
-- Source resolution and discovery are read-only. Outside `mode:spec-only`, normal refinement/implementation/review/archive requires the same-host fenced `source-claim`; direct edits are forbidden. In `mode:spec-only`, the caller's single-mutator rule permits the existing direct-edit convention because that mode intentionally does not claim.
-- Under a claim, build the complete next source content in a temporary candidate, compute the authoritative source's current SHA-256, then call `backlog-claim replace-file` with the source resource, current claim ID/token/revision, fresh operation ID, target path, expected SHA-256, and candidate path. Only its successful receipt is a source write. A file-version conflict, stale claim, or ambiguous receipt requires a fresh source read and ownership check; never retry with a weakened expected hash or use the ordinary edit tool.
-- `writeState` and `recordProgress` preserve surrounding prose, heading levels, checkbox syntax, labels, ordering, unknown fields, and the existing item convention in the candidate. A normal refinement persists a discoverable `refinement: complete` checkpoint with the specification receipt/version; `mode:spec-only` does not. A handoff or claim release is not durable progress.
-- `reviewBoundary` may persist an explicit group marker only at the established writable location and through the same claimed source replacement. Require the marker write's receipt plus exact ordered member IDs before reporting success; otherwise return a capability error.
-- Do not create a new backlog/spec file merely to hold state. If an item has no writable convention, return a capability error rather than silently creating one.
-- Declare fenced `source-claim` through `backlog-claim`; never declare `item-claim` for multiple items in one Markdown file. Its resource lock, claim CAS, expected-hash CAS, atomic replacement, and release share the source fence. This supports same-host workers only and does not exclude cross-host workers without shared CAS. An unavailable helper, direct claimed edit, or second sidecar is capability `none`.
-
-### Archive
-
-Archive only through an established repository convention: for example, moving an existing source or completed section to its documented archive location. Preserve the original content and record the resulting path/marker as the durable receipt. Never delete an item or source to simulate archive, and never archive merely because it was enumerated by a source-only schedule.
+**Archive:** Move existing content only through an established repository archive convention and retain the resulting path/marker. Never delete to simulate archive.
 
 ## Backlog.md
 
-Backlog.md is a distinct local provider. The project/task model and its durable state belong to Backlog.md, not to ad hoc Markdown parsing.
+Treat Backlog.md as a provider-owned project/task model, not ad hoc Markdown.
 
-### Discovery
+**Discovery:** Resolve and enumerate through supported `backlog` CLI/MCP operations; never parse or edit task files directly. Source-only scope enumerates the complete project. Map provider IDs, body, status, priority/order, dependencies, and checkpoints into `ItemState`, retaining opaque fields. Merge the canonical helper item-claim status. Pass explicit review-group selectors unchanged to the supported provider operation; require exact ordered members and a stable group identity.
 
-- Resolve an explicit project path or Backlog.md locator through the supported `backlog` CLI/MCP discovery operation. Repository-derived detection requires an unambiguous Backlog.md project marker and must not be guessed from arbitrary `.md` files.
-- Use the supported `backlog` CLI/MCP task/project listing operations to enumerate the entire project for source-only scope. Do not stop after the first open task and do not read project files as a substitute for the provider operation.
-- Map provider task IDs, title/body, status, priority, order, dependencies, and refinement/review checkpoints into `ItemState`. Derive an item resource with `backlog-claim key --provider backlog-md --source <project> --item <task-id>` and merge `backlog-claim status` as the current claim; Backlog.md assignee and workflow status are visibility/progress, not claims.
-- Use the provider's status vocabulary to determine terminal dependencies and review-pending work. Preserve provider ordering and opaque fields in `providerData`; preserve the local claim receipt separately in `WorkClaim`.
-- For an explicit `review-group:<provider-native-selector>`, pass the provider-native selector unchanged to the supported CLI/MCP group operation. Milestone/parent groups are valid only when that operation resolves the complete exact ordered member IDs and returns a stable group identity; invalid selectors or unavailable group resolution are capability/invalid-selector diagnostics, not inferred membership.
+**Mutation:** With the CLI installed, use a fenced item claim and run each provider mutation as one `backlog-claim exec ... -- backlog ...` operation. With only authorized MCP mutation, acquire the same canonical resource as `local-coordination` and apply the pre/post checks in [`claims.md`](claims.md). Project visible ownership as `@<assignee>` after acquisition, using `BACKLOG_CLAIM_ASSIGNEE` or stable `agentID`; assignment is never the claim. Persist specification/progress/review/group markers through the selected provider path and retain provider plus claim/pre-post receipts. `mode:spec-only` changes specification content only and leaves progress unchanged. Failed/ambiguous operations remain incomplete.
 
-### Durable mutation and progress
-
-- When the supported `backlog` CLI is installed, claimed mutations use the CLI only and each status/task/dependency/progress/review/completion/archive write runs as exactly one `backlog-claim exec ... -- backlog ...` operation with the current fenced item claim. Direct task-file edits and unguarded CLI writes are forbidden. When only authorized Backlog.md MCP mutation is available, derive the same item resource with `key --coordination-only`, pass `--coordination-only` to acquisition, require guarantee `local-coordination` in the receipt, and perform direct MCP writes only with the contract's lease and provider-state pre/post checks.
-- After acquisition, project visible ownership with `backlog task edit <task-id> -a @<assignee>` inside `exec`, or through the checked MCP path under local coordination. Resolve `<assignee>` from `BACKLOG_CLAIM_ASSIGNEE` when set, otherwise use the stable active `agentID`; retain the exact value in the claim report. The assignment is not the lease, is never consulted for eligibility, and may remain as historical visibility after release.
-- Pass the caller's exact item/review scope to each mutation. Retain the provider result plus the guarded claim revision or coordination pre/post receipts. A failed or ambiguous command leaves the item incomplete and the claim unreleased until reconciled or expired.
-- Persist group markers and `recordProgress` through the selected provider mutation path. Normal refinement stores a discoverable `refinement: complete` checkpoint with its specification receipt/version; `mode:spec-only` leaves progress unchanged.
-- Declare same-host fenced `item-claim` through `backlog-claim` when the supported `backlog` CLI is installed. Acquisition, heartbeat, guarded CLI writes, recovery, and release use one item resource. If only MCP mutation is available, default to `local-coordination` on that same resource; never describe the MCP write as fenced. The Backlog.md assignment is only a provider-visible projection. An unavailable helper, unavailable provider mutation, or inability to derive the canonical resource is capability `none`; cross-host workers remain outside either same-host guarantee.
-
-### Archive
-
-Archive or complete a Backlog.md task only through the supported provider operation. Under a normal-mode fenced claim, run the CLI archive/close command through `backlog-claim exec`; under local coordination, use the checked MCP mutation path. `mode:spec-only` has no archive authority. Do not remove or rename project files directly, and do not infer that all tasks in a source-only collection should be archived.
+**Archive:** Use the authorized provider archive/complete operation under the selected claim mode. Never rename/remove project files or archive every task merely because source-only discovery enumerated them.
