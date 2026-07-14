@@ -1,29 +1,19 @@
 # Diagnosis Template
 
-Start with one outcome:
+Start with `ROOT CAUSE PROVEN`, `ROOT CAUSE NOT PROVEN`, or `CANNOT REPRODUCE`, then:
 
 ```text
-ROOT CAUSE PROVEN
-ROOT CAUSE NOT PROVEN
-CANNOT REPRODUCE
+Symptom: <expected vs actual>
+Reproduction: <command/input/environment and result>
+First divergence: <path:line or runtime boundary>
+Mechanism: <specific causal behavior>
+Trigger: <input/state/timing>
+Evidence: <proof or challenge>
+Ruled out: <alternatives and discriminators>
+Blast radius: <affected callers/data/users/environments/versions>
+Fix direction: <smallest correction or decision>
+Verification: <original repro plus regression coverage>
+Missing evidence: <none or exact next requirement>
 ```
 
-Then report:
-
-```text
-Symptom: <exact expected vs actual behavior>
-Reproduction: <command/test/input/environment and result>
-First divergence: <path:line or runtime boundary where state/control first becomes wrong>
-Mechanism: <specific condition, invariant, ordering, boundary, type, permission, migration, or dependency behavior>
-Trigger: <concrete input/state/timing>
-Evidence: <observations proving or challenging the mechanism>
-Ruled out: <competing causes and discriminating evidence>
-Blast radius: <affected callers, data, users, environments, or versions>
-Fix direction: <smallest source-level correction, or exact decision required>
-Verification: <original repro plus targeted regression coverage>
-Missing evidence: <none, or exact information required next>
-```
-
-For `ROOT CAUSE NOT PROVEN`, list remaining hypotheses with evidence for and against each. Do not label the best guess as the cause.
-
-For `CANNOT REPRODUCE`, identify the exact environment, data, timing, permissions, configuration, or version difference needed. Do not recommend a speculative code change.
+For `NOT PROVEN`, list hypotheses with evidence for and against; never label the best guess as cause. For `CANNOT REPRODUCE`, name the missing environment/data/timing/permission/config/version difference and do not recommend speculative code changes.

@@ -1,98 +1,36 @@
 # Implementation Review Rubric
 
-Use proportional coverage. Correctness is mandatory for every review; do not turn a light review into a checklist exercise for risks the change cannot affect.
+Use proportional coverage. Correctness is mandatory; apply other sections only when the change can affect them.
 
-## Light review (default)
+## Baseline checks
 
-For a small, tightly scoped, coherent change:
-
-1. Establish intent, acceptance criteria, non-goals, and compatibility constraints.
-2. Inspect the complete diff and directly affected callsites and data flow.
-3. Verify correctness against the acceptance criteria, relevant boundaries and error paths, and available targeted tests or runtime evidence.
-4. Report only actionable findings. Examine another lens below only when the changed behavior directly touches it.
-
-## Full-review triggers
-
-Use the full rubric when any of these applies:
-
-- materially large or complex diff
-- independent subsystems or risk-bearing data flows
-- authentication, authorization, security, or privacy boundary
-- schema, migration, or data-integrity change
-- concurrency or transaction behavior
-- public API or compatibility surface
-- meaningful performance risk
-- explicit request for a deep review
-
-For a triggered full review, apply every relevant section below after the light-review checks. Do not manufacture concerns from sections unrelated to the target.
-
-## Intent and coverage
-
-- Does the implementation satisfy every explicit requirement and acceptance criterion?
-- Are all required callsites, generated artifacts, configuration, migrations, API/UI surfaces, and tests updated?
-- Is any behavior silently gated by a flag, default, fallback, or unreachable path?
-- Were obsolete paths removed without leaving aliases, stale shims, dead branches, or duplicate implementations?
-
-## Correctness
-
-- Boundary and edge values; empty, null, missing, duplicate, malformed, and partial states
-- Error propagation, cleanup, rollback, retries, idempotency, and recovery
-- Ordering, races, concurrency, reentrancy, transactions, and partial failure
-- Permissions, tenant/org/user scoping, state transitions, lifecycle ownership, and invariants
-- Schema/API compatibility, migration direction, generated data, serialization, and version skew
-- Tests that defend observable behavior, failure modes, and transitions rather than implementation trivia
+- Does the implementation satisfy every requirement and acceptance criterion without violating non-goals or compatibility constraints?
+- Did the change update every required callsite, generated artifact, configuration, migration, API/UI surface, and behavioral test?
+- Is behavior silently gated by a flag, fallback, default, or unreachable path?
+- Do boundary, empty, null, malformed, duplicate, partial, error, retry, cleanup, and recovery states preserve invariants?
+- Are ordering, ownership, permissions, lifecycle transitions, serialization, migration direction, and version skew correct where relevant?
+- Do tests prove observable behavior and failure transitions rather than implementation trivia?
 
 ## Security and privacy
 
-- Authentication and authorization at every trust boundary
-- Tenant/org/user isolation and object ownership
-- Secret, token, credential, and sensitive-data handling in storage, logs, errors, telemetry, caches, and client state
-- Injection, traversal, SSRF, XSS, CSRF, unsafe deserialization, shell/process execution, and path handling where relevant
-- Validation at external boundaries and safe handling of untrusted input/output
-- Least privilege and denial behavior when context or permission is absent
+Check authentication/authorization at trust boundaries; tenant/org/user isolation and ownership; least privilege and denial when context is absent; secret/sensitive-data exposure in storage, logs, errors, telemetry, caches, or clients; validation of untrusted input/output; and applicable injection, traversal, SSRF, XSS, CSRF, deserialization, process, and path risks.
 
-## Performance and reliability
+## Data, concurrency, and reliability
 
-- Avoidable allocations, copies, repeated parsing, repeated work, and synchronous blocking
-- N+1 queries, missing indexes, poor query shapes, transaction scope, pagination, batching, and unbounded result sets
-- Unbounded loops, retries, queues, recursion, memory growth, payloads, logs, or cache keys
-- Cache correctness, invalidation, stampedes, stale reads, and ownership
-- Frontend render churn, bundle growth, client waterfalls, duplicate requests, and unnecessary client computation
-- Timeouts, backpressure, cancellation, resource cleanup, and dependency failure behavior
+Check transactions, races, reentrancy, idempotency, partial failure, rollback, retries, timeouts, cancellation, backpressure, resource cleanup, cache ownership/invalidation, stale reads, and dependency failure. Verify schema/API compatibility, migrations, generated data, and recovery from interrupted states.
+
+## Performance
+
+Check expected-scale behavior for repeated parsing/work, allocations/copies, blocking, N+1 queries, indexes/query shape, transaction scope, pagination/batching, unbounded loops/retries/queues/recursion/results/payloads/logs/cache keys, frontend render churn, bundle growth, waterfalls, and duplicate requests.
 
 ## Maintainability and design
 
-- Fit with canonical repository patterns and ownership boundaries
-- Minimal surface area, direct control flow, clear invariants, names, types, and failure modes
-- Shared logic reused instead of a second convention or thin pass-through abstraction
-- No speculative abstraction, drive-by rewrite, redundant comment, TODO, deprecated path, or accidental public API
-- Tests located with the owning behavior and resilient to internal refactoring
-- New optionality, casts, generic mechanisms, or conditionals justified by actual domain variation
-
-## Latent failure
-
-Answer the three-month question with one concrete mechanism, such as:
-
-- ownership or invariant drift
-- unchecked edge state
-- schema/API/dependency change
-- concurrency or ordering
-- permission/scope leakage
-- data volume or cardinality
-- missing behavioral coverage
-- unclear source of truth
-
-Address it now when it can violate current acceptance, security, data integrity, compatibility, or expected-scale operation. Leave it as a follow-up only when current behavior is correct, the risk is bounded, and the follow-up has a concrete trigger or owner.
+Require fit with canonical ownership boundaries and repository patterns; direct control flow and explicit invariants/types/failures; reuse rather than a second convention or thin wrapper; minimal surface area; tests near the owning behavior; and justification for new optionality, casts, generic machinery, or conditionals. Flag speculative abstraction, drive-by rewrites, stale shims, dead branches, accidental APIs, and complexity moved rather than removed when they create a concrete future failure mechanism.
 
 ## Candidate validation
 
-Before reporting a finding:
+Before reporting, locate the changed/affected line, trace its caller and downstream effect, check intent and conventions, look for an existing guard/test/migration/invariant, identify a plausible triggering state, and state the observable requirement violation. If that chain is incomplete, keep investigating or omit the candidate.
 
-1. Locate the exact changed or directly affected line.
-2. Trace the behavior through its caller and downstream effect.
-3. Check intent and repository conventions.
-4. Look for an existing guard, invariant, test, migration, or ownership rule that resolves the concern.
-5. Determine a plausible input/state that triggers the failure.
-6. State what observable result differs from the requirement.
+## Three-month risk
 
-If any required link in that chain is missing, keep investigating or omit the finding.
+Name one most likely concrete mechanism: invariant/ownership drift, unchecked edge state, schema/API/dependency change, ordering/concurrency, permission leakage, data volume, missing behavioral coverage, or unclear source of truth. Address it now when it threatens current acceptance, security, data integrity, compatibility, or expected-scale operation. Follow up only when current behavior is correct, risk is bounded, and the trigger/owner is concrete.
