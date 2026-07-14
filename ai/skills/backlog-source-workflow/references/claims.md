@@ -14,6 +14,8 @@ backlog-claim key --provider <kind> --source <canonical-locator> --item <stable-
 
 Loose Markdown yields a fenced source resource; Backlog.md and GitHub yield fenced item resources. Linear and unfenced providers yield coordination-only item resources. Use `key --coordination-only` when a normally fenced provider must use an unfenced first-party mutation path.
 
+For Backlog.md in a Git repository, derive the source locator and run all `backlog` reads and writes from the repository's canonical primary/control checkout, even when the pass was invoked from another worktree. The helper defaults to the primary checkout containing the shared Git directory; `BACKLOG_CONTROL_ROOT` may name another registered checkout when the Backlog.md UI also uses it. Map a worktree-local source by repository-relative path; never let the implementation worktree's copy become provider state. If the control checkout, mapping, or safe provider working directory is missing or ambiguous, do not acquire/start work through a fallback checkout; return `WAIT` or the relevant capability diagnostic.
+
 Generate unique claim, session, worker-attempt, and operation IDs. Acquire with current provider eligibility/version. Coordination-only acquisition must include `--coordination-only`, and its receipt must say `local-coordination`. Resolve ambiguous acquisition by exact claim ID; never start or transfer work while ownership is uncertain.
 
 ## Lease lifecycle
@@ -24,9 +26,11 @@ Heartbeat before half the lease elapses and around long work. Heartbeat and rele
 
 ## Writes
 
+An item `WorkClaim` owns the whole pass and retains the existing one-pass lease lifecycle. A separate short same-host provider/repository mutation transaction lock serializes only shared Backlog.md provider writes, any corresponding provider-state commit, and Git integration in the canonical checkout. `backlog-claim exec` acquires it for Backlog.md mutations; use `backlog-claim control-exec` with the current item claim for one guarded `git` checkpoint or integration command. Refresh provider/Git state inside it, perform the minimal mutation/integration, and release it immediately. Never hold it during implementation, tests, or review, and never use it as item ownership. Unresolved contention or unsafe shared state returns `WAIT`. It does not fence provider writes from another host.
+
 Under a fenced helper claim:
 
-- run exactly one supported `backlog` or `gh` mutation through `backlog-claim exec`; the helper holds/renews the fence and advances the claim revision
+- run exactly one supported `backlog` or `gh` mutation through `backlog-claim exec`; the helper holds/renews the fence and advances the claim revision. Backlog.md commands use the canonical control checkout as their validated provider working directory
 - write loose Markdown only with `backlog-claim replace-file`, current claim credentials, a fresh operation ID, and the expected source SHA-256
 
 Never pass coordination-only mutations through `exec`/`replace-file`; both must reject that guarantee. Reuse an operation ID only to recover the same request's lost response. Changed inputs are a conflict.

@@ -29,6 +29,8 @@ ReviewGroup { id, label, itemIDs, explicit: true, reason }
 
 `providerData` retains opaque provider identity/version fields. Provider status, dependencies, progress, review, and completion remain authoritative; local snapshots are temporary read-only context.
 
+For a repository-backed provider, `providerData` also retains its canonical provider execution context. A Backlog.md source named from any Git worktree resolves its repository-relative location against the repository's unambiguous primary/control checkout; its canonical locator and every provider read/write use that checkout. Implementation worktrees contain code changes only and must not become alternate provider authorities. If the control checkout cannot be identified safely, the mapped source is absent, or its provider state is unsafe to mutate, return `WAIT`/a capability diagnostic instead of reading, writing, or falling back through the caller's feature worktree.
+
 A claim is one bounded ownership epoch, separate from durable `in-progress` state. `fenced` guards cooperating mutations through the selected provider/helper. `local-coordination` excludes only cooperating same-user agents on one host and does not fence provider writes or exclude cross-host workers. Read [`claims.md`](claims.md) before claim operations or claimed writes.
 
 `ReviewGroup` exists only for an explicit `review-group:<provider-native-selector>`. The provider must resolve exact ordered members and persist its authorized marker. Otherwise return a capability/invalid-selector diagnostic. Without that token, the review boundary is exactly one implementation item; source-only scope never implies group review.
@@ -42,6 +44,7 @@ Classify the ordered arguments before discovery:
 3. Preserve every explicit source and selector in supplied order, including unrelated provider kinds. Provider priority never reorders sources.
 4. If any explicit source was supplied, never fall back to repository-derived detection. A missing local path may substitute one clearly adjacent same-directory or moved/renamed-basename candidate only; report both paths. Otherwise fail that source.
 5. Without an explicit source, accept repository-derived detection only when exactly one candidate remains; report missing/ambiguous candidates otherwise.
+6. For Backlog.md inside a Git worktree, preserve the supplied source for diagnostics but canonicalize provider identity and execution to the same repository-relative source in the primary/control checkout. All later discovery, refresh, mutation, and receipt verification use that context, including when the caller runs from an implementation worktree.
 
 A source-only scope contains the complete discovered collection for every resolved source, never only the first actionable item. Explicit selectors narrow mutation scope but may still require reading dependencies outside the selection. Reading a dependency never authorizes mutating it.
 
@@ -83,11 +86,13 @@ All operations preserve stable IDs, explicit order, scope, and caller authority.
 11. `reviewBoundary(scope, requestedGroup?, authority)` returns the one-item default or resolves the explicit provider group; never infers a larger group.
 12. `archive(...)` uses the authorized provider archive/close/move convention under a matching claim and returns a durable receipt; it never deletes as a substitute.
 
+Repository-backed provider mutations additionally use a short same-host provider/repository mutation transaction lock. It is distinct from `WorkClaim`: the claim owns one item pass, while the transaction lock only serializes shared provider writes, their provider-file commits, and Git integration against the canonical control checkout. Acquire it immediately around those operations and release it before implementation resumes; never hold it for inspection, coding, tests, or review. Refresh provider/Git state inside the transaction and return `WAIT` on unresolved contention, ambiguity, or overlapping dirty state. This transaction is local coordination only and supplies no provider-side or cross-host fence.
+
 ## Durable state and authority
 
 Pass the caller's authority unchanged to every mutation. Enumeration never expands scope. Refresh provider state immediately before concurrent-sensitive writes, preserve unrelated fields, retain provider versions/receipts, and verify durable checkpoints before advancing. Failure or ambiguity leaves work incomplete and stops dependents until reconciled.
 
-Claims are the second hard gate after dependencies. Use the strongest declared capability: provider-native fencing, helper-fenced item/source claim, then `local-coordination`; use capability `none` only when required provider operations or a canonical same-host coordination resource are unavailable. Never downgrade to assignment, status, comments, branches, handoffs, or ordinary locks.
+Claims are the second hard gate after dependencies. Use the strongest declared capability: provider-native fencing, helper-fenced item/source claim, then `local-coordination`; use capability `none` only when required provider operations, the canonical provider execution context, or a canonical same-host coordination resource are unavailable. Never downgrade to assignment, status, comments, branches, handoffs, or ordinary locks. A provider/repository mutation transaction lock protects a brief shared-write critical section; it neither replaces nor extends a `WorkClaim`.
 
 Revalidate dependencies before delegation, integration, and checkpoints. If ownership, provider version, eligibility, or dependencies change, stop; checkpoint only safe authorized resumable state and release when possible. Persist the caller-defined specification/task/review/archive checkpoint under valid ownership before release. Do not advance scheduling after a failed checkpoint or release.
 
