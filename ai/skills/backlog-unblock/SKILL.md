@@ -5,7 +5,7 @@ description: Resolve human decisions, missing inputs, stale blocker records, and
 
 # Backlog Unblock
 
-Turn genuine blockers into durable decisions or precise remaining unblock conditions. Resolve exactly the requested sources/items, prompt the human only for consequential input that evidence cannot supply, and write the resulting decision back to every affected backlog item so a future agent can proceed without chat context.
+Turn genuine blockers into durable decisions or precise remaining unblock conditions, then commit scoped local backlog changes. Resolve exactly the requested sources/items, prompt the human only for consequential input that evidence cannot supply, and write the resulting decision back to every affected backlog item so a future agent can proceed without chat context.
 
 Apply `backlog-source-workflow` for source resolution, provider dispatch, dependency analysis, claims, and durable writes. Read its provider-neutral contract, the matching provider heading for each resolved kind, and its claim rules before any claim or mutation. This skill may mutate only:
 
@@ -70,4 +70,6 @@ For loose Markdown, preserve its existing syntax and use the fenced whole-source
 
 Keep source resolution, classification, recommendations, prompts, claims, authoritative writes, and synthesis in the active agent. Use bounded read-only exploration for materially independent evidence surfaces and one oracle only under the policy above. Subagents never prompt the user, mutate providers, manage claims, or decide final recommendations.
 
-Before declaring an item unblocked, verify that every selected question has an answer or evidence-backed disposition; every answer is written into the specification rather than chat only; blocker and status changes are no broader than the resolved condition; decision-only completion is justified; dependents now see the expected terminal/ready state; and all claims, receipts, and provider refreshes succeeded. Commit only scoped local backlog changes. Remote-only updates produce no local shadow commit.
+Before declaring an item unblocked, verify that every selected question has an answer or evidence-backed disposition; every answer is written into the specification rather than chat only; blocker and status changes are no broader than the resolved condition; decision-only completion is justified; dependents now see the expected terminal/ready state; and all claims, receipts, and provider refreshes succeeded.
+
+Run applicable formatting and validation, then commit all scoped local backlog changes concisely. Include no unrelated dirty work, do not add a co-author, and do not push or open a pull request without explicit authority. Treat a required guarded Backlog.md provider-state commit as this commit and retain its hash; do not create a duplicate commit. When only remote items changed, report that there is nothing local to commit and never create a local shadow merely to produce one.
