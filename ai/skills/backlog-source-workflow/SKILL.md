@@ -27,7 +27,8 @@ Use the stable task ID (`T1`, `T2`, and so on) when claiming, reporting, and rec
 1. Read [`references/contract.md`](references/contract.md).
 2. Resolve every provider kind while preserving explicit source order.
 3. Read only the matching provider heading from [`references/local-providers.md`](references/local-providers.md) or [`references/remote-providers.md`](references/remote-providers.md).
-4. Before acquiring, heartbeating, mutating under, or releasing a claim, also read [`references/claims.md`](references/claims.md). Read-only callers do not load it.
+4. When a resolved provider kind is Backlog.md, also load the [`backlog-md`](../backlog-md/SKILL.md) skill after the matching provider heading for its CLI/MCP and ticket-authoring conventions.
+5. Before acquiring, heartbeating, mutating under, or releasing a claim, also read [`references/claims.md`](references/claims.md). Read-only callers do not load it.
 
 Apply the caller's authority to the normalized operations: `resolveSource`, `discover`, `selectNext`/`selectWave`, `readItem`, `claim`, `heartbeat`, `releaseClaim`, `writeState`, `recordProgress`, `reviewBoundary`, and `archive`.
 
