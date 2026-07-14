@@ -19,6 +19,8 @@ Keep collection scope separate from item selection:
 
 Provider resolution is deliberately narrow: read loose Markdown using its existing structure; discover Backlog.md through supported CLI/MCP reads; use first-party Linear tooling; use `gh` for GitHub Issues; and merge same-host claim status from the resource key defined by the selected provider section. If an integration or local claim helper required to report authoritative eligibility is unavailable, report that limitation. Do not infer active ownership from assignees, labels, comments, statuses, branches, or stale local mentions.
 
+Treat `linear TICK` exactly like `linear:TICK`: it is an explicit source before any repository-derived discovery. Resolve an exact provider-native identity such as the Linear team key `TICK` before broader name search; a partial or fuzzy project-name result cannot make that exact match ambiguous. Once a provider qualifier is present, never use repository metadata to reinterpret or choose the source.
+
 When `$ARGUMENTS` contains no explicit source (including selector-only or description-only arguments), derive at most one active source from repository context in this order: repository-declared source or convention; structurally recognizable local backlog source matching the repository, branch, task, or selectors; then a remote collection linked by repository metadata or matching the selectors. Repository derivation happens only when no explicit source was supplied. If several derived sources are equally plausible, do not merge them; emit the diagnostic output below. When explicit sources are supplied, keep them distinct and include them in their supplied order.
 
 ## Determine units, order, and parallelism
