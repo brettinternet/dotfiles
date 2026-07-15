@@ -2,7 +2,7 @@
 
 [tools]
 # personal
-"github:brettinternet/worklease" = "v0.2.0"
+"github:brettinternet/worklease" = "latest"
 
 # dev
 go = "latest"

@@ -13,7 +13,7 @@ import unittest
 WORKLEASE = [
     "mise",
     "exec",
-    "github:brettinternet/worklease@v0.2.0",
+    "github:brettinternet/worklease@latest",
     "--",
     "worklease",
 ]
@@ -104,7 +104,6 @@ class WorkleaseTests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(0, completed.returncode, completed.stderr)
-        self.assertEqual("0.2.0", completed.stdout.strip())
 
     def test_lifecycle_exec_checkpoint_and_release(self) -> None:
         resource = "local:worklease-smoke"
