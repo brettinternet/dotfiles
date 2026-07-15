@@ -12,7 +12,7 @@ Every authorized backlog entrypoint loads this skill before interpreting source 
 
 ## Item-local task checklists
 
-Implementation tasks belong inside the ticket/item and are not separate backlog units. When a caller refines or implements an item, prefer a canonical `### Implementation tasks` section with direct Markdown task-list entries in stable order:
+Implementation tasks belong inside the ticket/item and are not separate backlog units. Provider-item decomposition is a distinct operation available only when the caller explicitly authorizes it. When a caller refines or implements an item, prefer a canonical `### Implementation tasks` section with direct Markdown task-list entries in stable order:
 
 ```markdown
 ### Implementation tasks
@@ -32,6 +32,6 @@ The canonical checklist is a preferred representation, not a start-time gate. If
 4. When a resolved provider kind is Backlog.md, also load the [`backlog-md`](../backlog-md/SKILL.md) skill after the matching provider heading for its CLI/MCP and ticket-authoring conventions.
 5. Before acquiring, heartbeating, mutating under, or releasing a claim, also read [`references/claims.md`](references/claims.md). Read-only callers do not load it.
 
-Apply the caller's authority to the normalized operations: `resolveSource`, `discover`, `selectNext`/`selectWave`, `readItem`, `claim`, `heartbeat`, `releaseClaim`, `writeState`, `recordProgress`, `reviewBoundary`, and `archive`.
+Apply the caller's authority to the normalized operations: `resolveSource`, `discover`, `selectNext`/`selectWave`, `readItem`, `claim`, `heartbeat`, `releaseClaim`, `createItem`, `writeState`, `recordProgress`, `reviewBoundary`, and `archive`.
 
 Provider state remains authoritative. Never create a writable shadow, use assignment/status/comments as a claim, let provider order override dependencies or explicit source order, or describe local same-host coordination as provider-side/cross-host fencing.

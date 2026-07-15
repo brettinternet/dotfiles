@@ -46,7 +46,7 @@ Classify the ordered arguments before discovery:
 5. Without an explicit source, accept repository-derived detection only when exactly one candidate remains; report missing/ambiguous candidates otherwise.
 6. For Backlog.md inside a Git worktree, preserve the supplied source for diagnostics but canonicalize provider identity and execution to the same repository-relative source in the primary/control checkout. All later discovery, refresh, mutation, and receipt verification use that context, including when the caller runs from an implementation worktree.
 
-A source-only scope contains the complete discovered collection for every resolved source, never only the first actionable item. Explicit selectors narrow mutation scope but may still require reading dependencies outside the selection. Reading a dependency never authorizes mutating it.
+A source-only scope contains the complete discovered collection for every resolved source, never only the first actionable item. Explicit selectors narrow mutation scope but may still require reading dependencies outside the selection. Reading a dependency never authorizes mutating it. When the caller explicitly grants decomposition authority, provider items derived from a selected item join mutation and scheduling scope at creation; existing unselected items remain read-only and may only be referenced as relationship targets.
 
 After resolving each kind, load only its provider section.
 
@@ -81,10 +81,13 @@ All operations preserve stable IDs, explicit order, scope, and caller authority.
 6. `claim(source, id, request, authority)` atomically acquires absent/expired ownership and returns claim/receipt or `busy | ineligible | conflict | capability`.
 7. `heartbeat(...)` extends only the matching unexpired claim and returns its new revision/receipt.
 8. `releaseClaim(...)` removes only the matching unexpired claim after a durable checkpoint and non-blank reason.
-9. `writeState(...)` applies one authorized provider patch through the selected fenced or coordination-only path and returns a provider receipt.
-10. `recordProgress(...)` writes the caller's durable checkpoint; chat/handoff/claim release is not progress.
-11. `reviewBoundary(scope, requestedGroup?, authority)` returns the one-item default or resolves the explicit provider group; never infers a larger group.
-12. `archive(...)` uses the authorized provider archive/close/move convention under a matching claim and returns a durable receipt; it never deletes as a substitute.
+9. `createItem(source, specification, relationships, authority)` creates one provider item only when the caller explicitly authorizes decomposition or item creation, preserving a returned stable ID and provider receipt. Relationship targets must already exist or be created earlier in the same guarded decomposition epoch.
+10. `writeState(...)` applies one authorized provider patch, including authorized parent/dependency relationships, through the selected fenced or coordination-only path and returns a provider receipt.
+11. `recordProgress(...)` writes the caller's durable checkpoint; chat/handoff/claim release is not progress.
+12. `reviewBoundary(scope, requestedGroup?, authority)` returns the one-item default or resolves the explicit provider group; never infers a larger group.
+13. `archive(...)` uses the authorized provider archive/close/move convention under a matching claim and returns a durable receipt; it never deletes as a substitute.
+
+Creation never follows from discovery alone. A caller with decomposition authority may create items only within a selected item's existing product scope, then must reread every created or rewritten item, validate the resulting acyclic graph and acceptance-criterion ownership, and retain receipts before expanding its in-memory refinement scope. A failed creation or relationship write stops the split; reconcile durable partial results under the same authority rather than deleting them, creating replacements, or advancing dependents.
 
 Repository-backed provider mutations additionally use a short same-host provider/repository mutation transaction lock. It is distinct from `WorkClaim`: the claim owns one item pass, while the transaction lock only serializes shared provider writes, their provider-file commits, and Git integration against the canonical control checkout. Acquire it immediately around those operations and release it before implementation resumes; never hold it for inspection, coding, tests, or review. Refresh provider/Git state inside the transaction and return `WAIT` on unresolved contention, ambiguity, or overlapping dirty state. This transaction is local coordination only and supplies no provider-side or cross-host fence.
 
