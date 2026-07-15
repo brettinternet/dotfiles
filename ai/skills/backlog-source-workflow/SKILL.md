@@ -12,7 +12,7 @@ Every authorized backlog entrypoint loads this skill before interpreting source 
 
 ## Item-local task checklists
 
-Implementation tasks belong inside the ticket/item and are not separate backlog units. When a caller refines or implements an item, use a canonical `### Implementation tasks` section with direct Markdown task-list entries in stable order:
+Implementation tasks belong inside the ticket/item and are not separate backlog units. When a caller refines or implements an item, prefer a canonical `### Implementation tasks` section with direct Markdown task-list entries in stable order:
 
 ```markdown
 ### Implementation tasks
@@ -21,6 +21,8 @@ Implementation tasks belong inside the ticket/item and are not separate backlog 
 ```
 
 Use the stable task ID (`T1`, `T2`, and so on) when claiming, reporting, and recording progress. A checked box is durable item-local progress, not provider completion; callers must still persist the matching commit, verification, acceptance-criteria state, and provider workflow state through the selected provider operation. Preserve completed boxes and unknown item content, and never turn nested checklist entries into separately scheduled backlog items.
+
+The canonical checklist is a preferred representation, not a start-time gate. If it is absent or malformed but the item's scope is unambiguous, the caller may map an equivalent task list or derive the smallest bounded task from the item specification, then normalize the checklist when provider mutation is available. A formatting defect alone is never a `BLOCKED` or `WAIT` reason; stop only for genuine scope, dependency, authority, capability, or decision ambiguity.
 
 ## Required loading
 
