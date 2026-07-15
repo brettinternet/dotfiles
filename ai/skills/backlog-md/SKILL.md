@@ -42,6 +42,8 @@ For Backlog.md native fields, use the provider's plan, AC, and DoD fields. Prese
 
 Preserve checked items and stable IDs during refinement. Never reset `[x]` to `[ ]` without explicit evidence that the task or criterion was reopened. A checked implementation task is progress, not provider completion; provider status, review, integration, and archive still require their own authorized transitions.
 
+This checklist shape is a preferred authoring convention, not a prerequisite for starting work. Resolve the task identity before acquiring the implementation claim: use the first unchecked stable ID, assign stable IDs by existing order to an equivalent list and select its first unchecked entry, or use fallback ID `T1` when no task list exists and scope is unambiguous. After claim acquisition, derive the smallest bounded outcome, persist the checklist when the selected provider can be mutated, and continue. If the provider is temporarily read-only, retain the pre-claim fallback task ID in the provider's supported progress state and report the checklist repair as follow-up work. Do not block implementation solely because the backlog is imperfect.
+
 ## Likely workflows
 
 ### Initialize or inspect a project
@@ -78,11 +80,11 @@ Read the complete item, dependencies, repository instructions, relevant code, an
 
 ### Implement one task at a time
 
-Claim the item before coding. Select the first unchecked `T*` task, implement only that coherent outcome, run targeted verification, commit the code, then update the plan checkbox and durable progress under the same ownership epoch. Mark matching AC items only when their evidence is complete. Do not check DoD until all implementation tasks and AC items are complete and review/integration evidence exists.
+Resolve the task identity before claiming: select the first unchecked `T*` task when one exists, assign stable IDs by existing order to an equivalent task list and select its first unchecked entry, or use fallback ID `T1` when the scope is unambiguous and no usable list exists. Then claim the item before coding. Under that claim, derive one bounded outcome, record or normalize the task state, and continue. Implement only that coherent outcome, run targeted verification, commit the code, then update the plan checkbox and durable progress under the same ownership epoch when the checklist is writable. Mark matching AC items only when their evidence is complete. Do not check DoD until all implementation tasks and AC items are complete and review/integration evidence exists.
 
 ### Review, complete, and archive
 
-Review the accumulated implementation only after all implementation tasks are checked. Run the independent verifier, resolve findings, check the remaining AC and DoD items through guarded provider operations, record the final summary, complete the provider item, and archive only when the caller authorizes it and the provider convention requires it.
+Review the accumulated implementation only after all implementation tasks are durably complete, preferably with checked task boxes; an explicitly recorded equivalent/fallback task state is sufficient while checklist repair remains outstanding. Run the independent verifier, resolve findings, check the remaining AC and DoD items through guarded provider operations, record the final summary, complete the provider item, and archive only when the caller authorizes it and the provider convention requires it.
 
 ## Command reference
 
