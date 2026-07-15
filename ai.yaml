@@ -3,6 +3,10 @@
     link:
       create: true
       relink: true
+- clean:
+    - ~/.claude/commands
+    - ~/.claude/skills
+    - ~/.agents/skills
 
 - shell:
     - command: |
@@ -63,18 +67,21 @@
       path: ai/claude/statusline-command.sh
     ~/.claude/commands/:
       glob: true
+      relink: false
       path: ai/commands/*
     ~/.claude/agents/:
       glob: true
       path: ai/claude/agents/*
     ~/.claude/skills/:
       glob: true
+      relink: false
       path: ai/skills/*
     # Codex
     ~/.codex/AGENTS.md:
       path: ai/AGENTS.md
     ~/.agents/skills/:
       glob: true
+      relink: false
       path: ai/skills/*
     # pi
     # OMP already reads ~/.claude/CLAUDE.md
