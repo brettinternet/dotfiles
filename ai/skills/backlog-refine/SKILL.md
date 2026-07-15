@@ -10,10 +10,11 @@ Refine exactly the requested sources/items for a lesser coding agent, then commi
 Apply `backlog-source-workflow` for source resolution, provider dispatch, dependency scheduling, claims, and durable writes. Read its provider-neutral contract, then only the matching provider heading for each resolved kind. This skill may write only:
 
 - refined specification content
+- decomposition items plus their parent/dependency relationships when splitting selected work under the rules below
 - in normal mode, its claim lifecycle and matching `refined:`/`refinement: complete` checkpoint
 - a verified human-required blocked state under the protocol below
 
-It never creates `ReviewGroup` state or authorizes other workflow mutations.
+It never creates `ReviewGroup` state or authorizes other workflow mutations. Decomposition authority applies only in normal mode and only within the selected work's product intent; it does not authorize unrelated backlog creation or reprioritization.
 
 ## Scope and readiness
 
@@ -49,12 +50,26 @@ For one selected item, work in the active agent and follow the same claim-before
 4. Narrow concurrent work around shared implementation surfaces. Acquire the strongest contract-supported claim for each item/source and revalidate dependencies. Report coordination-only work as `LOCAL COORDINATION (UNFENCED)`.
 5. Dispatch one bounded batch of independent item proposals. Workers return evidence/proposals only; they never mutate providers, commit, manage claims, or decide cross-item contracts.
 6. As claim holder, heartbeat, verify worker evidence, reconcile shared decisions, and perform authoritative writes in source/item order through the selected fenced or coordination-only path. Persist specification plus refinement checkpoint and refresh state; release item claims after each barrier and retain a source claim through the final wave or durable stop. Stop dependents on stale ownership, conflicts, ambiguous writes, missing checkpoints, or failed releases.
+7. After an authorized decomposition, add returned item IDs to the current refinement scope, rediscover the affected graph, and recompute waves before delegating or writing further specifications. Existing unselected items remain read-only except as dependency targets.
 
 Use provider-owned state as authoritative. Never create a local mirror of remote work, directly edit Backlog.md task files, bypass guarded normal-mode writes, treat assignment/comment/status as a claim, or describe same-host coordination as cross-host/provider fencing. Commit only local source refinements; remote-only work has no shadow commit.
 
 ## Make each item implementation-ready
 
 Each implementation task must be one coherent, independently verifiable behavioral outcome a lesser agent can implement, test, record, and commit in one bounded pass. Bundle inseparable production code, callsites, migrations/fixtures, and tests. Split independently useful behaviors or separate subsystems; never split by file, layer, test-writing, or checklist trivia. Map every acceptance criterion to tasks and every task to acceptance criteria.
+
+The refining agent may split a selected item into multiple provider items whenever that produces clearer dependency order, independently deliverable outcomes, or meaningful parallel work. This is an agent-discretionary refinement action; it does not require a separate user instruction. Split only at behavioral or subsystem boundaries, and only when the provider supports durable item creation plus parent/dependency relationships through the shared workflow. Keep inseparable work together.
+
+When decomposing an item:
+
+- create the smallest independently verifiable child or sibling items needed, preserving the selected item's product intent and scope
+- give each new item its own implementation tasks, acceptance criteria, Definition of Done when supported, verification, and exact artifact/interface contracts
+- map every original acceptance criterion to exactly one owning implementation item unless a deliberate shared criterion names all owners; leave no duplicated or orphaned work
+- persist explicit dependencies for required ordering and leave independent items dependency-free so scheduling can parallelize them
+- retain the original as a non-duplicative parent/coordination item when the provider supports parents; otherwise rewrite it to clearly identify the replacement items and remove duplicate implementation scope
+- build and validate the resulting graph before further refinement, then include newly created items in the selected refinement scope and dependency waves
+
+Do not decompose merely to reduce ticket size, distribute files/layers/tests, or manufacture concurrency. If provider creation or relationship mutation is unavailable, keep the work as item-local implementation tasks and report the capability limitation rather than partially splitting it.
 
 Write implementation tasks under a `### Implementation tasks` heading as direct Markdown task-list entries with stable IDs, for example `- [ ] T1 — Add the parser`. Keep acceptance criteria in their own section and map them to these tasks; do not use arbitrary acceptance-criteria checkboxes as the implementation schedule. Preserve existing checked tasks and stable IDs when refining an item, and never reset `[x]` to `[ ]` without explicit evidence that the task was reopened.
 
@@ -102,4 +117,4 @@ Use at most four subagents per invocation: up to three `executor`/`explore` work
 
 ## Completion gate
 
-Before committing, verify every selected item is covered; every open question and missing reference has a recorded disposition; tasks are bounded outcomes; acceptance, dependencies, decisions, assumptions, and verification are sufficient for a lesser agent; and readiness is honest. Confirm normal-mode claim/write/checkpoint/release receipts or `mode:spec-only` workflow-state preservation. Run only applicable formatting/validation. Commit scoped local changes concisely; when only remote items changed, report that there is nothing local to commit.
+Before committing, verify every selected and decomposition-created item is covered; every open question and missing reference has a recorded disposition; tasks are bounded outcomes; acceptance criteria have explicit non-duplicative owners; the dependency graph is acyclic and exposes all valid parallel work; decisions, assumptions, and verification are sufficient for a lesser agent; and readiness is honest. Confirm normal-mode creation/relationship and claim/write/checkpoint/release receipts or `mode:spec-only` workflow-state preservation. Run only applicable formatting/validation. Commit scoped local changes concisely; when only remote items changed, report that there is nothing local to commit.

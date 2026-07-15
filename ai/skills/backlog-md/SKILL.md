@@ -76,7 +76,7 @@ When multiline quoting is fragile, repeat `--append-*` edits or use literal newl
 
 ### Refine before coding
 
-Read the complete item, dependencies, repository instructions, relevant code, and history. Rewrite the plan into stable-ID task checkboxes, map every AC to one or more tasks, resolve missing references, and add only relevant DoD items. Stop for human input only on consequential product decisions that evidence cannot resolve. Persist the refined content through the provider workflow and wait for approval when the caller requests a plan-only pass.
+Read the complete item, dependencies, repository instructions, relevant code, and history. Rewrite the plan into stable-ID task checkboxes, map every AC to one or more tasks, resolve missing references, and add only relevant DoD items. When the calling workflow authorizes decomposition, the refining agent may create tasks and set their parent/dependency relationships without a separate user instruction when behavioral boundaries, dependency order, or meaningful parallelism justify the split. Use dependencies for required execution order and parents only for a genuine grouping/container relationship; otherwise retain the original as one coherent outcome. Apply the caller's decomposition rules, run `backlog task create` with `--parent`/`-p` and `--dep` through the guarded provider path, and immediately refine and reread every resulting item and relationship. Stop for human input only on consequential product decisions that evidence cannot resolve. Persist the refined content through the provider workflow and wait for approval when the caller requests a plan-only pass.
 
 ### Implement one task at a time
 
