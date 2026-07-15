@@ -61,6 +61,18 @@ tasks:
         -not -path "./dotbot/*"
         | xargs -n 1 zsh -n
       - prettier --check "**/*.{yaml,yml,json,jsonc}"
+  test:
+    desc: Run tests
+    cmds:
+      - git submodule update --init dotbot
+      - task: test-dotbot
+      - python3 ai/tests/test_worklease.py
+
+  test-dotbot:
+    internal: true
+    dir: dotbot
+    cmds:
+      - hatch test
 
   fix:
     desc: Run fixes
