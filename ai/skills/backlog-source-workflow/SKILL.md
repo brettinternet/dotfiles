@@ -26,11 +26,12 @@ The canonical checklist is a preferred representation, not a start-time gate. If
 
 ## Required loading
 
-1. Read [`references/contract.md`](references/contract.md).
-2. Resolve every provider kind while preserving explicit source order.
-3. Read only the matching provider heading from [`references/local-providers.md`](references/local-providers.md) or [`references/remote-providers.md`](references/remote-providers.md).
-4. When a resolved provider kind is Backlog.md, also load the [`backlog-md`](../backlog-md/SKILL.md) skill after the matching provider heading for its CLI/MCP and ticket-authoring conventions.
-5. Before acquiring, heartbeating, mutating under, or releasing a claim, also read [`references/claims.md`](references/claims.md). Read-only callers do not load it.
+1. Read [`worklease-workflow`](../worklease-workflow/SKILL.md) and its [`references/contract.md`](../worklease-workflow/references/contract.md) first; it is normative for graph construction, claim lifecycle, guarantee mapping, checkpoint ordering, and structured outcomes.
+2. Read [`references/contract.md`](references/contract.md).
+3. Resolve every provider kind while preserving explicit source order.
+4. Read only the matching provider heading from [`references/local-providers.md`](references/local-providers.md) or [`references/remote-providers.md`](references/remote-providers.md).
+5. When a resolved provider kind is Backlog.md, also load the [`backlog-md`](../backlog-md/SKILL.md) skill after the matching provider heading for its CLI/MCP and ticket-authoring conventions.
+6. Before acquiring, heartbeating, mutating under, or releasing a claim, also read [`references/claims.md`](references/claims.md). Read-only callers do not load it.
 
 Apply the caller's authority to the normalized operations: `resolveSource`, `discover`, `selectNext`/`selectWave`, `readItem`, `claim`, `heartbeat`, `releaseClaim`, `createItem`, `writeState`, `recordProgress`, `reviewBoundary`, and `archive`.
 

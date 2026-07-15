@@ -10,6 +10,8 @@ lsd = "latest"
 lazygit = "latest"
 slsa-verifier = "latest"
 cosign = "latest"
+# ai
+"github:brettinternet/worklease" = "v0.2.0"
 
 # search
 fd = "latest"

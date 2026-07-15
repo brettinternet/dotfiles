@@ -4,19 +4,19 @@ Load this reference only before claim acquisition, heartbeat, release, or mutati
 
 ## Selection and identity
 
-Prefer provider-native fencing, then the repository's fenced `backlog-claim` path, then `local-coordination` through the same helper when actual provider mutations cannot execute inside a fence. The helper stores leases only, never provider workflow state. It uses `BACKLOG_CLAIM_HOME` or `$XDG_STATE_HOME/backlog-work-claims` (`~/.local/state` by default) and combines a per-resource OS lock with SQLite compare-and-set state.
+Use provider-native fencing when the provider itself rejects stale writers. Otherwise use `worklease` for same-host claims and guarded local operations; `worklease` stores leases only, never provider workflow state. It uses `WORKLEASE_HOME` or `$XDG_STATE_HOME/worklease` (`~/.local/state/worklease` by default) and combines per-resource OS locks with SQLite compare-and-set state.
 
 Derive canonical resources with:
 
 ```text
-backlog-claim key --provider <kind> --source <canonical-locator> --item <stable-id>
+worklease key --provider <kind> --source <canonical-locator> --item <stable-id>
 ```
 
 Before deriving a key for a local source, resolve it against the intended repository context and confirm that `git rev-parse --show-toplevel` identifies that repository. Never resolve a relative source against an incidental agent shell directory. On `canonical-control-root-unavailable`, report `pwd`, the resolved source, Git toplevel/common-dir, and `BACKLOG_CONTROL_ROOT` before retrying.
 
-Loose Markdown yields a fenced source resource; Backlog.md and GitHub yield fenced item resources. Linear and unfenced providers yield coordination-only item resources. Use `key --coordination-only` when a normally fenced provider must use an unfenced first-party mutation path.
+Loose Markdown yields a source-scoped resource; Backlog.md and GitHub yield item resources. Linear and other unfenced providers yield coordination-only item resources. Use `key --coordination-only` when the durable provider mutation occurs outside a Worklease-guarded local operation.
 
-For Backlog.md in a Git repository, derive the source locator and run all `backlog` reads and writes from the repository's canonical primary/control checkout, even when the pass was invoked from another worktree. The helper defaults to the primary checkout containing the shared Git directory; `BACKLOG_CONTROL_ROOT` may name another registered checkout when the Backlog.md UI also uses it. Map a worktree-local source by repository-relative path; never let the implementation worktree's copy become provider state. If the control checkout, mapping, or safe provider working directory is missing or ambiguous, do not acquire/start work through a fallback checkout; return `WAIT` or the relevant capability diagnostic.
+For Backlog.md in a Git repository, derive the source locator and run all `backlog` reads and writes from the repository's canonical primary/control checkout, even when the pass was invoked from another worktree. Use `worklease exec --git-primary` for the validated provider working directory. Map a worktree-local source by repository-relative path; never let the implementation worktree's copy become provider state. If the control checkout, mapping, or safe provider working directory is missing or ambiguous, do not acquire/start work through a fallback checkout; return `WAIT` or the relevant capability diagnostic.
 
 Generate unique claim, session, worker-attempt, and operation IDs. Acquire with current provider eligibility/version. Coordination-only acquisition must include `--coordination-only`, and its receipt must say `local-coordination`. Resolve ambiguous acquisition by exact claim ID; never start or transfer work while ownership is uncertain.
 
@@ -28,14 +28,14 @@ Heartbeat before half the lease elapses and around long work. Heartbeat and rele
 
 ## Writes
 
-An item `WorkClaim` owns the whole pass and retains the existing one-pass lease lifecycle. A separate short same-host provider/repository mutation transaction lock serializes only shared Backlog.md provider writes, any corresponding provider-state commit, and Git integration in the canonical checkout. `backlog-claim exec` acquires it for Backlog.md mutations; use `backlog-claim control-exec` with the current item claim for one guarded `git` checkpoint or integration command. Refresh provider/Git state inside it, perform the minimal mutation/integration, and release it immediately. Never hold it during implementation, tests, or review, and never use it as item ownership. Unresolved contention or unsafe shared state returns `WAIT`. It does not fence provider writes from another host.
+An item `WorkClaim` owns the whole pass. A separate short same-host Worklease transaction claim serializes shared Backlog.md provider writes, provider-state commits, and Git integration in the canonical checkout. Derive one exact `local:provider-transaction:<canonical-common-dir>` resource from the canonical absolute Git common directory (`git rev-parse --git-common-dir` resolved to a real path), acquire it with `--coordination-only` only around the mutation with a finite wait, revalidate the item claim immediately before acquisition, run `worklease exec --git-primary` with that transaction claim (inside the item's guarded command when a long operation must retain the outer lease), reread the item/provider state immediately after, and release it immediately. Never hold it during implementation, tests, or review, and never use it as item ownership. This transaction is local coordination only and supplies no provider-side or cross-host fence.
 
-Under a fenced helper claim:
+Under a Worklease claim:
 
-- run exactly one supported `backlog` or `gh` mutation through `backlog-claim exec`; the helper holds/renews the fence and advances the claim revision. Backlog.md commands use the canonical control checkout as their validated provider working directory
-- write loose Markdown only with `backlog-claim replace-file`, current claim credentials, a fresh operation ID, and the expected source SHA-256
+- run exactly one provider mutation through `worklease exec`; use `--git-primary` for Backlog.md/Git canonical checkout operations. Retain the provider receipt and report provider mutations as `local-coordination` unless the provider itself supplies fencing evidence
+- write loose Markdown only with `worklease replace-file`, current claim credentials, a fresh operation ID, and the expected source SHA-256; this exact expected-hash replacement may be provider-fenced
 
-Never pass coordination-only mutations through `exec`/`replace-file`; both must reject that guarantee. Reuse an operation ID only to recover the same request's lost response. Changed inputs are a conflict.
+Use `worklease` operation IDs only to recover the identical request's lost response; changed inputs are a conflict. Coordination-only claims may run direct provider operations only with the exact pre/post claim and provider checks, and those writes remain `LOCAL COORDINATION (UNFENCED)`.
 
 Under `local-coordination`, heartbeat and validate the exact lease plus provider eligibility/version immediately before each direct first-party mutation, then reread both immediately afterward. Stop on lease loss, assignee conflict, provider change, failure, or ambiguity. The lease does not prevent the provider mutation, so always report `LOCAL COORDINATION (UNFENCED)` and never imply provider-side/cross-host fencing.
 

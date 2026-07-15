@@ -13,7 +13,7 @@ Backlog.md is a provider-owned task system. Use this skill for its CLI/MCP opera
 2. Use the canonical Backlog.md control checkout for every provider read and write. An implementation worktree is code-only.
 3. Prefer the documented command map in [`references/cli.md`](references/cli.md). Do not run `backlog --help` on every pass. Read `backlog instructions overview` when the project is initialized and use `--help` only when the installed version rejects a documented command, the required operation is not covered, or the capability is ambiguous.
 4. Prefer `--plain` for agent-readable list/view/search output and preserve complete task bodies before editing.
-5. Never edit task files directly. With the CLI, run each mutation through the selected fenced `backlog-claim exec ... -- backlog ...` path. With authorized MCP mutation, use the source workflow's coordination-only pre/post-check sequence.
+5. Never edit task files directly. With the CLI, derive `local:provider-transaction:<canonical-common-dir>` from the canonical absolute Git common directory, acquire it with a finite wait, run one `worklease exec --git-primary -- backlog ...` mutation, reread the provider receipt, and release the transaction claim. With authorized MCP mutation, use the source workflow's coordination-only pre/post-check sequence.
 6. If `backlog` is unavailable, use an authorized MCP integration or report the provider capability; do not silently substitute ad hoc Markdown edits. `bunx backlog.md <command>` is the one-off CLI fallback when dependency execution is authorized.
 
 ## Ticket checklist convention
