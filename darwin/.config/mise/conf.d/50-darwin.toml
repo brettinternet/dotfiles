@@ -1,6 +1,9 @@
 #:schema https://mise.en.dev/schema/mise.json
 
 [tools]
+# personal
+"github:brettinternet/worklease" = "latest"
+
 # dev
 go = "latest"
 rust = "latest"
