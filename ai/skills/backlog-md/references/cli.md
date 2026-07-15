@@ -73,6 +73,6 @@ backlog cleanup
 - For multiline values, repeat `--append-*` flags or pass literal newlines. Do not assume a quoted `\n` becomes a newline.
 - Use single-quoted shell arguments for literal backticks; unescaped backticks can execute command substitution before Backlog.md sees them.
 - Run provider reads and writes from the canonical Backlog.md control checkout.
-- Run mutations through `backlog-claim exec ... -- backlog ...` when the selected claim mode supports it; never edit task files directly.
-- After every mutation, reread the exact item and retain provider plus claim receipts.
+- Derive `local:provider-transaction:<canonical-common-dir>` from the canonical absolute Git common directory, acquire it with a finite wait, and run one mutation through `worklease exec --git-primary -- backlog ...`; never edit task files directly.
+- After every mutation, reread the exact item and retain both provider and Worklease receipts.
 - If a command fails because the CLI version differs, run the narrowest relevant `backlog <command> --help`, update the local reference only when the difference is stable and intentional, then retry under the existing claim rules.

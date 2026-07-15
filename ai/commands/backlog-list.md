@@ -9,7 +9,7 @@ This is a read-only prioritization command. Do not implement work, edit or creat
 
 ## Resolve the backlog source
 
-Apply the `backlog-source-workflow` skill as the shared source-resolution, provider-dispatch, and claim-authority contract. Load its provider-neutral contract first, then one matching provider heading per resolved kind. It normalizes `Source`, `SchedulingScope`, `ItemState`, `WorkClaim`, and optional `ReviewGroup`. This command is read-only: inspect provider state and `backlog-claim status` where selected, but never acquire, heartbeat, release, or mutate a claim.
+Apply the `backlog-source-workflow` skill as the shared source-resolution, provider-dispatch, and Worklease claim-authority contract. Load its provider-neutral contract first, then one matching provider heading per resolved kind. It normalizes `Source`, `SchedulingScope`, `ItemState`, `WorkClaim`, and optional `ReviewGroup`. This command is read-only: inspect provider state and `worklease status` where selected, but never acquire, heartbeat, release, or mutate a claim.
 
 Keep collection scope separate from item selection:
 
