@@ -1,18 +1,55 @@
 ---
 name: backlog-source-workflow
-description: Resolve backlog sources and schedule provider-backed work through one normalized, dependency-aware interface. Apply whenever an authorized backlog command or skill reads or mutates a backlog source; do not invoke as a replacement for the caller's authority or scope.
-user-invocable: false
+description: Resolve and operate on backlog sources consistently across loose Markdown, Backlog.md, GitHub Issues, Linear, and other supported providers. Use whenever a backlog command or skill reads or changes provider-backed work.
 ---
 
 # Backlog Source Workflow
 
-This skill supplies source resolution, discovery, dependency scheduling, provider operations, durable state, and archive mechanics. The caller retains scope and mutation authority and owns the actual refinement, implementation, review, or loop pass.
+Keep the user's backlog authoritative. This skill supplies the shared source, scheduling, and coordination rules; the calling command or skill supplies intent and mutation authority.
 
-Every authorized backlog entrypoint loads this skill before interpreting source or item content. This is an agent workflow contract, not a filesystem hook: a generic direct read of a file named `backlog.md` is not itself guaranteed to load the skill.
+## Resolve the source
 
-## Item-local task checklists
+1. Resolve explicit sources before selectors and preserve argument order. Never silently replace an unresolved explicit source or merge unrelated sources.
+2. Without an explicit source, use repository configuration or discover exactly one plausible backlog. Ask when several are equally plausible.
+3. Resolve selectors by stable provider ID, then exact title, then exact description. Do not fuzzy-match ambiguity away.
+4. Use the provider's supported interface:
+   - loose Markdown: preserve its existing structure and vocabulary
+   - Backlog.md: use `backlog` CLI/MCP; never edit task files directly
+   - GitHub Issues: use `gh`
+   - Linear or another remote provider: use its authenticated first-party integration
+5. For Backlog.md in a Git worktree, read and write provider state from the primary/control checkout. Implementation worktrees contain code only.
 
-Implementation tasks belong inside the ticket/item and are not separate backlog units. Provider-item decomposition is a distinct operation available only when the caller explicitly authorizes it. When a caller refines or implements an item, prefer a canonical `### Implementation tasks` section with direct Markdown task-list entries in stable order:
+Source-only input means the whole collection for scheduling, not permission to mutate every item or review the whole collection.
+
+## Select work
+
+Read enough of the collection to understand status, dependencies, blockers, progress, review state, and active Worklease claims.
+
+- Prerequisites must finish before dependents. An unfinished defined prerequisite is `ready after <item>`, not blocked.
+- Prefer resumable in-progress or review-pending work before new work in the same ready wave.
+- Multiple agents may take independent, unclaimed items from the same ready wave.
+- An active claim means wait or choose another independent item; never steal it or skip to its dependent.
+- Mark work blocked only for a real external/human dependency, an explicit provider blocker, or an unresolved missing/cyclic dependency. Ordinary implementation difficulty and failing tests are not blockers.
+- Review one item by default. Review several only when the caller explicitly identifies that group.
+
+## Coordinate mutations
+
+Before editing code or provider state for an item, use `worklease-workflow` to claim one canonical item resource derived from the provider, source, and item. Implementation, review, and unblock work use that same resource so they cannot overlap. Loose Markdown may require a source-wide claim.
+
+While holding the claim:
+
+1. Refresh the item and dependencies before consequential writes.
+2. Heartbeat around long operations.
+3. Record useful durable progress in the provider: completed task, commit or PR, verification, next step, review result, or precise blocker and unblock condition.
+4. Verify that checkpoint from the authoritative source, then release the claim.
+
+Use the strongest mutation guard actually available. `worklease replace-file` can guard a loose Markdown replacement with an expected hash; remote CLI/API writes are normally same-host coordination only. Do not describe assignment, status, comments, branches, or a local lease as provider-side or cross-host fencing.
+
+If a write or claim outcome is ambiguous, reread the claim and provider state before retrying. Never create a writable local shadow for a remote provider.
+
+## Item progress
+
+When an item needs implementation decomposition, prefer a stable item-local checklist:
 
 ```markdown
 ### Implementation tasks
@@ -20,19 +57,4 @@ Implementation tasks belong inside the ticket/item and are not separate backlog 
 - [ ] T2 — Update callers
 ```
 
-Use the stable task ID (`T1`, `T2`, and so on) when claiming, reporting, and recording progress. A checked box is durable item-local progress, not provider completion; callers must still persist the matching commit, verification, acceptance-criteria state, and provider workflow state through the selected provider operation. Preserve completed boxes and unknown item content, and never turn nested checklist entries into separately scheduled backlog items.
-
-The canonical checklist is a preferred representation, not a start-time gate. If it is absent or malformed but the item's scope is unambiguous, the caller may map an equivalent task list or derive the smallest bounded task from the item specification, then normalize the checklist when provider mutation is available. A formatting defect alone is never a `BLOCKED` or `WAIT` reason; stop only for genuine scope, dependency, authority, capability, or decision ambiguity.
-
-## Required loading
-
-1. Read [`worklease-workflow`](../worklease-workflow/SKILL.md) and its [`references/contract.md`](../worklease-workflow/references/contract.md) first; it is normative for graph construction, claim lifecycle, guarantee mapping, checkpoint ordering, and structured outcomes.
-2. Read [`references/contract.md`](references/contract.md).
-3. Resolve every provider kind while preserving explicit source order.
-4. Read only the matching provider heading from [`references/local-providers.md`](references/local-providers.md) or [`references/remote-providers.md`](references/remote-providers.md).
-5. When a resolved provider kind is Backlog.md, also load the [`backlog-md`](../backlog-md/SKILL.md) skill after the matching provider heading for its CLI/MCP and ticket-authoring conventions.
-6. Before acquiring, heartbeating, mutating under, or releasing a claim, also read [`references/claims.md`](references/claims.md). Read-only callers do not load it.
-
-Apply the caller's authority to the normalized operations: `resolveSource`, `discover`, `selectNext`/`selectWave`, `readItem`, `claim`, `heartbeat`, `releaseClaim`, `createItem`, `writeState`, `recordProgress`, `reviewBoundary`, and `archive`.
-
-Provider state remains authoritative. Never create a writable shadow, use assignment/status/comments as a claim, let provider order override dependencies or explicit source order, or describe local same-host coordination as provider-side/cross-host fencing.
+Treat these as progress within one provider item, not separately scheduled backlog items. Preserve checked tasks. A missing checklist is not itself a blocker when the next bounded task is otherwise clear.
