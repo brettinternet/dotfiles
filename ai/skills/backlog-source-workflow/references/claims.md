@@ -12,6 +12,8 @@ Derive canonical resources with:
 backlog-claim key --provider <kind> --source <canonical-locator> --item <stable-id>
 ```
 
+Before deriving a key for a local source, resolve it against the intended repository context and confirm that `git rev-parse --show-toplevel` identifies that repository. Never resolve a relative source against an incidental agent shell directory. On `canonical-control-root-unavailable`, report `pwd`, the resolved source, Git toplevel/common-dir, and `BACKLOG_CONTROL_ROOT` before retrying.
+
 Loose Markdown yields a fenced source resource; Backlog.md and GitHub yield fenced item resources. Linear and unfenced providers yield coordination-only item resources. Use `key --coordination-only` when a normally fenced provider must use an unfenced first-party mutation path.
 
 For Backlog.md in a Git repository, derive the source locator and run all `backlog` reads and writes from the repository's canonical primary/control checkout, even when the pass was invoked from another worktree. The helper defaults to the primary checkout containing the shared Git directory; `BACKLOG_CONTROL_ROOT` may name another registered checkout when the Backlog.md UI also uses it. Map a worktree-local source by repository-relative path; never let the implementation worktree's copy become provider state. If the control checkout, mapping, or safe provider working directory is missing or ambiguous, do not acquire/start work through a fallback checkout; return `WAIT` or the relevant capability diagnostic.
