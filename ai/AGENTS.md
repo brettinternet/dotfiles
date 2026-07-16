@@ -8,7 +8,7 @@
 
 ## Development
 
-Prefer the simplest design that satisfies the requirement. Do not add abstractions, indirection, configuration, or extensibility that no current requirement exercises.
+Prefer the simplest design that satisfies the requirement. Do not add abstractions, indirection, configuration, or extensibility that no current requirement exercises. A diff notably larger than the task implies needs justification or shrinking.
 
 When the same approach fails the same way twice, change approach or surface the blocker; don't retry variations.
 
