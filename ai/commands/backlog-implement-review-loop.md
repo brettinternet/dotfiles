@@ -46,7 +46,7 @@ When implementation tasks and acceptance criteria look complete at scheduling ti
 
 Inspect the resulting commits, then integrate the change after refreshing provider and repository state. Remove a clean command-created worktree after integration; retain and report a dirty, conflicted, or unfinished one for the next iteration.
 
-Before declaring the item complete, run one verifier with the acceptance criteria, commits, and changed files — not the worker's conclusions — and require a criterion-by-criterion result. Any failed or unverified criterion stays open.
+Before declaring the item complete, run one verifier with the acceptance criteria, commits, and changed files — not the worker's conclusions — and require a criterion-by-criterion result. Any failed or unverified criterion stays open. Record a substantive excess observation as follow-up work on an existing backlog item that covers it, or a new item if none does; it never blocks completing this item.
 
 While the claim is valid, checkpoint per `backlog-source-workflow` — recording attempts that made no progress too — verify a fresh agent could resume from the provider alone, then release. Archive only when the user or provider workflow explicitly calls for it.
 
