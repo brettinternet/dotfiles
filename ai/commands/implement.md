@@ -34,7 +34,6 @@ Before editing:
 - Keep changes limited to the feature and its required callsites, tests, generated artifacts, migrations, configuration, or documentation.
 - Delete obsolete code paths made unnecessary by the change. Do not leave compatibility shims, aliases, deprecated paths, or duplicate implementations unless `$ARGUMENTS` explicitly requires them.
 - Add or update tests for requested behavior, conditional branches, edge values, invariants, and failure modes implied by the feature.
-- When the implementation uses a reusable coding pattern, tell the user `CODE PATTERN:` followed by a brief description, whether it matches an existing repository implementation, and whether code can be shared. If sharing is practical, refactor to use the shared implementation instead of introducing a second convention.
 - Failed feature-scoped checks, missing required code, and outdated tests or fixtures caused by the feature are implementation work. Fix them in-repo and rerun targeted verification. Ignore unrelated failures only after recording evidence that they are unrelated.
 - If product information is missing, implement everything not blocked and record the exact remaining decision instead of guessing.
 - Use the one optional oracle consultation only after gathering repository evidence, and only for consequential, hard-to-reverse design tradeoffs or a possible genuine external blocker. Batch related questions; do not consult for ordinary choices or routine check failures.
@@ -72,7 +71,7 @@ Resolve the finish flow before pushing, merging, or opening anything:
 3. When still ambiguous, default to `local-merge`.
 
 - `local-merge`: merge the completed, verified work back to local `main`; clean up the temporary worktree; do not push.
-- `pull-request`: push the feature branch to `origin` and open a PR against the base branch with `gh`, using a concise title and body summarizing the feature and verification; clean up the worktree but keep the pushed branch; do not merge locally and do not merge the PR; report the PR URL and recommend `/pr-babysit [reviewer]` as the follow-up to drive it to green and approval. Invoking this command is the standing instruction to push and open the PR for this feature's own branch only — it overrides the global "never push / never open PRs without explicit instruction" rule for that branch and does not authorize force-pushing, merging, or touching unrelated branches.
+- `pull-request`: push the feature branch to `origin` and open a PR against the base branch with `gh`, using a concise title and body summarizing the feature and verification; clean up the worktree but keep the pushed branch; do not merge locally and do not merge the PR; report the PR URL and recommend `/pr-babysit [reviewer]` as the follow-up to drive it to green and approval. This flow authorizes pushing and opening the PR for this feature's branch only; it does not authorize force-pushing, merging, or touching unrelated branches.
 
 ## Finish
 
