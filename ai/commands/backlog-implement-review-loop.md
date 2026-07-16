@@ -14,13 +14,13 @@ Read only enough collection state to find the earliest dependency-ready work. Pr
 3. new work from the earliest ready wave
 4. a blocked item resolvable now (use `backlog-unblock`)
 
-Stall guard: if provider history shows two prior attempts at the same next step with no new progress, do not retry the same approach — spend this invocation's oracle consultation on it or record a precise blocker with the evidence.
+Stall guard: if provider history shows two prior attempts at the same next step with no new progress, do not retry the same approach — spend this invocation's oracle consultation on it; if an earlier iteration already consulted on this stall, record a precise blocker with the evidence instead.
 
-Select exactly one unclaimed item and acquire its claim before delegation, worktree creation, or edits; keep heartbeats, checkpointing, and release in this session. If nothing is eligible, report the active claims, dependency gates, or genuine blockers and stop.
+Select exactly one unclaimed item and acquire its claim; keep heartbeats, checkpointing, and release in this session. If nothing is eligible, report the active claims, dependency gates, or genuine blockers and stop.
 
 ## Work the item
 
-Run small or tightly coupled work inline. Delegate materially substantial, well-specified implementation or review to one executor when available: the worker reads the item body, code, diffs, logs, and test output directly so this context stays lean for verification and provider writes. Delegate the item at most once, with its source, stable ID, pass type, acceptance boundary, and repository instructions.
+Run small or tightly coupled work inline. Delegate materially substantial, well-specified implementation or review to one executor when available: the worker reads the item body, code, diffs, logs, and test output directly so this context stays lean for verification and provider writes. Delegate the item at most once, with its source, stable ID, pass type, acceptance boundary, and repository instructions. If the worker returns incomplete or blocked work, continue inline or checkpoint the remainder; do not delegate again.
 
 Whole-invocation budget: at most one executor, one verifier, one oracle consultation; when one finishes, do not start more work. Consult the read-only oracle only for an architecture, security, product, or cross-item tradeoff still unresolved after repository evidence is exhausted.
 

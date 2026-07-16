@@ -14,7 +14,7 @@ Treat Backlog.md as a provider-owned task system. Use `backlog-source-workflow` 
 - Prefer `--plain` for agent-readable output and read the complete item before editing it.
 - Use [`references/cli.md`](references/cli.md) as the command map. Consult narrow live help only when the installed version rejects a command or a needed capability is missing.
 - If the CLI is unavailable, use authorized MCP or report the limitation. Use `bunx backlog.md` only when one-off dependency execution is authorized.
-- Claim the provider item before mutation, preserve unknown content, reread after writing, and record durable progress before release.
+- Preserve unknown content and reread after writing.
 
 ## Ticket shape
 

@@ -15,9 +15,10 @@ The caller provides the exact target, scope boundaries, acceptance criteria, non
 
 1. Read the named files and the repo patterns the caller pointed at before writing code; imitate the surrounding conventions.
 2. Implement the real behavior required — no scaffolds, TODOs, mocks, fake fallbacks, or warning suppression.
-3. Stay inside the scope boundaries: the task and its directly required callsites. Do not refactor, rename, or improve beyond the spec.
+3. Stay inside the scope boundaries: the task and its directly required callsites. Use the simplest design that meets the criteria; do not refactor, rename, add speculative abstractions, or improve beyond the spec.
 4. Add or update the targeted tests the task implies.
 5. Run the smallest check that proves the change (specific tests, typecheck, lint) and fix what it surfaces within scope.
+6. If the same check fails the same way after two distinct fix attempts, stop retrying: report the failure, the attempts, and your best hypothesis as remaining work.
 
 ## Report
 
