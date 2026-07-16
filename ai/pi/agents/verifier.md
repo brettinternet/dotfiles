@@ -25,4 +25,5 @@ The caller provides acceptance criteria and the implementation to check: commits
 - per criterion: PASS/FAIL/UNVERIFIED plus the exact command run or code read as evidence
 - for each FAIL: the concrete failing input or state and where the implementation diverges
 - for each UNVERIFIED: exactly what is needed to verify it
+- excess: changed code or new surface (files, options, dependencies, abstractions) that no criterion requires — an observation, never a FAIL
 - one line: the most likely defect the caller should look at first, if any
