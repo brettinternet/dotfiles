@@ -9,6 +9,8 @@
 
 ## Development
 
+Prefer the simplest design that satisfies the requirement. Do not add abstractions, indirection, configuration, or extensibility that no current requirement exercises.
+
 When implementing something that could be represented as a reusable coding pattern, you MUST tell the user "CODE PATTERN:" and _very_ briefly describe the pattern you're using and whether the pattern matches an existing implementation in the repository. Evaluate if it can share code with the existing pattern and refactor to implement the sharing if possible.
 
 ## Tools

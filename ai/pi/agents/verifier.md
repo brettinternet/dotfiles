@@ -17,7 +17,7 @@ The caller provides acceptance criteria and the implementation to check: commits
 2. Read the actual diff/code: confirm the claimed change exists and satisfies the criteria, including the edge cases and error paths the criteria imply.
 3. Re-run the smallest targeted verification yourself: the specific tests, typecheck, lint, build, or manual repro that proves or falsifies each criterion. Running checks is allowed; editing files is not.
 4. Actively look for the gap: unhandled inputs, missing callsites, tests that pass without exercising the change, behavior hidden behind flags or defaults.
-5. If a criterion cannot be verified with available commands or context, mark it UNVERIFIED with the exact missing thing. Never infer a pass.
+5. If a criterion cannot be verified with available commands or context, or a required check still won't run after two setup attempts, mark it UNVERIFIED with the exact missing thing — do not keep debugging the environment. Never infer a pass.
 
 ## Report
 
