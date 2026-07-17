@@ -151,14 +151,14 @@ this plan leans on: pack schema 2, formula-spec-v2 (`[steps.check]`,
 `import` upsert, `ready --claim --json`).
 
 Acceptance:
-- [ ] `gc` and `bd` on PATH via `mise ls` (or documented brew fallback); versions
+- [x] `gc` and `bd` on PATH via `mise ls` (or documented brew fallback); versions
       recorded in `docs/environment.md` with date.
-- [ ] All six gc runtime deps present; `gc doctor` acknowledges them.
-- [ ] `docs/environment.md` lists agent CLIs available as harnesses on this machine
+- [x] All six gc runtime deps present; `gc doctor` acknowledges them.
+- [x] `docs/environment.md` lists agent CLIs available as harnesses on this machine
       (omp, claude, codex, opencode) and the confirmed provider base names.
-- [ ] Schema spot-check results recorded; any deltas from this plan appended to the
+- [x] Schema spot-check results recorded; any deltas from this plan appended to the
       Decision log.
-- [ ] No city created yet; changes limited to `ai/gascity/`,
+- [x] No city created yet; changes limited to `ai/gascity/`,
       `darwin/.config/mise/conf.d/`, and (only if needed) the darwin Brewfile.
 
 ### GC-02 — Initialize the city
@@ -628,3 +628,10 @@ verification results, schema deltas, and fallback choices land here. Seed entrie
   cannot pass vars; `gc converge` v1-only; v2 container deps don't gate children;
   `agent_defaults.model` parsed-not-applied; unknown formula step keys silently
   ignored (lint after every formula edit).
+- 2026-07-17 — GC-01 — installed gc 1.3.5, bd 1.1.0, and Dolt 2.2.0 via mise;
+  installed flock 0.4.0 via Homebrew because macOS lacked it; recorded runtime
+  paths and doctor evidence in `docs/environment.md`.
+- 2026-07-17 — GC-01 — v1.3.5's builtin catalog contains `omp`, `pi`, and
+  `claude`, but `gc init --providers` accepts only `claude`, `codex`, `gemini`,
+  `mimocode`, and `antigravity`; use direct provider aliases for omp/pi and do
+  not rely on the init allowlist.
