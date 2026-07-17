@@ -22,3 +22,9 @@ ready_delay_ms = 0
 [providers.pi]
 base = "builtin:pi"
 ready_delay_ms = 0
+
+[[rigs]]
+name = "fixture"
+prefix = "fx"
+default_branch = "main"
+suspended_on_start = true
