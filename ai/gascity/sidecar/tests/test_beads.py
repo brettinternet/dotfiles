@@ -37,7 +37,9 @@ def dump(value):
     print(json.dumps(value))
 if cmd == "search":
     ref = flag("--external-contains")
-    dump([b for b in state["beads"] if ref.lower() in b.get("external_ref", "").lower()])
+    matches = [b for b in state["beads"] if ref.lower() in b.get("external_ref", "").lower()]
+    limit = int(flag("--limit")) if "--limit" in args else 50
+    dump(matches if limit == 0 else matches[:limit])
 elif cmd == "create":
     bead = {"id": f"fake-{state['next']}", "title": flag("--title"),
             "description": flag("--description"), "external_ref": flag("--external-ref"),
@@ -59,8 +61,18 @@ elif cmd == "show":
     ]}
     dump([bead])
 elif cmd == "dep":
-    state["deps"].append({"issue_id": args[2], "depends_on_id": args[3]})
-    dump({"status": "added"})
+    if args[1] == "add":
+        state["deps"].append({"issue_id": args[2], "depends_on_id": args[3]})
+        dump({"status": "added"})
+    elif args[1] == "remove":
+        state["deps"] = [
+            edge
+            for edge in state["deps"]
+            if edge["issue_id"] != args[2] or edge["depends_on_id"] != args[3]
+        ]
+        dump({"status": "removed"})
+    else:
+        raise SystemExit(f"unsupported fake dependency command: {args[1]}")
 else:
     raise SystemExit(f"unsupported fake command: {cmd}")
 state_path.write_text(json.dumps(state))
@@ -75,6 +87,28 @@ def fake_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[BeadsC
     state.write_text(json.dumps({"next": 1, "beads": [], "deps": []}))
     monkeypatch.setenv("FAKE_BD_STATE", str(state))
     return BeadsClient((sys.executable, str(script)), cwd=tmp_path), state
+
+def test_find_external_ref_search_is_unbounded(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    client, state_path = fake_client(tmp_path, monkeypatch)
+    external_ref = "md:fixtures/backlog.md#target"
+    state_path.write_text(
+        json.dumps(
+            {
+                "next": 53,
+                "beads": [
+                    {"id": f"fake-{index}", "external_ref": f"{external_ref}-{index}"}
+                    for index in range(51)
+                ]
+                + [{"id": "fake-target", "external_ref": external_ref}],
+                "deps": [],
+            }
+        )
+    )
+
+    match = client.find_external_ref(external_ref)
+
+    assert match is not None
+    assert match["id"] == "fake-target"
 
 
 def test_preview_cli_reports_tasks_without_beads_writes(capsys: pytest.CaptureFixture[str], tmp_path: Path) -> None:
@@ -121,6 +155,27 @@ def test_create_skip_update_and_dependency_matrix(tmp_path: Path, monkeypatch: p
     bead = next(b for b in state["beads"] if b["id"] == first.bead_id)
     assert bead["title"] == "FIX-REVIEW — Retitle the greeting program"
     assert bead["metadata"]["source_fingerprint"] != metadata["source_fingerprint"]
+
+def test_reimport_removes_stale_source_dependency(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    client, state_path = fake_client(tmp_path, monkeypatch)
+    source = MarkdownBacklog(FIXTURE, relative_path="fixtures/backlog.md")
+    import_task(source, "fix-dep", client)
+    import_task(source, "fix-review", client)
+
+    changed = tmp_path / "without-dependency.md"
+    changed.write_text(
+        FIXTURE.read_text(encoding="utf-8").replace("Depends on: FIX-DEP\n", ""),
+        encoding="utf-8",
+    )
+    import_task(
+        MarkdownBacklog(changed, relative_path="fixtures/backlog.md"),
+        "fix-review",
+        client,
+    )
+
+    assert json.loads(state_path.read_text())["deps"] == []
 
 
 def test_dependency_wires_when_dependency_is_imported_later(
