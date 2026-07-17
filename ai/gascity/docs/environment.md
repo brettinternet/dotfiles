@@ -11,15 +11,17 @@ Verified 2026-07-17 on macOS arm64.
 | bd | 1.1.0 (`8e4e59d39f34`) | `github:gastownhall/beads` via `darwin/.config/mise/conf.d/55-gascity.toml` |
 | dolt | 2.2.0 | `ubi:dolthub/dolt` via the same mise config |
 | tmux | latest | existing mise installation |
-| jq | system `/usr/bin/jq` | already installed |
-| git | Homebrew `/opt/homebrew/bin/git` | already installed |
-| flock | 0.4.0 Homebrew `/opt/homebrew/bin/flock` | added to `darwin/Brewfile` and installed |
+| jq | system installation | already installed |
+| git | Homebrew | already installed |
+| flock | 0.4.0 Homebrew | added to `darwin/Brewfile` and installed |
 
 The six gc runtime dependencies resolve in the gc environment: `tmux`, `jq`,
 `git`, `dolt`, `flock`, and the `bd` executable.
-The gc and bd release tarballs were GitHub-attestation verified by mise before extraction.
-Dolt installed through mise's `ubi` backend; mise warns that this backend is deprecated, but the
-release resolved and installed successfully.
+The gc and bd release tarballs were GitHub-attestation verified by mise before
+extraction. Dolt installed through mise's `ubi` backend; mise warns that this
+backend is deprecated, but the release resolved and installed successfully.
+After mise config deployment and a fresh login shell, `mise ls` and PATH expose
+gc and bd directly.
 
 ## Agent CLIs
 
@@ -40,8 +42,8 @@ wizard flag.
 
 ## Doctor and city state
 
-No city was created or registered under `ai/gascity/`. A disposable city under
-`/tmp` was initialized with `gc init --no-start` only to exercise the installed
+No city was created or registered under `ai/gascity/`. A disposable temporary
+city was initialized with `gc init --no-start` only to exercise the installed
 `gc doctor`, then removed with `trash`; `gc cities` reports no registered cities.
 
 Running `gc doctor` from the repository correctly refuses because there is no
