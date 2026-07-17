@@ -207,13 +207,13 @@ Create a trivial bead, route it to the pool, watch it complete.
 
 Acceptance:
 - [ ] A bead slung to `worker` is claimed and closed by an omp session
-      (evidence: `gc events` shows session lifecycle + bead close; `gc session logs`
-      shows omp ran).
-- [ ] A second smoke bead run with the claude provider variant proves per-agent
+      (runtime events and the native OMP transcript prove execution, but installed
+      gc 1.3.5 cannot resolve that OMP transcript through `gc session logs`).
+- [x] A second smoke bead run with the claude provider variant proves per-agent
       provider selection works.
-- [ ] Two consecutive runs use distinct provider sessions (fresh context proven —
+- [x] Two consecutive runs use distinct provider sessions (fresh context proven —
       compare session ids/keys in events).
-- [ ] Provider config committed; no secrets in it.
+- [x] Provider config committed; no secrets in it.
 
 Depends on: GC-02
 
@@ -654,3 +654,5 @@ verification results, schema deltas, and fallback choices land here. Seed entrie
 - 2026-07-17 — GC-02 — `gc import install` restored the ignored `packs.lock`
   required by doctor for the two remote pack imports; keep this generated lockfile
   machine-local and ignored.
+
+- 2026-07-17 — GC-03 — committed b8c1164 configured builtin `omp`, `claude`, and `pi` providers plus fresh one-shot city pools `worker` and `worker-claude`; focused config/lint checks passed and changed-file secret/path scan was clean. OMP bead `gc-wisp-d7o` and Claude bead `gc-wisp-o4dy` closed in distinct fresh sessions (events 303–406); Claude `gc session logs` resolved its transcript. Installed gc 1.3.5 could not resolve the native OMP transcript through `gc session logs` (the raw OMP transcript exists under the machine-local OMP session store), so the first GC-03 acceptance remains open. Next step: make OMP transcript evidence resolvable through the supported gc log path without tracking machine-local paths.
