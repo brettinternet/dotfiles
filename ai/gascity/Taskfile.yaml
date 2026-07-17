@@ -1,0 +1,29 @@
+---
+version: "3"
+
+tasks:
+  init:
+    desc: Install Gas City dependencies and run diagnostics
+    cmds:
+      - mise install -q
+      - task: doctor
+
+  up:
+    desc: Start the Gas City supervisor-managed city
+    cmds:
+      - mise exec -- gc start
+
+  down:
+    desc: Stop the Gas City city
+    cmds:
+      - mise exec -- gc stop
+
+  status:
+    desc: Show Gas City city status
+    cmds:
+      - mise exec -- gc status
+
+  doctor:
+    desc: Run Gas City diagnostics
+    cmds:
+      - mise exec -- gc doctor

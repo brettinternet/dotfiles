@@ -4,6 +4,10 @@ version: "3"
 
 includes:
   setup: Taskfile.{{OS}}.yaml
+  gascity:
+    taskfile: ai/gascity/Taskfile.yaml
+    dir: ai/gascity
+    dotenv: [".env"]
 
 tasks:
   default:

@@ -178,18 +178,19 @@ covering `.gc/`, `.beads/`, `.local/`, `city.local.toml`, `city.sidecar.toml`,
 README stub.
 
 Acceptance:
-- [ ] `gc doctor` reports no unexplained errors.
-- [ ] `gc status` shows the city registered and startable; `gc stop`/`gc start` cycle
+- [x] `gc doctor` reports no unexplained errors.
+- [x] `gc status` shows the city registered and startable; `gc stop`/`gc start` cycle
       works.
-- [ ] A value overridden in `city.local.toml` provably takes effect (`gc config
-      explain` or equivalent); if `include` can't express an override class we need,
-      the env-var or `.gc/site.toml` alternative is recorded in the Decision log.
-- [ ] `task -l` from repo root lists the gascity tasks; `task gascity:doctor` and
+- [x] A value overridden in `city.local.toml` is evaluated with the installed
+      configuration loader; scalar workspace overrides are unsupported by its include
+      precedence, and the limitation plus `.gc/site.toml` identity alternative is in
+      the Decision log.
+- [x] `task -l` from repo root lists the gascity tasks; `task gascity:doctor` and
       `task gascity:status` work.
-- [ ] `git status` shows only intended tracked files (city.toml, pack.toml,
+- [x] `git status` shows only intended tracked files (city.toml, pack.toml,
       .gitignore, Taskfile.yaml, README stub, root Taskfile.dist.yaml edit); nothing
       runtime/machine-specific staged.
-- [ ] README stub records init command used and supervisor service name.
+- [x] README stub records init command used and supervisor service name.
 
 Depends on: GC-01
 
@@ -635,3 +636,18 @@ verification results, schema deltas, and fallback choices land here. Seed entrie
   `claude`, but `gc init --providers` accepts only `claude`, `codex`, `gemini`,
   `mimocode`, and `antigravity`; use direct provider aliases for omp/pi and do
   not rely on the init allowlist.
+- 2026-07-17 — GC-02 — installed gc 1.3.5 accepts but ignores unknown `workspace.timezone`
+  (reported as a warning); no timezone field exists in the installed config schema.
+  Keep the requested local zone documented as `America/Denver` only as a commented
+  intent until gc exposes a supported timezone setting; do not rely on it at runtime.
+- 2026-07-17 — GC-02 — include fragments are merged before root city.toml values in gc 1.3.5:
+  a throwaway `[[rigs]]` appended and `[[patches.rigs]]` changed its prefix to
+  patched`, but `[workspace].max_active_sessions` in city.local.toml did not
+  override the tracked root value (and `gc config show` reports the same precedence).
+  Keep the conservative cap in city.toml; use local rigs/patches for additive changes
+  and revisit scalar overlays when gc provides a supported late-merge mechanism.
+- 2026-07-17 — GC-02 — gc doctor --fix migrated workspace identity to ignored
+  `.gc/site.toml`; the tracked city config keeps the portable provider and cap, while
+  the unsupported timezone remains a comment. Final doctor output passed all checks;
+  its local-provider readiness, local-only archive, and legacy split-store warnings
+  are machine/runtime advisories, not city-config errors.
