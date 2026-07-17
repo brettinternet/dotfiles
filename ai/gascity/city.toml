@@ -1,0 +1,12 @@
+include = ["city.local.toml"]
+
+[workspace]
+# gc 1.3.5 stores workspace.name and workspace.prefix in .gc/site.toml.
+# timezone is not a supported field in the installed config schema.
+provider = "codex"
+max_active_sessions = 2
+
+[providers]
+[providers.codex]
+base = "builtin:codex"
+ready_delay_ms = 0

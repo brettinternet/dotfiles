@@ -1,0 +1,17 @@
+.gc/
+.agents/
+.dolt-backup/
+packs.lock
+.beads/
+.local/
+city.local.toml
+city.sidecar.toml
+*.env
+sidecar/.venv/
+sidecar/**/*.sqlite*
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.beads/proxieddb/
