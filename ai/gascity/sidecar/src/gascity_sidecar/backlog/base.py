@@ -1,8 +1,8 @@
 """Common models and interface for sidecar backlog sources.
 
-This module deliberately has no transport or web-framework dependencies.  Sources
-are read-only during preview/materialization; a future adapter may implement
-writeback explicitly.
+This module deliberately has no transport or web-framework dependencies. Sources
+are read-only during preview/materialization; explicit writeback is a separate
+operation.
 """
 
 from __future__ import annotations
@@ -53,6 +53,26 @@ class TaskNotFoundError(BacklogError):
 
 class ReadOnlySourceError(BacklogError):
     """The source has no write-back operation in this adapter version."""
+
+
+class WritebackError(BacklogError):
+    """The requested source writeback cannot be applied safely."""
+
+
+class SourceFingerprintMismatchError(WritebackError):
+    """The source changed after the bead was materialized."""
+
+    def __init__(self, task_id: str, expected: str, actual: str) -> None:
+        self.task_id = task_id
+        self.expected = expected
+        self.actual = actual
+        super().__init__(
+            f"task {task_id!r} fingerprint mismatch: bead has {expected}, source has {actual}"
+        )
+
+
+class WritebackStateError(WritebackError):
+    """The requested completion state is not valid for source writeback."""
 
 
 @dataclass(frozen=True, slots=True)

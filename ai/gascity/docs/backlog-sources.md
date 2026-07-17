@@ -1,9 +1,9 @@
 # Backlog sources
 
 This document defines the standalone backlog-source contract used by the sidecar.
-The v1 Markdown adapter is intentionally read-only: preview and materialization
-never write the configured source. A later, explicit write-back command owns any
-source mutation.
+Preview and materialization never write the configured source. An explicit
+write-back command owns source mutation and is guarded by the current source
+fingerprint plus the accepted/closed Beads state.
 
 ## Markdown v1 grammar
 
@@ -72,9 +72,12 @@ class BacklogSource(ABC):
 
 `Task` is an immutable value with `id`, `title`, normalized `body`,
 `external_ref`, `fingerprint`, `dependencies`, `done`, `actionable`, and source
-`section_number`. `TaskState` is the future write-back state model. The Markdown
-adapter implements `preview` and pure-read `materialize`; `writeback` raises the
-typed `ReadOnlySourceError`. `parse_markdown(text, source_path=...)` and
+`section_number`. `TaskState` carries the completion flag plus source metadata
+needed by guarded writeback. The Markdown adapter implements pure-read
+`preview`/`materialize` and explicit `writeback`: it verifies the recorded
+fingerprint, inserts or updates `Status: done`, and atomically replaces the
+source while preserving unrelated bytes. The in-memory test adapter remains
+read-only. `parse_markdown(text, source_path=...)` and
 `MarkdownBacklog.from_text(...)` provide an in-memory parser path for tests.
 
 Expected failures derive from `BacklogError`: malformed input raises

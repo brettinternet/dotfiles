@@ -3,21 +3,25 @@
 from __future__ import annotations
 
 import hashlib
+import os
 import re
+import stat
+import tempfile
 import unicodedata
 from dataclasses import replace
 from pathlib import Path
 from typing import Iterable
-
 from .base import (
     BacklogSource,
     DuplicateTaskIdError,
     MalformedBacklogError,
     MissingDependencyError,
     ReadOnlySourceError,
+    SourceFingerprintMismatchError,
     Task,
     TaskNotFoundError,
     TaskState,
+    WritebackStateError,
 )
 
 _SECTION_RE = re.compile(r"^##[ \t]+(.+?)\s*$")
@@ -212,10 +216,89 @@ def parse_markdown(text: str, *, source_path: str | Path = "backlog.md") -> list
         )
         for task in parsed
     ]
+_STATUS_LINE_RE = re.compile(r"^(\s*Status:\s*)(.*?)(\r\n|\r|\n)?$", re.IGNORECASE)
+
+
+def _line_ending(line: str) -> str:
+    if line.endswith("\r\n"):
+        return "\r\n"
+    if line.endswith("\r"):
+        return "\r"
+    if line.endswith("\n"):
+        return "\n"
+    return "\n"
+
+
+def _atomic_replace(path: Path, content: bytes) -> None:
+    mode = stat.S_IMODE(path.stat().st_mode)
+    fd, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            os.fchmod(handle.fileno(), mode)
+            handle.write(content)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+        try:
+            directory_fd = os.open(path.parent, os.O_RDONLY)
+        except OSError:
+            return
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
+    finally:
+        try:
+            temporary.unlink()
+        except FileNotFoundError:
+            pass
+
+
+def _mark_section_done(path: Path, task_id: str, expected_fingerprint: str, relative_path: str) -> None:
+    raw = path.read_bytes()
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise MalformedBacklogError("Markdown source must be valid UTF-8") from exc
+    tasks = parse_markdown(text, source_path=relative_path)
+    task = next((candidate for candidate in tasks if candidate.id == task_id), None)
+    if task is None:
+        raise TaskNotFoundError(task_id)
+    if task.fingerprint != expected_fingerprint:
+        raise SourceFingerprintMismatchError(task_id, expected_fingerprint, task.fingerprint)
+
+    raw_lines = text.splitlines(keepends=True)
+    starts = [
+        number
+        for number, line in enumerate(raw_lines)
+        if line.startswith("##") and not line.startswith("###") and _SECTION_RE.match(line.rstrip("\r\n"))
+    ]
+    start = starts[task.section_number - 1]
+    end = starts[task.section_number] if task.section_number < len(starts) else len(raw_lines)
+    for number in range(start + 1, end):
+        match = _STATUS_LINE_RE.match(raw_lines[number])
+        if match is None:
+            continue
+        if match.group(2).strip().lower() in {"done", "complete", "completed", "closed"}:
+            return
+        raw_lines[number] = f"{match.group(1)}done{_line_ending(raw_lines[number])}"
+        _atomic_replace(path, "".join(raw_lines).encode("utf-8"))
+        return
+
+    ending = _line_ending(raw_lines[start])
+    marker = f"Status: done{ending}"
+    if raw_lines[start].endswith(("\r\n", "\r", "\n")):
+        raw_lines.insert(start + 1, marker)
+    else:
+        raw_lines[start] = raw_lines[start] + ending + marker
+    _atomic_replace(path, "".join(raw_lines).encode("utf-8"))
+
+
 
 
 class MarkdownBacklog(BacklogSource):
-    """Read-only Markdown v1 backlog adapter."""
+    """Markdown v1 backlog adapter with explicit, guarded writeback."""
 
     def __init__(self, path: str | Path = "backlog.md", *, relative_path: str | Path | None = None):
         self.path = Path(path)
@@ -237,9 +320,13 @@ class MarkdownBacklog(BacklogSource):
         raise TaskNotFoundError(task_id)
 
     def writeback(self, task_id: str, state: TaskState) -> None:
-        raise ReadOnlySourceError(
-            "Markdown v1 is read-only; writeback is an explicit later adapter operation"
-        )
+        if not state.done:
+            raise WritebackStateError("writeback requires a completed task state")
+        metadata = state.metadata or {}
+        expected_fingerprint = metadata.get("source_fingerprint")
+        if not isinstance(expected_fingerprint, str) or not expected_fingerprint:
+            raise WritebackStateError("writeback requires bead source_fingerprint metadata")
+        _mark_section_done(self.path, task_id, expected_fingerprint, self.relative_path)
 
 
 class MarkdownBacklogText(MarkdownBacklog):
@@ -252,3 +339,5 @@ class MarkdownBacklogText(MarkdownBacklog):
 
     def preview(self) -> list[Task]:
         return parse_markdown(self._text, source_path=self.relative_path)
+    def writeback(self, task_id: str, state: TaskState) -> None:
+        raise ReadOnlySourceError("in-memory Markdown sources cannot be written back")
