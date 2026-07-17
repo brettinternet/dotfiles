@@ -123,6 +123,22 @@ def test_create_skip_update_and_dependency_matrix(tmp_path: Path, monkeypatch: p
     assert bead["metadata"]["source_fingerprint"] != metadata["source_fingerprint"]
 
 
+def test_dependency_wires_when_dependency_is_imported_later(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    client, state_path = fake_client(tmp_path, monkeypatch)
+    source = MarkdownBacklog(FIXTURE, relative_path="fixtures/backlog.md")
+
+    dependent = import_task(source, "fix-review", client)
+    assert dependent.action == "created"
+    assert json.loads(state_path.read_text())["deps"] == []
+
+    dependency = import_task(source, "fix-dep", client)
+    state = json.loads(state_path.read_text())
+    assert len(state["beads"]) == 2
+    assert state["deps"] == [{"issue_id": dependent.bead_id, "depends_on_id": dependency.bead_id}]
+
+
 def test_ambiguous_external_ref_refuses_to_write(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     client, state_path = fake_client(tmp_path, monkeypatch)
     state_path.write_text(json.dumps({
