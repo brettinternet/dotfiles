@@ -61,6 +61,22 @@ def test_status_degrades_when_fake_gc_client_is_unavailable(tmp_path: Path) -> N
         assert client.get("/").status_code == 200
 
 
+def test_status_degrades_when_gc_controller_is_stopped(tmp_path: Path) -> None:
+    class FakeClient:
+        async def status(self):
+            return {
+                "ok": True,
+                "running": False,
+                "controller": {"running": False},
+                "health": {"usable": False},
+            }
+
+    settings = Settings(state_db_path=tmp_path / "state.sqlite3")
+    with TestClient(create_app(settings, gc_client=FakeClient())) as client:
+        assert client.get("/health").json() == {"status": "degraded", "gc": "degraded"}
+        assert client.get("/status").json()["gc"]["status"] == "degraded"
+
+
 def test_cli_timeout(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     class Process:
         returncode = 0

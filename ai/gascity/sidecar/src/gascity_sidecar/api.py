@@ -27,6 +27,19 @@ async def _client_snapshot(client: Any) -> dict[str, Any]:
     sessions = status.get("sessions", status.get("running_sessions", []))
     workflows = status.get("workflows", status.get("active_workflows", []))
     return {"status": status, "sessions": sessions, "workflows": workflows}
+def _gc_is_healthy(status: dict[str, Any]) -> bool:
+    """Treat a reachable but stopped controller as degraded."""
+    if status.get("ok") is False or status.get("running") is False:
+        return False
+    controller = status.get("controller")
+    if isinstance(controller, dict) and controller.get("running") is False:
+        return False
+    health = status.get("health")
+    if isinstance(health, dict) and health.get("usable") is False:
+        return False
+    return True
+
+
 
 
 def create_app(
@@ -48,11 +61,15 @@ def create_app(
     @app.get("/health")
     async def health() -> dict[str, str]:
         try:
-            await client.status()
+            gc_status = await client.status()
+            if not isinstance(gc_status, dict):
+                raise TypeError("Gas City status must be an object")
         except GasCityError:
             return {"status": "degraded", "gc": "unavailable"}
         except Exception:
             return {"status": "degraded", "gc": "error"}
+        if not _gc_is_healthy(gc_status):
+            return {"status": "degraded", "gc": "degraded"}
         return {"status": "ok", "gc": "ok"}
 
     @app.get("/status")
@@ -72,7 +89,10 @@ def create_app(
                 raise TypeError("Gas City status must be an object")
             if not isinstance(sessions, list) or not isinstance(workflows, list):
                 raise TypeError("Gas City sessions/workflows must be arrays")
-            gc_payload = {"status": "ok", "data": gc_status}
+            gc_payload = {
+                "status": "ok" if _gc_is_healthy(gc_status) else "degraded",
+                "data": gc_status,
+            }
         except GasCityError as exc:
             sessions, workflows = [], []
             gc_payload = {"status": "degraded", "error": str(exc)}
