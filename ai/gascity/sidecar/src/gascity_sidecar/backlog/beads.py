@@ -203,7 +203,7 @@ def source_metadata(task: Task) -> dict[str, str]:
 
 
 def import_task(source: Any, task_id: str, beads: BeadsClient) -> MaterializationResult:
-    """Materialize one task and wire dependencies whose beads already exist."""
+    """Materialize one task and wire every available dependency edge."""
     task = source.materialize(task_id)
     metadata = source_metadata(task)
     existing = beads.find_external_ref(task.external_ref)
@@ -227,14 +227,14 @@ def import_task(source: Any, task_id: str, beads: BeadsClient) -> Materializatio
     if not isinstance(bead_id, str) or not bead_id:
         raise BeadsError(f"bd returned no bead id for {task.external_ref!r}")
 
+    tasks = source.preview()
+    tasks_by_id = {candidate.id.casefold(): candidate for candidate in tasks}
     current = beads.show(bead_id) if task.dependencies else {}
     current_dependencies = {
         dependency.get("id")
         for dependency in current.get("dependencies", [])
         if isinstance(dependency, dict)
     }
-
-    tasks_by_id = {candidate.id.casefold(): candidate for candidate in source.preview()}
     dependency_results: list[DependencyResult] = []
     for dependency_id in task.dependencies:
         dependency = tasks_by_id.get(dependency_id.casefold())
@@ -255,6 +255,25 @@ def import_task(source: Any, task_id: str, beads: BeadsClient) -> Materializatio
         beads.add_dependency(bead_id, dependency_bead_id)
         current_dependencies.add(dependency_bead_id)
         dependency_results.append(DependencyResult(dependency_id, "wired", dependency_bead_id))
+
+    for dependent in tasks:
+        if task.id.casefold() not in {dependency.casefold() for dependency in dependent.dependencies}:
+            continue
+        dependent_bead = beads.find_external_ref(dependent.external_ref)
+        if dependent_bead is None:
+            continue
+        dependent_bead_id = dependent_bead.get("id")
+        if not isinstance(dependent_bead_id, str) or not dependent_bead_id or dependent_bead_id == bead_id:
+            continue
+        dependent_record = beads.show(dependent_bead_id)
+        dependent_dependencies = {
+            dependency.get("id")
+            for dependency in dependent_record.get("dependencies", [])
+            if isinstance(dependency, dict)
+        }
+        if bead_id not in dependent_dependencies:
+            beads.add_dependency(dependent_bead_id, bead_id)
+
     return MaterializationResult(
         task_id=task.id,
         title=task.title,
