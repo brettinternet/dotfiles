@@ -118,6 +118,8 @@ class BeadsClient:
                 external_ref,
                 "--status",
                 "all",
+                "--limit",
+                "0",
                 "--json",
             ],
             json_output=True,
@@ -171,6 +173,9 @@ class BeadsClient:
 
     def add_dependency(self, bead_id: str, dependency_bead_id: str) -> None:
         self._run(["dep", "add", bead_id, dependency_bead_id, "--json"], json_output=True)
+
+    def remove_dependency(self, bead_id: str, dependency_bead_id: str) -> None:
+        self._run(["dep", "remove", bead_id, dependency_bead_id, "--json"], json_output=True)
 
     def show(self, bead_id: str) -> dict[str, Any]:
         payload = self._run(["show", bead_id, "--json"], json_output=True)
@@ -229,12 +234,13 @@ def import_task(source: Any, task_id: str, beads: BeadsClient) -> Materializatio
 
     tasks = source.preview()
     tasks_by_id = {candidate.id.casefold(): candidate for candidate in tasks}
-    current = beads.show(bead_id) if task.dependencies else {}
+    current = beads.show(bead_id)
     current_dependencies = {
         dependency.get("id")
         for dependency in current.get("dependencies", [])
         if isinstance(dependency, dict)
     }
+    desired_dependency_ids: set[str] = set()
     dependency_results: list[DependencyResult] = []
     for dependency_id in task.dependencies:
         dependency = tasks_by_id.get(dependency_id.casefold())
@@ -249,12 +255,27 @@ def import_task(source: Any, task_id: str, beads: BeadsClient) -> Materializatio
         if not isinstance(dependency_bead_id, str) or not dependency_bead_id:
             dependency_results.append(DependencyResult(dependency_id, "skipped"))
             continue
+        desired_dependency_ids.add(dependency_bead_id)
         if dependency_bead_id in current_dependencies:
             dependency_results.append(DependencyResult(dependency_id, "skipped", dependency_bead_id))
             continue
         beads.add_dependency(bead_id, dependency_bead_id)
         current_dependencies.add(dependency_bead_id)
         dependency_results.append(DependencyResult(dependency_id, "wired", dependency_bead_id))
+
+    source_prefix = task.external_ref.rsplit("#", 1)[0] + "#"
+    for dependency in current.get("dependencies", []):
+        if not isinstance(dependency, dict):
+            continue
+        dependency_bead_id = dependency.get("id")
+        dependency_external_ref = dependency.get("external_ref")
+        if (
+            isinstance(dependency_bead_id, str)
+            and dependency_bead_id not in desired_dependency_ids
+            and isinstance(dependency_external_ref, str)
+            and dependency_external_ref.startswith(source_prefix)
+        ):
+            beads.remove_dependency(bead_id, dependency_bead_id)
 
     for dependent in tasks:
         if task.id.casefold() not in {dependency.casefold() for dependency in dependent.dependencies}:
