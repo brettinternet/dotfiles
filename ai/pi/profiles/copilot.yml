@@ -1,12 +1,12 @@
 ---
 modelRoles:
-  default: github-copilot/claude-sonnet-4-6
+  default: github-copilot/claude-sonnet-5
   smol: github-copilot/claude-haiku-4-5
   slow: github-copilot/claude-opus-4-8
-  designer: github-copilot/claude-opus-4-8
-  vision: github-copilot/gpt-5.5
-  task: github-copilot/claude-sonnet-4-6
+  designer: github-copilot/claude-fable-5
+  vision: github-copilot/gpt-5.6-sol
+  task: github-copilot/gpt-5.6-luna
   commit: github-copilot/gpt-5.4-mini
   plan: github-copilot/claude-opus-4-8
-  advisor: github-copilot/gpt-5.5
+  advisor: github-copilot/gpt-5.6-luna
   title: github-copilot/gpt-5.4-mini
