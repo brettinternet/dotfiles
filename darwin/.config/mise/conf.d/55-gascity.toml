@@ -1,0 +1,6 @@
+#:schema https://mise.en.dev/schema/mise.json
+
+[tools]
+"github:gastownhall/gascity" = "latest"
+"github:gastownhall/beads" = "latest"
+"ubi:dolthub/dolt" = "latest"

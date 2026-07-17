@@ -1,6 +1,7 @@
 # CLI
 brew "btop"
 brew "coreutils"
+brew "flock"
 brew "git"
 brew "mas"
 brew "trash-cli"
