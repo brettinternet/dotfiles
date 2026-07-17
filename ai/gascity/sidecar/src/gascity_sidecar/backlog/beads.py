@@ -13,7 +13,7 @@ from pathlib import Path
 import subprocess
 from typing import Any, Sequence
 
-from .base import BacklogError, Task
+from .base import BacklogError, Task, TaskState
 
 
 class BeadsError(BacklogError):
@@ -39,6 +39,18 @@ class AmbiguousExternalRefError(BeadsError):
         self.count = count
         super().__init__(f"external ref {external_ref!r} matched {count} beads; refusing to choose")
 
+
+
+class BeadNotFoundError(BeadsError):
+    """No bead records the requested Markdown external reference."""
+
+    def __init__(self, external_ref: str) -> None:
+        self.external_ref = external_ref
+        super().__init__(f"no bead found for external ref {external_ref!r}")
+
+
+class BeadStateError(BeadsError):
+    """The bead has not reached an accepted completion state."""
 
 @dataclass(frozen=True, slots=True)
 class DependencyResult:
@@ -71,6 +83,22 @@ class MaterializationResult:
                 }
                 for dep in self.dependencies
             ],
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class WritebackResult:
+    task_id: str
+    bead_id: str
+    external_ref: str
+    action: str = "marked_done"
+
+    def as_dict(self) -> dict[str, str]:
+        return {
+            "task_id": self.task_id,
+            "bead_id": self.bead_id,
+            "external_ref": self.external_ref,
+            "action": self.action,
         }
 
 
@@ -303,3 +331,46 @@ def import_task(source: Any, task_id: str, beads: BeadsClient) -> Materializatio
         action=action,
         dependencies=tuple(dependency_results),
     )
+
+
+def writeback_task(source: Any, task_id: str, beads: BeadsClient) -> WritebackResult:
+    """Mark one source task done after validating its current Beads identity."""
+    task = source.materialize(task_id)
+    record = beads.find_external_ref(task.external_ref)
+    if record is None:
+        raise BeadNotFoundError(task.external_ref)
+    bead_id = record.get("id")
+    if not isinstance(bead_id, str) or not bead_id:
+        raise BeadsError(f"bd returned no bead id for {task.external_ref!r}")
+    record = beads.show(bead_id)
+    status = record.get("status")
+    if not isinstance(status, str) or status.casefold() not in {"accepted", "closed"}:
+        raise BeadStateError(
+            f"bead {bead_id!r} is not accepted or closed (status={status!r})"
+        )
+    metadata = record.get("metadata")
+    if not isinstance(metadata, dict):
+        raise BeadStateError(f"bead {bead_id!r} has no source metadata")
+    if metadata.get("source_id") != task.id:
+        raise BeadStateError(
+            f"bead {bead_id!r} source id {metadata.get('source_id')!r} "
+            f"does not match task {task.id!r}"
+        )
+    if metadata.get("source_path") != source.relative_path:
+        raise BeadStateError(
+            f"bead {bead_id!r} source path {metadata.get('source_path')!r} "
+            f"does not match {source.relative_path!r}"
+        )
+    expected_fingerprint = metadata.get("source_fingerprint")
+    if not isinstance(expected_fingerprint, str) or not expected_fingerprint:
+        raise BeadStateError(f"bead {bead_id!r} has no source fingerprint")
+    source.writeback(
+        task_id,
+        TaskState(
+            done=True,
+            metadata={
+                "source_fingerprint": expected_fingerprint,
+            },
+        ),
+    )
+    return WritebackResult(task.id, bead_id, task.external_ref)
