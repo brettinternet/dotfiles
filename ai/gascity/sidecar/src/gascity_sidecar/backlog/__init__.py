@@ -13,6 +13,17 @@ from .base import (
 )
 from .markdown import fingerprint_section, slugify_title
 from .markdown import MarkdownBacklog, normalize_section_body, parse_markdown
+from .beads import (
+    AmbiguousExternalRefError,
+    BeadsClient,
+    BeadsCommandError,
+    BeadsError,
+    DependencyResult,
+    MaterializationResult,
+    import_task,
+    source_metadata,
+)
+
 
 __all__ = [
     "BacklogError",
@@ -29,4 +40,12 @@ __all__ = [
     "parse_markdown",
     "fingerprint_section",
     "slugify_title",
+    "AmbiguousExternalRefError",
+    "BeadsClient",
+    "BeadsCommandError",
+    "BeadsError",
+    "DependencyResult",
+    "MaterializationResult",
+    "import_task",
+    "source_metadata",
 ]

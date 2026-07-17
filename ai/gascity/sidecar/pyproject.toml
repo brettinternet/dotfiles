@@ -8,6 +8,8 @@ version = "0.1.0"
 description = "Standalone Gas City backlog source adapters"
 requires-python = ">=3.12"
 dependencies = []
+[project.scripts]
+gascity-sidecar = "gascity_sidecar.cli:main"
 
 [dependency-groups]
 dev = ["pytest>=8.0"]
