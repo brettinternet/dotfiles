@@ -27,3 +27,13 @@ tasks:
     desc: Run Gas City diagnostics
     cmds:
       - mise exec -- gc doctor
+
+  sidecar:serve:
+    desc: Run the Gas City sidecar HTTP service
+    cmds:
+      - uv run --project sidecar gascity-sidecar serve
+
+  sidecar:test:
+    desc: Run focused sidecar tests
+    cmds:
+      - uv run --project sidecar pytest
