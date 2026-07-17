@@ -651,3 +651,6 @@ verification results, schema deltas, and fallback choices land here. Seed entrie
   the unsupported timezone remains a comment. Final doctor output passed all checks;
   its local-provider readiness, local-only archive, and legacy split-store warnings
   are machine/runtime advisories, not city-config errors.
+- 2026-07-17 — GC-02 — `gc import install` restored the ignored `packs.lock`
+  required by doctor for the two remote pack imports; keep this generated lockfile
+  machine-local and ignored.
