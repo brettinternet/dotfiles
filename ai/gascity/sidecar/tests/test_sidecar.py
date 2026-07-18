@@ -146,3 +146,21 @@ def test_schema_mismatch_is_typed(monkeypatch: pytest.MonkeyPatch, tmp_path: Pat
     monkeypatch.setattr(client, "_run_cli", malformed)
     with pytest.raises(GasCitySchemaError):
         asyncio.run(client.status())
+
+def test_malformed_jsonl_event_values_are_logged(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    client = GasCityClient(city_path=tmp_path)
+
+    async def unavailable(*args, **kwargs):
+        raise _ApiUnavailable("not available")
+
+    async def output(*args, **kwargs):
+        return '{"seq": 1, "type": "workflow.started", "ts": "2026-07-17T20:00:00Z"}\nnull\n[]\n'
+
+    monkeypatch.setattr(client, "_request_api", unavailable)
+    monkeypatch.setattr(client, "_run_cli", output)
+    assert asyncio.run(client.list_events()) == [
+        {"seq": 1, "type": "workflow.started", "ts": "2026-07-17T20:00:00Z"}
+    ]
+    assert caplog.text.count("expected object") == 2

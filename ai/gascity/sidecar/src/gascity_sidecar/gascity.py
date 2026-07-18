@@ -174,6 +174,8 @@ class GasCityClient:
                     continue
                 if isinstance(decoded, Mapping):
                     items.append(dict(decoded))
+                else:
+                    _LOG.warning("skipping malformed JSONL event from Gas City CLI: expected object")
             return items
 
     async def stream_events(self, after: int = 0):
@@ -219,6 +221,8 @@ class GasCityClient:
                     continue
                 if isinstance(decoded, Mapping):
                     yield dict(decoded)
+                else:
+                    _LOG.warning("skipping malformed JSONL event from Gas City CLI: expected object")
         finally:
             if process.returncode is None:
                 process.terminate()
