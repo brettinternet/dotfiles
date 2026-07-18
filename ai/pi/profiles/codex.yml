@@ -5,7 +5,8 @@ modelRoles:
   designer: openai-codex/gpt-5.6-sol:xhigh
   vision: openai-codex/gpt-5.6-sol:high
   task: openai-codex/gpt-5.6-luna:high
-  commit: openai-codex/gpt-5.6-luna:low
+  commit: openai-codex/gpt-5.3-codex-spark:high
   plan: openai-codex/gpt-5.6-sol:high
   advisor: openai-codex/gpt-5.6-luna:high
-  title: openai-codex/gpt-5.6-luna:low
+  title: openai-codex/gpt-5.3-codex-spark:high
+  tiny: openai-codex/gpt-5.3-codex-spark:high
