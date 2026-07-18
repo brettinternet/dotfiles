@@ -104,11 +104,13 @@ def test_malformed_api_event_items_are_logged(caplog) -> None:
     assert "malformed Gas City event item" in caplog.text
 
 
-def test_pending_notification_survives_crash_before_delivery(tmp_path: Path) -> None:
+def test_pending_notification_survives_crash_after_dedupe_claim(tmp_path: Path) -> None:
     store_path = tmp_path / "state.sqlite3"
 
     class CrashStore(StateStore):
         def claim_notification(self, notification_key: str) -> bool:
+            claimed = super().claim_notification(notification_key)
+            assert claimed
             raise KeyboardInterrupt
 
     first = EventProcessor(CrashStore(store_path))
