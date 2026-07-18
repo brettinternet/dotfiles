@@ -200,8 +200,7 @@ class EventProcessor:
             self.notifier.notify(event)
         except Exception:
             _LOG.warning("notification failed for event %s; continuing", event.identity)
-        finally:
-            self.store.complete_notification(event.identity)
+        self.store.complete_notification(event.identity)
 
     def process_pending(self) -> None:
         for payload in self.store.load_pending_notifications():
@@ -210,10 +209,11 @@ class EventProcessor:
             except Exception:
                 _LOG.warning("skipping malformed pending notification")
                 continue
-            if self.dedupe.claim(event.identity):
-                self._deliver(event)
-            else:
-                self.store.complete_notification(event.identity)
+            # A pending row can survive after dedupe was claimed but before delivery.
+            # Retry it regardless of the claim result: at-least-once recovery is safer
+            # than silently losing a notification, and completion removes the row.
+            self.dedupe.claim(event.identity)
+            self._deliver(event)
 
 
     def process(self, raw: Mapping[str, Any]) -> InternalEvent | None:
