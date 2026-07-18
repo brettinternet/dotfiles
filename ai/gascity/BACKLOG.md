@@ -289,12 +289,12 @@ bead.
 
 Acceptance:
 
-- [ ] One fixture bead flows through all five phases to a closed root bead.
+- [x] One fixture bead flows through all five phases to a closed root bead.
 - [ ] Events/sessions prove five distinct fresh sessions (one per phase).
-- [ ] Artifacts exist and are concise: brief.md, plan.md, attempts/1/report.md,
+- [x] Artifacts exist and are concise: brief.md, plan.md, attempts/1/report.md,
       verify.md, final.md; `gc.output_json` populated per step.
 - [ ] Artifacts and outcome survive `gc stop && gc start` (session termination).
-- [ ] Killing a mid-phase session and re-running demonstrates recovery from durable
+- [x] Killing a mid-phase session and re-running demonstrates recovery from durable
       state (bead + artifacts), not conversation state.
 
 Depends on: GC-05
@@ -771,3 +771,5 @@ override the tracked root value (and`gc config show` reports the same precedence
 - 2026-07-18 — GC-14 — fresh-context review repair pass (claim `claim-gc-14-fresh-20260718-pass41`) fixed `_deliver` deleting pending notifications after notifier failures; failed deliveries now remain in the durable outbox for retry, with a restart regression. Commit `812a1ea`; focused event/sidecar checks passed 17, full sidecar suite passed 41 with 1 skipped, compileall and diff checks passed. The normal commit hook's secret scan passed, while its repository check failed only on ignored runtime JSON formatting warnings, so the commit used `--no-verify`. GC-11 remains unfinished, so the live notification/restart replay check cannot run; repeated verifier/executor/oracle `usage_limit_reached` failures and the earlier oracle consultation keep the stall guard active. Next step: complete GC-11, run the live check, then obtain one fresh independent criterion-by-criterion verifier when provider capacity restores.
 
 - 2026-07-18 — GC-06 — fresh-context implementation pass (claim `claim-gc-06-fresh-20260718-pass42`) advanced the existing fixture workflow without dispatching a duplicate root. Managed OMP verifier completed `fx-n8o` with `verify.md` and `gc.output_json` pass; managed finalizer completed `fx-jfn`, wrote `final.md`, recorded `gc.outcome=pass`, and closed root `fx-4r8`. `gc stop` completed, all five durable artifacts remained present, and `gc start` completed; post-restart `gc status --json` reported the city usable and both verification/final artifacts remained present. The remaining GC-06 acceptance criteria are not all verified: canonical five-distinct-session evidence is incomplete because installed gc 1.3.5 city-scoped reviewer claim discovery federates to the fixture but claim execution uses the reviewer city store and returns `bead not found` for fixture bead `fx-jfn`; finalization used the documented fallback `gc bd update fx-jfn --claim --rig fixture`, so hook provenance is not canonical. No mid-phase kill/rerun recovery was performed. Precise next step: preserve the closed root and use a fresh non-duplicate fixture workflow or an installed controller fix to produce canonical per-phase session evidence and kill-mid-phase/rerun recovery evidence, then update the five GC-06 acceptance checkboxes only from durable evidence.
+
+- 2026-07-18 — GC-06 — fresh-context implementation pass (`claim-gc-06-fresh-20260718-pass43`) dispatched fresh root `fx-ixl`; intake, plan, implement, verify, and finalize closed in order, with durable artifacts and output metadata. Independent verifier PASSed criteria 1, 3, and 5; criterion 5 was proven by recovery root `fx-m2l` after killing session `s-gc-wisp-gbkyod` and resuming with `s-gc-wisp-8jnqzn`. A direct `gc stop --json`/`gc start --json` cycle then confirmed all five `fx-ixl` artifacts survived. Criterion 2 remains unchecked: installed gc 1.3.5 lacks canonical cross-rig hook claim provenance for intake (`fx-eav` has no session binding), despite distinct fresh phase session records. Criterion 4 remains unchecked pending a fresh independent verifier result for the stop/start evidence gathered after the verifier pass. Main root `fx-ixl` is closed with `gc.outcome=pass`; recovery-only root `fx-m2l` is checkpointed `gc.recovery_test_only=true` and intentionally stops after recovered intake.
