@@ -4,16 +4,16 @@ Verified 2026-07-17 on macOS arm64.
 
 ## Tooling
 
-| Tool | Version | Installation |
-|---|---|---|
-| mise | 2026.7.7 macos-arm64 | existing mise installation |
-| gc | 1.3.5 | `github:gastownhall/gascity` via `darwin/.config/mise/conf.d/55-gascity.toml` |
-| bd | 1.1.0 (`8e4e59d39f34`) | `github:gastownhall/beads` via `darwin/.config/mise/conf.d/55-gascity.toml` |
-| dolt | 2.2.0 | `ubi:dolthub/dolt` via the same mise config |
-| tmux | latest | existing mise installation |
-| jq | system installation | already installed |
-| git | Homebrew | already installed |
-| flock | 0.4.0 Homebrew | added to `darwin/Brewfile` and installed |
+| Tool  | Version                | Installation                                                                  |
+| ----- | ---------------------- | ----------------------------------------------------------------------------- |
+| mise  | 2026.7.7 macos-arm64   | existing mise installation                                                    |
+| gc    | 1.3.5                  | `github:gastownhall/gascity` via `darwin/.config/mise/conf.d/55-gascity.toml` |
+| bd    | 1.1.0 (`8e4e59d39f34`) | `github:gastownhall/beads` via `darwin/.config/mise/conf.d/55-gascity.toml`   |
+| dolt  | 2.2.0                  | `github:dolthub/dolt` via the same mise config                                |
+| tmux  | latest                 | existing mise installation                                                    |
+| jq    | system installation    | already installed                                                             |
+| git   | Homebrew               | already installed                                                             |
+| flock | 0.4.0 Homebrew         | added to `darwin/Brewfile` and installed                                      |
 
 The six gc runtime dependencies resolve in the gc environment: `tmux`, `jq`,
 `git`, `dolt`, `flock`, and the `bd` executable.
@@ -25,12 +25,12 @@ gc and bd directly.
 
 ## Agent CLIs
 
-| CLI | Version | gc builtin provider base |
-|---|---:|---|
-| omp | 17.0.2 | `builtin:omp` |
-| claude | 2.1.212 | `builtin:claude` |
-| codex | 0.144.5 | `builtin:codex` |
-| opencode | 1.18.3 | `builtin:opencode` |
+| CLI      | Version | gc builtin provider base |
+| -------- | ------: | ------------------------ |
+| omp      |  17.0.2 | `builtin:omp`            |
+| claude   | 2.1.212 | `builtin:claude`         |
+| codex    | 0.144.5 | `builtin:codex`          |
+| opencode |  1.18.3 | `builtin:opencode`       |
 
 The installed v1.3.5 builtin provider catalog also contains `pi`; the planned
 review bases `builtin:omp`, `builtin:pi`, and `builtin:claude` are valid provider
