@@ -227,12 +227,13 @@ class EventProcessor:
                 self.store.save_event_checkpoint(sequence)
             return None
         event_payload = event.model_dump(mode="json")
+        pending_before = self.store.has_pending_notification(event.identity)
         self.store.stage_notification(event_payload)
         self.store.record_internal_event(event_payload, max_events=self.recent_limit)
-        if self.dedupe.claim(event.identity):
+        if self.dedupe.claim(event.identity) or pending_before:
             self._deliver(event)
         else:
-            # Replay after a pre-checkpoint crash may stage an already-delivered event.
+            # A previously completed notification has no pending row; skip replay.
             self.store.complete_notification(event.identity)
         return event
 
