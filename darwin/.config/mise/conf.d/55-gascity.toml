@@ -3,4 +3,4 @@
 [tools]
 "github:gastownhall/gascity" = "latest"
 "github:gastownhall/beads" = "latest"
-"ubi:dolthub/dolt" = "latest"
+"github:dolthub/dolt" = "latest"
