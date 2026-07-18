@@ -82,7 +82,8 @@ The sidecar persists the latest processed city event `seq` in its SQLite state
 database and requests replay after that cursor on restart. Recent mapped events
 are retained in the same database (the API currently serves the newest 100).
 Pushover is enabled only when both `PUSHOVER_APP_TOKEN` and `PUSHOVER_USER_KEY`
-are set; delivery errors are logged without stopping event processing.
+are set; delivery errors are logged without stopping event processing, and failed
+deliveries remain pending for a later retry.
 Notification recovery is deliberately at-least-once. A pending row is retried when
 the sidecar crashes after claiming an event but before delivery, while ordinary
 replay after a completed delivery is deduped. Pushover has no transaction with the

@@ -57,20 +57,29 @@ def test_checkpoint_resume_and_recent_events(tmp_path: Path) -> None:
     assert [event["sequence"] for event in store.load_recent_events()] == [1]
 
 
-def test_notification_failure_isolated_and_deduped_after_restart(tmp_path: Path) -> None:
+def test_notification_failure_isolated_and_retried_after_restart(tmp_path: Path) -> None:
     store_path = tmp_path / "state.sqlite3"
     sent: list[str] = []
+    attempts = 0
 
-    class FailingNotifier:
+    class FlakyNotifier:
         def notify(self, event):
+            nonlocal attempts
+            attempts += 1
             sent.append(event.identity)
-            raise RuntimeError("network failure")
+            if attempts == 1:
+                raise RuntimeError("network failure")
 
-    first = EventProcessor(StateStore(store_path), FailingNotifier())
+    first = EventProcessor(StateStore(store_path), FlakyNotifier())
     first.process(raw(7, "workflow.completed", id="event-7"))
-    second = EventProcessor(StateStore(store_path), FailingNotifier())
-    second.process(raw(7, "workflow.completed", id="event-7"))
     assert sent == ["event-7"]
+    assert StateStore(store_path).load_pending_notifications()
+
+    second = EventProcessor(StateStore(store_path), FlakyNotifier())
+    second.process_pending()
+    second.process(raw(7, "workflow.completed", id="event-7"))
+    assert sent == ["event-7", "event-7"]
+    assert StateStore(store_path).load_pending_notifications() == []
 
 
 def test_pushover_unset_is_disabled(monkeypatch) -> None:
