@@ -50,6 +50,7 @@ class PushoverNotifier:
 
     def notify(self, event: InternalEvent) -> None:
         if not self.enabled:
+            _LOG.info("Pushover disabled; notification skipped for event %s", event.identity)
             return None
         title = f"Gas City: {event.kind.value.replace('_', ' ')}"
         message = event.subject or event.message or event.source_type

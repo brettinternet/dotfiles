@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -94,6 +95,17 @@ def test_pushover_unset_is_disabled(monkeypatch) -> None:
     monkeypatch.delenv("PUSHOVER_APP_TOKEN", raising=False)
     monkeypatch.delenv("PUSHOVER_USER_KEY", raising=False)
     assert not PushoverNotifier.from_environment().enabled
+
+def test_pushover_disabled_logs_delivery(caplog, monkeypatch) -> None:
+    monkeypatch.delenv("PUSHOVER_APP_TOKEN", raising=False)
+    monkeypatch.delenv("PUSHOVER_USER_KEY", raising=False)
+    caplog.set_level(logging.INFO, logger="gascity_sidecar.notifications")
+
+    event = map_event(raw(9, "workflow.started", id="event-9"))
+    assert event is not None
+    PushoverNotifier.from_environment().notify(event)
+
+    assert "Pushover disabled; notification skipped for event event-9" in caplog.text
 
 
 def test_event_and_gc_read_endpoints(tmp_path: Path) -> None:
