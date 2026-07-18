@@ -46,6 +46,12 @@ class StateStore:
                     payload TEXT NOT NULL,
                     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
                 );
+                CREATE TABLE IF NOT EXISTS pending_notifications (
+                    notification_key TEXT PRIMARY KEY,
+                    payload TEXT NOT NULL,
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                );
+
                 """
             )
 
@@ -123,6 +129,34 @@ class StateStore:
                 (limit,),
             ).fetchall()
         return [json.loads(row["payload"]) for row in rows]
+
+    def stage_notification(self, event: dict[str, Any]) -> None:
+        """Persist an event notification until its delivery attempt finishes."""
+        identity = event.get("identity")
+        if not isinstance(identity, str) or not identity:
+            raise ValueError("notification identity is required")
+        payload = json.dumps(event, sort_keys=True)
+        with self._connect() as connection:
+            connection.execute(
+                "INSERT OR IGNORE INTO pending_notifications(notification_key, payload) "
+                "VALUES (?, ?)",
+                (identity, payload),
+            )
+
+    def load_pending_notifications(self) -> list[dict[str, Any]]:
+        with self._connect() as connection:
+            rows = connection.execute(
+                "SELECT payload FROM pending_notifications ORDER BY created_at, notification_key"
+            ).fetchall()
+        return [json.loads(row["payload"]) for row in rows]
+
+    def complete_notification(self, notification_key: str) -> None:
+        with self._connect() as connection:
+            connection.execute(
+                "DELETE FROM pending_notifications WHERE notification_key = ?",
+                (notification_key,),
+            )
+
 
     def claim_notification(self, notification_key: str) -> bool:
         """Return true only for the first occurrence of a notification key."""

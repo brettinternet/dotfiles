@@ -195,6 +195,27 @@ class EventProcessor:
         self.dedupe = NotificationDedupe(store)
         self.recent_limit = recent_limit
 
+    def _deliver(self, event: InternalEvent) -> None:
+        try:
+            self.notifier.notify(event)
+        except Exception:
+            _LOG.warning("notification failed for event %s; continuing", event.identity)
+        finally:
+            self.store.complete_notification(event.identity)
+
+    def process_pending(self) -> None:
+        for payload in self.store.load_pending_notifications():
+            try:
+                event = InternalEvent.model_validate(payload)
+            except Exception:
+                _LOG.warning("skipping malformed pending notification")
+                continue
+            if self.dedupe.claim(event.identity):
+                self._deliver(event)
+            else:
+                self.store.complete_notification(event.identity)
+
+
     def process(self, raw: Mapping[str, Any]) -> InternalEvent | None:
         sequence = raw.get("seq", raw.get("sequence")) if isinstance(raw, Mapping) else None
         if isinstance(sequence, int) and not isinstance(sequence, bool) and sequence <= self.store.load_event_checkpoint():
@@ -204,12 +225,11 @@ class EventProcessor:
             if isinstance(sequence, int) and not isinstance(sequence, bool) and sequence >= 0:
                 self.store.save_event_checkpoint(sequence)
             return None
-        self.store.record_internal_event(event.model_dump(mode="json"), max_events=self.recent_limit)
+        event_payload = event.model_dump(mode="json")
+        self.store.stage_notification(event_payload)
+        self.store.record_internal_event(event_payload, max_events=self.recent_limit)
         if self.dedupe.claim(event.identity):
-            try:
-                self.notifier.notify(event)
-            except Exception:
-                _LOG.warning("notification failed for event %s; continuing", event.identity)
+            self._deliver(event)
         return event
 
     async def consume(self, events: AsyncIterable[Mapping[str, Any]] | Iterable[Mapping[str, Any]]) -> None:
@@ -221,6 +241,7 @@ class EventProcessor:
                 self.process(raw)
 
     async def run(self, client: Any) -> None:
+        self.process_pending()
         stream = getattr(client, "stream_events", None)
         if stream is None:
             _LOG.info("Gas City client has no event stream; event consumer disabled")
