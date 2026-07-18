@@ -230,6 +230,9 @@ class EventProcessor:
         self.store.record_internal_event(event_payload, max_events=self.recent_limit)
         if self.dedupe.claim(event.identity):
             self._deliver(event)
+        else:
+            # Replay after a pre-checkpoint crash may stage an already-delivered event.
+            self.store.complete_notification(event.identity)
         return event
 
     async def consume(self, events: AsyncIterable[Mapping[str, Any]] | Iterable[Mapping[str, Any]]) -> None:
