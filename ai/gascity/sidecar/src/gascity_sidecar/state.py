@@ -40,6 +40,12 @@ class StateStore:
                     notification_key TEXT PRIMARY KEY,
                     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
                 );
+                CREATE TABLE IF NOT EXISTS recent_events (
+                    identity TEXT PRIMARY KEY,
+                    sequence INTEGER NOT NULL,
+                    payload TEXT NOT NULL,
+                    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+                );
                 """
             )
 
@@ -75,10 +81,48 @@ class StateStore:
         with self._connect() as connection:
             connection.execute(
                 "INSERT INTO event_checkpoint(id, sequence) VALUES (1, ?) "
-                "ON CONFLICT(id) DO UPDATE SET sequence = excluded.sequence",
+                "ON CONFLICT(id) DO UPDATE SET sequence = MAX(sequence, excluded.sequence)",
                 (sequence,),
             )
-        return sequence
+        return self.load_event_checkpoint()
+
+    def record_internal_event(self, event: dict[str, Any], *, max_events: int = 100) -> None:
+        """Persist an internal event and advance its cursor atomically."""
+        if max_events < 1:
+            raise ValueError("max_events must be positive")
+        identity = event.get("identity")
+        sequence = event.get("sequence")
+        if not isinstance(identity, str) or not identity:
+            raise ValueError("internal event identity is required")
+        if isinstance(sequence, bool) or not isinstance(sequence, int) or sequence < 0:
+            raise ValueError("internal event sequence must be non-negative")
+        payload = json.dumps(event, sort_keys=True)
+        with self._connect() as connection:
+            connection.execute(
+                "INSERT OR IGNORE INTO recent_events(identity, sequence, payload) VALUES (?, ?, ?)",
+                (identity, sequence, payload),
+            )
+            connection.execute(
+                "INSERT INTO event_checkpoint(id, sequence) VALUES (1, ?) "
+                "ON CONFLICT(id) DO UPDATE SET sequence = MAX(sequence, excluded.sequence)",
+                (sequence,),
+            )
+            connection.execute(
+                "DELETE FROM recent_events WHERE identity IN ("
+                "SELECT identity FROM recent_events ORDER BY sequence DESC, identity DESC "
+                "LIMIT -1 OFFSET ?)",
+                (max_events,),
+            )
+
+    def load_recent_events(self, limit: int = 100) -> list[dict[str, Any]]:
+        if limit < 1:
+            return []
+        with self._connect() as connection:
+            rows = connection.execute(
+                "SELECT payload FROM recent_events ORDER BY sequence DESC, identity DESC LIMIT ?",
+                (limit,),
+            ).fetchall()
+        return [json.loads(row["payload"]) for row in rows]
 
     def claim_notification(self, notification_key: str) -> bool:
         """Return true only for the first occurrence of a notification key."""

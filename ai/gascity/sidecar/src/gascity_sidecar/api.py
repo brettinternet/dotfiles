@@ -10,8 +10,10 @@ from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 
 from .config import Settings, validate_bind
+from .events import EventProcessor
 from .gascity import GasCityClient, GasCityError
 from .models import DesiredState
+from .notifications import PushoverNotifier
 from .state import StateStore
 
 
@@ -55,6 +57,27 @@ def create_app(
 
     app = FastAPI(title="Gas City Sidecar", version="0.1.0")
     app.state.settings = settings
+    processor = EventProcessor(store, PushoverNotifier.from_environment())
+    app.state.event_processor = processor
+    app.state.event_task = None
+
+    @app.on_event("startup")
+    async def start_event_consumer() -> None:
+        import asyncio
+
+        if hasattr(client, "stream_events"):
+            app.state.event_task = asyncio.create_task(processor.run(client))
+    @app.on_event("shutdown")
+    async def stop_event_consumer() -> None:
+        import asyncio
+
+        task = app.state.event_task
+        if task is not None:
+            task.cancel()
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
     app.state.state_store = store
     app.state.gc_client = client
 
@@ -108,6 +131,28 @@ def create_app(
             "sessions": sessions,
             "workflows": workflows,
         }
+
+    @app.get("/events")
+    async def events(limit: int = 100) -> list[dict[str, Any]]:
+        return store.load_recent_events(limit)
+
+    @app.get("/workflows")
+    async def workflows() -> list[Any]:
+        try:
+            return list(await client.workflows())
+        except Exception:
+            return []
+
+    @app.get("/workers")
+    async def workers() -> list[Any]:
+        try:
+            if hasattr(client, "workers"):
+                return list(await client.workers())
+            if hasattr(client, "sessions"):
+                return list(await client.sessions())
+        except Exception:
+            pass
+        return []
 
     @app.get("/", response_class=HTMLResponse)
     async def status_page() -> str:

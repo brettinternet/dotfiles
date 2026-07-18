@@ -75,3 +75,18 @@ are GC-02 initialization concerns, not installation failures.
 
 No schema delta changes the GC-01 architecture. The init-provider allowlist
 exception is recorded in the Decision log below.
+
+## Sidecar event consumer
+
+The sidecar persists the latest processed city event `seq` in its SQLite state
+database and requests replay after that cursor on restart. Recent mapped events
+are retained in the same database (the API currently serves the newest 100).
+Pushover is enabled only when both `PUSHOVER_APP_TOKEN` and `PUSHOVER_USER_KEY`
+are set; delivery errors are logged without stopping event processing.
+
+Gas City 1.3.5 exposes replay through `gc events --after` and the city events
+API. The sidecar prefers the API and falls back to read-only
+`gc events --follow --after <seq>` JSONL when the endpoint is unavailable.
+Event-log rotation can invalidate a cursor; this version does not provide a
+cross-rotation cursor marker, so a rotated log must be replayed from its
+available head (the sidecar may not recover events discarded before rotation).

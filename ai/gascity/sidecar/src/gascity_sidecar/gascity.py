@@ -141,6 +141,83 @@ class GasCityClient:
             raise GasCitySchemaError(f"Gas City {category} response must be a JSON object")
         return dict(raw)
 
+    @staticmethod
+    def _event_items(raw: Any, category: str = "events") -> list[dict[str, Any]]:
+        if isinstance(raw, Mapping):
+            raw = raw.get("events", raw.get("items", []))
+        if not isinstance(raw, list):
+            raise GasCitySchemaError(f"Gas City {category} response must be an array")
+        return [dict(item) for item in raw if isinstance(item, Mapping)]
+
+    async def list_events(self, after: int = 0) -> list[dict[str, Any]]:
+        """Read replayable events, preferring the city API over JSONL CLI output."""
+        if after < 0:
+            raise ValueError("event cursor cannot be negative")
+        path = f"/v0/city/{quote(self.city_name, safe='')}/events?after={after}"
+        try:
+            raw = await self._request_api("events", path)
+            return self._event_items(raw)
+        except _ApiUnavailable:
+            raw = await self._run_cli("events", "events", "--after", str(after))
+            items: list[dict[str, Any]] = []
+            for line in raw.splitlines():
+                try:
+                    decoded = json.loads(line)
+                except json.JSONDecodeError:
+                    _LOG.warning("skipping malformed JSONL event from Gas City CLI")
+                    continue
+                if isinstance(decoded, Mapping):
+                    items.append(dict(decoded))
+            return items
+
+    async def stream_events(self, after: int = 0):
+        """Yield replayed events from the API, falling back to CLI JSONL follow."""
+        if after < 0:
+            raise ValueError("event cursor cannot be negative")
+        cursor = after
+        path_prefix = f"/v0/city/{quote(self.city_name, safe='')}/events?after="
+        try:
+            while True:
+                path = f"{path_prefix}{cursor}"
+                items = self._event_items(await self._request_api("events", path))
+                for event in items:
+                    yield event
+                    sequence = event.get("seq", event.get("sequence"))
+                    if isinstance(sequence, int) and not isinstance(sequence, bool):
+                        cursor = max(cursor, sequence)
+                if not items:
+                    await asyncio.sleep(1)
+        except _ApiUnavailable:
+            pass
+        _LOG.info("running Gas City event stream", extra={"command_category": "events"})
+        process = await asyncio.create_subprocess_exec(
+            self.cli_command,
+            "--city",
+            str(self.city_path),
+            "events",
+            "--follow",
+            "--after",
+            str(cursor),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            cwd=str(self.city_path),
+        )
+        try:
+            if process.stdout is None:
+                return
+            async for line in process.stdout:
+                try:
+                    decoded = json.loads(line)
+                except json.JSONDecodeError:
+                    _LOG.warning("skipping malformed JSONL event from Gas City CLI")
+                    continue
+                if isinstance(decoded, Mapping):
+                    yield dict(decoded)
+        finally:
+            if process.returncode is None:
+                process.terminate()
+                await process.wait()
+
     async def status(self) -> dict[str, Any]:
         """Get city status, preferring REST and falling back to `gc status --json`."""
         path = f"/v0/city/{quote(self.city_name, safe='')}/status"
@@ -169,6 +246,13 @@ class GasCityClient:
     async def workflows(self) -> list[Any]:
         return (await self.snapshot())["workflows"]
 
+
+    async def workers(self) -> list[Any]:
+        status = await self.status()
+        workers = status.get("workers", status.get("sessions", status.get("running_sessions", [])))
+        if not isinstance(workers, list):
+            raise GasCitySchemaError("Gas City status workers must be an array")
+        return workers
     async def mutate(self, method: str, path: str, payload: Mapping[str, Any] | None = None) -> Any:
         """Issue a REST mutation with the required request-confirmation header."""
         if method.upper() not in {"POST", "PUT", "PATCH", "DELETE"}:
