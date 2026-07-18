@@ -70,7 +70,7 @@ _EVENT_ALIASES: dict[EventKind, frozenset[str]] = {
         }
     ),
     EventKind.WORKFLOW_FAILED: frozenset(
-        {"workflow.failed", "run.failed", "dispatch.failed", "formula.failed", "convoy.failed"}
+        {"workflow.failed", "run.failed", "dispatch.failed", "formula.failed", "order.failed", "convoy.failed"}
     ),
     EventKind.WORKFLOW_BLOCKED: frozenset(
         {"workflow.blocked", "workflow.waiting", "run.blocked", "dispatch.blocked", "formula.blocked", "convoy.blocked"}

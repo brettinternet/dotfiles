@@ -23,6 +23,7 @@ def raw(seq: int, event_type: str, **extra: object) -> dict[str, object]:
 def test_event_mapping_and_tolerance() -> None:
     assert map_event(raw(1, "workflow.started")).kind == EventKind.WORKFLOW_STARTED
     assert map_event(raw(2, "workflow.failed", payload={"retry_exhausted": True})).kind == EventKind.RETRY_EXHAUSTED
+    assert map_event(raw(2, "order.failed")).kind == EventKind.WORKFLOW_FAILED
     assert (
         map_event(raw(3, "bead.created", payload={"bead": {"issue_type": "convoy"}})).kind
         == EventKind.WORKFLOW_STARTED
