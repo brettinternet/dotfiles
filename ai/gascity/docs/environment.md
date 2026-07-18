@@ -83,6 +83,12 @@ database and requests replay after that cursor on restart. Recent mapped events
 are retained in the same database (the API currently serves the newest 100).
 Pushover is enabled only when both `PUSHOVER_APP_TOKEN` and `PUSHOVER_USER_KEY`
 are set; delivery errors are logged without stopping event processing.
+Notification recovery is deliberately at-least-once. A pending row is retried when
+the sidecar crashes after claiming an event but before delivery, while ordinary
+replay after a completed delivery is deduped. Pushover has no transaction with the
+sidecar SQLite database, so a crash after Pushover accepts a notification but before
+`complete_notification` can deliver that notification twice on restart; exactly-once
+delivery and simultaneous no-gap/no-duplicate guarantees are not possible here.
 
 Gas City 1.3.5 exposes replay through `gc events --after` and the city events
 API. The sidecar prefers the API and falls back to read-only
