@@ -200,6 +200,7 @@ class EventProcessor:
             self.notifier.notify(event)
         except Exception:
             _LOG.warning("notification failed for event %s; continuing", event.identity)
+            return
         self.store.complete_notification(event.identity)
 
     def process_pending(self) -> None:
