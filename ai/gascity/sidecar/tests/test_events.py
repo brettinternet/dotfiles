@@ -21,8 +21,28 @@ def raw(seq: int, event_type: str, **extra: object) -> dict[str, object]:
 def test_event_mapping_and_tolerance() -> None:
     assert map_event(raw(1, "workflow.started")).kind == EventKind.WORKFLOW_STARTED
     assert map_event(raw(2, "workflow.failed", payload={"retry_exhausted": True})).kind == EventKind.RETRY_EXHAUSTED
-    assert map_event(raw(3, "unknown.event")) is None
-    assert map_event({"seq": 4, "type": "workflow.started"}) is None
+    assert (
+        map_event(raw(3, "bead.created", payload={"bead": {"issue_type": "convoy"}})).kind
+        == EventKind.WORKFLOW_STARTED
+    )
+    assert (
+        map_event(
+            raw(
+                4,
+                "bead.closed",
+                payload={"bead": {"issue_type": "convoy", "metadata": {"close_reason": "workflow failed"}}},
+            )
+        ).kind
+        == EventKind.WORKFLOW_FAILED
+    )
+    assert (
+        map_event(raw(5, "bead.updated", payload={"bead": {"issue_type": "convoy", "status": "blocked"}})).kind
+        == EventKind.WORKFLOW_BLOCKED
+    )
+    assert map_event(raw(6, "bead.closed", payload={"bead": {"issue_type": "task"}})) is None
+    assert map_event(raw(7, "convoy.closed")).kind == EventKind.WORKFLOW_COMPLETED
+    assert map_event(raw(8, "unknown.event")) is None
+    assert map_event({"seq": 9, "type": "workflow.started"}) is None
     assert map_event({"seq": "bad", "type": "workflow.started", "ts": TS}) is None
 
 

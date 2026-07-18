@@ -47,16 +47,33 @@ class InternalEvent(BaseModel):
 
 _EVENT_ALIASES: dict[EventKind, frozenset[str]] = {
     EventKind.WORKFLOW_STARTED: frozenset(
-        {"workflow.started", "workflow.start", "run.started", "dispatch.started", "formula.started", "order.fired"}
+        {
+            "workflow.started",
+            "workflow.start",
+            "run.started",
+            "dispatch.started",
+            "formula.started",
+            "order.fired",
+            "convoy.created",
+            "convoy.started",
+        }
     ),
     EventKind.WORKFLOW_COMPLETED: frozenset(
-        {"workflow.completed", "workflow.complete", "run.completed", "dispatch.completed", "formula.completed", "order.completed"}
+        {
+            "workflow.completed",
+            "workflow.complete",
+            "run.completed",
+            "dispatch.completed",
+            "formula.completed",
+            "order.completed",
+            "convoy.closed",
+        }
     ),
     EventKind.WORKFLOW_FAILED: frozenset(
-        {"workflow.failed", "run.failed", "dispatch.failed", "formula.failed"}
+        {"workflow.failed", "run.failed", "dispatch.failed", "formula.failed", "convoy.failed"}
     ),
     EventKind.WORKFLOW_BLOCKED: frozenset(
-        {"workflow.blocked", "workflow.waiting", "run.blocked", "dispatch.blocked", "formula.blocked"}
+        {"workflow.blocked", "workflow.waiting", "run.blocked", "dispatch.blocked", "formula.blocked", "convoy.blocked"}
     ),
     EventKind.HUMAN_INPUT_REQUIRED: frozenset(
         {"human.input_required", "human_input_required", "input.required", "workflow.input_required"}
@@ -72,9 +89,18 @@ _EVENT_ALIASES: dict[EventKind, frozenset[str]] = {
     ),
 }
 
-
 def _normalise_type(value: object) -> str:
     return str(value).strip().lower().replace("-", "_").replace(" ", "_")
+
+
+_WORKFLOW_ISSUE_TYPES = frozenset({"convoy", "formula", "run", "workflow"})
+
+
+def _bead_payload(payload: Any) -> Mapping[str, Any] | None:
+    if not isinstance(payload, Mapping):
+        return None
+    bead = payload.get("bead", payload)
+    return bead if isinstance(bead, Mapping) else None
 
 
 def _kind_for(raw_type: str, payload: Any) -> EventKind | None:
@@ -82,6 +108,21 @@ def _kind_for(raw_type: str, payload: Any) -> EventKind | None:
     if normalized in {"workflow.failed", "run.failed"} and isinstance(payload, Mapping):
         if payload.get("retry_exhausted") or payload.get("retries_exhausted"):
             return EventKind.RETRY_EXHAUSTED
+    bead = _bead_payload(payload)
+    if normalized in {"bead.created", "bead.closed", "bead.updated"} and bead is not None:
+        issue_type = _normalise_type(bead.get("issue_type"))
+        if issue_type in _WORKFLOW_ISSUE_TYPES:
+            if normalized == "bead.created":
+                return EventKind.WORKFLOW_STARTED
+            if normalized == "bead.closed":
+                metadata = bead.get("metadata")
+                reason = _normalise_type(metadata.get("close_reason")) if isinstance(metadata, Mapping) else ""
+                if any(marker in reason for marker in ("fail", "error", "exception", "timeout")):
+                    return EventKind.WORKFLOW_FAILED
+                return EventKind.WORKFLOW_COMPLETED
+            status = _normalise_type(bead.get("status"))
+            if status in {"blocked", "waiting", "blocked_on_dependency"}:
+                return EventKind.WORKFLOW_BLOCKED
     for kind, aliases in _EVENT_ALIASES.items():
         if normalized in {_normalise_type(alias).replace("_", ".") for alias in aliases}:
             return kind
