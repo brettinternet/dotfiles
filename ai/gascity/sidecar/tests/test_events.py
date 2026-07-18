@@ -5,6 +5,7 @@ from pathlib import Path
 from fastapi.testclient import TestClient
 
 from gascity_sidecar.api import create_app
+from gascity_sidecar.gascity import GasCityClient
 from gascity_sidecar.events import EventKind, EventProcessor, map_event
 from gascity_sidecar.notifications import PushoverNotifier
 from gascity_sidecar.state import StateStore
@@ -96,3 +97,36 @@ def test_event_and_gc_read_endpoints(tmp_path: Path) -> None:
         assert client.get("/events").json()[0]["kind"] == "workflow_started"
         assert client.get("/workflows").json() == [{"id": "run-1"}]
         assert client.get("/workers").json() == [{"name": "worker"}]
+
+def test_malformed_api_event_items_are_logged(caplog) -> None:
+    event = raw(1, "workflow.started")
+    assert GasCityClient._event_items([event, "malformed"]) == [event]
+    assert "malformed Gas City event item" in caplog.text
+
+
+def test_pending_notification_survives_crash_before_delivery(tmp_path: Path) -> None:
+    store_path = tmp_path / "state.sqlite3"
+
+    class CrashStore(StateStore):
+        def claim_notification(self, notification_key: str) -> bool:
+            raise KeyboardInterrupt
+
+    first = EventProcessor(CrashStore(store_path))
+    try:
+        first.process(raw(7, "workflow.completed", id="event-7"))
+    except KeyboardInterrupt:
+        pass
+    else:
+        raise AssertionError("expected simulated process crash")
+
+    sent: list[str] = []
+
+    class Notifier:
+        def notify(self, event) -> None:
+            sent.append(event.identity)
+
+    second = EventProcessor(StateStore(store_path), Notifier())
+    second.process_pending()
+    second.process_pending()
+    second.process(raw(7, "workflow.completed", id="event-7"))
+    assert sent == ["event-7"]

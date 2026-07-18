@@ -147,7 +147,13 @@ class GasCityClient:
             raw = raw.get("events", raw.get("items", []))
         if not isinstance(raw, list):
             raise GasCitySchemaError(f"Gas City {category} response must be an array")
-        return [dict(item) for item in raw if isinstance(item, Mapping)]
+        items: list[dict[str, Any]] = []
+        for item in raw:
+            if not isinstance(item, Mapping):
+                _LOG.warning("skipping malformed Gas City event item")
+                continue
+            items.append(dict(item))
+        return items
 
     async def list_events(self, after: int = 0) -> list[dict[str, Any]]:
         """Read replayable events, preferring the city API over JSONL CLI output."""
