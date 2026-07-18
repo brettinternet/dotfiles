@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.gascity.sidecar</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/bin/sh</string>
+		<string>__REPO_ROOT__/ai/gascity/sidecar/launchd-run.sh</string>
+	</array>
+	<key>WorkingDirectory</key>
+	<string>__REPO_ROOT__/ai/gascity</string>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>GC_SIDECAR_CITY_PATH</key>
+		<string>.</string>
+		<key>GC_SIDECAR_BIND_HOST</key>
+		<string>127.0.0.1</string>
+		<key>GC_SIDECAR_BIND_PORT</key>
+		<string>8787</string>
+		<key>GC_SIDECAR_GC_API_PORT</key>
+		<string>8372</string>
+	</dict>
+	<key>KeepAlive</key>
+	<true/>
+	<key>ThrottleInterval</key>
+	<integer>30</integer>
+	<key>StandardOutPath</key>
+	<string>__REPO_ROOT__/ai/gascity/.local/sidecar.stdout.log</string>
+	<key>StandardErrorPath</key>
+	<string>__REPO_ROOT__/ai/gascity/.local/sidecar.stderr.log</string>
+</dict>
+</plist>
