@@ -143,6 +143,41 @@ def test_pending_notification_survives_crash_after_dedupe_claim(tmp_path: Path) 
     assert sent == ["event-7"]
 
 
+def test_failed_pending_notification_is_retried_after_early_crash(tmp_path: Path) -> None:
+    store_path = tmp_path / "state.sqlite3"
+
+    class CrashAfterStageStore(StateStore):
+        def stage_notification(self, event) -> None:
+            super().stage_notification(event)
+            raise KeyboardInterrupt
+
+    first = EventProcessor(CrashAfterStageStore(store_path))
+    try:
+        first.process(raw(7, "workflow.completed", id="event-7"))
+    except KeyboardInterrupt:
+        pass
+    else:
+        raise AssertionError("expected simulated process crash")
+
+    attempts = 0
+    sent: list[str] = []
+
+    class FlakyNotifier:
+        def notify(self, event) -> None:
+            nonlocal attempts
+            attempts += 1
+            sent.append(event.identity)
+            if attempts == 1:
+                raise RuntimeError("network failure")
+
+    second = EventProcessor(StateStore(store_path), FlakyNotifier())
+    second.process_pending()
+    second.process(raw(7, "workflow.completed", id="event-7"))
+
+    assert sent == ["event-7", "event-7"]
+    assert StateStore(store_path).load_pending_notifications() == []
+
+
 def test_replayed_event_clears_stale_notification_after_precheckpoint_crash(tmp_path: Path) -> None:
     store_path = tmp_path / "state.sqlite3"
 

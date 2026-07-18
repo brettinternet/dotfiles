@@ -158,6 +158,13 @@ class StateStore:
             )
 
 
+    def has_pending_notification(self, notification_key: str) -> bool:
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT 1 FROM pending_notifications WHERE notification_key = ?",
+                (notification_key,),
+            ).fetchone()
+        return row is not None
     def claim_notification(self, notification_key: str) -> bool:
         """Return true only for the first occurrence of a notification key."""
         with self._connect() as connection:
