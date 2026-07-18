@@ -132,3 +132,33 @@ def test_pending_notification_survives_crash_after_dedupe_claim(tmp_path: Path) 
     second.process_pending()
     second.process(raw(7, "workflow.completed", id="event-7"))
     assert sent == ["event-7"]
+
+
+def test_replayed_event_clears_stale_notification_after_precheckpoint_crash(tmp_path: Path) -> None:
+    store_path = tmp_path / "state.sqlite3"
+
+    class CrashStore(StateStore):
+        def record_internal_event(self, event, *, max_events=100) -> None:
+            raise KeyboardInterrupt
+
+    first = EventProcessor(CrashStore(store_path))
+    try:
+        first.process(raw(7, "workflow.completed", id="event-7"))
+    except KeyboardInterrupt:
+        pass
+    else:
+        raise AssertionError("expected simulated process crash")
+
+    sent: list[str] = []
+
+    class Notifier:
+        def notify(self, event) -> None:
+            sent.append(event.identity)
+
+    second = EventProcessor(StateStore(store_path), Notifier())
+    second.process_pending()
+    second.process(raw(7, "workflow.completed", id="event-7"))
+    second.process_pending()
+
+    assert sent == ["event-7"]
+    assert StateStore(store_path).load_pending_notifications() == []
