@@ -57,6 +57,14 @@ def test_checkpoint_resume_and_recent_events(tmp_path: Path) -> None:
     assert [event["sequence"] for event in store.load_recent_events()] == [1]
 
 
+def test_sequence_zero_is_processed_once_on_an_empty_store(tmp_path: Path) -> None:
+    store_path = tmp_path / "state.sqlite3"
+    processor = EventProcessor(StateStore(store_path))
+
+    assert processor.process(raw(0, "workflow.started", id="event-0")) is not None
+    assert processor.process(raw(0, "workflow.started", id="event-0")) is None
+    assert StateStore(store_path).load_event_checkpoint() == 0
+
 def test_notification_failure_isolated_and_retried_after_restart(tmp_path: Path) -> None:
     store_path = tmp_path / "state.sqlite3"
     sent: list[str] = []

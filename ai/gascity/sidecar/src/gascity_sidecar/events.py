@@ -219,7 +219,12 @@ class EventProcessor:
 
     def process(self, raw: Mapping[str, Any]) -> InternalEvent | None:
         sequence = raw.get("seq", raw.get("sequence")) if isinstance(raw, Mapping) else None
-        if isinstance(sequence, int) and not isinstance(sequence, bool) and sequence <= self.store.load_event_checkpoint():
+        checkpoint = self.store.load_event_checkpoint()
+        if (
+            isinstance(sequence, int)
+            and not isinstance(sequence, bool)
+            and (sequence < checkpoint or (sequence == checkpoint and self.store.has_event_checkpoint()))
+        ):
             return None
         event = map_event(raw)
         if event is None:

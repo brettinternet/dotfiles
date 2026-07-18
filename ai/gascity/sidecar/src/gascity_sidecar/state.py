@@ -80,6 +80,12 @@ class StateStore:
                 "SELECT sequence FROM event_checkpoint WHERE id = 1"
             ).fetchone()
         return int(row["sequence"]) if row else 0
+    def has_event_checkpoint(self) -> bool:
+        with self._connect() as connection:
+            row = connection.execute(
+                "SELECT 1 FROM event_checkpoint WHERE id = 1"
+            ).fetchone()
+        return row is not None
 
     def save_event_checkpoint(self, sequence: int) -> int:
         if sequence < 0:
