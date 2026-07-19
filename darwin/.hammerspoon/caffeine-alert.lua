@@ -7,7 +7,7 @@ return {
   appearance = function(_context)
     if caffeine.isOverrideActive() then
       return {
-        title = "Dismiss alert",
+        title = "Dismiss\nalert",
         state = "active",
         appearanceVersion = 1,
         foregroundColor = "#FEF3C7",
@@ -17,7 +17,7 @@ return {
     end
 
     return {
-      title = "No alert",
+      title = "No\nalert",
       state = "inactive",
       appearanceVersion = 1,
       foregroundColor = "#CBD5E1",
