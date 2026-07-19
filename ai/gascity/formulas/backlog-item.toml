@@ -43,7 +43,7 @@ Persist a concise JSON result with `gc.output_json`, including `phase` =
 not complete. Close only this phase bead after the artifact and output are
 written; do not close the root here.
 """
-metadata = { "gc.run_target" = "intake", "gc.output_json_schema" = "backlog-item.intake.v1", "gc.output_json_required" = "true" }
+metadata = { "gc.run_target" = "gc.intake", "gc.output_json_schema" = "backlog-item.intake.v1", "gc.output_json_required" = "true" }
 
 [[steps]]
 id = "plan"
@@ -63,7 +63,7 @@ implementer session; do not rely on conversation history. Persist
 `workflow_root`, and `artifact` = `.gascity/work/<root>/plan.md`, plus stable
 failure fields when needed. Close only this phase bead.
 """
-metadata = { "gc.run_target" = "planner", "gc.output_json_schema" = "backlog-item.plan.v1", "gc.output_json_required" = "true" }
+metadata = { "gc.run_target" = "gc.planner", "gc.output_json_schema" = "backlog-item.plan.v1", "gc.output_json_required" = "true" }
 
 [[steps]]
 id = "implement"
@@ -84,7 +84,7 @@ structured commits, files changed, checks and results, and any blocker. Persist
 `attempt` = `1`, and `artifact` = `.gascity/work/<root>/attempts/1/report.md`.
 Close only this phase bead after durable output is written.
 """
-metadata = { "gc.run_target" = "implementer", "gc.output_json_schema" = "backlog-item.implement.v1", "gc.output_json_required" = "true" }
+metadata = { "gc.run_target" = "gc.implementer", "gc.output_json_schema" = "backlog-item.implement.v1", "gc.output_json_required" = "true" }
 
 [[steps]]
 id = "verify"
@@ -106,7 +106,7 @@ and `artifact` = `.gascity/work/<root>/verify.md`; include criterion results
 and stable failure fields. Close only this phase bead after durable output is
 written.
 """
-metadata = { "gc.run_target" = "verifier", "gc.output_json_schema" = "backlog-item.verify.v1", "gc.output_json_required" = "true" }
+metadata = { "gc.run_target" = "gc.verifier", "gc.output_json_schema" = "backlog-item.verify.v1", "gc.output_json_required" = "true" }
 
 [[steps]]
 id = "finalize"
@@ -133,4 +133,4 @@ precise blocked/failed outcome and evidence, persist `gc.output_json` with a
 stable failure class/reason, and leave the root open for resumable recovery;
 do not claim success or close it.
 """
-metadata = { "gc.run_target" = "reviewer", "gc.output_json_schema" = "backlog-item.finalize.v1", "gc.output_json_required" = "true" }
+metadata = { "gc.run_target" = "gc.reviewer", "gc.output_json_schema" = "backlog-item.finalize.v1", "gc.output_json_required" = "true" }
