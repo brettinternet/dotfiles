@@ -1,49 +1,5 @@
 -- Todo: modify https://github.com/dbalatero/SkyRocket.spoon
 
-local function shellQuote(value)
-  return "'" .. tostring(value):gsub("'", "'\\''") .. "'"
-end
-
-local function ensureSpoonInstall()
-  local spoonDir = hs.configdir .. "/Spoons"
-  local spoonPath = spoonDir .. "/SpoonInstall.spoon"
-
-  if hs.fs.attributes(spoonPath, "mode") == "directory" then
-    return true
-  end
-
-  hs.alert.show("Installing SpoonInstall")
-  hs.fs.mkdir(spoonDir)
-
-  local zipPath = spoonDir .. "/SpoonInstall.spoon.zip"
-  local spoonInstallUrl = "https://github.com/Hammerspoon/Spoons/raw/master/Spoons/SpoonInstall.spoon.zip"
-  local command = table.concat({
-    "/usr/bin/curl -fsSL -o", shellQuote(zipPath), shellQuote(spoonInstallUrl),
-    "&& /usr/bin/unzip -oq", shellQuote(zipPath), "-d", shellQuote(spoonDir),
-    "&& /bin/rm -f", shellQuote(zipPath),
-  }, " ")
-
-  local _, ok = hs.execute(command, true)
-  if not ok or hs.fs.attributes(spoonPath, "mode") ~= "directory" then
-    hs.alert.show("SpoonInstall install failed")
-    return false
-  end
-
-  return true
-end
-
-local hasSpoonInstall = ensureSpoonInstall()
-if hasSpoonInstall then
-  local ok = pcall(hs.loadSpoon, "SpoonInstall")
-  if ok and spoon.SpoonInstall then
-    spoon.SpoonInstall.use_syncinstall = true
-    pcall(function()
-      spoon.SpoonInstall:andUse("Caffeine", { start = true })
-    end)
-  else
-    hs.alert.show("SpoonInstall unavailable")
-  end
-end
 
 hs.ipc.cliInstall()
 
@@ -131,113 +87,8 @@ prefix:bind('', 'H', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("io.robbie.Hom
 -- System
 prefix:bind('cmd', 'L', prefixFn(function() hs.caffeinate.lockScreen() end))
 prefix:bind('cmd', 'P', prefixFn(function() hs.caffeinate.systemSleep() end))
-local caffeineBatteryThreshold = 20
-local caffeineOverride = false
-local caffeineOverrideAlert = nil
-local caffeineLastDisabledReason = nil
-
-local function caffeineDisabledReason()
-  local reasons = {}
-
-  if #hs.screen.allScreens() ~= 1 then
-    table.insert(reasons, "multiple displays")
-  end
-
-  local batteryPercentage = hs.battery.percentage()
-  if batteryPercentage and batteryPercentage < caffeineBatteryThreshold then
-    table.insert(reasons, "battery below " .. caffeineBatteryThreshold .. "%")
-  end
-
-  if #reasons > 0 then
-    return table.concat(reasons, " and ")
-  end
-end
-
-local function caffeineAllowed()
-  return caffeineDisabledReason() == nil
-end
-
-local function clearCaffeineOverride()
-  caffeineOverride = false
-  if caffeineOverrideAlert then
-    hs.alert.closeSpecific(caffeineOverrideAlert)
-    caffeineOverrideAlert = nil
-  end
-end
-
-local function showCaffeineOverride(reason)
-  if caffeineOverrideAlert then
-    hs.alert.closeSpecific(caffeineOverrideAlert)
-  end
-  caffeineOverrideAlert = hs.alert.show("CAFFEINE OVERRIDE ACTIVE\n" .. reason, true)
-end
-
-local function setCaffeine(on, allowOverride)
-  if not spoon.Caffeine then
-    hs.alert.show("Caffeine unavailable")
-    return
-  end
-
-  if not on then
-    spoon.Caffeine:setState(false)
-    clearCaffeineOverride()
-    return
-  end
-
-  local disabledReason = caffeineDisabledReason()
-  if disabledReason and not allowOverride then
-    spoon.Caffeine:setState(false)
-    clearCaffeineOverride()
-    hs.alert.show("Caffeine disabled: " .. disabledReason)
-    return
-  end
-
-  spoon.Caffeine:setState(true)
-  if disabledReason then
-    caffeineOverride = true
-    caffeineLastDisabledReason = disabledReason
-    showCaffeineOverride(disabledReason)
-  else
-    clearCaffeineOverride()
-  end
-end
-
-local function toggleCaffeine()
-  local shouldEnable = not hs.caffeinate.get("displayIdle")
-  setCaffeine(shouldEnable, shouldEnable)
-end
-
-prefix:bind('cmd', 'K', prefixFn(toggleCaffeine))
-local function enforceCaffeineAllowed()
-  local disabledReason = caffeineDisabledReason()
-  if disabledReason and disabledReason ~= caffeineLastDisabledReason then
-    local wasOn = hs.caffeinate.get("displayIdle")
-    setCaffeine(false)
-    if wasOn then
-      hs.alert.show("Caffeine disabled: " .. disabledReason)
-    end
-  elseif not disabledReason and caffeineOverride then
-    clearCaffeineOverride()
-  end
-  caffeineLastDisabledReason = disabledReason
-end
-local function disableCaffeineOnSleep(event)
-  if event ~= hs.caffeinate.watcher.systemWillSleep then
-    return
-  end
-
-  setCaffeine(false)
-end
-
-
-caffeineScreenWatcher = hs.screen.watcher.new(function()
-  enforceCaffeineAllowed()
-end):start()
-caffeineBatteryWatcher = hs.battery.watcher.new(function()
-  enforceCaffeineAllowed()
-end):start()
-caffeineSleepWatcher = hs.caffeinate.watcher.new(disableCaffeineOnSleep):start()
-enforceCaffeineAllowed()
+local caffeine = require("caffeine").start()
+prefix:bind('cmd', 'K', prefixFn(caffeine.toggle))
 prefix:bind('cmd', 'C', prefixFn(function()
   hs.pasteboard.clearContents()
   hs.alert.show("Clipboard Cleared")
@@ -269,6 +120,7 @@ require("audio")
 require("media")
 require("system")
 require("http")
+require("sd")
 
 -- Reload config on change
 local home = os.getenv("HOME")
