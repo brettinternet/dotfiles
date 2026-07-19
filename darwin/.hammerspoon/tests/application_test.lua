@@ -76,6 +76,7 @@ local running_application
 local frontmost_application
 local launched_bundle_id
 local activation_callback
+local valid_icon = false
 _G.hs = {
   application = {
     get = function()
@@ -99,8 +100,28 @@ _G.hs = {
       end,
     },
   },
+  image = {
+    imageFromAppBundle = function()
+      return {
+        bitmapRepresentation = function()
+          return {
+            encodeAsURLString = function()
+              return "data:image/png;base64," .. (valid_icon and "BBBB" or "AAAA")
+            end,
+          }
+        end,
+      }
+    end,
+  },
 }
 
+package.preload["streamdeck.protocol"] = function()
+  return {
+    validateAppearanceIcon = function(icon)
+      return icon.dataBase64 ~= "AAAA"
+    end,
+  }
+end
 package.loaded.application = nil
 local action = require("application")
 
@@ -134,6 +155,10 @@ assert_equal(windowless_application.unhide_calls, 0, "windowless app should not 
 
 local windowless_appearance = action.appearance({ settings = { bundleID = "com.example.TestApp" } })
 assert_equal(windowless_appearance.state, "active", "windowless app should appear hidden")
+assert_equal(windowless_appearance.icon, nil, "invalid custom icon should be omitted")
+valid_icon = true
+local valid_icon_appearance = action.appearance({ settings = { bundleID = "com.example.TestApp" } })
+assert_true(valid_icon_appearance.icon ~= nil, "valid custom icon should be included")
 
 local stopped_application = new_application({ frontmost = false, hidden = false, running = false, has_main_window = false })
 press(stopped_application)
@@ -148,7 +173,7 @@ assert_equal(frontmost_application_with_window.hide_calls, 1, "frontmost app sho
 local background_application = new_application({ frontmost = false, hidden = false })
 press(background_application)
 assert_equal(launched_bundle_id, nil, "visible background app should not be relaunched")
-assert_equal(background_application.activate_calls, 0, "show should not focus by default")
+assert_equal(background_application.hide_calls, 1, "visible background app should be hidden")
 
 local focused_background_application = new_application({ frontmost = false, hidden = false })
 press(focused_background_application, { focus_on_show = true })
@@ -157,7 +182,7 @@ assert_equal(focused_background_application.activate_calls, 1, "focus option sho
 assert_true(focused_background_application.last_activate_all_windows, "focus option should bring all windows forward")
 
 local previously_focused_application = new_application({ frontmost = true, hidden = false })
-local focused_target_application = new_application({ frontmost = false, hidden = false })
+local focused_target_application = new_application({ frontmost = false, hidden = true })
 frontmost_application = previously_focused_application
 press(focused_target_application, { focus_on_show = true, instance_id = "refocus" })
 frontmost_application = focused_target_application
@@ -179,6 +204,10 @@ press(hidden_application)
 assert_equal(launched_bundle_id, nil, "running hidden app should not be relaunched")
 assert_equal(hidden_application.unhide_calls, 1, "hidden app should be unhidden")
 assert_equal(hidden_application.activate_calls, 0, "hidden app should not be focused by default")
+press(hidden_application)
+assert_equal(hidden_application.hide_calls, 1, "shown background app should be hidden on the next press")
+press(hidden_application)
+assert_equal(hidden_application.unhide_calls, 2, "hidden app should be shown again after repeated toggles")
 
 local focused_hidden_application = new_application({ frontmost = false, hidden = true })
 press(focused_hidden_application, { focus_on_show = true })

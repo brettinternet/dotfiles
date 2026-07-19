@@ -131,11 +131,20 @@ local function application_icon(application, configured_bundle_id)
     return nil
   end
 
-  return {
+  local icon = {
     kind = "custom",
     mediaType = "image/png",
     dataBase64 = data_base64,
   }
+  local protocol_ok, protocol = pcall(require, "streamdeck.protocol")
+  if not protocol_ok or type(protocol.validateAppearanceIcon) ~= "function" then
+    return nil
+  end
+  local valid_ok, valid = pcall(protocol.validateAppearanceIcon, icon)
+  if not valid_ok or valid ~= true then
+    return nil
+  end
+  return icon
 end
 
 local function configured_application(bundle_id)
@@ -369,7 +378,9 @@ return {
     local application, bundle_id, focus_on_show = application_for(context)
     if not application and bundle_id == nil then
       error("no frontmost application")
-    elseif application and application_is_frontmost(application) and not application_is_hidden(application) then
+    elseif application
+        and not application_is_hidden(application)
+        and (bundle_id == nil or not focus_on_show or application_is_frontmost(application)) then
       remember_previous_application(context, application)
       local was_hidden = toggle_application(application)
       if not was_hidden then
