@@ -27,7 +27,7 @@ return {
     end
 
     return {
-      title = "Allow sleep",
+      title = "Allow\nsleep",
       state = "inactive",
       appearanceVersion = 1,
       foregroundColor = "#E2E8F0",
