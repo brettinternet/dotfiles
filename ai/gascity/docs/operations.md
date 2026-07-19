@@ -9,8 +9,6 @@ paths.
 
 ## Manual startup and shutdown
 
-Start the city and verify its controller:
-
 ```sh
 cd ai/gascity
 mise exec -- gc start
@@ -152,6 +150,11 @@ service. It contains the `__REPO_ROOT__` placeholder because launchd requires
 an absolute working directory and program path. `sidecar/launchd-run.sh`
 resolves the checkout at runtime and sources the ignored `.env` before running
 `uv run --project sidecar gascity-sidecar serve`.
+Launchd does not load shell startup files, so the wrapper cannot assume a
+mise-managed `uv` is on `PATH`. Set `GC_SIDECAR_UV_BIN` to an absolute `uv`
+path in the ignored `ai/gascity/.env` (for example, the output of
+`command -v uv` from the shell where `uv` is installed) before loading the
+rendered service.
 
 Keep the example unloaded in the repository. To render, validate, load, and
 inspect a user-local copy:

@@ -9,4 +9,12 @@ if [ -f "$ROOT/.env" ]; then
   set +a
 fi
 
-exec uv run --project "$ROOT/sidecar" gascity-sidecar serve
+uv_bin="${GC_SIDECAR_UV_BIN:-}"
+if [ -z "$uv_bin" ]; then
+  uv_bin="$(command -v uv 2>/dev/null || true)"
+fi
+if [ -z "$uv_bin" ]; then
+  printf '%s\n' "uv not found; set GC_SIDECAR_UV_BIN in $ROOT/.env" >&2
+  exit 127
+fi
+exec "$uv_bin" run --project "$ROOT/sidecar" gascity-sidecar serve
