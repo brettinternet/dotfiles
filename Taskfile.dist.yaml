@@ -50,21 +50,78 @@ tasks:
       - test -f lefthook.yaml
 
   check:
-    desc: Run checks
+    desc: Run checks on tracked files
     cmds:
-      - shellcheck -s sh base/.profile
-      - >-
-        find . -type f
-        \( -name '*.sh' -o -name '*.bash' -o -name '*.ksh' -o -name '*.bashrc'
-        -o -name '*.bash_profile' -o -name '*.bash_login' -o -name '*.bash_logout' \)
-        -not -path "./dotbot/*"
-        | xargs shellcheck
-      - >-
-        find . -type f
-        \( -name '*.zsh' -o -name '.zprofile' -o -name '.zshrc' -o -name '.zshrc.*' \)
-        -not -path "./dotbot/*"
-        | xargs -n 1 zsh -n
-      - prettier --check "**/*.{yaml,yml,json,jsonc}"
+      - git diff --check
+      - task: check-files
+        vars:
+          FILES_CMD: git ls-files -z
+
+  check-staged:
+    desc: Run checks on staged files
+    cmds:
+      - git diff --cached --check
+      - task: check-files
+        vars:
+          FILES_CMD: git diff --cached --name-only --diff-filter=ACMR -z
+
+  check-files:
+    internal: true
+    cmds:
+      - |
+        bash -euo pipefail -c '
+          posix_shell_files=()
+          shell_files=()
+          zsh_files=()
+          lua_files=()
+          nvim_lua_files=()
+          format_files=()
+
+          while IFS= read -r -d "" file; do
+            [[ -e "$file" || -L "$file" ]] || continue
+            case "$file" in
+              base/.profile)
+                posix_shell_files+=("$file")
+                ;;
+              *.sh|*.bash|*.ksh|*.bashrc|*.bash_profile|*.bash_login|*.bash_logout)
+                shell_files+=("$file")
+                ;;
+              *.zsh|*/.zprofile|.zprofile|*/.zshrc|.zshrc|*/.zshrc.*|.zshrc.*)
+                zsh_files+=("$file")
+                ;;
+              *.lua)
+                lua_files+=("$file")
+                case "$file" in
+                  base/.config/nvim/*)
+                    nvim_lua_files+=("$file")
+                    ;;
+                esac
+                ;;
+              *.yaml|*.yml|*.json|*.jsonc)
+                format_files+=("$file")
+                ;;
+            esac
+          done < <({{.FILES_CMD}})
+
+          if ((${#posix_shell_files[@]})); then
+            shellcheck -s sh -- "${posix_shell_files[@]}"
+          fi
+          if ((${#shell_files[@]})); then
+            shellcheck -- "${shell_files[@]}"
+          fi
+          for file in "${zsh_files[@]}"; do
+            zsh -n -- "$file"
+          done
+          if ((${#lua_files[@]})); then
+            stylua --check -- "${lua_files[@]}"
+          fi
+          if ((${#nvim_lua_files[@]})); then
+            selene --config base/.config/nvim/selene.toml -- "${nvim_lua_files[@]}"
+          fi
+          if ((${#format_files[@]})); then
+            prettier --check --ignore-unknown -- "${format_files[@]}"
+          fi
+        '
   test:
     desc: Run tests
     cmds:
@@ -79,9 +136,39 @@ tasks:
       - hatch test
 
   fix:
-    desc: Run fixes
+    desc: Format tracked files
     cmds:
-      - prettier --write "**/*.{yaml,yml,json,jsonc}"
+      - task: fix-files
+        vars:
+          FILES_CMD: git ls-files -z
+
+  fix-files:
+    internal: true
+    cmds:
+      - |
+        bash -euo pipefail -c '
+          lua_files=()
+          format_files=()
+
+          while IFS= read -r -d "" file; do
+            [[ -e "$file" || -L "$file" ]] || continue
+            case "$file" in
+              *.lua)
+                lua_files+=("$file")
+                ;;
+              *.yaml|*.yml|*.json|*.jsonc)
+                format_files+=("$file")
+                ;;
+            esac
+          done < <({{.FILES_CMD}})
+
+          if ((${#lua_files[@]})); then
+            stylua -- "${lua_files[@]}"
+          fi
+          if ((${#format_files[@]})); then
+            prettier --write --ignore-unknown -- "${format_files[@]}"
+          fi
+        '
 
   update:
     desc: Update dependencies

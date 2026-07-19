@@ -1,18 +1,19 @@
 -- Todo: modify https://github.com/dbalatero/SkyRocket.spoon
 
-
 hs.ipc.cliInstall()
 
 -- Print helper
 function dump(o)
-  if type(o) == 'table' then
-    local s = '{ '
+  if type(o) == "table" then
+    local s = "{ "
     for k, v in pairs(o) do
       local key = k
-      if type(key) ~= 'number' then key = '"' .. key .. '"' end
-      s = s .. '[' .. key .. '] = ' .. dump(v) .. ','
+      if type(key) ~= "number" then
+        key = '"' .. key .. '"'
+      end
+      s = s .. "[" .. key .. "] = " .. dump(v) .. ","
     end
-    return s .. '} '
+    return s .. "} "
   else
     return tostring(o)
   end
@@ -20,8 +21,10 @@ end
 
 -- Prefix modal for app/system commands
 
-local prefix = hs.hotkey.modal.new('cmd', ';')
-prefix:bind('', "escape", function() prefix:exit() end)
+local prefix = hs.hotkey.modal.new("cmd", ";")
+prefix:bind("", "escape", function()
+  prefix:exit()
+end)
 
 function prefix:entered()
   commandModeAlert = hs.alert.show("Command mode", true)
@@ -70,42 +73,70 @@ function getLaunchFocusOrHideAndSwitchBackFn(bundleid, kill)
 end
 
 -- Applications
-prefix:bind('', 'F', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("org.chromium.Chromium")))
-prefix:bind('', 'C', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.microsoft.VSCode")))
-prefix:bind('', 'G', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.github.GitHubClient")))
-prefix:bind('', 'S', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.spotify.client")))
-prefix:bind('', 'E', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.apple.finder")))
-prefix:bind('', 'M', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.apple.MobileSMS")))
-prefix:bind('', 'V', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.vivaldi.Vivaldi")))
-prefix:bind('', 'X', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.googlecode.iterm2")))
-prefix:bind('', 'A', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.tinyspeck.slackmacgap")))
-prefix:bind('', 'D', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.hnc.Discord")))
-prefix:bind('', 'Z', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("us.zoom.xos")))
-prefix:bind('', 'O', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.obsproject.obs-studio")))
-prefix:bind('', 'H', prefixFn(getLaunchFocusOrHideAndSwitchBackFn("io.robbie.HomeAssistant")))
+prefix:bind("", "F", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("org.chromium.Chromium")))
+prefix:bind("", "C", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.microsoft.VSCode")))
+prefix:bind("", "G", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.github.GitHubClient")))
+prefix:bind("", "S", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.spotify.client")))
+prefix:bind("", "E", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.apple.finder")))
+prefix:bind("", "M", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.apple.MobileSMS")))
+prefix:bind("", "V", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.vivaldi.Vivaldi")))
+prefix:bind("", "X", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.googlecode.iterm2")))
+prefix:bind("", "A", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.tinyspeck.slackmacgap")))
+prefix:bind("", "D", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.hnc.Discord")))
+prefix:bind("", "Z", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("us.zoom.xos")))
+prefix:bind("", "O", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.obsproject.obs-studio")))
+prefix:bind("", "H", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("io.robbie.HomeAssistant")))
 
 -- System
-prefix:bind('cmd', 'L', prefixFn(function() hs.caffeinate.lockScreen() end))
-prefix:bind('cmd', 'P', prefixFn(function() hs.caffeinate.systemSleep() end))
+prefix:bind(
+  "cmd",
+  "L",
+  prefixFn(function()
+    hs.caffeinate.lockScreen()
+  end)
+)
+prefix:bind(
+  "cmd",
+  "P",
+  prefixFn(function()
+    hs.caffeinate.systemSleep()
+  end)
+)
 local caffeine = require("caffeine").start()
-prefix:bind('cmd', 'K', prefixFn(caffeine.toggle))
-prefix:bind('cmd', 'C', prefixFn(function()
-  hs.pasteboard.clearContents()
-  hs.alert.show("Clipboard Cleared")
-end))
+prefix:bind("cmd", "K", prefixFn(caffeine.toggle))
+prefix:bind(
+  "cmd",
+  "C",
+  prefixFn(function()
+    hs.pasteboard.clearContents()
+    hs.alert.show("Clipboard Cleared")
+  end)
+)
 
 -- Info helpers
-prefix:bind('cmd', 'B', prefixFn(function()
-  hs.pasteboard.setContents(hs.application.frontmostApplication():bundleID())
-  hs.alert.show("BundleID Copied")
-end))
-prefix:bind('cmd', 'D', prefixFn(function()
-  hs.pasteboard.setContents(hs.application.frontmostApplication():title())
-  hs.alert.show("Title Copied")
-end))
-prefix:bind('', '\\', prefixFn(function()
-  hs.execute('/Applications/BetterDisplay.app/Contents/MacOS/BetterDisplay toggle -name="Dell AW3423DW" -connected')
-end))
+prefix:bind(
+  "cmd",
+  "B",
+  prefixFn(function()
+    hs.pasteboard.setContents(hs.application.frontmostApplication():bundleID())
+    hs.alert.show("BundleID Copied")
+  end)
+)
+prefix:bind(
+  "cmd",
+  "D",
+  prefixFn(function()
+    hs.pasteboard.setContents(hs.application.frontmostApplication():title())
+    hs.alert.show("Title Copied")
+  end)
+)
+prefix:bind(
+  "",
+  "\\",
+  prefixFn(function()
+    hs.execute('/Applications/BetterDisplay.app/Contents/MacOS/BetterDisplay toggle -name="Dell AW3423DW" -connected')
+  end)
+)
 
 -- Utils
 
@@ -124,5 +155,9 @@ require("sd")
 
 -- Reload config on change
 local home = os.getenv("HOME")
-hs.pathwatcher.new(home .. "/.dotfiles/darwin/.hammerspoon/", function() hs.reload() end):start()
+hs.pathwatcher
+  .new(home .. "/.dotfiles/darwin/.hammerspoon/", function()
+    hs.reload()
+  end)
+  :start()
 hs.alert.show("Hammerspoon config loaded")

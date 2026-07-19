@@ -1,4 +1,3 @@
-
 local c = {
   none = "NONE",
   syntax = {},

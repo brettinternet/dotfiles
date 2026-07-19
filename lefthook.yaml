@@ -5,6 +5,6 @@ pre-commit:
   parallel: true
   jobs:
     - name: Run checks
-      run: task check
+      run: task check-staged
     - name: Check for secret leaks
       run: gitleaks git --pre-commit --redact --staged --verbose --no-banner

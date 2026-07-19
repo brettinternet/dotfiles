@@ -88,7 +88,6 @@ local youtubeHomeUrl = "https://www.youtube.com"
 local lastPausedMedia = nil
 local pendingYoutubePause = false
 
-
 -- Plex
 
 local plexBrowserBundleID = youtubeBrowserBundleID
@@ -377,12 +376,11 @@ end
 
 hs.hotkey.bind(nil, "f20", nil, playOrPauseSpotify, longPressSpotify)
 
-
 -- Change audio output
 local function toggleAudioOutput()
   local current = hs.audiodevice.defaultOutputDevice()
-  local speakers = hs.audiodevice.findOutputByName('Stone Pro Audio')
-  local headphones = hs.audiodevice.findOutputByName('Elgato Wave XLR')
+  local speakers = hs.audiodevice.findOutputByName("Stone Pro Audio")
+  local headphones = hs.audiodevice.findOutputByName("Elgato Wave XLR")
 
   if toggleAudioOutputAlertID then
     hs.alert.closeSpecific(toggleAudioOutputAlertID)
@@ -399,7 +397,6 @@ end
 hs.hotkey.bind(nil, "f13", toggleAudioOutput)
 
 -- YouTube shortcuts
-
 
 function openBrowserTab(browser, url)
   local script = ([[(function() {
@@ -540,6 +537,8 @@ function openDisposableBrowserWindow(browser, url)
       }
     })();
     ]]):format(browser, windowId)
-    hs.timer.doAfter(0.5, function() hs.osascript.javascript(script) end)
+    hs.timer.doAfter(0.5, function()
+      hs.osascript.javascript(script)
+    end)
   end
 end
