@@ -23,6 +23,8 @@ name = "fixture"
 prefix = "fx"
 default_branch = "main"
 suspended_on_start = true
+[rigs.imports.gc]
+source = "."
 
 [[patches.agent]]
 name = "control-dispatcher"

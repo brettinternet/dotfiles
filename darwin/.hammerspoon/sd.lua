@@ -11,7 +11,6 @@ local caffeine = require("caffeine")
 local applicationAction = require("application")
 local actions = {
   (require("keep-awake")),
-  (require("meeting-mode")),
   (require("caffeine-alert")),
   applicationAction,
 }
