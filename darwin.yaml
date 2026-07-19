@@ -10,6 +10,9 @@
     - ~/dev/sandbox
     - ~/dev/work
 
+- clean:
+    - ~/.hammerspoon
+
 - link:
     ~/.gitconfig:
       path: darwin/.gitconfig
