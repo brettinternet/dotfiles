@@ -156,11 +156,13 @@ function caffeine.start()
 
   watchers.screen = hs.screen.watcher.new(enforceAllowed):start()
   watchers.battery = hs.battery.watcher.new(enforceAllowed):start()
-  watchers.sleep = hs.caffeinate.watcher.new(function(event)
-    if event == hs.caffeinate.watcher.systemWillSleep then
-      caffeine.setEnabled(false)
-    end
-  end):start()
+  watchers.sleep = hs.caffeinate.watcher
+    .new(function(event)
+      if event == hs.caffeinate.watcher.systemWillSleep then
+        caffeine.setEnabled(false)
+      end
+    end)
+    :start()
 
   enforceAllowed()
   updateMenubar()

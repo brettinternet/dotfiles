@@ -25,42 +25,108 @@ local actions = {
   ["/plex"] = focusPlex,
   ["/play_pause_youtube"] = playPauseOrOpenYoutube,
   ["/youtube"] = focusYoutube,
-  ["/youtube/home"] = function() openYoutubeLocation("https://www.youtube.com", "youtube\\.com/?$") end,
-  ["/youtube/subscriptions"] = function() openYoutubeLocation("https://www.youtube.com/feed/subscriptions", "youtube\\.com/feed/subscriptions") end,
-  ["/youtube/history"] = function() openYoutubeLocation("https://www.youtube.com/feed/history", "youtube\\.com/feed/history") end,
-  ["/youtube/watch_later"] = function() openYoutubeLocation("https://www.youtube.com/playlist?list=WL", "youtube\\.com/playlist\\?list=WL") end,
-  ["/youtube/playlists"] = function() openYoutubeLocation("https://www.youtube.com/feed/playlists", "youtube\\.com/feed/playlists") end,
-  ["/youtube/shorts"] = function() openYoutubeLocation("https://www.youtube.com/shorts", "youtube\\.com/shorts") end,
-  ["/youtube/trending"] = function() openYoutubeLocation("https://www.youtube.com/feed/trending", "youtube\\.com/feed/trending") end,
-  ["/youtube/music"] = function() openYoutubeLocation("https://music.youtube.com", "music\\.youtube\\.com") end,
+  ["/youtube/home"] = function()
+    openYoutubeLocation("https://www.youtube.com", "youtube\\.com/?$")
+  end,
+  ["/youtube/subscriptions"] = function()
+    openYoutubeLocation("https://www.youtube.com/feed/subscriptions", "youtube\\.com/feed/subscriptions")
+  end,
+  ["/youtube/history"] = function()
+    openYoutubeLocation("https://www.youtube.com/feed/history", "youtube\\.com/feed/history")
+  end,
+  ["/youtube/watch_later"] = function()
+    openYoutubeLocation("https://www.youtube.com/playlist?list=WL", "youtube\\.com/playlist\\?list=WL")
+  end,
+  ["/youtube/playlists"] = function()
+    openYoutubeLocation("https://www.youtube.com/feed/playlists", "youtube\\.com/feed/playlists")
+  end,
+  ["/youtube/shorts"] = function()
+    openYoutubeLocation("https://www.youtube.com/shorts", "youtube\\.com/shorts")
+  end,
+  ["/youtube/trending"] = function()
+    openYoutubeLocation("https://www.youtube.com/feed/trending", "youtube\\.com/feed/trending")
+  end,
+  ["/youtube/music"] = function()
+    openYoutubeLocation("https://music.youtube.com", "music\\.youtube\\.com")
+  end,
   ["/youtube/play_pause"] = playPauseOrOpenYoutube,
   ["/media/play_pause"] = playPauseMedia,
   ["/media/next"] = playNextMedia,
-  ["/youtube/next"] = function() youtubeShortcut("next") end,
-  ["/youtube/previous"] = function() youtubeShortcut("previous") end,
-  ["/youtube/rewind"] = function() youtubeShortcut("rewind") end,
-  ["/youtube/forward"] = function() youtubeShortcut("forward") end,
-  ["/youtube/mute"] = function() youtubeShortcut("mute") end,
-  ["/youtube/captions"] = function() youtubeShortcut("captions") end,
-  ["/youtube/fullscreen"] = function() youtubeShortcut("fullscreen") end,
-  ["/youtube/theater"] = function() youtubeShortcut("theater") end,
-  ["/youtube/miniplayer"] = function() youtubeShortcut("miniplayer") end,
-  ["/youtube/volume_up"] = function() youtubeShortcut("volume_up") end,
-  ["/youtube/volume_down"] = function() youtubeShortcut("volume_down") end,
-  ["/youtube/speed_up"] = function() youtubeShortcut("speed_up") end,
-  ["/youtube/speed_down"] = function() youtubeShortcut("speed_down") end,
-  ["/youtube/frame_next"] = function() youtubeShortcut("frame_next") end,
-  ["/youtube/frame_previous"] = function() youtubeShortcut("frame_previous") end,
-  ["/youtube/beginning"] = function() youtubeShortcut("beginning") end,
-  ["/youtube/seek_10"] = function() youtubeShortcut("seek_10") end,
-  ["/youtube/seek_20"] = function() youtubeShortcut("seek_20") end,
-  ["/youtube/seek_30"] = function() youtubeShortcut("seek_30") end,
-  ["/youtube/seek_40"] = function() youtubeShortcut("seek_40") end,
-  ["/youtube/seek_50"] = function() youtubeShortcut("seek_50") end,
-  ["/youtube/seek_60"] = function() youtubeShortcut("seek_60") end,
-  ["/youtube/seek_70"] = function() youtubeShortcut("seek_70") end,
-  ["/youtube/seek_80"] = function() youtubeShortcut("seek_80") end,
-  ["/youtube/seek_90"] = function() youtubeShortcut("seek_90") end,
+  ["/youtube/next"] = function()
+    youtubeShortcut("next")
+  end,
+  ["/youtube/previous"] = function()
+    youtubeShortcut("previous")
+  end,
+  ["/youtube/rewind"] = function()
+    youtubeShortcut("rewind")
+  end,
+  ["/youtube/forward"] = function()
+    youtubeShortcut("forward")
+  end,
+  ["/youtube/mute"] = function()
+    youtubeShortcut("mute")
+  end,
+  ["/youtube/captions"] = function()
+    youtubeShortcut("captions")
+  end,
+  ["/youtube/fullscreen"] = function()
+    youtubeShortcut("fullscreen")
+  end,
+  ["/youtube/theater"] = function()
+    youtubeShortcut("theater")
+  end,
+  ["/youtube/miniplayer"] = function()
+    youtubeShortcut("miniplayer")
+  end,
+  ["/youtube/volume_up"] = function()
+    youtubeShortcut("volume_up")
+  end,
+  ["/youtube/volume_down"] = function()
+    youtubeShortcut("volume_down")
+  end,
+  ["/youtube/speed_up"] = function()
+    youtubeShortcut("speed_up")
+  end,
+  ["/youtube/speed_down"] = function()
+    youtubeShortcut("speed_down")
+  end,
+  ["/youtube/frame_next"] = function()
+    youtubeShortcut("frame_next")
+  end,
+  ["/youtube/frame_previous"] = function()
+    youtubeShortcut("frame_previous")
+  end,
+  ["/youtube/beginning"] = function()
+    youtubeShortcut("beginning")
+  end,
+  ["/youtube/seek_10"] = function()
+    youtubeShortcut("seek_10")
+  end,
+  ["/youtube/seek_20"] = function()
+    youtubeShortcut("seek_20")
+  end,
+  ["/youtube/seek_30"] = function()
+    youtubeShortcut("seek_30")
+  end,
+  ["/youtube/seek_40"] = function()
+    youtubeShortcut("seek_40")
+  end,
+  ["/youtube/seek_50"] = function()
+    youtubeShortcut("seek_50")
+  end,
+  ["/youtube/seek_60"] = function()
+    youtubeShortcut("seek_60")
+  end,
+  ["/youtube/seek_70"] = function()
+    youtubeShortcut("seek_70")
+  end,
+  ["/youtube/seek_80"] = function()
+    youtubeShortcut("seek_80")
+  end,
+  ["/youtube/seek_90"] = function()
+    youtubeShortcut("seek_90")
+  end,
   ["/bounce_displays"] = bounceDisplays,
   -- ["/sleep"] = systemSleep,
   ["/outlook"] = function()
