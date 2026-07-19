@@ -1,4 +1,8 @@
 local target_by_instance = {}
+local previous_application_by_instance = {}
+local last_activated_application
+local previous_activated_application
+local application_history_watcher
 
 local function settings_for(context)
   local settings = nil
@@ -9,14 +13,14 @@ local function settings_for(context)
   end
 
   if type(settings) ~= "table" then
-    return nil
+    return nil, false
   end
 
   local bundle_id = settings.bundleID
   if type(bundle_id) ~= "string" or bundle_id == "" or #bundle_id > 128 then
-    return nil
+    return nil, false
   end
-  return bundle_id
+  return bundle_id, settings.focusOnShow == true
 end
 
 local function target_key(context)
@@ -38,6 +42,38 @@ local function frontmost_application()
   end
   return application
 end
+
+local function start_application_history()
+  if
+    type(hs) ~= "table"
+    or type(hs.application) ~= "table"
+    or type(hs.application.watcher) ~= "table"
+    or type(hs.application.watcher.new) ~= "function"
+  then
+    return
+  end
+
+  local ok, current = pcall(hs.application.frontmostApplication)
+  if ok then
+    last_activated_application = current
+  end
+
+  local watcher_api = hs.application.watcher
+  local watcher_ok, watcher = pcall(watcher_api.new, function(_, event, application)
+    if event == watcher_api.activated and application and application ~= last_activated_application then
+      previous_activated_application = last_activated_application
+      last_activated_application = application
+    end
+  end)
+  if not watcher_ok or not watcher or type(watcher.start) ~= "function" then
+    return
+  end
+
+  application_history_watcher = watcher
+  pcall(watcher.start, watcher)
+end
+
+start_application_history()
 
 local MAX_ICON_BYTES = 32768
 
@@ -125,15 +161,34 @@ local function launch_or_focus_application(bundle_id)
 end
 
 local function application_for(context)
-  local bundle_id = settings_for(context)
+  local bundle_id, focus_on_show = settings_for(context)
   if bundle_id ~= nil then
-    return configured_application(bundle_id), bundle_id
+    return configured_application(bundle_id), bundle_id, focus_on_show
   end
 
-  return target_by_instance[target_key(context)] or frontmost_application(), nil
+  return target_by_instance[target_key(context)] or frontmost_application(), nil, false
 end
 
-local function application_is_hidden(application)
+local function application_is_running(application)
+  local ok, running = pcall(application.isRunning, application)
+  if not ok then
+    error("failed to inspect application running state: " .. tostring(running))
+  end
+  if type(running) ~= "boolean" then
+    error("failed to inspect application running state")
+  end
+  return running
+end
+
+local function application_has_main_window(application)
+  local ok, main_window = pcall(application.mainWindow, application)
+  if not ok then
+    error("failed to inspect application windows: " .. tostring(main_window))
+  end
+  return main_window ~= nil
+end
+
+local function application_is_actually_hidden(application)
   local ok, hidden = pcall(application.isHidden, application)
   if not ok then
     error("failed to inspect application visibility: " .. tostring(hidden))
@@ -142,6 +197,27 @@ local function application_is_hidden(application)
     error("failed to inspect application visibility")
   end
   return hidden
+end
+
+local function application_is_hidden(application)
+  if not application_is_running(application) then
+    return true
+  end
+  if application_is_actually_hidden(application) then
+    return true
+  end
+  return not application_has_main_window(application)
+end
+
+local function application_is_frontmost(application)
+  local ok, frontmost = pcall(application.isFrontmost, application)
+  if not ok then
+    error("failed to inspect application focus: " .. tostring(frontmost))
+  end
+  if type(frontmost) ~= "boolean" then
+    error("failed to inspect application focus")
+  end
+  return frontmost
 end
 
 local function application_name(application)
@@ -165,10 +241,82 @@ local function toggle_application(application)
   if not ok then
     error("failed to " .. operation .. " application: " .. tostring(result))
   end
-  if result ~= true then
-    error("failed to " .. operation .. " application")
-  end
   return hidden
+end
+
+local function activate_application(application)
+  if type(application.activate) ~= "function" then
+    error("application cannot focus")
+  end
+
+  local ok, result = pcall(application.activate, application, true)
+  if not ok then
+    error("failed to focus application: " .. tostring(result))
+  end
+  if result ~= true then
+    error("failed to focus application")
+  end
+end
+
+local function remember_previous_application(context, target)
+  local previous = frontmost_application()
+  if previous == target then
+    previous = previous_activated_application
+  end
+  if previous and previous ~= target then
+    previous_application_by_instance[target_key(context)] = previous
+  end
+end
+
+local function refocus_previous_application(context, target)
+  local key = target_key(context)
+  local previous = previous_application_by_instance[key]
+  previous_application_by_instance[key] = nil
+  if not previous then
+    previous = frontmost_application()
+  end
+  if previous and previous ~= target and application_is_running(previous) then
+    activate_application(previous)
+  end
+end
+
+local function unhide_application(application)
+  if type(application.unhide) ~= "function" then
+    error("application cannot show")
+  end
+
+  local ok, result = pcall(application.unhide, application)
+  if not ok then
+    error("failed to show application: " .. tostring(result))
+  end
+end
+
+local function show_application(context, application, bundle_id, focus_on_show)
+  local key = target_key(context)
+  local target_bundle_id = bundle_id
+  if application then
+    if application_is_running(application) and application_has_main_window(application) then
+      previous_application_by_instance[key] = nil
+      if focus_on_show then
+        remember_previous_application(context, application)
+      end
+      if application_is_actually_hidden(application) then
+        unhide_application(application)
+      end
+      if focus_on_show then
+        activate_application(application)
+      end
+      return
+    end
+    target_bundle_id = target_bundle_id or application_bundle_id(application)
+  end
+
+  previous_application_by_instance[key] = nil
+  remember_previous_application(context, application)
+  if not target_bundle_id then
+    error("application cannot show")
+  end
+  launch_or_focus_application(target_bundle_id)
 end
 
 local function close_application(application)
@@ -191,6 +339,7 @@ return {
   settingsSchemaVersion = 1,
   settingsSchema = {
     { type = "text", key = "bundleID", label = "Application bundle ID", maxLength = 128 },
+    { type = "boolean", key = "focusOnShow", label = "Focus application when shown", default = false },
   },
 
   appearance = function(context)
@@ -217,18 +366,23 @@ return {
   end,
 
   press = function(context)
-    local application, bundle_id = application_for(context)
-    if not application then
-      if bundle_id ~= nil then
-        launch_or_focus_application(bundle_id)
-      else
-        error("no frontmost application")
-      end
-    else
+    local application, bundle_id, focus_on_show = application_for(context)
+    if not application and bundle_id == nil then
+      error("no frontmost application")
+    elseif application and application_is_frontmost(application) and not application_is_hidden(application) then
+      remember_previous_application(context, application)
       local was_hidden = toggle_application(application)
+      if not was_hidden then
+        refocus_previous_application(context, application)
+      end
       if bundle_id == nil then
         local key = target_key(context)
         target_by_instance[key] = was_hidden and nil or application
+      end
+    else
+      show_application(context, application, bundle_id, focus_on_show)
+      if bundle_id == nil then
+        target_by_instance[target_key(context)] = nil
       end
     end
   end,
@@ -242,8 +396,10 @@ return {
     end
 
     close_application(application)
+    local key = target_key(context)
     if bundle_id == nil then
-      target_by_instance[target_key(context)] = nil
+      target_by_instance[key] = nil
     end
+    previous_application_by_instance[key] = nil
   end,
 }
