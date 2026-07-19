@@ -54,19 +54,34 @@ local function notify()
   end
 end
 
-local function clearOverride()
-  override = false
+local function closeOverrideAlert()
   if overrideAlert then
     hs.alert.closeSpecific(overrideAlert)
     overrideAlert = nil
   end
 end
 
+local function clearOverride()
+  override = false
+  closeOverrideAlert()
+end
+
 local function showOverride(reason)
-  if overrideAlert then
-    hs.alert.closeSpecific(overrideAlert)
-  end
+  closeOverrideAlert()
   overrideAlert = hs.alert.show("CAFFEINE OVERRIDE ACTIVE\n" .. reason, true)
+end
+
+function caffeine.isOverrideActive()
+  return overrideAlert ~= nil
+end
+
+function caffeine.dismissOverride()
+  if not overrideAlert then
+    return false
+  end
+  closeOverrideAlert()
+  notify()
+  return true
 end
 
 local function applyState(enabled)
@@ -76,13 +91,13 @@ local function applyState(enabled)
       error("failed to set display idle prevention")
     end
   end
-  notify()
 end
 
 function caffeine.setEnabled(enabled, allowOverride)
   if not enabled then
     applyState(false)
     clearOverride()
+    notify()
     return false
   end
 
@@ -90,6 +105,7 @@ function caffeine.setEnabled(enabled, allowOverride)
   if reason and not allowOverride then
     applyState(false)
     clearOverride()
+    notify()
     hs.alert.show("Caffeine disabled: " .. reason)
     return false
   end
@@ -102,6 +118,7 @@ function caffeine.setEnabled(enabled, allowOverride)
   else
     clearOverride()
   end
+  notify()
   return true
 end
 

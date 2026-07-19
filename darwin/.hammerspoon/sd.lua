@@ -11,6 +11,7 @@ local caffeine = require("caffeine")
 local actions = {
   (require("keep-awake")),
   (require("meeting-mode")),
+  (require("caffeine-alert")),
 }
 
 local refreshGeneration = 0
