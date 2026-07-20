@@ -929,3 +929,17 @@ override the tracked root value (and`gc config show` reports the same precedence
   `gc.failure_class=review_attempts_exhausted`,
   `gc.exhausted_attempts=1`, and a durable 1-of-1 failure reason. Only iteration
   bead `fx-ey73` exists; no attempt 2 was materialized.
+
+- 2026-07-20 — GC-11 — implementation committed as `4c95463`, with focused
+  follow-up commits `df08447`, `5c5a0c6`, and `d709300`. Added the repeatable
+  `gascity:demo`, `gascity:demo:repair`, `gascity:demo:halt`, and
+  `gascity:demo:reset` tasks, the fixture-rig demo runner, durable artifact and
+  write-back checks, duplicate-import assertion, scoped reset cleanup, and
+  README command sequence. Targeted syntax, shellcheck, task exposure, and
+  diff checks pass; repository tests pass (148 passed, 2 skipped; worklease
+  tests 4 passed). Independent verification found no remaining static defect.
+  Live criteria remain unverified because the existing Gas City controller is
+  unavailable (`controller_not_running`, `no_agents_running`) and
+  `gc doctor --json` reports `failed=1`, `blocking_failed=1`,
+  `order-firing-current`; rerun the demo after the controller is recovered
+  before checking GC-11 acceptance boxes.
