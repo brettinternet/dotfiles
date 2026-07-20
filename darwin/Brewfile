@@ -7,17 +7,10 @@ brew "mas"
 brew "trash-cli"
 brew "wget"
 
-# CLI + GUI
-brew "wireguard-tools"
-
 # GUI
-cask "db-browser-for-sqlite"
-cask "discord"
-cask "elgato-control-center"
 cask "elgato-stream-deck"
 cask "font-fira-code"
 cask "font-hack-nerd-font"
-cask "ghostty"
 cask "github"
 cask "ungoogled-chromium"
 cask "gpg-suite"
@@ -25,14 +18,7 @@ cask "hammerspoon"
 cask "maccy"
 cask "slack"
 cask "spotify"
-cask "vnc-viewer"
 cask "visual-studio-code"
-cask "vlc"
-cask "zoom"
 
 # AppStore
-mas "Bitwarden", id: 1352778147 # Safari support
-mas "Home Assistant", id: 1099568401
-mas "uBlock Origin Lite", id: 6745342698
-mas "Windows App", id: 1295203466 # Microsoft Remote Desktop
 mas "Xcode", id: 497799835

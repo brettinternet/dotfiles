@@ -1,0 +1,17 @@
+# CLI
+brew "wireguard-tools"
+
+# GUI
+cask "db-browser-for-sqlite"
+cask "discord"
+cask "elgato-control-center"
+cask "ghostty"
+cask "vnc-viewer"
+cask "zoom"
+
+# AppStore
+mas "Bitwarden", id: 1352778147 # Safari support
+mas "Home Assistant", id: 1099568401
+mas "uBlock Origin Lite", id: 6745342698
+mas "Windows App", id: 1295203466 # Microsoft Remote Desktop
+mas "Xcode", id: 497799835
