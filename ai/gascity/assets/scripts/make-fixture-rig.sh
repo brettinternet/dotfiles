@@ -95,9 +95,13 @@ CLAUDE.md
 .dolt-backup/
 EOF
 
+mkdir -p "$RIG_DIR/assets/scripts"
+cp "$SCRIPT_DIR/review-check.sh" "$RIG_DIR/assets/scripts/review-check.sh"
+chmod +x "$RIG_DIR/assets/scripts/review-check.sh"
+
 cp "$BACKLOG_SOURCE" "$RIG_DIR/backlog.md"
 
-git -C "$RIG_DIR" add AGENTS.md hello.py check.sh .gitignore backlog.md
+git -C "$RIG_DIR" add AGENTS.md hello.py check.sh .gitignore backlog.md assets/scripts/review-check.sh
 if ! git -C "$RIG_DIR" diff --cached --quiet; then
   git -C "$RIG_DIR" -c user.name='GC fixture' -c user.email='gc-fixture@example.invalid' \
     commit -q -m 'Refresh GC-04 fixture rig'

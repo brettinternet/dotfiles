@@ -875,3 +875,25 @@ override the tracked root value (and`gc config show` reports the same precedence
   Pushover unset logged both notifications. The live dispatch workflow remains a
   non-gating GC-11 follow-up; Pushover remains at-least-once because an external
   acceptance cannot atomically commit with the sidecar SQLite outbox.
+
+- 2026-07-19 — GC-07 — installed gc 1.3.5 rejects `{{max_repair_attempts}}` in
+  integer `steps.check.max_attempts` fields after substitution. Kept the default
+  two-attempt `backlog-item` formula and added literal-budget variants
+  `backlog-item-repair-1`, `backlog-item-repair-2`, and `backlog-item-repair-3`;
+  the one-attempt variant provides the bounded exhaustion path. Added
+  `assets/scripts/review-check.sh`, which captures only plan/acceptance criteria,
+  current diff, and the latest report, invokes the Claude reviewer with JSON
+  schema validation, persists `reviewer-input.md`, `review.md`, and
+  `verdict.json`, and has a deterministic `fixture:fail-once` first-attempt
+  gate. Formula lint/show passed; checker smoke passed fail-once attempt 1 and
+  pass attempt 2 with a real Claude one-shot. Live controller dispatch remains
+  pending after the supervisor restart left the city in `starting_bead_store`.
+
+- 2026-07-19 — GC-07 — after correcting all repair variants to the installed
+  binding-qualified fixture targets, `gc lint` and `gc formula show` pass for
+  literal budgets 1/2/3 and a fresh `gc sling ... --on backlog-item-repair-2`
+  cooks/routes the graph. A clean `gc stop`/`gc start` restored the controller
+  and dispatcher, but no worker session completed the live fixture workflow;
+  smoke beads were closed after preserving their route/session metadata. The
+  four GC-07 acceptance lines remain unchecked pending end-to-end worker
+  artifacts and fresh-session event evidence.

@@ -33,3 +33,16 @@ Acceptance criteria:
 
 - [ ] The validation command is shown exactly as `./check.sh`.
 - [ ] The comment mentions that `./check.sh --fail` is an intentional failure mode.
+
+## FIX-REPAIR — Exercise the bounded repair loop
+
+Add the `REPAIR-READY` marker to `AGENTS.md` and leave the existing fixture
+check behavior unchanged.
+
+Review harness marker: `fixture:fail-once`.
+
+Acceptance criteria:
+
+- [ ] `AGENTS.md` contains exactly one `REPAIR-READY` marker.
+- [ ] `./check.sh` still passes with no environment variables set.
+- [ ] Keep the implementation in `AGENTS.md`; do not change `hello.py`.
