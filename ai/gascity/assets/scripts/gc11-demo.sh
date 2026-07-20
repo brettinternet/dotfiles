@@ -200,7 +200,7 @@ append_id "$STATE_DIR/root-bead-ids" "$root_id"
 printf 'gc11-demo: dispatched %s at %s using %s\n' "$FORMULA" "$TARGET" "$root_id"
 
 wait_for_workflow() {
-  local deadline=$((SECONDS + WAIT_SECONDS)) root_json status outcome failure remaining sleep_for
+  local deadline=$((SECONDS + WAIT_SECONDS)) root_json status failure remaining sleep_for
   while ((SECONDS < deadline)); do
     root_json=$("${GC_CMD[@]}" bd show "$root_id" --json 2>/dev/null || true)
     if [[ -n $root_json ]]; then
