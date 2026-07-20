@@ -18,6 +18,8 @@ elif [[ -n ${GC_RIG:-} ]]; then
   rig_path=$(jq -er '.rig.path // .path' <<<"$rig_json") ||
     fail "configured rig has no path: $GC_RIG"
   REPO_ROOT=$(cd -- "$rig_path" && pwd)
+elif [[ -n ${BEADS_DIR:-} && -d ${BEADS_DIR} ]]; then
+  REPO_ROOT=$(cd -- "$BEADS_DIR/.." && pwd)
 elif [[ -d "$PWD/.gascity/work" ]]; then
   REPO_ROOT=$PWD
 elif [[ -d "$SCRIPT_ROOT/.gascity/work" ]]; then
@@ -83,7 +85,7 @@ repo_diff=$(git -C "$REPO_ROOT" diff --no-ext-diff HEAD -- .)
 untracked_diff=
 while IFS= read -r -d '' untracked_path; do
   case $untracked_path in
-    .gascity|.gascity/*) continue ;;
+    .gascity|.gascity/*|.omp|.omp/*|.local/fixture-rig/.omp|.local/fixture-rig/.omp/*) continue ;;
   esac
   untracked_output=
   if untracked_output=$(git -C "$REPO_ROOT" diff --no-ext-diff --no-index /dev/null "$REPO_ROOT/$untracked_path"); then
@@ -116,6 +118,10 @@ fi
 schema='{"type":"object","additionalProperties":false,"properties":{"verdict":{"type":"string","enum":["pass","fail"]},"findings":{"type":"array","items":{"type":"string"}}},"required":["verdict","findings"]}'
 review_prompt=$(cat "$input")
 reviewer=${GC_REVIEW_CHECK_CLAUDE:-claude}
+if [[ $reviewer == claude ]] && ! command -v "$reviewer" >/dev/null 2>&1; then
+  local_claude=${HOME:-}/.local/bin/claude
+  [[ -x $local_claude ]] && reviewer=$local_claude
+fi
 tmp_dir=$(mktemp -d "${TMPDIR:-/tmp}/gc-review-check.XXXXXX")
 trap 'trash "$tmp_dir" 2>/dev/null || true' EXIT
 raw_output=$tmp_dir/reviewer.json

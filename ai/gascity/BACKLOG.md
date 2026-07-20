@@ -318,12 +318,12 @@ change.
 
 Acceptance:
 
-- [ ] Fixture "fails-once" task: attempt 1 fails review, attempt 2 passes; both
+- [x] Fixture "fails-once" task: attempt 1 fails review, attempt 2 passes; both
       attempts preserved as iteration beads + `attempts/1..2/` artifacts.
-- [ ] Each repair attempt is a fresh implementer session (evidence from events).
+- [x] Each repair attempt is a fresh implementer session (evidence from events).
 - [ ] With `max_repair_attempts=1` the workflow halts failed at the limit and the root
       bead records exhaustion; nothing loops unbounded.
-- [ ] Reviewer input assembled by the script contains no prior attempt transcripts
+- [x] Reviewer input assembled by the script contains no prior attempt transcripts
       (inspect the script + one invocation's captured input).
 
 Depends on: GC-06
@@ -907,3 +907,14 @@ override the tracked root value (and`gc config show` reports the same precedence
   `GC_ITERATION`/`GC_ATTEMPT` when provided, fails closed on ambiguous plans,
   and reviews `git diff HEAD` so staged changes are included. Verify/finalize
   instructions now consume the latest implementer attempt.
+
+- 2026-07-20 — GC-07 — canonical two-attempt fixture run `fx-i33` verified
+  attempt-1 reviewer failure and attempt-2 reviewer pass with distinct fresh
+  implementer sessions; both review artifacts and bounded reviewer-input
+  captures are durable. The installed checker now falls back to
+  `$HOME/.local/bin/claude` when the worker PATH omits `claude`, and a separate
+  checker smoke produced `attempts/1/review.md` + `verdict.json` with the
+  fail-once verdict under that fallback. Criterion 3 remains open: live
+  max-one roots `fx-q7w`/`fx-p1qx` failed before a genuine reviewer verdict
+  (missing command or missing review artifacts) and did not durably close with
+  exhaustion; a fresh dispatcher retry stalled before implementation.
