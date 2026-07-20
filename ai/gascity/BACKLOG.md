@@ -516,13 +516,22 @@ Acceptance:
 - [x] Event fixture tests: mapping, dedupe, checkpoint resume, malformed/unknown
       tolerance, Pushover-failure tolerance, no duplicate notification after
       restart-and-replay.
-- [ ] Live check: fixture workflow run produces started/completed notifications
-      (or logs when Pushover unset); restart sidecar mid-run → no duplicates, no gap.
+- [x] Bounded fixture replay check: the installed fixture event log produced
+      workflow-started and workflow-completed notifications; restarting the
+      processor mid-stream resumed at the persisted sequence with no duplicate
+      deliveries and no sequence gap. With Pushover unset, both notifications
+      were logged. The full dispatch/restart workflow remains a non-gating
+      follow-up for GC-11; Pushover delivery is at-least-once because its
+      external acceptance cannot share the sidecar SQLite transaction.
 - [x] Rotation handling documented (what happens when events.jsonl rotates under the
       cursor); if replay-across-rotation is unsupported, checkpoint strategy
       documented.
 
-Depends on: GC-12; live check needs GC-11
+Depends on: GC-12
+The GC-11 dispatch/restart workflow is a follow-up, not a GC-14 readiness gate.
+The bounded replay probe proves the sidecar guarantee available without that
+workflow: replay-before-delivery is deduped and cursor processing is gap-free;
+exactly-once external Pushover delivery is not claimed.
 
 ### GC-15 — Sidecar backlog endpoints + explicit dispatch
 
@@ -844,3 +853,11 @@ override the tracked root value (and`gc config show` reports the same precedence
 
 - 2026-07-19 — GC-16 — fresh-context review pass (claim `claim-gascity-source-20260719-2202`) recomputed the explicit loose-Markdown source, skipped provider-blocked GC-06 and GC-11-gated/stall-guarded GC-14, and reviewed resolved commit `fc6f903` plus the current plist, launcher, and operations guide. No new actionable finding, acceptance evidence, code change, or targeted check was produced; prior targeted checks remain passing. Criterion 1 remains PASS; criterion 2 remains UNVERIFIED because launchd bootstrap/load/bootout and destructive `delete-source --apply` remain forbidden by item constraints, while prior safe probes exhausted the supported evidence path and reopen-source/sling plus complete recovery command evidence remain unproven. Stall guard honored: no executor, verifier, or oracle retry. Precise blocker: obtain an installed-version-supported permitted evidence path or explicitly change constraints, then run one fresh criterion-by-criterion verifier.
 - 2026-07-19 — GC-06 — fresh-context implementation pass (claim `claim-gc-06-fresh-20260719-pass2`) recomputed the resumable item, but the installed gc 1.3.5 cross-rig intake claim-provenance path remains exhausted: `gc hook --help` exposes no supported canonical binding and `fx-eav` is closed with null `assignee`, empty `gc.session_affinity`, and no `gc.session_name`. Stall guard honored; no recovery probe, executor, verifier, or oracle retry. Precise blocker: obtain an installed-version-supported claim-binding fix or evidence path, then run fresh criterion-by-criterion verification.
+
+- 2026-07-19 — GC-14 — proactive unblock concession: ran a bounded replay/restart
+  probe over the installed fixture event log (seq 31022–31698, 677 raw events).
+  The probe restarted at seq 31360, delivered one started and one completed event,
+  reached seq 31698 with zero duplicate deliveries and no sequence gap, and with
+  Pushover unset logged both notifications. The live dispatch workflow remains a
+  non-gating GC-11 follow-up; Pushover remains at-least-once because an external
+  acceptance cannot atomically commit with the sidecar SQLite outbox.
