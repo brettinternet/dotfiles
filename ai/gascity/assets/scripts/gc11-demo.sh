@@ -230,6 +230,10 @@ if [[ $MODE == halt ]]; then
   [[ $root_failure == review_attempts_exhausted ]] || fail 'halt did not record review-attempt exhaustion metadata'
   exhausted=$(jq -r 'if type == "array" then .[0].metadata["gc.exhausted_attempts"] // "" else .metadata["gc.exhausted_attempts"] // "" end' <<<"$root_json")
   [[ $exhausted == 1 ]] || fail "halt recorded exhausted attempts as ${exhausted:-<missing>}"
+  if ! "${GC_CMD[@]}" doctor --json >"$STATE_DIR/doctor.json"; then
+    fail 'gc doctor --json failed'
+  fi
+  jq -e '(.failed == 0) and (.blocking_failed == 0)' "$STATE_DIR/doctor.json" >/dev/null || fail 'gc doctor --json was not clean'
   printf 'gc11-demo: expected halt after %s review attempt(s); no write-back performed\n' "$exhausted"
   exit 0
 fi
