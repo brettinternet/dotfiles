@@ -23,46 +23,57 @@ fi
 WORK_ROOT=${GC_WORKFLOW_ROOT:-}
 if [[ -n $WORK_ROOT && $WORK_ROOT != /* ]]; then
   WORK_ROOT="$REPO_ROOT/.gascity/work/$WORK_ROOT"
+elif [[ -n ${GC_BEAD_ID:-} ]]; then
+  bead_json=$(gc bd show "$GC_BEAD_ID" --json) ||
+    fail "cannot read assigned bead: $GC_BEAD_ID"
+  root_id=$(jq -er '
+    if type == "array" then .[0].metadata["gc.root_bead_id"]
+    else .metadata["gc.root_bead_id"]
+    end
+  ' <<<"$bead_json") || fail "assigned bead has no workflow root: $GC_BEAD_ID"
+  WORK_ROOT="$REPO_ROOT/.gascity/work/$root_id"
 elif [[ -z $WORK_ROOT ]]; then
   work_base="$REPO_ROOT/.gascity/work"
   [[ -d $work_base ]] || fail "missing workflow directory: $work_base"
-  latest_mtime=-1
-  latest_plan=
-  while IFS= read -r -d '' plan_path; do
-    plan_mtime=$(stat -f '%m' "$plan_path")
-    if ((plan_mtime > latest_mtime)); then
-      latest_mtime=$plan_mtime
-      latest_plan=$plan_path
-    fi
-  done < <(find "$work_base" -mindepth 2 -maxdepth 2 -type f -name plan.md -print0)
-  [[ -n $latest_plan ]] || fail "no durable workflow plan found below $work_base"
-  WORK_ROOT=${latest_plan%/plan.md}
+  shopt -s nullglob
+  plan_paths=("$work_base"/*/plan.md)
+  shopt -u nullglob
+  ((${#plan_paths[@]} == 1)) || fail "GC_WORKFLOW_ROOT or GC_BEAD_ID is required when workflow plans are ambiguous"
+  WORK_ROOT=${plan_paths[0]%/plan.md}
 fi
 
 [[ -d $WORK_ROOT ]] || fail "missing workflow root: $WORK_ROOT"
+
 PLAN=$WORK_ROOT/plan.md
 [[ -f $PLAN ]] || fail "missing plan: $PLAN"
 
-attempt=-1
-report=
-for report_path in "$WORK_ROOT"/attempts/*/report.md; do
-  [[ -f $report_path ]] || continue
-  attempt_name=${report_path%/report.md}
-  attempt_name=${attempt_name##*/}
-  [[ $attempt_name =~ ^[0-9]+$ ]] || continue
-  if ((attempt_name > attempt)); then
-    attempt=$attempt_name
-    report=$report_path
-  fi
-done
-((attempt >= 1)) || fail "no implementer report found below $WORK_ROOT/attempts"
+attempt=${GC_ITERATION:-${GC_ATTEMPT:-}}
+if [[ -n $attempt ]]; then
+  [[ $attempt =~ ^[0-9]+$ ]] || fail "invalid review iteration: $attempt"
+  report="$WORK_ROOT/attempts/$attempt/report.md"
+  [[ -f $report ]] || fail "missing implementer report for iteration $attempt"
+else
+  attempt=-1
+  report=
+  for report_path in "$WORK_ROOT"/attempts/*/report.md; do
+    [[ -f $report_path ]] || continue
+    attempt_name=${report_path%/report.md}
+    attempt_name=${attempt_name##*/}
+    [[ $attempt_name =~ ^[0-9]+$ ]] || continue
+    if ((attempt_name > attempt)); then
+      attempt=$attempt_name
+      report=$report_path
+    fi
+  done
+  ((attempt >= 1)) || fail "no implementer report found below $WORK_ROOT/attempts"
+fi
 
 attempt_dir=${report%/report.md}
 input=$attempt_dir/reviewer-input.md
 verdict_file=$attempt_dir/verdict.json
 review_file=$attempt_dir/review.md
 
-repo_diff=$(git -C "$REPO_ROOT" diff --no-ext-diff)
+repo_diff=$(git -C "$REPO_ROOT" diff --no-ext-diff HEAD)
 if [[ -z $repo_diff ]]; then
   repo_diff=$(git -C "$REPO_ROOT" show --format=fuller --no-ext-diff --stat --patch HEAD)
 fi

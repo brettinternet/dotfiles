@@ -99,6 +99,11 @@ mkdir -p "$RIG_DIR/assets/scripts"
 cp "$SCRIPT_DIR/review-check.sh" "$RIG_DIR/assets/scripts/review-check.sh"
 chmod +x "$RIG_DIR/assets/scripts/review-check.sh"
 
+# Installed gc 1.3.5 resolves exec checks from the implementer work directory.
+mkdir -p "$RIG_DIR/.gc/agents/implementer/assets/scripts"
+cp "$SCRIPT_DIR/review-check.sh" "$RIG_DIR/.gc/agents/implementer/assets/scripts/review-check.sh"
+chmod +x "$RIG_DIR/.gc/agents/implementer/assets/scripts/review-check.sh"
+
 cp "$BACKLOG_SOURCE" "$RIG_DIR/backlog.md"
 
 git -C "$RIG_DIR" add AGENTS.md hello.py check.sh .gitignore backlog.md assets/scripts/review-check.sh

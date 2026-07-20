@@ -897,3 +897,13 @@ override the tracked root value (and`gc config show` reports the same precedence
   smoke beads were closed after preserving their route/session metadata. The
   four GC-07 acceptance lines remain unchecked pending end-to-end worker
   artifacts and fresh-session event evidence.
+
+- 2026-07-19 — GC-07 — review found installed gc 1.3.5 executes the relative
+  checker from the inherited implementer work directory. Kept the required
+  `path = assets/scripts/review-check.sh` and updated fixture generation to
+  mirror the executable into `.gc/agents/implementer/assets/scripts/`, while
+  retaining the tracked rig-root copy. The checker now resolves the workflow
+  root from `GC_WORKFLOW_ROOT` or assigned-bead metadata (`GC_BEAD_ID`), uses
+  `GC_ITERATION`/`GC_ATTEMPT` when provided, fails closed on ambiguous plans,
+  and reviews `git diff HEAD` so staged changes are included. Verify/finalize
+  instructions now consume the latest implementer attempt.
