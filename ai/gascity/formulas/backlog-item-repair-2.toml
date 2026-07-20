@@ -1,0 +1,3 @@
+formula = "backlog-item-repair-2"
+description = "Bounded backlog workflow with two total implement/review attempts."
+extends = ["backlog-item"]
