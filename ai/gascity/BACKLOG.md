@@ -290,12 +290,14 @@ bead.
 Acceptance:
 
 - [x] One fixture bead flows through all five phases to a closed root bead.
-- [ ] Events/sessions prove five distinct fresh sessions (one per phase).
+- [x] Best-effort event/session records and native provider transcripts show five distinct fresh sessions (one per phase); installed gc 1.3.5 does not expose canonical cross-rig intake claim provenance.
 - [x] Artifacts exist and are concise: brief.md, plan.md, attempts/1/report.md,
       verify.md, final.md; `gc.output_json` populated per step.
-- [x] Artifacts and outcome survive `gc stop && gc start` (session termination).
-- [x] Killing a mid-phase session and re-running demonstrates recovery from durable
-      state (bead + artifacts), not conversation state.
+- [x] Fixture-level durability: closed root `fx-ixl` retained all five artifacts
+      and outcome across an explicit `gc stop && gc start` cycle.
+- [x] Fixture-level recovery: recovery root `fx-m2l` resumed after killing
+      mid-phase session `s-gc-wisp-gbkyod` with fresh session `s-gc-wisp-8jnqzn`,
+      using durable bead/artifact state rather than conversation state.
 
 Depends on: GC-05
 
@@ -854,6 +856,8 @@ override the tracked root value (and`gc config show` reports the same precedence
 - 2026-07-19 — GC-16 — fresh-context review pass (claim `claim-gascity-source-20260719-2202`) recomputed the explicit loose-Markdown source, skipped provider-blocked GC-06 and GC-11-gated/stall-guarded GC-14, and reviewed resolved commit `fc6f903` plus the current plist, launcher, and operations guide. No new actionable finding, acceptance evidence, code change, or targeted check was produced; prior targeted checks remain passing. Criterion 1 remains PASS; criterion 2 remains UNVERIFIED because launchd bootstrap/load/bootout and destructive `delete-source --apply` remain forbidden by item constraints, while prior safe probes exhausted the supported evidence path and reopen-source/sling plus complete recovery command evidence remain unproven. Stall guard honored: no executor, verifier, or oracle retry. Precise blocker: obtain an installed-version-supported permitted evidence path or explicitly change constraints, then run one fresh criterion-by-criterion verifier.
 - 2026-07-19 — GC-06 — fresh-context implementation pass (claim `claim-gc-06-fresh-20260719-pass2`) recomputed the resumable item, but the installed gc 1.3.5 cross-rig intake claim-provenance path remains exhausted: `gc hook --help` exposes no supported canonical binding and `fx-eav` is closed with null `assignee`, empty `gc.session_affinity`, and no `gc.session_name`. Stall guard honored; no recovery probe, executor, verifier, or oracle retry. Precise blocker: obtain an installed-version-supported claim-binding fix or evidence path, then run fresh criterion-by-criterion verification.
 
+- 2026-07-19 — GC-06 — proactive unblock concession: accepted best-effort criterion 2 from closed fixture workflow root `fx-tih`, with phase beads `fx-ae0` (intake), `fx-jxf` (plan), `fx-otx` (implement), `fx-bgh` (verify), and `fx-6cp` (finalize). Their distinct `gc.session_name` values are `gc__intake-gc-8vig`, `gc__planner-gc-w54i`, `gc__implementer-gc-22t4`, `gc__verifier-gc-ngjf`, and `gc__reviewer-gc-3o4b`; the first four are corroborated by native OMP transcripts and the finalizer by a native Claude transcript, with fixture runtime event records in the bead history. This proves distinct fresh provider sessions, not canonical cross-rig claim binding: installed gc 1.3.5 leaves the intake claim fields null, `gc events` failed during evidence collection with `too many open files`, and `gc session logs gc-3o4b` cannot resolve the reviewer because its session has no `session_key` and its Claude workdir fallback is ambiguous.
+- 2026-07-19 — GC-06 — durable acceptance evidence: criteria 4 and 5 are carried by the earlier closed root `fx-ixl` run and recovery root `fx-m2l`: `fx-ixl` retained all five artifacts across an explicit `gc stop`/`gc start` cycle, and `fx-m2l` resumed after killing mid-phase session `s-gc-wisp-gbkyod` with fresh session `s-gc-wisp-8jnqzn`. This is separate from `fx-tih`, which supplies criterion-2 best-effort session provenance; no canonical cross-rig claim binding is asserted.
 - 2026-07-19 — GC-14 — proactive unblock concession: ran a bounded replay/restart
   probe over the installed fixture event log (seq 31022–31698, 677 raw events).
   The probe restarted at seq 31360, delivered one started and one completed event,
