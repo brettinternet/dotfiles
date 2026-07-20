@@ -206,7 +206,6 @@ wait_for_workflow() {
     if [[ -n $root_json ]]; then
       printf '%s\n' "$root_json" >"$STATE_DIR/workflow-state.json"
       status=$(jq -r 'if type == "array" then .[0].status // "" else .status // "" end' <<<"$root_json" 2>/dev/null || true)
-      outcome=$(jq -r 'if type == "array" then .[0].metadata["gc.outcome"] // "" else .metadata["gc.outcome"] // "" end' <<<"$root_json" 2>/dev/null || true)
       failure=$(jq -r 'if type == "array" then .[0].metadata["gc.failure_class"] // "" else .metadata["gc.failure_class"] // "" end' <<<"$root_json" 2>/dev/null || true)
       if [[ $failure == review_attempts_exhausted ]]; then
         return 0
