@@ -95,6 +95,9 @@ while IFS= read -r -d '' untracked_path; do
   untracked_diff+=$untracked_output
   untracked_diff+=$'\n'
 done < <(git -C "$REPO_ROOT" ls-files --others --exclude-standard -z)
+if [[ -n $repo_diff && -n $untracked_diff ]]; then
+  repo_diff+=$'\n'
+fi
 repo_diff+=$untracked_diff
 if [[ -z $repo_diff ]]; then
   repo_diff=$(git -C "$REPO_ROOT" show --format=fuller --no-ext-diff --stat --patch HEAD)
