@@ -88,6 +88,7 @@ chmod +x "$RIG_DIR/check.sh"
 cat > "$RIG_DIR/.gitignore" <<'EOF'
 .beads/
 .gc/
+.gc/gc11-demo/
 .agents/
 .claude/
 CLAUDE.md

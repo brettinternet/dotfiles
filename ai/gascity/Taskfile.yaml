@@ -37,3 +37,23 @@ tasks:
     desc: Run focused sidecar tests
     cmds:
       - uv run --project sidecar pytest
+
+  demo:
+    desc: Run the GC-11 happy-path demo
+    cmds:
+      - ./assets/scripts/gc11-demo.sh happy
+
+  demo:repair:
+    desc: Run the GC-11 bounded repair demo
+    cmds:
+      - ./assets/scripts/gc11-demo.sh repair
+
+  demo:halt:
+    desc: Run the GC-11 expected exhaustion demo
+    cmds:
+      - ./assets/scripts/gc11-demo.sh halt
+
+  demo:reset:
+    desc: Reset only beads recorded by the GC-11 demo
+    cmds:
+      - ./assets/scripts/gc11-demo.sh reset
