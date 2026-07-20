@@ -103,6 +103,12 @@ chmod +x "$RIG_DIR/assets/scripts/review-check.sh"
 mkdir -p "$RIG_DIR/.gc/agents/implementer/assets/scripts"
 cp "$SCRIPT_DIR/review-check.sh" "$RIG_DIR/.gc/agents/implementer/assets/scripts/review-check.sh"
 chmod +x "$RIG_DIR/.gc/agents/implementer/assets/scripts/review-check.sh"
+# The live controller may resolve relative exec checks from the city agent
+# workspace rather than the rig worktree.
+CITY_AGENT_SCRIPT_DIR="$CITY_DIR/.gc/agents/implementer/assets/scripts"
+mkdir -p "$CITY_AGENT_SCRIPT_DIR"
+cp "$SCRIPT_DIR/review-check.sh" "$CITY_AGENT_SCRIPT_DIR/review-check.sh"
+chmod +x "$CITY_AGENT_SCRIPT_DIR/review-check.sh"
 
 cp "$BACKLOG_SOURCE" "$RIG_DIR/backlog.md"
 

@@ -12,6 +12,12 @@ SCRIPT_ROOT=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
 
 if [[ -n ${GC_REVIEW_CHECK_ROOT:-} ]]; then
   REPO_ROOT=$(cd -- "$GC_REVIEW_CHECK_ROOT" && pwd)
+elif [[ -n ${GC_RIG:-} ]]; then
+  rig_json=$(gc rig status "$GC_RIG" --json) ||
+    fail "cannot inspect configured rig: $GC_RIG"
+  rig_path=$(jq -er '.rig.path // .path' <<<"$rig_json") ||
+    fail "configured rig has no path: $GC_RIG"
+  REPO_ROOT=$(cd -- "$rig_path" && pwd)
 elif [[ -d "$PWD/.gascity/work" ]]; then
   REPO_ROOT=$PWD
 elif [[ -d "$SCRIPT_ROOT/.gascity/work" ]]; then
@@ -73,14 +79,30 @@ input=$attempt_dir/reviewer-input.md
 verdict_file=$attempt_dir/verdict.json
 review_file=$attempt_dir/review.md
 
-repo_diff=$(git -C "$REPO_ROOT" diff --no-ext-diff HEAD)
+repo_diff=$(git -C "$REPO_ROOT" diff --no-ext-diff HEAD -- .)
+untracked_diff=
+while IFS= read -r -d '' untracked_path; do
+  case $untracked_path in
+    .gascity|.gascity/*) continue ;;
+  esac
+  untracked_output=
+  if untracked_output=$(git -C "$REPO_ROOT" diff --no-ext-diff --no-index /dev/null "$REPO_ROOT/$untracked_path"); then
+    :
+  else
+    diff_status=$?
+    ((diff_status == 1)) || fail "cannot read untracked diff: $untracked_path"
+  fi
+  untracked_diff+=$untracked_output
+  untracked_diff+=$'\n'
+done < <(git -C "$REPO_ROOT" ls-files --others --exclude-standard -z)
+repo_diff+=$untracked_diff
 if [[ -z $repo_diff ]]; then
   repo_diff=$(git -C "$REPO_ROOT" show --format=fuller --no-ext-diff --stat --patch HEAD)
 fi
 
 {
   printf '# Review input\n\n'
-  printf 'This input is limited to the current plan, its acceptance criteria, the current repository diff, and the latest implementer report. Do not inspect prior reports, transcripts, or other workflow artifacts.\n\n'
+  printf 'This input is limited to the current plan, its acceptance criteria, the current repository diff (including non-ignored untracked files), and the latest implementer report. Do not inspect prior reports, transcripts, or other workflow artifacts.\n\n'
   printf '## Plan and acceptance criteria\n\n'
   cat "$PLAN"
   printf '\n## Current repository diff\n\n```diff\n%s\n```\n' "$repo_diff"
@@ -122,7 +144,7 @@ jq -e 'type == "object" and (.verdict == "pass" or .verdict == "fail") and (.fin
 provider_verdict=$(jq -r '.verdict' <<<"$structured")
 findings=$(jq -c '.findings' <<<"$structured")
 
-if grep -Fq 'fixture:fail-once' "$PLAN" && ((attempt == 1)); then
+if grep -Fq 'fixture:fail-once' "$PLAN" "$WORK_ROOT/brief.md" 2>/dev/null && ((attempt == 1)); then
   provider_verdict=fail
   findings=$(jq -c '. + ["Fixture fail-once gate: the first review attempt is intentionally rejected; use this finding on the fresh repair iteration."]' <<<"$findings")
 fi
