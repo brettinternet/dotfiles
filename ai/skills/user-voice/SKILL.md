@@ -18,8 +18,10 @@ Prefer `done, also added coverage for the reopen path` over `Great catch! I've g
 Before returning externally directed text:
 
 1. Put the point first and remove anything uninformative.
-2. Verify facts, certainty, severity, and requested action against the evidence.
-3. Match the form to the intent; do not turn a status or explanation into a question unless an answer is needed.
-4. Remove em dashes, semicolons, stacked requests, canned praise, and unnecessary formatting.
-5. Preserve protected technical capitalization and exact quoted text.
-6. Confirm the workflow permits sending or posting; otherwise return a draft only.
+1. Prioritize clarity, brevity, and directness over formality or polish.
+1. Verify facts, certainty, severity, and requested action against the evidence.
+1. Match the form to the intent; do not turn a status or explanation into a question unless an answer is needed.
+1. Remove em dashes, semicolons, stacked requests, canned praise, and unnecessary formatting.
+1. Preserve protected technical capitalization and exact quoted text.
+1. Confirm the workflow permits sending or posting; otherwise return a draft only.
+1. Don't point out obvious facts such as CI state, unless they are relevant to the request or action.
