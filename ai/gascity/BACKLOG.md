@@ -321,7 +321,7 @@ Acceptance:
 - [x] Fixture "fails-once" task: attempt 1 fails review, attempt 2 passes; both
       attempts preserved as iteration beads + `attempts/1..2/` artifacts.
 - [x] Each repair attempt is a fresh implementer session (evidence from events).
-- [ ] With `max_repair_attempts=1` the workflow halts failed at the limit and the root
+- [x] With `max_repair_attempts=1` the workflow halts failed at the limit and the root
       bead records exhaustion; nothing loops unbounded.
 - [x] Reviewer input assembled by the script contains no prior attempt transcripts
       (inspect the script + one invocation's captured input).
@@ -918,3 +918,14 @@ override the tracked root value (and`gc config show` reports the same precedence
   max-one roots `fx-q7w`/`fx-p1qx` failed before a genuine reviewer verdict
   (missing command or missing review artifacts) and did not durably close with
   exhaustion; a fresh dispatcher retry stalled before implementation.
+
+- 2026-07-20 — GC-07 — recovered genuine max-one root `fx-igzc` after fixing
+  the headless reviewer environment. The checker now finds mise-installed
+  reviewers when worker `HOME`/`PATH` are isolated, unsets the agent-specific
+  Claude config directory, and falls back to an explicit OMP `--model claude`
+  one-shot when the standalone Claude binary has no headless login. The resumed
+  bounded check produced `attempts/1/review.md` + `verdict.json` with a genuine
+  fail verdict, then closed the root with `gc.outcome=fail`,
+  `gc.failure_class=review_attempts_exhausted`,
+  `gc.exhausted_attempts=1`, and a durable 1-of-1 failure reason. Only iteration
+  bead `fx-ey73` exists; no attempt 2 was materialized.

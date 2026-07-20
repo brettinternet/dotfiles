@@ -116,21 +116,61 @@ fi
 } >"$input"
 
 schema='{"type":"object","additionalProperties":false,"properties":{"verdict":{"type":"string","enum":["pass","fail"]},"findings":{"type":"array","items":{"type":"string"}}},"required":["verdict","findings"]}'
-review_prompt=$(cat "$input")
 reviewer=${GC_REVIEW_CHECK_CLAUDE:-claude}
+reviewer_home=${HOME:-}
 if [[ $reviewer == claude ]] && ! command -v "$reviewer" >/dev/null 2>&1; then
-  local_claude=${HOME:-}/.local/bin/claude
-  [[ -x $local_claude ]] && reviewer=$local_claude
+  mise_claude=${MISE_DATA_DIR:-$reviewer_home/.local/share/mise}/installs/claude/latest/claude
+  local_claude=$reviewer_home/.local/bin/claude
+  if [[ ! -x $mise_claude && ! -x $local_claude ]]; then
+    user_name=$(id -un)
+    [[ $user_name =~ ^[a-zA-Z0-9._-]+$ ]] || fail "invalid runtime user: $user_name"
+    eval "reviewer_home=~$user_name"
+    mise_claude=$reviewer_home/.local/share/mise/installs/claude/latest/claude
+    local_claude=$reviewer_home/.local/bin/claude
+  fi
+  if [[ -x $mise_claude ]]; then
+    reviewer=$mise_claude
+  elif [[ -x $local_claude ]]; then
+    reviewer=$local_claude
+  fi
 fi
 tmp_dir=$(mktemp -d "${TMPDIR:-/tmp}/gc-review-check.XXXXXX")
 trap 'trash "$tmp_dir" 2>/dev/null || true' EXIT
 raw_output=$tmp_dir/reviewer.json
 raw_error=$tmp_dir/reviewer.err
 
-if ! (cd "$REPO_ROOT" && "$reviewer" --bare --no-session-persistence --tools '' -p \
-  --output-format json --json-schema "$schema" "$review_prompt" >"$raw_output" 2>"$raw_error"); then
+reviewer_status=0
+(
+  cd "$REPO_ROOT"
+  unset CLAUDE_CONFIG_DIR
+  HOME=$reviewer_home "$reviewer" --safe-mode --no-session-persistence --tools '' -p \
+    --output-format json --json-schema "$schema" <"$input" >"$raw_output" 2>"$raw_error"
+) || reviewer_status=$?
+if ((reviewer_status != 0)); then
   cat "$raw_error" >&2
-  fail "reviewer command failed"
+  cat "$raw_output" >&2
+  omp_reviewer=$reviewer_home/.local/share/mise/installs/github-can1357-oh-my-pi/latest/omp
+  [[ -x $omp_reviewer ]] || fail "reviewer command failed and OMP fallback is unavailable"
+  omp_output=$tmp_dir/reviewer.jsonl
+  if ! (
+    cd "$REPO_ROOT"
+    HOME=$reviewer_home "$omp_reviewer" --model claude --mode json -p --no-session --no-tools \
+      --no-extensions --no-skills --no-rules \
+      --system-prompt 'Review the supplied plan, acceptance criteria, diff, and report. Return only JSON matching {"verdict":"pass|fail","findings":["actionable finding"]}.' \
+      "@$input" >"$omp_output"
+  ); then
+    fail "OMP reviewer fallback failed"
+  fi
+  jq -sce '
+    [.[] |
+      select(.type == "message_end" and .message.role == "assistant") |
+      .message.content[] |
+      select(.type == "text") |
+      .text] |
+    last |
+    fromjson
+  ' "$omp_output" >"$raw_output" || fail "OMP reviewer fallback did not return JSON"
+  reviewer="$omp_reviewer --model claude"
 fi
 
 structured=$(jq -cer '
@@ -144,7 +184,7 @@ structured=$(jq -cer '
   fail 'reviewer did not return JSON'
 }
 
-jq -e 'type == "object" and (.verdict == "pass" or .verdict == "fail") and (.findings | type == "array")' \
+jq -e 'type == "object" and (keys == ["findings", "verdict"]) and (.verdict == "pass" or .verdict == "fail") and (.findings | type == "array" and all(.[]; type == "string"))' \
   <<<"$structured" >/dev/null || {
   printf '%s\n' "$structured" >&2
   fail 'reviewer JSON did not match the verdict schema'
@@ -178,6 +218,27 @@ jq -n \
     jq -r '.[] | "- " + .' <<<"$findings"
   fi
 } >"$review_file"
+
+if [[ $provider_verdict == fail ]]; then
+  workflow_root=${WORK_ROOT##*/}
+  root_json=$(gc bd show "$workflow_root" --json) ||
+    fail "cannot read workflow root: $workflow_root"
+  max_attempts=$(jq -er '
+    if type == "array" then .[0].metadata["gc.var.max_repair_attempts"]
+    else .metadata["gc.var.max_repair_attempts"]
+    end
+  ' <<<"$root_json") || fail "workflow root has no repair limit: $workflow_root"
+  [[ $max_attempts =~ ^[1-9][0-9]*$ ]] ||
+    fail "invalid workflow repair limit: $max_attempts"
+  if ((attempt >= max_attempts)); then
+    gc bd update "$workflow_root" \
+      --set-metadata gc.outcome=fail \
+      --set-metadata gc.failure_class=review_attempts_exhausted \
+      --set-metadata "gc.failure_reason=review failed after $attempt of $max_attempts allowed attempts" \
+      --set-metadata "gc.exhausted_attempts=$attempt" >/dev/null ||
+      fail "cannot record review exhaustion on workflow root: $workflow_root"
+  fi
+fi
 
 printf 'review-check: attempt %s %s (%s)\n' "$attempt" "$provider_verdict" "${input#"$REPO_ROOT"/}"
 if [[ $provider_verdict == pass ]]; then
