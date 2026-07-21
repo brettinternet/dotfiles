@@ -427,7 +427,7 @@ session_state_for_reset() {
           or (($by_id[0].state // "") | type) != "string" then
           error("matching session has malformed template/state")
         elif ($by_id[0].template // $by_id[0].template_name // "") != $template then
-          "missing"
+          "mismatch"
         elif (($by_id[0].closed // false) == true) or (($by_id[0].state // "") == "closed") then
           "closed"
         else
@@ -542,6 +542,12 @@ wake_ready_phase_sessions() {
         wake_status=$?
         wake_diag=
         [[ -s $wake_err ]] && wake_diag=$(tr '\n' ' ' <"$wake_err")
+        if [[ $wake_diag == *"$session_id"* ]] &&
+           [[ $wake_diag =~ ([Cc]losed|[Nn]ot[[:space:]]+found) ]]; then
+          replace_ready_phase_session "$i" "$template" "$session_id"
+          reset_templates+=("$template")
+          break
+        fi
         fail "cannot wake reset session (root=$root_id template=$template session=$session_id exit=$wake_status${wake_diag:+; stderr=$wake_diag})"
       fi
       PHASE_RESET_SESSION_IDS[i]=$session_id
@@ -576,6 +582,40 @@ wait_for_workflow() {
     sleep "$sleep_for"
   done
   fail "workflow root $root_id did not reach a terminal state within ${WAIT_SECONDS}s"
+}
+
+wait_for_phase_sessions_closed() {
+  local deadline=$((SECONDS + WAIT_SECONDS))
+  local i template session_id session_state pending
+  local remaining sleep_for
+
+  while ((SECONDS < deadline)); do
+    pending=
+    for i in "${!PHASE_TEMPLATES[@]}"; do
+      template=${PHASE_TEMPLATES[$i]}
+      session_id=${PHASE_SESSION_IDS[$i]-}
+      [[ -n $session_id ]] ||
+        fail "final phase session ID is missing (root=$root_id template=$template session=<missing>)"
+      session_state=$(session_state_for_reset "$i" "$template" "$session_id")
+      case "$session_state" in
+        missing|closed)
+          ;;
+        present)
+          pending+="${pending:+; }template=$template session=$session_id"
+          ;;
+        *)
+          fail "cannot inspect final phase session (root=$root_id template=$template session=$session_id state=$session_state)"
+          ;;
+      esac
+    done
+    [[ -z $pending ]] && return 0
+    remaining=$((deadline - SECONDS))
+    ((remaining > 0)) || break
+    sleep_for=$POLL_SECONDS
+    ((sleep_for > remaining)) && sleep_for=$remaining
+    sleep "$sleep_for"
+  done
+  fail "phase sessions did not become missing or closed within ${WAIT_SECONDS}s (root=$root_id $pending)"
 }
 
 require_attempt_artifacts() {
@@ -614,6 +654,7 @@ wait_for_workflow
 root_json=$(cat "$STATE_DIR/workflow-state.json")
 root_status=$(jq -r 'if type == "array" then .[0].status // "" else .status // "" end' <<<"$root_json")
 [[ $root_status == closed ]] || fail "workflow root did not close (status=${root_status:-<missing>})"
+wait_for_phase_sessions_closed
 root_failure=$(jq -r 'if type == "array" then .[0].metadata["gc.failure_class"] // "" else .metadata["gc.failure_class"] // "" end' <<<"$root_json")
 WORK_ROOT="$RIG_DIR/.gascity/work/$root_id"
 if [[ $MODE == halt ]]; then

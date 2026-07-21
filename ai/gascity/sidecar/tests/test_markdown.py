@@ -26,10 +26,15 @@ EDGE = Path(__file__).parent / "fixtures"
 def test_fixture_ids_refs_and_actionability() -> None:
     tasks = MarkdownBacklog(FIXTURE, relative_path="fixtures/backlog.md").preview()
 
-    assert [task.id for task in tasks] == ["fix-dep", "fix-review", "fix-independent"]
+    assert [task.id for task in tasks] == [
+        "fix-dep",
+        "fix-review",
+        "fix-independent",
+        "fix-repair",
+    ]
     assert tasks[0].external_ref == "md:fixtures/backlog.md#fix-dep"
     assert tasks[1].dependencies == ("FIX-DEP",)
-    assert [task.actionable for task in tasks] == [True, False, True]
+    assert [task.actionable for task in tasks] == [True, False, True, True]
     assert all(not task.done for task in tasks)
 
 

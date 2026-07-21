@@ -54,6 +54,7 @@ session closes or is not found between discovery and wake, it creates one fresh
 detached session for that exact template, replaces the selected ID, wakes the
 replacement, and continues to dispatch. This is same-template race recovery,
 not generic retry behavior; any other wake failure remains fatal.
+An exact selected ID that resolves under a different template is a fatal identity mismatch; it is never treated as gone or eligible for replacement.
 
 After dispatch, bounded workflow polling asks each phase hook for ready work and
 filters its results to entries whose `gc.root_bead_id` matches the current
@@ -71,9 +72,24 @@ ID wait for the requested startup. If a closed or not-found ID is replaced,
 the replacement is woken once and is considered already wake-requested, so a
 newly selected ID can receive its own single request. No bead is manually
 assigned or closed, and recovery is not a manual step.
+If that selected session closes or disappears after reset succeeds but before wake, the same one-time same-template replacement path used for a closed/not-found race updates `PHASE_SESSION_IDS`, wakes the replacement, and preserves the bounded reset bookkeeping.
 The workflow deadline is bounded by `GC11_WAIT_SECONDS`, which defaults to 3600
 seconds to cover five fresh provider phases plus review and repair. This
-deadline is distinct from the 60-second `GC11_PREWARM_SECONDS` gate.
+deadline is distinct from the 60-second `GC11_PREWARM_SECONDS` gate. The
+post-closure session wait uses the same `GC11_WAIT_SECONDS` deadline and the
+`GC11_POLL_SECONDS` interval (default 5 seconds).
+After the workflow root closes, each public task waits boundedly for the exact
+final selected session ID for every phase template to become missing or closed.
+An exact selected ID resolving under a different template is a fatal identity mismatch, never a missing or closed result that can satisfy this gate or trigger normal replacement.
+The gate reports the root, template, and session ID for session-list, malformed
+result, and timeout failures. Only after every selected phase session is gone or
+closed does the task verify durable workflow reports and outcome artifacts. This
+post-closure session gate applies to happy, repair, and halt; halt checks only
+`brief.md`, `plan.md`, and the single failed attempt's report, review, and
+verdict, with no `verify.md` or `final.md` and no write-back.
+
+The public tasks do not claim live acceptance; their checks describe the
+expected fixture behavior and dependency boundaries.
 
 From the repository root, these task names invoke
 `ai/gascity/assets/scripts/gc11-demo.sh` with the matching mode:
@@ -81,7 +97,8 @@ From the repository root, these task names invoke
 `gascity:demo:halt` → `halt`, and `gascity:demo:reset` → `reset`.
 
 The public happy-path task runs the complete import → dispatch →
-post-dispatch idempotency assertion → workflow → explicit write-back sequence:
+post-dispatch idempotency assertion → workflow → bounded final-session-gone
+gate → durable report-retention checks → explicit write-back sequence:
 
 ```sh
 task gascity:demo
@@ -93,6 +110,7 @@ templates before importing or dispatching. The public task performs the
 discovery, wake/reload, and bounded controller-health gate automatically; it
 does not wait for intake or phase sessions to become active. Once the gate
 passes, sling immediately. The concise manual equivalent is:
+The public task applies the full identity and race rules above. The concise manual equivalent below captures initial phase IDs for wake/reload and the controller-health gate; it does not implement demand-time reset/replacement orchestration.
 
 ```sh
 cd ai/gascity
@@ -145,7 +163,9 @@ cd "$RIG_DIR"
 
 Then import the actionable Markdown task, dispatch the returned bead to the
 intake target, repeat the import after dispatch and verify it returns the same
-bead, wait for an accepted/closed workflow, then write back explicitly:
+bead, wait for the workflow root to close, wait for the captured phase sessions
+to be missing or closed, verify the retained artifacts, then write back
+explicitly:
 
 ```sh
 BEAD_ID="$(GC_BACKLOG_SOURCE=backlog.md "$IMPORT" fix-independent | jq -er '.bead_id')"
@@ -180,6 +200,44 @@ for _ in $(seq 1 120); do
   sleep 1
 done
 test "${STATUS:-}" = closed
+DEADLINE=$((SECONDS + ${GC11_WAIT_SECONDS:-3600}))
+for i in "${!PHASE_IDS[@]}"; do
+  id="${PHASE_IDS[$i]}"
+  template="${PHASE_TEMPLATES[$i]}"
+  SESSION_STATE=
+  while ((SECONDS < DEADLINE)); do
+    SESSION_JSON="$("${GC[@]}" session list --state all --json)"
+    SESSION_STATE="$(jq -er --arg id "$id" --arg template "$template" '
+      if type != "object" or (.sessions | type) != "array" then
+        error("session list result is not an object with sessions")
+      else
+        [.sessions[] | select((.id // .session_id // "") == $id)] |
+        if length == 0 then "missing"
+        elif length != 1 then error("session ID is not unique")
+        elif ((.[0].template // .[0].template_name // "") != $template) then
+          "mismatch"
+        elif ((.[0].closed // false) == true
+              or (.[0].state // "") == "closed") then "closed"
+        else "present"
+        end
+      end' <<<"$SESSION_JSON")"
+    [[ $SESSION_STATE == mismatch ]] && {
+      echo "selected session ID resolves under wrong template: id=$id expected=$template" >&2
+      exit 1
+    }
+    [[ $SESSION_STATE == missing || $SESSION_STATE == closed ]] && break
+    remaining=$((DEADLINE - SECONDS))
+    ((remaining > 0)) || break
+    sleep_for="${GC11_POLL_SECONDS:-5}"
+    ((sleep_for > remaining)) && sleep_for=$remaining
+    sleep "$sleep_for"
+  done
+if [[ $SESSION_STATE != missing && $SESSION_STATE != closed ]]; then
+  echo "phase session did not become missing or closed within ${GC11_WAIT_SECONDS:-3600}s (workflow=$WORKFLOW_ID template=$template session=$id state=${SESSION_STATE:-unknown})" >&2
+  exit 1
+fi
+done
+
 WORK_ROOT=".gascity/work/$WORKFLOW_ID"
 for name in brief.md plan.md verify.md final.md; do test -f "$WORK_ROOT/$name"; done
 for name in "$WORK_ROOT"/attempts/*/report.md \
