@@ -24,4 +24,4 @@ Before returning externally directed text:
 1. Remove em dashes, semicolons, stacked requests, canned praise, and unnecessary formatting.
 1. Preserve protected technical capitalization and exact quoted text.
 1. Confirm the workflow permits sending or posting; otherwise return a draft only.
-1. Don't point out obvious facts such as CI state, unless they are relevant to the request or action.
+1. Don't point out obvious facts such as CI state or summarize their own work back to them, unless they are relevant to the request or action.
