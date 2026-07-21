@@ -30,3 +30,8 @@ source = "."
 name = "control-dispatcher"
 dir = "fixture"
 min_active_sessions = 1
+
+[[patches.agent]]
+name = "intake"
+dir = "fixture"
+min_active_sessions = 1

@@ -39,21 +39,21 @@ tasks:
       - uv run --project sidecar pytest
 
   demo:
-    desc: Run the GC-11 happy-path demo
+    desc: Run GC-11 happy-path with exact-template durable prewarm; wait up to 60 seconds (GC11_PREWARM_SECONDS) only for a healthy running controller, then sling immediately with --nudge; phase startup is current-root demand-driven with demand-time same-template replacement for closed/not-found sessions, stale-session reset/wake/reconcile at most once per selected phase session ID, later polls waiting for startup, and a newly replaced ID receiving its own single wake request; GC11_WAIT_SECONDS defaults to 3600 seconds
     cmds:
       - ./assets/scripts/gc11-demo.sh happy
 
   demo:repair:
-    desc: Run the GC-11 bounded repair demo
+    desc: Run GC-11 bounded repair with exact-template durable prewarm; wait up to 60 seconds (GC11_PREWARM_SECONDS) only for a healthy running controller, then sling immediately with --nudge; phase startup is current-root demand-driven with demand-time same-template replacement for closed/not-found sessions, stale-session reset/wake/reconcile at most once per selected phase session ID, later polls waiting for startup, and a newly replaced ID receiving its own single wake request; GC11_WAIT_SECONDS defaults to 3600 seconds
     cmds:
       - ./assets/scripts/gc11-demo.sh repair
 
   demo:halt:
-    desc: Run the GC-11 expected exhaustion demo
+    desc: Run GC-11 expected exhaustion with exact-template durable prewarm; wait up to 60 seconds (GC11_PREWARM_SECONDS) only for a healthy running controller, then sling immediately with --nudge; phase startup is current-root demand-driven with demand-time same-template replacement for closed/not-found sessions, stale-session reset/wake/reconcile at most once per selected phase session ID, later polls waiting for startup, and a newly replaced ID receiving its own single wake request; GC11_WAIT_SECONDS defaults to 3600 seconds
     cmds:
       - ./assets/scripts/gc11-demo.sh halt
 
   demo:reset:
-    desc: Reset only beads recorded by the GC-11 demo
+    desc: Reset tracked fixture files and remove only GC-11 demo-recorded graphs
     cmds:
       - ./assets/scripts/gc11-demo.sh reset
