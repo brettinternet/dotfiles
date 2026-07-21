@@ -26,50 +26,144 @@ task gascity:down
 
 ## GC-11 demo: Markdown → Beads → workflow → outcome
 
-Run every repeat from the repository root with reset first. Reset clears only
-demo-recorded roots and imported fixture beads; the fixture refresh regenerates
-the ignored rig files:
+Run every repeat from the repository root with reset first. Reset regenerates
+the fixture rig's tracked files and removes only graphs recorded by prior
+GC-11 runs; it deliberately preserves unrelated GC-07 roots:
 
 ```sh
 task gascity:demo:reset
-cd ai/gascity
-./assets/scripts/make-fixture-rig.sh
 ```
+The controller must be healthy and supervisor-managed before dispatch. Each
+public demo (`demo`, `demo:repair`, and `demo:halt`) prepares one durable,
+nonterminal session record for each exact phase template
+(`fixture/gc.intake`, `fixture/gc.planner`, `fixture/gc.implementer`,
+`fixture/gc.verifier`, and `fixture/gc.reviewer`), reusing a matching record
+or creating a detached session. It reloads the supervisor, wakes the selected
+session identities, and reloads again. With `max_active_sessions = 2`, runtime
+capacity remains bounded; durable records do not mean that five workers run at
+once.
+The `GC11_PREWARM_SECONDS` setting controls a bounded gate (default 60 seconds)
+that waits only for a healthy, running controller. It does not wait for intake
+or any phase session to become active. Once the controller is healthy and
+running, the formula is slung immediately with `--nudge`; actual phase runtime
+startup is current-root demand-driven as workflow polling finds ready work.
+Do not manually assign phases, nudge each phase, or recover duplicate workflow
+roots as part of the normal demo.
+Prewarm handles the bounded discovery-to-wake race: if a selected reusable
+session closes or is not found between discovery and wake, it creates one fresh
+detached session for that exact template, replaces the selected ID, wakes the
+replacement, and continues to dispatch. This is same-template race recovery,
+not generic retry behavior; any other wake failure remains fatal.
+
+After dispatch, bounded workflow polling asks each phase hook for ready work and
+filters its results to entries whose `gc.root_bead_id` matches the current
+workflow `root_id`. Assigned or in-progress work is excluded by hook readiness,
+so unrelated roots never control phase selection or trigger resets.
+For the first workflow-order phase with an unassigned ready bead, polling
+selects that phase's durable session identity. During demand-time orchestration,
+if that selected session has since closed or is not found, it creates one fresh
+same-template replacement, updates the selected ID, wakes the replacement, and
+performs the supervisor reconciliation. Otherwise, if the selected session is
+stale or has no process, it resets and wakes that same selected identity, then
+performs one supervisor reconciliation (a batched reload). Each selected phase
+session ID receives at most one reset+wake request; later polls with that same
+ID wait for the requested startup. If a closed or not-found ID is replaced,
+the replacement is woken once and is considered already wake-requested, so a
+newly selected ID can receive its own single request. No bead is manually
+assigned or closed, and recovery is not a manual step.
+The workflow deadline is bounded by `GC11_WAIT_SECONDS`, which defaults to 3600
+seconds to cover five fresh provider phases plus review and repair. This
+deadline is distinct from the 60-second `GC11_PREWARM_SECONDS` gate.
 
 From the repository root, these task names invoke
 `ai/gascity/assets/scripts/gc11-demo.sh` with the matching mode:
 `gascity:demo` → `happy`, `gascity:demo:repair` → `repair`,
 `gascity:demo:halt` → `halt`, and `gascity:demo:reset` → `reset`.
 
-The public happy-path task runs the complete import → workflow → explicit
-write-back sequence:
+The public happy-path task runs the complete import → dispatch →
+post-dispatch idempotency assertion → workflow → explicit write-back sequence:
 
 ```sh
 task gascity:demo
 ```
 
-To run that sequence manually, import the actionable Markdown task, repeat the
-same import, dispatch the returned bead to the intake target, wait for an
-accepted/closed workflow, then write back explicitly:
+To run that sequence manually, first ensure the supervisor-managed controller is
+healthy and prepare durable nonterminal records for all five exact phase
+templates before importing or dispatching. The public task performs the
+discovery, wake/reload, and bounded controller-health gate automatically; it
+does not wait for intake or phase sessions to become active. Once the gate
+passes, sling immediately. The concise manual equivalent is:
 
 ```sh
 cd ai/gascity
 CITY_DIR=$PWD
+GC=(mise exec -- gc --city "$CITY_DIR" --rig fixture)
+"${GC[@]}" doctor
+PHASE_TEMPLATES=(
+  fixture/gc.intake fixture/gc.planner fixture/gc.implementer
+  fixture/gc.verifier fixture/gc.reviewer
+)
+PHASE_IDS=()
+for template in "${PHASE_TEMPLATES[@]}"; do
+  id="$("${GC[@]}" session list --state all --json |
+    jq -r --arg template "$template" '
+      [.sessions[] |
+       select(.template == $template and (.closed // false) != true
+         and .state != "closed")] |
+      .[0].id // empty')"
+  if [[ -z "$id" ]]; then
+    id="$("${GC[@]}" session new "$template" --no-attach --json |
+      jq -er '.session_id // .id // empty')"
+  fi
+  PHASE_IDS+=("$id")
+done
+"${GC[@]}" supervisor reload
+for id in "${PHASE_IDS[@]}"; do
+  "${GC[@]}" session wake "$id" --json
+done
+"${GC[@]}" supervisor reload
+HEALTHY=false
+for _ in $(seq 1 "${GC11_PREWARM_SECONDS:-60}"); do
+  if "${GC[@]}" status --json 2>/dev/null |
+    jq -e '
+      (.running == true or .controller.running == true
+       or .status == "running" or .controller.status == "running")
+      and
+      (.health.usable == true or .controller.health.usable == true)
+    ' >/dev/null; then
+    HEALTHY=true
+    break
+  fi
+  sleep 1
+done
+test "$HEALTHY" = true
 RIG_DIR=$CITY_DIR/.local/fixture-rig
 IMPORT=$CITY_DIR/commands/backlog-import/run.sh
 WRITEBACK=$CITY_DIR/commands/backlog-writeback/run.sh
 cd "$RIG_DIR"
+```
+
+Then import the actionable Markdown task, dispatch the returned bead to the
+intake target, repeat the import after dispatch and verify it returns the same
+bead, wait for an accepted/closed workflow, then write back explicitly:
+
+```sh
 BEAD_ID="$(GC_BACKLOG_SOURCE=backlog.md "$IMPORT" fix-independent | jq -er '.bead_id')"
-GC_BACKLOG_SOURCE=backlog.md "$IMPORT" fix-independent
+WORKFLOW_ID="$(
+  mise exec -- gc --city "$CITY_DIR" --rig fixture sling fixture/gc.intake \
+    backlog-item --formula --nudge --var item="$BEAD_ID" \
+    --var max_repair_attempts=2 --json | jq -er '.workflow_id'
+)"
+POST_DISPATCH_BEAD_ID="$(
+  GC_BACKLOG_SOURCE=backlog.md "$IMPORT" fix-independent |
+    jq -er --arg bead "$BEAD_ID" '
+      select(.action == "skipped" and .bead_id == $bead) | .bead_id'
+)"
+test "$POST_DISPATCH_BEAD_ID" = "$BEAD_ID"
 bd search - --external-contains 'md:backlog.md#fix-independent' \
   --status all --limit 0 --json |
   jq -er '[.[] | select(.external_ref == "md:backlog.md#fix-independent")] |
     if length == 1 then .[0].id else error("expected exactly one bead") end'
-WORKFLOW_ID="$(
-  mise exec -- gc --city "$CITY_DIR" --rig fixture sling fixture/gc.intake \
-    backlog-item --formula --var item="$BEAD_ID" \
-    --var max_repair_attempts=2 --json | jq -er '.workflow_id'
-)"
 for _ in $(seq 1 120); do
   SHOW_JSON="$(mise exec -- gc --city "$CITY_DIR" --rig fixture \
     bd show "$WORKFLOW_ID" --json)"
@@ -117,14 +211,17 @@ task gascity:demo:halt
 ```
 
 All dispatches use the supported `fixture/gc.intake` target, never bare
-`fixture`. A successful path closes the imported source bead before
-`backlog-writeback`; the expected halt leaves that source bead open and does
-not write back. The max-one-live exhaustion evidence is an expected
-halt/demo dependency boundary, not a claim that GC-07 is complete.
+`fixture`. Successful paths close the imported source bead before
+`backlog-writeback`; they retain `brief.md`, `plan.md`, `verify.md`, `final.md`,
+and every attempt's report, review, and verdict under
+`.gascity/work/<root>/`. The expected halt closes with
+`gc.failure_class=review_attempts_exhausted` and
+`gc.exhausted_attempts=1`; it retains only `brief.md`, `plan.md`, and exactly
+one failed attempt's report, review, and verdict, leaves the source bead open,
+and does not write back. It does not produce `verify.md` or `final.md`. The
+max-one-live exhaustion evidence is an expected halt/demo dependency boundary,
+not a claim that GC-07 is complete.
 
-Intermediate and final reports remain durable after sessions exit under
-`.gascity/work/<root>/`: `brief.md`, `plan.md`, `verify.md`, `final.md`, and
-each `attempts/<n>/` report, review, and verdict.
 Finish every run with the doctor gate:
 
 ```sh
