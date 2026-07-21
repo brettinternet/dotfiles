@@ -1,10 +1,10 @@
 modelRoles:
-  default: openai-codex/gpt-5.6-luna:xhigh
+  default: openai-codex/gpt-5.6-terra:high
   smol: openai-codex/gpt-5.6-luna:low
   slow: openai-codex/gpt-5.6-sol:max
   designer: openrouter/moonshotai/kimi-k3:xhigh
   vision: openai-codex/gpt-5.6-sol:high
-  task: openai-codex/gpt-5.6-luna:high
+  task: openai-codex/gpt-5.6-luna:xhigh
   commit: openai-codex/gpt-5.6-luna:low
   plan: openai-codex/gpt-5.6-sol:high
   advisor: openai-codex/gpt-5.6-luna:high
