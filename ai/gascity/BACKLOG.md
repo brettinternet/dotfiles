@@ -422,17 +422,17 @@ Acceptance:
 - [ ] All intermediate reports + final report present after sessions are gone.
 - [ ] `gc doctor` clean at the end.
 
-Progress (2026-07-21): implementation and static verification are complete, but live
-acceptance remains blocked by the machine-wide Gas City supervisor exhausting its
-file-descriptor limit. The latest happy-path run reached root `fx-wjco`; intake and
-plan closed with durable `gc.output_json`, then implementer startup failed. Supervisor
-evidence records `pipe: too many open files`, `open /dev/null: too many open files`,
-and provider errors while copying the `fixture/gc.implementer` pack overlay. The run
-also exposed and fixed controller-only prewarm, one-shot session reset/wake, and
-closed-session replacement races. Static checks pass (`bash -n`, ShellCheck,
-`git diff --check`); repository tests pass (148 passed, 2 skipped; Worklease 4/4).
-Next: repair the supervisor file-descriptor leak outside this repository, restart it,
-then run happy, repair, and halt demos and check all four acceptance boxes.
+Progress (2026-07-21): implementation and static verification are complete, including
+a bounded check that every exact selected phase session is missing or closed before
+durable report retention is asserted. Live acceptance remains blocked by the
+machine-wide Gas City supervisor exhausting its file-descriptor limit. A fresh
+happy-path retry imported `fix-independent` idempotently, but stalled while preparing
+phase sessions; current supervisor logs again record `open ...: too many open files`
+for city metadata and Beads configuration. The earlier run reached root `fx-wjco`;
+intake and plan closed with durable `gc.output_json`, then implementer startup failed.
+Static checks pass (`bash -n`, ShellCheck); the four live acceptance boxes remain
+unchecked. Next: repair the supervisor file-descriptor leak outside this repository,
+restart it, then run happy, repair, and halt demos and check all four boxes.
 
 Depends on: GC-07, GC-09, GC-10
 
