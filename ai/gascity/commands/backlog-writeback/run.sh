@@ -7,6 +7,12 @@ if [[ $# -ne 1 ]]; then
 fi
 source_path=${GC_BACKLOG_SOURCE:-backlog.md}
 root=$(cd "$(dirname "$0")/../.." && pwd)
+if [[ -f "$root/.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  . "$root/.env"
+  set +a
+fi
 args=(backlog writeback --source "$source_path" "$1")
 if [[ -n ${GC_BACKLOG_RELATIVE_PATH:-} ]]; then
   args+=(--relative-path "$GC_BACKLOG_RELATIVE_PATH")
