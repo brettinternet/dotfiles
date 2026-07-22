@@ -4,6 +4,7 @@
 packs.lock
 .beads/
 .local/
+.gascity/
 city.local.toml
 city.sidecar.toml
 *.env

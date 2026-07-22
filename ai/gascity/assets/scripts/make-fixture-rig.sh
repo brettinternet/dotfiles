@@ -56,6 +56,9 @@ The check is deterministic. `./check.sh --fail` is an intentional failure mode
 for exercising review and repair paths; it never changes repository state.
 EOF
 
+# Provider "claude" expects CLAUDE.md; keep it in sync with AGENTS.md.
+ln -sf AGENTS.md "$RIG_DIR/CLAUDE.md"
+
 cat > "$RIG_DIR/hello.py" <<'EOF'
 #!/usr/bin/env python3
 print("hello from fixture")
