@@ -955,3 +955,37 @@ override the tracked root value (and`gc config show` reports the same precedence
   `gc doctor --json` reports `failed=1`, `blocking_failed=1`,
   `order-firing-current`; rerun the demo after the controller is recovered
   before checking GC-11 acceptance boxes.
+
+- 2026-07-21 — GC-11 — the machine-wide `com.gascity.supervisor` (gc 1.3.5)
+  pegged at its 10000-FD limit; root cause is fsnotify v1.9.0 (pinned by gc)
+  leaking watched REG/DIR descriptors on macOS kqueue watcher replacement
+  during config reload (fsnotify/fsnotify#732, fixed upstream in v1.10.x, not
+  fixable from this repo). `lsof` showed the watched tree dominated by
+  `sidecar/.venv` (~44k rows), `.worktrees` (~10k), and `.local/fixture-rig`
+  (~7.7k) inside the city root. Decision: relocate the sidecar venv outside
+  the watched tree via `UV_PROJECT_ENVIRONMENT`, set only in the gitignored
+  `ai/gascity/.env` (machine-local, portable no-op when absent); tracked
+  `commands/backlog-*/run.sh` now source `.env` before invoking `uv run`
+  (mirroring the existing `sidecar/launchd-run.sh` precedent), and
+  `Taskfile.yaml` gained `dotenv: [".env"]` so `task sidecar:serve`/
+  `sidecar:test` pick it up too; `docs/operations.md`'s manual sidecar command
+  now sources `.env` explicitly. Rebuilt the venv at
+  `$HOME/.local/state/gascity-sidecar-venv` with `uv sync`, trashed the old
+  `sidecar/.venv`, and confirmed `uv run --project sidecar pytest` (44 passed,
+  1 skipped) and `commands/backlog-preview/run.sh` both resolve the relocated
+  venv correctly. Checked `gc config explain`/`gc config show`/cached gc docs
+  for a supported watcher-scope or exclude setting: none exists in installed
+  gc 1.3.5. Restarted the supervisor via the supported `gc supervisor stop
+  --wait` / `gc supervisor start` path (tmux-hosted agent sessions survived,
+  since they run under a separate tmux server from the Go supervisor
+  process); measured unique FDs with `lsof -nP -p PID -F f | sort -nu | wc
+  -l`: fresh baseline 12, after `gc start` 2559, after one `gc supervisor
+  reload` + 30s settle 2557, after a second reload 2571 (delta ~2-14 per
+  reload, versus the ~3000/reload previously observed) — well under the
+  10000-FD cap with clear headroom. The launchd plist
+  (`~/Library/LaunchAgents/com.gascity.supervisor.plist`) is gc-managed and
+  sets no per-process file-descriptor limit, and the installed gc binary
+  itself appears to impose the 10000 cap internally, so there is no
+  supported, non-gc-managed way to raise it; the durable mitigation is the
+  slimmer watched tree plus restart discipline until upstream fsnotify is
+  bumped.

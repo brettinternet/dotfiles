@@ -17,12 +17,19 @@ mise exec -- gc doctor
 ```
 
 Start the sidecar in a second terminal. It binds to loopback by default and
-loads environment overrides from the ignored `ai/gascity/.env`:
+loads environment overrides from the ignored `ai/gascity/.env`. Source that
+file first so `uv` itself sees machine-local overrides such as
+`UV_PROJECT_ENVIRONMENT` (the sidecar venv location) before it resolves the
+project:
 
 ```sh
 cd ai/gascity
+set -a && [ -f .env ] && . .env; set +a
 uv run --project sidecar gascity-sidecar serve
 ```
+
+`task sidecar:serve` and `task sidecar:test` load `.env` automatically via the
+Taskfile's `dotenv` setting; `commands/*/run.sh` source it directly.
 
 Read-only sidecar checks:
 

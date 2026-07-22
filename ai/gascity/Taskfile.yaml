@@ -1,6 +1,8 @@
 ---
 version: "3"
 
+dotenv: [".env"]
+
 tasks:
   init:
     desc: Install Gas City dependencies and run diagnostics
