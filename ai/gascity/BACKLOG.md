@@ -133,7 +133,7 @@ commands/ doctor/ assets/ template-fragments/` as needed, plus non-machine dirs
 
 ## Items
 
-### GC-01 — Install gc + bd via mise, capture environment report
+## GC-01 — Install gc + bd via mise, capture environment report
 
 Create `darwin/.config/mise/conf.d/55-gascity.toml` with
 `"github:gastownhall/gascity"` and `"github:gastownhall/beads"` (both publish
@@ -162,7 +162,7 @@ Acceptance:
 - [x] No city created yet; changes limited to `ai/gascity/`,
       `darwin/.config/mise/conf.d/`, and (only if needed) the darwin Brewfile.
 
-### GC-02 — Initialize the city
+## GC-02 — Initialize the city
 
 Run `gc init` for `ai/gascity/` (or init elsewhere and move per gc guidance if init
 resists an existing dir — record which). Trim scaffold to what we use. Set
@@ -196,7 +196,7 @@ Acceptance:
 
 Depends on: GC-01
 
-### GC-03 — OMP primary provider + smoke worker
+## GC-03 — OMP primary provider + smoke worker
 
 Configure `[providers.omp]` (prefer `base = "builtin:omp"`; else ProviderSpec:
 `command = "omp"`, `print_args = ["-p"]`, resume flags per installed docs) pointed at a
@@ -220,7 +220,7 @@ Acceptance:
 
 Depends on: GC-02
 
-### GC-04 — Fixture rig
+## GC-04 — Fixture rig
 
 `assets/scripts/make-fixture-rig.sh`: generates a tiny throwaway git repo under
 `ai/gascity/.local/fixture-rig/` (gitignored) containing: `AGENTS.md` (short repo
@@ -241,7 +241,7 @@ Acceptance:
 
 Depends on: GC-02
 
-### GC-05 — Phase agents
+## GC-05 — Phase agents
 
 Pack agents `agents/{intake,planner,implementer,reviewer,verifier}/` with `agent.toml`
 (rig scope; per decision 4: fresh/one_shot/min 0/max 1) and `prompt.md` per phase,
@@ -275,7 +275,7 @@ Acceptance:
 
 Depends on: GC-03, GC-04
 
-### GC-06 — Linear workflow formula (happy path, no repair loop yet)
+## GC-06 — Linear workflow formula (happy path, no repair loop yet)
 
 `formulas/backlog-item.toml`, formula v2 (`[requires] formula_compiler = ">=2.0.0"`):
 steps intake → plan → implement → verify → finalize with `needs` edges, each routed to
@@ -301,7 +301,7 @@ Acceptance:
 
 Depends on: GC-05
 
-### GC-07 — Bounded repair loop
+## GC-07 — Bounded repair loop
 
 Add `[steps.check]` to the implement step: `mode = "exec"`,
 `path = assets/scripts/review-check.sh`, `max_attempts` fed by
@@ -328,7 +328,7 @@ Acceptance:
 
 Depends on: GC-06
 
-### GC-08 — Markdown backlog adapter (parser + identity, standalone)
+## GC-08 — Markdown backlog adapter (parser + identity, standalone)
 
 Python package `sidecar/src/gascity_sidecar/backlog/` (`base.py` defines the source
 interface: `preview() -> [Task]`, `materialize(task_id)`, `writeback(task_id, state)`;
@@ -336,8 +336,9 @@ interface: `preview() -> [Task]`, `materialize(task_id)`, `writeback(task_id, st
 v1 (document in `docs/backlog-sources.md`):
 
 - A task = a `## ` section in the configured file (default `backlog.md`).
-- Stable external ID: explicit `<!-- id: xyz -->` in the section wins; else slugified
-  title (collision → error, refuse import; never silently disambiguate).
+- Stable external ID: explicit HTML comment marker (`id:` followed by a value,
+  wrapped in an HTML comment) in the section wins; else slugified title (collision
+  → error, refuse import; never silently disambiguate).
 - External ref format: `md:<relative-path>#<id>`.
 - Fingerprint: sha256 of the normalized section body.
 - Dependencies: a `Depends on: <id>[, <id>]` line.
@@ -358,9 +359,11 @@ Acceptance:
       fixture examples for future Linear/Jira adapters (interface + sample payloads
       only, no production code).
 
-Depends on: GC-01 (bd flag verification); parallel-safe with GC-05–07
+Parallel-safe with GC-05–07 (bd flag verification already covered by GC-01).
 
-### GC-09 — Materialize into Beads, idempotently + pack commands
+Depends on: GC-01
+
+## GC-09 — Materialize into Beads, idempotently + pack commands
 
 Adapter `materialize`: look up by `bd list --external-ref <ref> --json`; create with
 `bd create --external-ref ... --metadata '{"source_kind":"markdown","source_path":...,
@@ -386,7 +389,7 @@ Acceptance:
 
 Depends on: GC-08, GC-02
 
-### GC-10 — Explicit write-back command
+## GC-10 — Explicit write-back command
 
 `commands/backlog-writeback/run.sh` → adapter `writeback`: writes accepted completion
 state for one task id back to the Markdown source. Refuse (typed error, no edit) when:
@@ -403,7 +406,7 @@ Acceptance:
 
 Depends on: GC-09
 
-### GC-11 — End-to-end demo: markdown → beads → workflow → outcome
+## GC-11 — End-to-end demo: markdown → beads → workflow → outcome
 
 Wire the full path on the fixture rig: import one fixture task (GC-09), dispatch
 `backlog-item` with the created bead (GC-06/07), let it finish, then run write-back
@@ -436,7 +439,7 @@ restart it, then run happy, repair, and halt demos and check all four boxes.
 
 Depends on: GC-07, GC-09, GC-10
 
-### GC-12 — Sidecar skeleton: config, state, status, gc client
+## GC-12 — Sidecar skeleton: config, state, status, gc client
 
 FastAPI app in `sidecar/` per the agreed structure (main/api/config/state/gascity/
 events/admission/notifications/models + backlog pkg from GC-08). Python 3.12+, uv,
@@ -466,9 +469,11 @@ Acceptance:
 - [x] Fake-gc-client unit tests cover client timeout/nonzero-exit/schema-mismatch
       paths.
 
-Depends on: GC-02 (city exists), GC-08 (package). Parallel-safe with GC-05–07.
+Parallel-safe with GC-05–07 (GC-02 gives city existence, GC-08 gives the package).
 
-### GC-13 — Sidecar control plane: pause/resume/drain, concurrency, budget mode
+Depends on: GC-02, GC-08
+
+## GC-13 — Sidecar control plane: pause/resume/drain, concurrency, budget mode
 
 Endpoints: `POST /control/pause|resume|drain`, `PUT /control/concurrency`,
 `PUT /control/max-repair-attempts`, `PUT /control/codex-budget-mode`. Semantics:
@@ -510,9 +515,11 @@ Acceptance:
 - [ ] Chosen concurrency mechanism + its verification evidence recorded in the
       Decision log.
 
-Depends on: GC-12, GC-11 (needs a dispatchable workflow to prove semantics)
+GC-11 is needed to give a dispatchable workflow to prove semantics against.
 
-### GC-14 — Sidecar events + Pushover
+Depends on: GC-12, GC-11
+
+## GC-14 — Sidecar events + Pushover
 
 Consume gc events: prefer API/SSE with `Last-Event-ID`/`--after-cursor` resume
 (verified supported: monotonic `seq`, replay from cursor, rotation exists); fall back
@@ -547,7 +554,7 @@ The bounded replay probe proves the sidecar guarantee available without that
 workflow: replay-before-delivery is deduped and cursor processing is gap-free;
 exactly-once external Pushover delivery is not claimed.
 
-### GC-15 — Sidecar backlog endpoints + explicit dispatch
+## GC-15 — Sidecar backlog endpoints + explicit dispatch
 
 `POST /backlogs/markdown/preview` and `POST /backlogs/markdown/import` (single task
 id; wraps GC-08/09 adapter; typed request/response). Import materializes only —
@@ -567,7 +574,7 @@ Acceptance:
 
 Depends on: GC-13, GC-09
 
-### GC-16 — Process management + operations guide
+## GC-16 — Process management + operations guide
 
 Documented manual startup (`uv run gascity-sidecar serve`) plus a macOS `launchd`
 example plist in `sidecar/` (working directory set, restart-with-backoff via
@@ -587,9 +594,11 @@ Acceptance:
       outputs sanity-checked (note any verb that differs from this plan in the
       Decision log).
 
-Depends on: GC-12; content finalized after GC-11
+Content finalized after GC-11.
 
-### GC-17 — Architecture + state-ownership + rig-onboarding docs
+Depends on: GC-12
+
+## GC-17 — Architecture + state-ownership + rig-onboarding docs
 
 `docs/architecture.md`: components (gc supervisor/city, beads, phase pools, formula,
 sidecar), data flow diagram (text), decisions 1–10 summarized with their whys.
@@ -609,9 +618,11 @@ Acceptance:
       a second generated fixture rig to prove the instructions).
 - [ ] No doc contradicts the installed-version findings in the Decision log.
 
-Depends on: GC-11; ideally after GC-13–15 so sidecar docs are accurate
+Ideally written after GC-13–15 so sidecar docs are accurate.
 
-### GC-18 — Final acceptance sweep
+Depends on: GC-11
+
+## GC-18 — Final acceptance sweep
 
 Re-verify the completion criteria end-to-end on a clean pass and record results in
 `docs/validation.md` (command + observed result each):
@@ -638,7 +649,7 @@ demo commands, current limitations, and the next smallest step to integrate one 
 repository's `backlog.md` (expected: register repo as rig → point sidecar markdown
 source at its backlog → preview → import one item → dispatch with low concurrency).
 
-Depends on: everything above
+Depends on: GC-01, GC-02, GC-03, GC-04, GC-05, GC-06, GC-07, GC-08, GC-09, GC-10, GC-11, GC-12, GC-13, GC-14, GC-15, GC-16, GC-17
 
 ---
 
@@ -1009,3 +1020,66 @@ override the tracked root value (and`gc config show` reports the same precedence
   until fsnotify is upgraded upstream; this pass did not attempt to reduce
   `.worktrees`/`fixture-rig` churn itself since that is live work in
   progress, not idle bulk.
+
+- 2026-07-21 — GC-11 — `gc doctor` blocking-error/warning cleanup pass.
+  `order-firing-current` CRITICAL-stale on `mol-dog-stale-db` (last fired
+  3300–4900 min ago at city and fixture-rig scope) traced via `gc order
+  check`/`gc order history mol-dog-stale-db` to patrol sessions that never
+  started during the recent supervisor FD-exhaustion window; re-armed with
+  `gc order run mol-dog-stale-db` (city and `--rig fixture`), then closed the
+  3 orphaned unclaimed `mol-dog-stale-db` beads (gc-bwle, gc-gy5d, gc-qrqw)
+  via `bd close --reason` (supported verb, no hand-editing). Residual
+  `order-firing-current` flags on fast (1m/5m) cooldown orders, mostly
+  fixture-rig-scoped, were already present at baseline before any change
+  here and are attributable to live churn from the concurrent `back-11-10`
+  drill session plus FD pressure (confirmed 29,267 open FDs on the
+  supervisor, well past the ~10k cap); restarted the supervisor via the
+  documented `gc supervisor stop --wait` / `start` path (FDs dropped to 17;
+  tmux-hosted sessions, including the live drill, survived unaffected) and
+  `gc reload --async`, which narrowed but did not fully eliminate the
+  fast-cadence lag — treated as expected transient overdue-ness on a live
+  rig, not a new regression, per no further supported remedy short of
+  touching the live session. `events.jsonl` at 116.9 MB (blocking
+  `events-log-size`) was rotated with the documented, cursor-aware
+  supervisor command `gc events rotate --wait`, archiving seq 1–136309 to a
+  compressed sidecar file and resetting the active log to ~1 KB; the
+  sidecar's event-processor cursor is DB-backed and the sidecar isn't
+  running as a service here, so no active consumer was exposed to the
+  documented cross-rotation cursor-invalidation risk (GC-14's docs note a
+  rotated log has no cross-rotation cursor marker — a restarted sidecar
+  would need to resume from its available head, i.e. the new anchor event,
+  not the archived range). The 9 fixture-rig `gc.routed_to` short-form
+  values (fx-0ip, fx-3em, fx-7dv, fx-810, fx-caq, fx-d69, fx-jlv, fx-qa2,
+  fx-t3n) were backfilled to binding-qualified names (e.g.
+  `fixture/gc.verifier`) via `gc bd update <id> --rig fixture
+  --set-metadata gc.routed_to=<value>`, clearing `v2-routed-to-namespace`.
+  `commands/backlog-preview/run.sh` failed on this file with "duplicate
+  dependency 'GC-02' in section 'Items'"; root cause was structural, not a
+  single-line typo as originally framed: every `### GC-XX` item lived nested
+  under one `## Items` heading, and the v1 markdown adapter's
+  `_section_starts` only treats `##` (not `###`) as a section boundary
+  (confirmed against GC-08's own documented grammar: "a task = a `## `
+  section"), so all 18 items' `Depends on:` lines were flattened into one
+  list and any dependency shared by two-or-more items (GC-02 alone is
+  depended on by GC-03/GC-04/GC-09/GC-12) tripped the duplicate check.
+  Promoted all `### GC-XX` headings to `## GC-XX` so each item is its own
+  section; also fixed casualties this uncovered: reworded five annotated
+  `Depends on:` lines (GC-08, GC-12, GC-13, GC-16, GC-17) that mixed
+  free-text parentheticals/semicolons into the ID list (moved the prose to
+  an adjacent sentence, kept the dependency line as bare comma-separated
+  IDs), replaced GC-18's non-ID "everything above" with the explicit
+  GC-01–GC-17 list, and rewrote GC-08's own documentation example of the
+  `id: xyz` HTML-comment marker syntax (its literal HTML comment was itself
+  being matched by the id-marker regex, silently overriding GC-08's real
+  task id to `xyz` and breaking GC-09's dependency resolution) to describe
+  the marker without reproducing matchable syntax.
+  `commands/backlog-preview/run.sh` now parses the full file cleanly (exit
+  0, 27 tasks). Final `gc doctor --json`: `blocking_failed=1, failed=1,
+  warned=4` (down from `blocking_failed=1, failed=1, warned=6` at
+  baseline) — the one remaining blocking failure is the fast-cadence
+  order-firing lag described above. Deliberately skipped, per plan:
+  `bd-split-store` legacy `.beads/embeddeddolt` reconcile (risky
+  export/import, no reason to rush it), `dolt-noms-size` 3+ GB bloat
+  recovery (own troubleshooting doc, not present in this checkout, out of
+  scope here), and `order-tracking-retention`/notification-bead advisories
+  (auto-pruned, self-resolving).
