@@ -1083,3 +1083,24 @@ override the tracked root value (and`gc config show` reports the same precedence
   recovery (own troubleshooting doc, not present in this checkout, out of
   scope here), and `order-tracking-retention`/notification-bead advisories
   (auto-pruned, self-resolving).
+
+- 2026-07-21 — GC-11 — fresh-context implementation pass
+  (`claim-gascity-gc-11-20260721-pass1`) selected the earliest resumable
+  dependency-ready item. A changed, bounded recovery restarted the supported
+  machine-wide supervisor, started the fixture city, and manually refreshed
+  the two critical `dolt-health`/`beads-health` orders at city and fixture
+  scope. The descriptor gate improved from 10,103 before restart to 20 after
+  supervisor startup and 2,597 after `gc start`; `gc doctor --json` then
+  passed with `failed=0` and `blocking_failed=0`. One bounded happy attempt
+  (`GC11_PREWARM_SECONDS=30 GC11_WAIT_SECONDS=900 GC11_POLL_SECONDS=5 task
+  gascity:demo`) imported `fix-independent` idempotently, dispatched root
+  `fx-jktt`, and persisted `brief.md`, `plan.md`, and
+  `attempts/1/{report.md,review.md,verdict.json}` with a pass verdict before
+  the outer command timed out at 1,000 seconds. The root remains
+  `in_progress`; verifier bead `fx-z9dk` and finalizer `fx-ipw1` are open, so
+  no write-back occurred. The supervisor reached 11,003 descriptors after
+  this active-work churn. Do not rerun the happy demo: preserve and resume
+  `fx-jktt` from the verifier boundary only after a fresh supported supervisor
+  recovery and descriptor gate; then run the repair and halt variants under
+  the same bounded gate. The oracle consultation was unavailable before
+  producing advice and was cancelled; no further oracle retry this pass.
