@@ -1,9 +1,11 @@
 ---
-description: Read-only draft PR review — summary plus at most 4 priority findings, nothing posted to GitHub
+description: Draft PR review — read-only unless explicitly told to post comments
 argument-hint: <pr-number|url>
 ---
 
-Switch to plan mode (or otherwise operate strictly read-only). Do not make any changes to code and do not post comments to GitHub.
+Switch to plan mode (or otherwise operate strictly read-only). Do not make any
+changes to code. Do not post anything to GitHub unless the user explicitly asks
+to proceed with posting this draft's comments.
 
 Review PR $ARGUMENTS using `gh pr view` and `gh pr diff`.
 Look up the linked Linear, Jira, or GitHub issue where possible using the branch name or PR comments to get full context.
@@ -35,14 +37,29 @@ Produce a review with:
 Only include the highest-priority comments. If nothing meets that bar, say there are no potentially breaking concerns.
 Reference the file and the _REAL_ line number from the file in the diff that's related to your comment.
 
+## Posting when explicitly requested
+
+Only when the user explicitly asks to proceed with posting the draft's comments:
+
+- Attach every finding that maps to a changed line as a real file-line comment
+  in a `COMMENT` review. Use a top-level review comment only when no specific
+  changed line fits.
+- Approve the PR with a short review comment when there are no blockers.
+- When there are blockers, submit a `COMMENT` review; never submit
+  `REQUEST_CHANGES`, even for a blocking finding.
+- Do not post a review or approval merely because this command was invoked.
+
+Use the GitHub review API for a review with inline comments; `gh pr review`
+cannot attach comments to individual lines.
+
 ## Draft voice
 
-Load and apply the `user-voice` skill to the final draft. This command remains
-read-only and permits drafting only, never posting. Use no praise, and keep each
-point to one sentence where possible. Phrase every priority comment directed at
-the PR author as exactly one sincere question they can answer or push back on.
-Do not stack questions; for a blocker, ask one direct question that names the
-concern.
+Load and apply the `user-voice` skill to the final draft and to any GitHub
+review explicitly authorized above. Otherwise this command remains read-only.
+Use no praise, and keep each point to one sentence where possible. Phrase every
+priority comment directed at the PR author as exactly one sincere question they
+can answer or push back on. Do not stack questions; for a blocker, ask one
+direct question that names the concern.
 
 ## Rules
 

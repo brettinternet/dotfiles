@@ -43,12 +43,16 @@ active PR is silently omitted.
 
 Load and apply the `user-voice` skill to everything posted to GitHub:
 review-thread and inline-comment replies, top-level PR comments, reviewer-request
-summaries, and request-changes or approval bodies. This command grants the
+summaries, and approval or review-comment bodies. This command grants the
 posting authority; the skill controls wording only. Skip trivial nits. Treat
 completed-fix, stale-finding, and disagreement replies as declarative replies.
 For new feedback directed at the PR author, ask exactly one sincere question
 they can answer or push back on. Do not stack questions; for a blocker, ask one
 direct question that names the concern.
+When posting a new finding, use a file-line review comment whenever it maps to a
+line in the current diff; use a top-level review comment only when no specific
+changed line fits. Never submit a `REQUEST_CHANGES` review: post a `COMMENT`
+review instead, so the author receives the feedback without an explicit block.
 
 ## 0. Locate the PR
 
