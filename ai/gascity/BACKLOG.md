@@ -966,10 +966,13 @@ override the tracked root value (and`gc config show` reports the same precedence
   the watched tree via `UV_PROJECT_ENVIRONMENT`, set only in the gitignored
   `ai/gascity/.env` (machine-local, portable no-op when absent); tracked
   `commands/backlog-*/run.sh` now source `.env` before invoking `uv run`
-  (mirroring the existing `sidecar/launchd-run.sh` precedent), and
-  `Taskfile.yaml` gained `dotenv: [".env"]` so `task sidecar:serve`/
-  `sidecar:test` pick it up too; `docs/operations.md`'s manual sidecar command
-  now sources `.env` explicitly. Rebuilt the venv at
+  (mirroring the existing `sidecar/launchd-run.sh` precedent); a top-level
+  `dotenv: [".env"]` in `ai/gascity/Taskfile.yaml` was tried first but rejected
+  by `task` (this file is `taskfile:`-included from the repo-root
+  `Taskfile.dist.yaml`, and go-task forbids `dotenv` on included taskfiles —
+  lefthook's pre-commit task run caught it), so `sidecar:serve`/`sidecar:test`
+  instead source `.env` inline in their `cmds`; `docs/operations.md`'s manual
+  sidecar command now sources `.env` explicitly too. Rebuilt the venv at
   `$HOME/.local/state/gascity-sidecar-venv` with `uv sync`, trashed the old
   `sidecar/.venv`, and confirmed `uv run --project sidecar pytest` (44 passed,
   1 skipped) and `commands/backlog-preview/run.sh` both resolve the relocated

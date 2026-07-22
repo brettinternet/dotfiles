@@ -28,8 +28,10 @@ set -a && [ -f .env ] && . .env; set +a
 uv run --project sidecar gascity-sidecar serve
 ```
 
-`task sidecar:serve` and `task sidecar:test` load `.env` automatically via the
-Taskfile's `dotenv` setting; `commands/*/run.sh` source it directly.
+`task sidecar:serve` and `task sidecar:test` source `.env` inline before
+invoking `uv run` (this Taskfile is included by the repo-root `Taskfile.dist.yaml`,
+and go-task rejects a top-level `dotenv` declaration on included taskfiles);
+`commands/*/run.sh` source it directly.
 
 Read-only sidecar checks:
 
