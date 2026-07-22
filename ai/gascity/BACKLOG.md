@@ -992,3 +992,20 @@ override the tracked root value (and`gc config show` reports the same precedence
   supported, non-gc-managed way to raise it; the durable mitigation is the
   slimmer watched tree plus restart discipline until upstream fsnotify is
   bumped.
+
+- 2026-07-21 — GC-11 — follow-up observation: with the city actively working
+  (a concurrent `back-11-10` session and the fixture-rig control-dispatcher
+  both churning files), the same supervisor climbed from the 2557/2571
+  post-reload counts to 6774 unique FDs within a few minutes at rest (no
+  further manual reload), attributable to `.worktrees/back-11-10` (~2120
+  watched rows) and `.local/fixture-rig` (~2084 watched rows) — the
+  underlying fsnotify leak still fires on every watcher replacement, and
+  active work continuously replaces watches on those trees regardless of the
+  venv relocation. This is not a regression from the relocation: it removed
+  the largest static contributor and cut the per-explicit-reload delta from
+  ~3000 to single/low-double digits, but it does not stop the leak from
+  accumulating during ordinary active-city churn. Restart discipline (a
+  periodic `gc supervisor stop`/`start`) remains the operative mitigation
+  until fsnotify is upgraded upstream; this pass did not attempt to reduce
+  `.worktrees`/`fixture-rig` churn itself since that is live work in
+  progress, not idle bulk.
