@@ -24,9 +24,16 @@ project:
 
 ```sh
 cd ai/gascity
-set -a && [ -f .env ] && . .env; set +a
+set -a && [ -f ./.env ] && . ./.env; set +a
 uv run --project sidecar gascity-sidecar serve
 ```
+
+The `./` prefix matters: zsh's `.` builtin searches `$path` instead of the
+current directory for slash-less filenames, so `. .env` silently sources
+nothing under zsh. A bare `uv run` without `UV_PROJECT_ENVIRONMENT` set
+recreates `sidecar/.venv` inside the watched city tree and reintroduces the
+supervisor descriptor bloat, so always go through this snippet, `task`, or
+`commands/*/run.sh`.
 
 `task sidecar:serve` and `task sidecar:test` source `.env` inline before
 invoking `uv run` (this Taskfile is included by the repo-root `Taskfile.dist.yaml`,
