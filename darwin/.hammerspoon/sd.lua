@@ -5,13 +5,12 @@ if not loaded then
 end
 
 local caffeine = require("caffeine")
+local actionCatalog = require("streamdeck.actions")
 
--- Add new button action modules to this list. Actions return plain definitions and
--- do not register themselves, which keeps their behavior testable and reusable.
+-- Keep local actions whose behavior intentionally differs from the catalog.
 local applicationAction = require("application")
 local actions = {
-  (require("keep-awake")),
-  (require("caffeine-alert")),
+  (require("caffeinate")),
   applicationAction,
 }
 
@@ -53,4 +52,25 @@ local applicationWatcher = hs.application.watcher.new(function(_name, event, _ap
 end)
 applicationWatcher:start()
 
+actionCatalog.register(streamdeck, {
+  "app-launcher",
+  "audio-output-router",
+  "clipboard-clean",
+  "clipboard-stash",
+  "desktop-space-cycler",
+  "focus-timer",
+  "keyboard-layout",
+  "last-application",
+  "lock-screen",
+  "microphone",
+  "pomodoro",
+  "spotify",
+  "system-monitor",
+  "url-launcher",
+  "window-center",
+  "window-maximize",
+  "window-next-screen",
+  "window-snap",
+  "youtube",
+})
 streamdeck.start()
