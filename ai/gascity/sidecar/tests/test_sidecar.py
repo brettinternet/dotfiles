@@ -5,9 +5,12 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+import uvicorn
 
 from gascity_sidecar.api import create_app
 from gascity_sidecar.config import Settings, validate_bind
+from gascity_sidecar import main as sidecar_main
+from gascity_sidecar.main import run_server
 from gascity_sidecar.gascity import (
     GasCityClient,
     GasCityCommandError,
@@ -41,11 +44,95 @@ def test_desired_state_survives_restart(tmp_path: Path) -> None:
     assert not second.claim_notification("workflow:done")
 
 
+def test_default_gc_timeout_exceeds_observed_reload_duration() -> None:
+    settings = Settings(_env_file=None)
+
+    assert settings.gc_timeout_seconds > 52.59
+
+
 def test_non_loopback_bind_refused_by_default() -> None:
     with pytest.raises(ValueError, match="loopback"):
         validate_bind("0.0.0.0")
     validate_bind("127.0.0.1")
     validate_bind("0.0.0.0", allow_non_loopback=True)
+
+
+def test_run_server_public_override_protects_control_mutations(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    class FakeClient:
+        async def status(self):
+            return {"ok": True, "running": True}
+
+    settings = Settings(_env_file=None, state_db_path=tmp_path / "state.sqlite3")
+    captured: dict[str, object] = {}
+
+    def capture_app(effective_settings: Settings):
+        captured["settings"] = effective_settings
+        return create_app(effective_settings, gc_client=FakeClient())
+
+    def capture_run(app, *, host, port, log_config):
+        captured["app"] = app
+        captured["host"] = host
+        captured["port"] = port
+        captured["log_config"] = log_config
+
+    monkeypatch.setattr(sidecar_main, "create_app", capture_app)
+    monkeypatch.setattr(uvicorn, "run", capture_run)
+
+    run_server(
+        settings=settings,
+        host="0.0.0.0",
+        port=9876,
+        allow_non_loopback=True,
+    )
+
+    assert captured["host"] == "0.0.0.0"
+    assert captured["port"] == 9876
+    effective_settings = captured["settings"]
+    assert effective_settings.bind_host == "0.0.0.0"
+    assert effective_settings.bind_port == 9876
+    assert effective_settings.allow_non_loopback_bind is True
+    assert settings.bind_host == "127.0.0.1"
+    assert settings.bind_port == 8787
+
+    with TestClient(captured["app"]) as client:
+        assert client.get("/status").status_code == 200
+        assert client.post("/control/pause").status_code == 403
+
+
+def test_run_server_loopback_override_allows_control_mutations(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    class FakeClient:
+        async def status(self):
+            return {"ok": True, "running": True}
+
+    settings = Settings(_env_file=None, state_db_path=tmp_path / "state.sqlite3")
+    captured: dict[str, object] = {}
+
+    def capture_app(effective_settings: Settings):
+        captured["settings"] = effective_settings
+        return create_app(effective_settings, gc_client=FakeClient())
+
+    def capture_run(app, *, host, port, log_config):
+        captured["app"] = app
+        captured["host"] = host
+        captured["port"] = port
+        captured["log_config"] = log_config
+
+    monkeypatch.setattr(sidecar_main, "create_app", capture_app)
+    monkeypatch.setattr(uvicorn, "run", capture_run)
+
+    run_server(settings=settings, host="127.0.0.1", port=9877)
+
+    assert captured["host"] == "127.0.0.1"
+    assert captured["port"] == 9877
+    assert captured["settings"].bind_host == "127.0.0.1"
+    assert captured["settings"].bind_port == 9877
+
+    with TestClient(captured["app"]) as client:
+        assert client.post("/control/pause").status_code == 200
 
 
 def test_status_degrades_when_fake_gc_client_is_unavailable(tmp_path: Path) -> None:
@@ -55,7 +142,10 @@ def test_status_degrades_when_fake_gc_client_is_unavailable(tmp_path: Path) -> N
 
     settings = Settings(state_db_path=tmp_path / "state.sqlite3")
     with TestClient(create_app(settings, gc_client=FakeClient())) as client:
-        assert client.get("/health").json() == {"status": "degraded", "gc": "unavailable"}
+        assert client.get("/health").json() == {
+            "status": "degraded",
+            "gc": "unavailable",
+        }
         body = client.get("/status").json()
         assert body["gc"]["status"] == "degraded"
         assert client.get("/").status_code == 200
@@ -133,7 +223,9 @@ def test_status_cli_fallback_does_not_duplicate_subcommand(
     assert arguments == ["status", "--json"]
 
 
-def test_schema_mismatch_is_typed(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_schema_mismatch_is_typed(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     client = GasCityClient(city_path=tmp_path)
 
     async def unavailable(*args, **kwargs):
@@ -146,6 +238,7 @@ def test_schema_mismatch_is_typed(monkeypatch: pytest.MonkeyPatch, tmp_path: Pat
     monkeypatch.setattr(client, "_run_cli", malformed)
     with pytest.raises(GasCitySchemaError):
         asyncio.run(client.status())
+
 
 def test_malformed_jsonl_event_values_are_logged(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, caplog: pytest.LogCaptureFixture

@@ -525,20 +525,20 @@ mutation access with authentication stays out of scope; a future item can add it
 
 Acceptance:
 
-- [ ] Tests: pause blocks a dispatch attempt; resume unblocks; drain waits without
+- [x] Tests: pause blocks a dispatch attempt; resume unblocks; drain waits without
       killing (fake client); budget-mode admission matrix; concurrency validation
       (bounds, type); every response includes the five reporting fields.
-- [ ] UI tests: `/` renders status, active workflow/session detail, and every
+- [x] UI tests: `/` renders status, active workflow/session detail, and every
       GC-13 control; a form mutation re-renders its five reporting fields;
       repair-attempt control says "new dispatches only"; stop requires the typed
       city name on its non-refreshing confirmation page and invokes a fake client's
       stop operation, never a live fixture.
-- [ ] Bind-guard tests: mutations (forms and `/control/*`) are refused on a
+- [x] Bind-guard tests: mutations (forms and `/control/*`) are refused on a
       non-loopback bind even with the opt-in flag set; loopback mutations succeed;
       the status view remains available under the opt-in.
-- [ ] Manual check against the live fixture city: pause → attempted fixture dispatch
+- [x] Manual check against the live fixture city: pause → attempted fixture dispatch
       refused; active run untouched; resume → dispatch proceeds.
-- [ ] Chosen concurrency mechanism + its verification evidence recorded in the
+- [x] Chosen concurrency mechanism + its verification evidence recorded in the
       Decision log.
 
 GC-11 is needed to give a dispatchable workflow to prove semantics against.
@@ -1222,3 +1222,26 @@ override the tracked root value (and`gc config show` reports the same precedence
   refresh on the status view only; the stop confirmation lives on its own
   non-refreshing page because a five-second full-page refresh would clobber typed
   input; rendering stays stdlib string-based like the existing `/` page.
+- 2026-07-23 — GC-13 — implemented the control plane, provider-aware admission,
+  manual `UsageReader` boundary, future-dispatch repair limit, loopback-only JSON
+  and native-form mutations, five-second operator status page, and typed,
+  non-refreshing durable-stop page. The final sidecar suite passed 79 tests with
+  one opt-in skip; Ruff passed; browser smoke confirmed every status/control
+  section and confirmed the stop page has no refresh metadata. Independent
+  verification passed all seven GC-13 criteria.
+- 2026-07-23 — GC-13 — selected the preferred concurrency mechanism: tracked
+  `city.toml` references gitignored, sidecar-owned `city.sidecar.toml`; Task entry
+  points create the file before their first `gc` command; control mutations write
+  it atomically and invoke `gc reload`. Installed Gas City v1.3.5 rejects
+  `providers.*.max_active_sessions`, so the verified file uses only supported
+  `[workspace].max_active_sessions`. `gc config show --validate` reported
+  `Config valid`; a successful live reload took 52.59 seconds, so the bounded
+  default CLI timeout is 90 seconds. Conserve uses workspace cap 1 and explicitly
+  warns that v1.3.5 cannot prove a provider-only dynamic cap and therefore also
+  constrains non-Codex sessions; critical/paused remain provider-aware admission.
+- 2026-07-23 — GC-13 — live fixture acceptance kept active workflow `fx-4353`
+  `in_progress` across pause, refused the paused `omp` dispatch without invoking
+  Gas City, then admitted resume and created workflow `fx-s9yu`. Pause/resume
+  performed no unverified `gc suspend`/`gc resume` operation. Public-host override
+  regression coverage also proves status remains readable while all mutations are
+  forbidden, including when the non-loopback status-view opt-in is enabled.

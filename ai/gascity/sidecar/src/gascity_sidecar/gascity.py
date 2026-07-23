@@ -94,10 +94,16 @@ class GasCityClient:
                     return response.status, response.read()
             except HTTPError as exc:
                 if exc.code == 404:
-                    raise _ApiUnavailable(f"Gas City API does not provide {category}") from exc
-                raise GasCityError(f"Gas City API {category} returned HTTP {exc.code}") from exc
+                    raise _ApiUnavailable(
+                        f"Gas City API does not provide {category}"
+                    ) from exc
+                raise GasCityError(
+                    f"Gas City API {category} returned HTTP {exc.code}"
+                ) from exc
             except (URLError, OSError) as exc:
-                raise _ApiUnavailable(f"Gas City API unavailable for {category}") from exc
+                raise _ApiUnavailable(
+                    f"Gas City API unavailable for {category}"
+                ) from exc
 
         try:
             _, raw = await asyncio.wait_for(asyncio.to_thread(fetch), self.timeout)
@@ -106,7 +112,9 @@ class GasCityClient:
         try:
             return json.loads(raw)
         except (UnicodeDecodeError, json.JSONDecodeError) as exc:
-            raise GasCitySchemaError(f"Gas City API {category} returned invalid JSON") from exc
+            raise GasCitySchemaError(
+                f"Gas City API {category} returned invalid JSON"
+            ) from exc
 
     async def _run_cli(self, category: str, *arguments: str) -> str:
         _LOG.info("running Gas City command", extra={"command_category": category})
@@ -124,7 +132,9 @@ class GasCityClient:
                 cwd=str(self.city_path),
             )
             try:
-                stdout, stderr = await asyncio.wait_for(process.communicate(), self.timeout)
+                stdout, stderr = await asyncio.wait_for(
+                    process.communicate(), self.timeout
+                )
             except asyncio.TimeoutError as exc:
                 process.kill()
                 await process.communicate()
@@ -132,13 +142,25 @@ class GasCityClient:
         except FileNotFoundError as exc:
             raise GasCityUnavailable("Gas City CLI is not installed") from exc
         if process.returncode:
-            raise GasCityCommandError(category, process.returncode, stderr.decode(errors="replace"))
+            raise GasCityCommandError(
+                category, process.returncode, stderr.decode(errors="replace")
+            )
         return stdout.decode(errors="replace")
+
+    async def reload(self) -> str:
+        """Reload the city configuration through the installed Gas City CLI."""
+        return await self._run_cli("reload", "reload")
+
+    async def stop(self) -> str:
+        """Durably stop the city through the installed Gas City CLI."""
+        return await self._run_cli("stop", "stop")
 
     @staticmethod
     def _json_object(raw: Any, category: str) -> dict[str, Any]:
         if not isinstance(raw, Mapping):
-            raise GasCitySchemaError(f"Gas City {category} response must be a JSON object")
+            raise GasCitySchemaError(
+                f"Gas City {category} response must be a JSON object"
+            )
         return dict(raw)
 
     @staticmethod
@@ -175,7 +197,9 @@ class GasCityClient:
                 if isinstance(decoded, Mapping):
                     items.append(dict(decoded))
                 else:
-                    _LOG.warning("skipping malformed JSONL event from Gas City CLI: expected object")
+                    _LOG.warning(
+                        "skipping malformed JSONL event from Gas City CLI: expected object"
+                    )
             return items
 
     async def stream_events(self, after: int = 0):
@@ -222,7 +246,9 @@ class GasCityClient:
                 if isinstance(decoded, Mapping):
                     yield dict(decoded)
                 else:
-                    _LOG.warning("skipping malformed JSONL event from Gas City CLI: expected object")
+                    _LOG.warning(
+                        "skipping malformed JSONL event from Gas City CLI: expected object"
+                    )
         finally:
             if process.returncode is None:
                 process.terminate()
@@ -239,7 +265,9 @@ class GasCityClient:
             try:
                 decoded = json.loads(raw)
             except json.JSONDecodeError as exc:
-                raise GasCitySchemaError("Gas City status CLI returned invalid JSON") from exc
+                raise GasCitySchemaError(
+                    "Gas City status CLI returned invalid JSON"
+                ) from exc
             return self._json_object(decoded, "status")
 
     async def snapshot(self) -> dict[str, Any]:
@@ -247,7 +275,9 @@ class GasCityClient:
         sessions = status.get("sessions", status.get("running_sessions", []))
         workflows = status.get("workflows", status.get("active_workflows", []))
         if not isinstance(sessions, list) or not isinstance(workflows, list):
-            raise GasCitySchemaError("Gas City status sessions/workflows must be arrays")
+            raise GasCitySchemaError(
+                "Gas City status sessions/workflows must be arrays"
+            )
         return {"status": status, "sessions": sessions, "workflows": workflows}
 
     async def sessions(self) -> list[Any]:
@@ -256,14 +286,18 @@ class GasCityClient:
     async def workflows(self) -> list[Any]:
         return (await self.snapshot())["workflows"]
 
-
     async def workers(self) -> list[Any]:
         status = await self.status()
-        workers = status.get("workers", status.get("sessions", status.get("running_sessions", [])))
+        workers = status.get(
+            "workers", status.get("sessions", status.get("running_sessions", []))
+        )
         if not isinstance(workers, list):
             raise GasCitySchemaError("Gas City status workers must be an array")
         return workers
-    async def mutate(self, method: str, path: str, payload: Mapping[str, Any] | None = None) -> Any:
+
+    async def mutate(
+        self, method: str, path: str, payload: Mapping[str, Any] | None = None
+    ) -> Any:
         """Issue a REST mutation with the required request-confirmation header."""
         if method.upper() not in {"POST", "PUT", "PATCH", "DELETE"}:
             raise ValueError("mutations require POST, PUT, PATCH, or DELETE")
