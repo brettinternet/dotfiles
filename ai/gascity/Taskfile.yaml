@@ -44,7 +44,7 @@ tasks:
       - ./assets/scripts/gc11-demo.sh happy
 
   demo:repair:
-    desc: Run GC-11 bounded repair with exact-template durable prewarm; wait up to 60 seconds (GC11_PREWARM_SECONDS) only for a healthy running controller, then sling immediately with --nudge; phase startup is current-root demand-driven with demand-time same-template replacement for closed/not-found sessions, stale-session reset/wake/reconcile at most once per selected phase session ID, later polls waiting for startup, and a newly replaced ID receiving its own single wake request; GC11_WAIT_SECONDS defaults to 3600 seconds
+    desc: Run GC-11 bounded repair with exact-template durable prewarm for non-iterating phases while each implementer attempt is controller demand-spawned in a distinct one-shot session; wait up to 60 seconds (GC11_PREWARM_SECONDS) only for a healthy running controller, then sling immediately with --nudge; phase startup is current-root demand-driven with demand-time same-template replacement for closed/not-found sessions, stale-session reset/wake/reconcile at most once per selected phase session ID, later polls waiting for startup, and a newly replaced ID receiving its own single wake request; GC11_WAIT_SECONDS defaults to 3600 seconds
     cmds:
       - ./assets/scripts/gc11-demo.sh repair
 

@@ -33,15 +33,17 @@ GC-11 runs; it deliberately preserves unrelated GC-07 roots:
 ```sh
 task gascity:demo:reset
 ```
-The controller must be healthy and supervisor-managed before dispatch. Each
-public demo (`demo`, `demo:repair`, and `demo:halt`) prepares one durable,
-nonterminal session record for each exact phase template
-(`fixture/gc.intake`, `fixture/gc.planner`, `fixture/gc.implementer`,
-`fixture/gc.verifier`, and `fixture/gc.reviewer`), reusing a matching record
-or creating a detached session. It reloads the supervisor, wakes the selected
-session identities, and reloads again. With `max_active_sessions = 2`, runtime
-capacity remains bounded; durable records do not mean that five workers run at
-once.
+The controller must be healthy and supervisor-managed before dispatch. The
+happy and halt demos prepare one durable, nonterminal session record for each
+exact phase template (`fixture/gc.intake`, `fixture/gc.planner`,
+`fixture/gc.implementer`, `fixture/gc.verifier`, and `fixture/gc.reviewer`),
+reusing a matching record or creating a detached session. The repair demo
+prepares the four non-iterating phases but deliberately leaves the implementer
+unbound: the controller's one-shot implementer pool demand-spawns a distinct
+session for each check iteration, and workflow polling adopts each assigned
+session ID. The runner reloads the supervisor after preparation. With
+`max_active_sessions = 2`, runtime capacity remains bounded; durable records do
+not mean that five workers run at once.
 The `GC11_PREWARM_SECONDS` setting controls a bounded gate (default 60 seconds)
 that waits only for a healthy, running controller. It does not wait for intake
 or any phase session to become active. Once the controller is healthy and
@@ -56,19 +58,29 @@ replacement, and continues to dispatch. This is same-template race recovery,
 not generic retry behavior; any other wake failure remains fatal.
 An exact selected ID that resolves under a different template is a fatal identity mismatch; it is never treated as gone or eligible for replacement.
 
-After dispatch, bounded workflow polling asks each phase hook for ready work and
-filters its results to entries whose `gc.root_bead_id` matches the current
-workflow `root_id`. Assigned or in-progress work is excluded by hook readiness,
-so unrelated roots never control phase selection or trigger resets.
-For the first workflow-order phase with an unassigned ready bead, polling
-selects that phase's durable session identity. During demand-time orchestration,
+After dispatch, bounded workflow polling asks each preselected phase hook for
+ready work and filters its results to entries whose `gc.root_bead_id` matches
+the current workflow `root_id`. Assigned or in-progress work is excluded by
+hook readiness, so unrelated roots never control phase selection or trigger
+resets. The repair implementer is the exception: while no attempt is assigned,
+polling leaves its pool unbound and waits for controller demand; once assigned,
+polling adopts that attempt's exact session ID. When the next unassigned repair
+iteration appears, polling first proves that the completed session owns no
+active or unrelated work, closes that session, clears the selected ID, and
+performs one batched supervisor reload. Controller demand then spawns the next
+one-shot implementer session. For the first workflow-order
+phase with an unassigned ready bead, polling selects that phase's durable
+session identity. During demand-time orchestration,
 if that selected session has since closed or is not found, it creates one fresh
 same-template replacement, updates the selected ID, wakes the replacement, and
 performs the supervisor reconciliation. Otherwise, if the selected session is
 stale or has no process, it resets and wakes that same selected identity, then
-performs one supervisor reconciliation (a batched reload). Each selected phase
-session ID receives at most one reset+wake request; later polls with that same
-ID wait for the requested startup. If a closed or not-found ID is replaced,
+performs one supervisor reconciliation (a batched reload).
+A successful nudge suppresses only duplicate message delivery, not runtime
+inspection; later polls still detect post-nudge process loss and can spend the
+same bounded reset/wake or replacement.
+Each selected phase session ID receives at most one reset+wake request; later
+polls with that same ID wait for the requested startup. If a closed or not-found ID is replaced,
 the replacement is woken once and is considered already wake-requested, so a
 newly selected ID can receive its own single request. No bead is manually
 assigned or closed, and recovery is not a manual step.
@@ -84,9 +96,9 @@ An exact selected ID resolving under a different template is a fatal identity mi
 The gate reports the root, template, and session ID for session-list, malformed
 result, and timeout failures. Only after every selected phase session is gone or
 closed does the task verify durable workflow reports and outcome artifacts. This
-post-closure session gate applies to happy, repair, and halt; halt checks only
-`brief.md`, `plan.md`, and the single failed attempt's report, review, and
-verdict, with no `verify.md` or `final.md` and no write-back.
+post-closure session gate applies to happy, repair, and halt. Halt checks
+`brief.md`, `plan.md`, a failed `final.md`, and the single failed attempt's
+report, review, and verdict, with no `verify.md` and no write-back.
 
 The public tasks do not claim live acceptance; their checks describe the
 expected fixture behavior and dependency boundaries.
@@ -104,13 +116,20 @@ gate → durable report-retention checks → explicit write-back sequence:
 task gascity:demo
 ```
 
+Before the first import, the public task proves that the task's exact Markdown
+external reference is absent. It retries only recognized transient store
+failures; if creation committed before such a failure, a later `skipped` result
+is adopted only by that retried call and its bead ID is recorded for reset.
+
 To run that sequence manually, first ensure the supervisor-managed controller is
 healthy and prepare durable nonterminal records for all five exact phase
 templates before importing or dispatching. The public task performs the
 discovery, wake/reload, and bounded controller-health gate automatically; it
-does not wait for intake or phase sessions to become active. Once the gate
-passes, sling immediately. The concise manual equivalent is:
-The public task applies the full identity and race rules above. The concise manual equivalent below captures initial phase IDs for wake/reload and the controller-health gate; it does not implement demand-time reset/replacement orchestration.
+does not wait for intake or phase sessions to become active. Once the gate passes, sling immediately.
+The public task applies the full identity and race rules above. The concise
+manual equivalent below captures initial phase IDs for wake/reload and the
+controller-health gate; it does not implement demand-time reset/replacement
+orchestration.
 
 ```sh
 cd ai/gascity
@@ -272,13 +291,14 @@ All dispatches use the supported `fixture/gc.intake` target, never bare
 `fixture`. Successful paths close the imported source bead before
 `backlog-writeback`; they retain `brief.md`, `plan.md`, `verify.md`, `final.md`,
 and every attempt's report, review, and verdict under
-`.gascity/work/<root>/`. The expected halt closes with
-`gc.failure_class=review_attempts_exhausted` and
-`gc.exhausted_attempts=1`; it retains only `brief.md`, `plan.md`, and exactly
-one failed attempt's report, review, and verdict, leaves the source bead open,
-and does not write back. It does not produce `verify.md` or `final.md`. The
-max-one-live exhaustion evidence is an expected halt/demo dependency boundary,
-not a claim that GC-07 is complete.
+`.gascity/work/<root>/`. The expected halt aborts verification, runs its
+always-schedulable finalizer, and closes with
+`gc.outcome=fail`, `gc.failure_class=review_attempts_exhausted`, and
+`gc.exhausted_attempts=1`. It retains `brief.md`, `plan.md`, a failed
+`final.md`, and exactly one failed attempt's report, review, and verdict; it
+leaves the source bead open and does not write back. It does not produce
+`verify.md`. The max-one-live exhaustion evidence is an expected halt/demo
+dependency boundary, not a claim that GC-07 is complete.
 
 Finish every run with the doctor gate:
 
