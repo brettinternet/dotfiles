@@ -68,16 +68,12 @@ end
 
 local function showOverride(reason)
   closeOverrideAlert()
-  overrideAlert = hs.alert.show(
-    "CAFFEINE OVERRIDE ACTIVE\n" .. reason,
-    {
-      atScreenEdge = 2,
-      textSize = 16,
-      padding = 8,
-      radius = 10,
-    },
-    true
-  )
+  overrideAlert = hs.alert.show("CAFFEINE OVERRIDE ACTIVE\n" .. reason, {
+    atScreenEdge = 2,
+    textSize = 16,
+    padding = 8,
+    radius = 10,
+  }, true)
 end
 
 function caffeine.isOverrideActive()
