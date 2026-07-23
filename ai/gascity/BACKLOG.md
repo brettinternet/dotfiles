@@ -418,24 +418,26 @@ retry-limit halt variant. Add task entries: `gascity:demo` (happy path),
 
 Acceptance:
 
-- [ ] README commands reproduce: clean import → workflow pass → write-back, on a fresh
+- [x] README commands reproduce: clean import → workflow pass → write-back, on a fresh
       fixture rig (`make-fixture-rig.sh` re-run first); `task gascity:demo` runs the
       same path.
-- [ ] Repeated import mid-flow creates no duplicate work.
-- [ ] All intermediate reports + final report present after sessions are gone.
-- [ ] `gc doctor` clean at the end.
+- [x] Repeated import mid-flow creates no duplicate work.
+- [x] All intermediate reports + final report present after sessions are gone.
+- [x] `gc doctor` clean at the end.
 
-Progress (2026-07-21): implementation and static verification are complete, including
-a bounded check that every exact selected phase session is missing or closed before
-durable report retention is asserted. Live acceptance remains blocked by the
-machine-wide Gas City supervisor exhausting its file-descriptor limit. A fresh
-happy-path retry imported `fix-independent` idempotently, but stalled while preparing
-phase sessions; current supervisor logs again record `open ...: too many open files`
-for city metadata and Beads configuration. The earlier run reached root `fx-wjco`;
-intake and plan closed with durable `gc.output_json`, then implementer startup failed.
-Static checks pass (`bash -n`, ShellCheck); the four live acceptance boxes remain
-unchecked. Next: repair the supervisor file-descriptor leak outside this repository,
-restart it, then run happy, repair, and halt demos and check all four boxes.
+Completed (2026-07-23): fresh current-source proofs from commit `187aff75` passed
+without source edits during any run. Happy root `fx-8j5s` closed PASS with source
+`fx-dbcb`, exact `changed_files=["AGENTS.md"]`, resolvable root/source references,
+retained reports, all five selected phase sessions gone, explicit write-back, and
+doctor `failed=0`/`blocking_failed=0`. Repair root `fx-uyyg` closed PASS after
+attempt 1 failed in `gc__implementer-gc-jw6chy` and attempt 2 passed in distinct
+session `gc__implementer-gc-5qquj3`; both attempts, write-back, and clean doctor
+were retained. Halt root `fx-q75y` closed FAIL after exactly one failed review,
+recorded `review_attempts_exhausted`/`exhausted_attempts=1`, retained failed
+`final.md` with no `verify.md` or write-back, left source `fx-udzm` open and the
+source bytes unchanged, retired all selected sessions, and ended with clean doctor.
+Two independent criterion-by-criterion verifiers returned PASS for every GC-11
+acceptance and expanded happy/repair/halt requirement.
 
 Depends on: GC-07, GC-09, GC-10
 
@@ -1174,3 +1176,13 @@ override the tracked root value (and`gc config show` reports the same precedence
   source-only review are clean. Next pass: reset the retained `fx-70js` demo
   state, rerun happy from this commit, then run repair and halt, verify all
   GC-11 acceptance evidence independently, and only then mark GC-11 complete.
+
+- 2026-07-23 — GC-11 — reset retained `fx-70js`, then ran fresh happy, repair, and
+  retry-limit halt proofs from `187aff75` with 90s Beads readiness, 60s controller
+  prewarm, 3600s workflow waits, and 5s polling. Happy `fx-8j5s`, repair `fx-uyyg`,
+  and halt `fx-q75y` each exited through the expected public task success path;
+  exact artifacts, write-back or no-write-back behavior, root-scoped references,
+  selected-session retirement, repair-session distinctness, exhaustion metadata,
+  source state, and doctor `failed=0`/`blocking_failed=0` were independently
+  verified. Two final independent verifiers PASSed every GC-11 criterion; mark
+  GC-11 complete.
