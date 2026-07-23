@@ -27,8 +27,20 @@ def run_server(
         else allow_non_loopback
     )
     validate_bind(actual_host, allow_non_loopback=allow)
-    configure_logging(settings.log_level)
-    uvicorn.run(create_app(settings), host=actual_host, port=actual_port, log_config=None)
+    effective_settings = settings.model_copy(
+        update={
+            "bind_host": actual_host,
+            "bind_port": actual_port,
+            "allow_non_loopback_bind": allow,
+        }
+    )
+    configure_logging(effective_settings.log_level)
+    uvicorn.run(
+        create_app(effective_settings),
+        host=effective_settings.bind_host,
+        port=effective_settings.bind_port,
+        log_config=None,
+    )
 
 
 def application(**overrides: Any):

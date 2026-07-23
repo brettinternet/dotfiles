@@ -27,7 +27,9 @@ class Settings(BaseSettings):
     gc_api_url: str | None = None
     gc_api_port: int = 8080
     gc_command: str = "gc"
-    gc_timeout_seconds: float = 10.0
+    gc_timeout_seconds: float = 90.0
+    drain_poll_interval_seconds: float = 1.0
+    drain_timeout_seconds: float = 30.0
     log_level: str = "INFO"
 
     @field_validator("bind_port", "gc_api_port")
@@ -42,6 +44,17 @@ class Settings(BaseSettings):
     def valid_timeout(cls, value: float) -> float:
         if value <= 0:
             raise ValueError("gc timeout must be positive")
+        return value
+
+    @field_validator("drain_poll_interval_seconds", "drain_timeout_seconds")
+    @classmethod
+    def valid_drain_setting(cls, value: float, info) -> float:
+        if value <= 0:
+            raise ValueError(f"{info.field_name} must be positive")
+        if info.field_name == "drain_poll_interval_seconds" and value > 60:
+            raise ValueError("drain poll interval must be at most 60 seconds")
+        if info.field_name == "drain_timeout_seconds" and value > 3600:
+            raise ValueError("drain timeout must be at most 3600 seconds")
         return value
 
     def api_base_url(self) -> str:

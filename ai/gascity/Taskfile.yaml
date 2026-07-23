@@ -2,34 +2,57 @@
 version: "3"
 
 tasks:
+  sidecar:init-config:
+    desc: Create the ignored sidecar config when absent
+    cmds:
+      - |
+          if [ -e city.sidecar.toml ] || [ -L city.sidecar.toml ]; then
+            exit 0
+          fi
+          printf '%s\n' \
+            '[workspace]' \
+            'max_active_sessions = 2' \
+            > city.sidecar.toml
   init:
     desc: Install Gas City dependencies and run diagnostics
+    deps:
+      - sidecar:init-config
     cmds:
       - mise install -q
       - task: doctor
 
   up:
     desc: Start the Gas City supervisor-managed city
+    deps:
+      - sidecar:init-config
     cmds:
       - mise exec -- gc start
 
   down:
     desc: Stop the Gas City city
+    deps:
+      - sidecar:init-config
     cmds:
       - mise exec -- gc stop
 
   status:
     desc: Show Gas City city status
+    deps:
+      - sidecar:init-config
     cmds:
       - mise exec -- gc status
 
   doctor:
     desc: Run Gas City diagnostics
+    deps:
+      - sidecar:init-config
     cmds:
       - mise exec -- gc doctor
 
   sidecar:serve:
     desc: Run the Gas City sidecar HTTP service
+    deps:
+      - sidecar:init-config
     cmds:
       - set -a && [ -f .env ] && . .env; set +a; uv run --project sidecar gascity-sidecar serve
 
@@ -40,20 +63,28 @@ tasks:
 
   demo:
     desc: Run GC-11 happy-path with exact-template durable prewarm; wait up to 60 seconds (GC11_PREWARM_SECONDS) only for a healthy running controller, then sling immediately with --nudge; phase startup is current-root demand-driven with demand-time same-template replacement for closed/not-found sessions, stale-session reset/wake/reconcile at most once per selected phase session ID, later polls waiting for startup, and a newly replaced ID receiving its own single wake request; GC11_WAIT_SECONDS defaults to 3600 seconds
+    deps:
+      - sidecar:init-config
     cmds:
       - ./assets/scripts/gc11-demo.sh happy
 
   demo:repair:
     desc: Run GC-11 bounded repair with exact-template durable prewarm for non-iterating phases while each implementer attempt is controller demand-spawned in a distinct one-shot session; wait up to 60 seconds (GC11_PREWARM_SECONDS) only for a healthy running controller, then sling immediately with --nudge; phase startup is current-root demand-driven with demand-time same-template replacement for closed/not-found sessions, stale-session reset/wake/reconcile at most once per selected phase session ID, later polls waiting for startup, and a newly replaced ID receiving its own single wake request; GC11_WAIT_SECONDS defaults to 3600 seconds
+    deps:
+      - sidecar:init-config
     cmds:
       - ./assets/scripts/gc11-demo.sh repair
 
   demo:halt:
     desc: Run GC-11 expected exhaustion with exact-template durable prewarm; wait up to 60 seconds (GC11_PREWARM_SECONDS) only for a healthy running controller, then sling immediately with --nudge; phase startup is current-root demand-driven with demand-time same-template replacement for closed/not-found sessions, stale-session reset/wake/reconcile at most once per selected phase session ID, later polls waiting for startup, and a newly replaced ID receiving its own single wake request; GC11_WAIT_SECONDS defaults to 3600 seconds
+    deps:
+      - sidecar:init-config
     cmds:
       - ./assets/scripts/gc11-demo.sh halt
 
   demo:reset:
     desc: Reset tracked fixture files and remove only GC-11 demo-recorded graphs
+    deps:
+      - sidecar:init-config
     cmds:
       - ./assets/scripts/gc11-demo.sh reset
