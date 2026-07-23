@@ -27,12 +27,16 @@ Acceptance criteria:
 
 ## FIX-INDEPENDENT — Document the fixture check
 
-Add a short comment to `AGENTS.md` explaining how to run the deterministic check.
+Add this exact HTML comment to `AGENTS.md`:
+
+```markdown
+<!-- Deterministic validation: run `./check.sh`; `./check.sh --fail` is an intentional failure mode for exercising review and repair paths. -->
+```
 
 Acceptance criteria:
 
-- [ ] The validation command is shown exactly as `./check.sh`.
-- [ ] The comment mentions that `./check.sh --fail` is an intentional failure mode.
+- [ ] `AGENTS.md` contains that exact comment once.
+- [ ] `./check.sh` still exits successfully.
 
 ## FIX-REPAIR — Exercise the bounded repair loop
 
