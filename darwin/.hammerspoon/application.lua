@@ -343,7 +343,7 @@ local function close_application(application)
 end
 
 return {
-  id = "com.brettinternet.hammerspoon.application-toggle",
+  id = "com.brettinternet.hammerspoon.application-launcher",
   name = "Hide/show application",
   settingsSchemaVersion = 1,
   settingsSchema = {
