@@ -52,25 +52,5 @@ local applicationWatcher = hs.application.watcher.new(function(_name, event, _ap
 end)
 applicationWatcher:start()
 
-actionCatalog.register(streamdeck, {
-  "app-launcher",
-  "audio-output-router",
-  "clipboard-clean",
-  "clipboard-stash",
-  "desktop-space-cycler",
-  "focus-timer",
-  "keyboard-layout",
-  "last-application",
-  "lock-screen",
-  "microphone",
-  "pomodoro",
-  "spotify",
-  "system-monitor",
-  "url-launcher",
-  "window-center",
-  "window-maximize",
-  "window-next-screen",
-  "window-snap",
-  "youtube",
-})
+actionCatalog.registerAll(streamdeck)
 streamdeck.start()

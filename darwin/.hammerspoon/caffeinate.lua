@@ -10,7 +10,7 @@ local allowSleepIcon = helpers.svg(
 )
 
 return {
-  id = "com.brettinternet.hammerspoon.keep-awake",
+  id = "com.brettinternet.hammerspoon.caffeinate",
   name = "Keep awake",
 
   appearance = function(_context)
