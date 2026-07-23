@@ -378,9 +378,11 @@ return {
     local application, bundle_id, focus_on_show = application_for(context)
     if not application and bundle_id == nil then
       error("no frontmost application")
-    elseif application
-        and not application_is_hidden(application)
-        and (bundle_id == nil or not focus_on_show or application_is_frontmost(application)) then
+    elseif
+      application
+      and not application_is_hidden(application)
+      and (bundle_id == nil or not focus_on_show or application_is_frontmost(application))
+    then
       remember_previous_application(context, application)
       local was_hidden = toggle_application(application)
       if not was_hidden then

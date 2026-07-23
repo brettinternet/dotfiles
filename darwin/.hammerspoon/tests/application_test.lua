@@ -94,8 +94,7 @@ _G.hs = {
       new = function(callback)
         activation_callback = callback
         return {
-          start = function()
-          end,
+          start = function() end,
         }
       end,
     },
@@ -140,10 +139,11 @@ local function press(application, options)
   options = options or {}
   running_application = application
   launched_bundle_id = nil
-  local settings = options.unconfigured and {} or {
-    bundleID = "com.example.TestApp",
-    focusOnShow = options.focus_on_show,
-  }
+  local settings = options.unconfigured and {}
+    or {
+      bundleID = "com.example.TestApp",
+      focusOnShow = options.focus_on_show,
+    }
   action.press({ settings = settings, instanceId = options.instance_id or "configured" })
 end
 
@@ -160,7 +160,8 @@ valid_icon = true
 local valid_icon_appearance = action.appearance({ settings = { bundleID = "com.example.TestApp" } })
 assert_true(valid_icon_appearance.icon ~= nil, "valid custom icon should be included")
 
-local stopped_application = new_application({ frontmost = false, hidden = false, running = false, has_main_window = false })
+local stopped_application =
+  new_application({ frontmost = false, hidden = false, running = false, has_main_window = false })
 press(stopped_application)
 assert_equal(launched_bundle_id, "com.example.TestApp", "stopped app should be launched")
 assert_equal(stopped_application.unhide_calls, 0, "stopped app should not be unhidden")
