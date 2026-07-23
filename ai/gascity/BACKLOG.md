@@ -507,11 +507,29 @@ Every state-changing response: previous state, new state, gc operation performed
 `applies_to: immediate|future`, warnings. Do not claim dynamic behavior the installed
 gc doesn't prove.
 
+Minimal operator UI: extend the existing server-rendered `/` page; no SPA, bundled
+assets, or separate frontend. Refresh status, active workflows/sessions, and recent
+events every five seconds. Provide native HTML forms for every GC-13 action:
+pause/resume/drain, concurrency, default max-repair-attempts, and Codex budget mode.
+Show each mutation's reporting fields inline. Label max-repair-attempts “new
+dispatches only”; it cannot change an active Ralph repair loop. Add an emergency,
+city-wide “Stop” action with typed confirmation that invokes the documented durable
+`gc stop` operation; it is not a JSON control endpoint unless a safer supported gc
+verb is verified. For mutation access on a LAN, require the existing explicit
+non-loopback opt-in plus authentication and trusted-network firewalling; loopback is
+the default. The status view may remain unauthenticated only on loopback.
+
 Acceptance:
 
 - [ ] Tests: pause blocks a dispatch attempt; resume unblocks; drain waits without
       killing (fake client); budget-mode admission matrix; concurrency validation
       (bounds, type); every response includes the five reporting fields.
+- [ ] UI tests: `/` renders status, active workflow/session detail, and every
+      GC-13 control; a form mutation renders its reporting fields; repair-attempt
+      control says “new dispatches only”; city-wide stop requires typed confirmation
+      and invokes a fake client's documented stop operation, never a live fixture.
+- [ ] LAN-access tests: non-loopback still requires explicit opt-in; mutations on a
+      non-loopback bind reject unauthenticated requests.
 - [ ] Manual check against the live fixture city: pause → attempted fixture dispatch
       refused; active run untouched; resume → dispatch proceeds.
 - [ ] Chosen concurrency mechanism + its verification evidence recorded in the
