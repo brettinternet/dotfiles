@@ -485,8 +485,10 @@ Endpoints: `POST /control/pause|resume|drain`, `PUT /control/concurrency`,
   sidecar-admission only). Never kills sessions.
 - drain: pause + wait for active workflows/sessions to settle (poll status/events);
   reports settled/not-settled. Separate from pause; no kills.
-- emergency stop: implement only as documented `gc stop` (durable by design) — a
-  documented operation, not an API endpoint, unless a safer supported verb exists.
+- emergency stop: documented durable `gc stop`, exposed only through the operator
+  page's typed-confirmation form — never the JSON `/control/*` API. (Supersedes the
+  earlier "documented operation, not an API endpoint" stance; Decision log
+  2026-07-23.)
 - concurrency: preference order — (1) sidecar-owned gitignored include
   `city.sidecar.toml` referenced from `city.toml` `include` (distinct from the
   human-owned `city.local.toml`; merge semantics already verified in GC-02) then
@@ -508,16 +510,18 @@ Every state-changing response: previous state, new state, gc operation performed
 gc doesn't prove.
 
 Minimal operator UI: extend the existing server-rendered `/` page; no SPA, bundled
-assets, or separate frontend. Refresh status, active workflows/sessions, and recent
-events every five seconds. Provide native HTML forms for every GC-13 action:
-pause/resume/drain, concurrency, default max-repair-attempts, and Codex budget mode.
-Show each mutation's reporting fields inline. Label max-repair-attempts “new
-dispatches only”; it cannot change an active Ralph repair loop. Add an emergency,
-city-wide “Stop” action with typed confirmation that invokes the documented durable
-`gc stop` operation; it is not a JSON control endpoint unless a safer supported gc
-verb is verified. For mutation access on a LAN, require the existing explicit
-non-loopback opt-in plus authentication and trusted-network firewalling; loopback is
-the default. The status view may remain unauthenticated only on loopback.
+assets, template engine, or separate frontend (stdlib string rendering, as today).
+The status view (status, active workflows/sessions, recent events) auto-refreshes
+every five seconds via meta refresh. Native HTML forms for every GC-13 action:
+pause/resume/drain, concurrency, default max-repair-attempts, and Codex budget mode;
+each mutation re-renders with its five reporting fields inline. Label
+max-repair-attempts "new dispatches only"; it cannot change an active repair loop.
+City-wide "Stop" (documented durable `gc stop`) lives on its own non-refreshing
+confirmation page — auto-refresh must never clobber typed input — and requires
+typing the city name to submit. Mutations (forms and `/control/*`) are loopback-only
+in this version: refused on a non-loopback bind even when the existing explicit
+non-loopback opt-in is set (that opt-in grants the status view only). LAN/remote
+mutation access with authentication stays out of scope; a future item can add it.
 
 Acceptance:
 
@@ -525,11 +529,13 @@ Acceptance:
       killing (fake client); budget-mode admission matrix; concurrency validation
       (bounds, type); every response includes the five reporting fields.
 - [ ] UI tests: `/` renders status, active workflow/session detail, and every
-      GC-13 control; a form mutation renders its reporting fields; repair-attempt
-      control says “new dispatches only”; city-wide stop requires typed confirmation
-      and invokes a fake client's documented stop operation, never a live fixture.
-- [ ] LAN-access tests: non-loopback still requires explicit opt-in; mutations on a
-      non-loopback bind reject unauthenticated requests.
+      GC-13 control; a form mutation re-renders its five reporting fields;
+      repair-attempt control says "new dispatches only"; stop requires the typed
+      city name on its non-refreshing confirmation page and invokes a fake client's
+      stop operation, never a live fixture.
+- [ ] Bind-guard tests: mutations (forms and `/control/*`) are refused on a
+      non-loopback bind even with the opt-in flag set; loopback mutations succeed;
+      the status view remains available under the opt-in.
 - [ ] Manual check against the live fixture city: pause → attempted fixture dispatch
       refused; active run untouched; resume → dispatch proceeds.
 - [ ] Chosen concurrency mechanism + its verification evidence recorded in the
@@ -676,9 +682,11 @@ Depends on: GC-01, GC-02, GC-03, GC-04, GC-05, GC-06, GC-07, GC-08, GC-09, GC-10
 ## Explicitly out of scope (first version)
 
 Linear/Jira production integrations; custom `exec` beads provider; real Codex quota
-retrieval; remote/authenticated access; multi-user permissions; frontend beyond the
-minimal status page; automatic retry-limit changes to active runs; any push/PR/merge
-automation; modifying real backlogs or repositories.
+retrieval; remote/authenticated access (the GC-13 operator page's mutations are
+loopback-only; LAN access with auth is a future item); multi-user permissions;
+frontend beyond the server-rendered operator page (GC-13); automatic retry-limit
+changes to active runs; any push/PR/merge automation; modifying real backlogs or
+repositories.
 
 ## Parallelization note
 
@@ -1204,3 +1212,13 @@ override the tracked root value (and`gc config show` reports the same precedence
   source state, and doctor `failed=0`/`blocking_failed=0` were independently
   verified. Two final independent verifiers PASSed every GC-11 criterion; mark
   GC-11 complete.
+- 2026-07-23 — GC-13 — owner added a slim server-rendered operator UI to the item,
+  superseding two first-version boundaries: "frontend beyond the minimal status
+  page" (now the operator page with control forms) and the emergency-stop "not an
+  API endpoint" stance (now a typed-confirmation form invoking documented
+  `gc stop`). Refinements applied on review: mutations stay loopback-only and
+  LAN/authenticated access remains out of scope (the original draft required auth
+  for LAN mutations, contradicting the out-of-scope list); auto-refresh is meta
+  refresh on the status view only; the stop confirmation lives on its own
+  non-refreshing page because a five-second full-page refresh would clobber typed
+  input; rendering stays stdlib string-based like the existing `/` page.
