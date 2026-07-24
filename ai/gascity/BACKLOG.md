@@ -664,18 +664,18 @@ Depends on: GC-11
 Re-verify the completion criteria end-to-end on a clean pass and record results in
 `docs/validation.md` (command + observed result each):
 
-- [ ] `gc doctor` no unexplained errors.
-- [ ] OMP runs as a gc worker (session evidence).
-- [ ] Triple import → one bead.
-- [ ] Fixture item through the full workflow; implementation and review in separate
+- [x] `gc doctor` no unexplained errors.
+- [x] OMP runs as a gc worker (session evidence).
+- [x] Triple import → one bead.
+- [x] Fixture item through the full workflow; implementation and review in separate
       sessions/contexts (event evidence).
-- [ ] Failed review → fresh repair context; halt at configured limit.
-- [ ] Reports survive session termination and a `gc stop`/`gc start`.
-- [ ] README demonstration commands reproduce from scratch; `task -l` lists all
+- [x] Failed review → fresh repair context; halt at configured limit.
+- [x] Reports survive session termination and a `gc stop`/`gc start`.
+- [x] README demonstration commands reproduce from scratch; `task -l` lists all
       gascity tasks and `task gascity:demo` passes.
-- [ ] `git ls-files ai/gascity` contains no secrets or machine-specific runtime data
+- [x] `git ls-files ai/gascity` contains no secrets or machine-specific runtime data
       (no `city.local.toml`, `city.sidecar.toml`, `.env`); gitleaks pass on the repo.
-- [ ] Sidecar: starts independent of agents; reports gc status; pause blocks fixture
+- [x] Sidecar: starts independent of agents; reports gc status; pause blocks fixture
       admission; resume restores; drain doesn't kill the active run; replayed events
       don't re-notify; Pushover disabled via env only; budget mode changes admission;
       restart preserves desired state + cursor; removing the sidecar entirely leaves
@@ -685,6 +685,14 @@ Also produce the closing summary: final architecture, files created/changed, exa
 demo commands, current limitations, and the next smallest step to integrate one real
 repository's `backlog.md` (expected: register repo as rig → point sidecar markdown
 source at its backlog → preview → import one item → dispatch with low concurrency).
+
+Completed (2026-07-24): `docs/validation.md` records every command and observed
+result, the closing architecture/file/demo/limitations summary, and all required
+sidecar evidence. The final hardened repair run (`fx-mcqr`) passed with distinct
+implementer sessions; the configured one-attempt halt (`fx-ric8`) stopped without
+write-back. Final doctor, repository checks/tests, sidecar tests, Markdown
+formatting, and gitleaks passed. Independent verification passed all nine criteria
+and the closing summary.
 
 Depends on: GC-01, GC-02, GC-03, GC-04, GC-05, GC-06, GC-07, GC-08, GC-09, GC-10, GC-11, GC-12, GC-13, GC-14, GC-15, GC-16, GC-17
 
@@ -1295,3 +1303,16 @@ override the tracked root value (and`gc config show` reports the same precedence
   stale scheduled order while the controller, stores, and supervisor remained
   usable. `launchctl bootstrap`/`bootout` were intentionally not run because
   GC-16 forbids installing or enabling the example service.
+- 2026-07-24 — GC-18 — installed v1.3.5 session close is asynchronous for the
+  durable implementer pool. The repair check now resolves exact identities
+  (permitting only leading `s-` normalization), treats an already missing/closed
+  exact session as retired after a fresh active-work audit, otherwise waits for
+  terminal state before returning the retry signal, and force-closes the failed
+  root with durable diagnostics if retirement cannot be proved. Its Bash deadline
+  wrapper bounds reviewer, session, and abort commands inside the formula's
+  15-minute check timeout.
+- 2026-07-24 — GC-18 — final acceptance passed: repair root `fx-mcqr` used
+  distinct implementer sessions across attempts; configured-limit root `fx-ric8`
+  halted after its compiled one-attempt budget with no write-back; final doctor
+  reported 78 passed, zero failed/blocking failures; repository checks/tests,
+  sidecar 105 passed + 2 skipped, gitleaks, and independent verification passed.

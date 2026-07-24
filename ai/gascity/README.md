@@ -33,6 +33,7 @@ GC-11 runs; it deliberately preserves unrelated GC-07 roots:
 ```sh
 task gascity:demo:reset
 ```
+
 The controller must be healthy and supervisor-managed before dispatch. The
 happy and halt demos prepare one durable, nonterminal session record for each
 exact phase template (`fixture/gc.intake`, `fixture/gc.planner`,
@@ -64,13 +65,20 @@ the current workflow `root_id`. Assigned or in-progress work is excluded by
 hook readiness, so unrelated roots never control phase selection or trigger
 resets. The repair implementer is the exception: while no attempt is assigned,
 polling leaves its pool unbound and waits for controller demand; once assigned,
-polling adopts that attempt's exact session ID. When the next unassigned repair
-iteration appears, polling first proves that the completed session owns no
-active or unrelated work, closes that session, clears the selected ID, and
-performs one batched supervisor reload. Controller demand then spawns the next
-one-shot implementer session. For the first workflow-order
-phase with an unassigned ready bead, polling selects that phase's durable
-session identity. During demand-time orchestration,
+polling adopts that attempt's exact session ID.
+On any non-final failed check—whether a valid reviewer `fail` verdict or a
+persisted reviewer infrastructure/malformed-output failure—the synchronous
+check-boundary finalizer proves that the completed one-shot implementer session
+owns no active or unrelated work, then synchronously retires it before returning
+control to the formula loop. It uses the compiled Ralph control bead's literal
+`gc.max_attempts`—not an independently supplied root variable—to choose
+retirement for another iteration or exhaustion metadata at the limit. The next
+repair iteration remains unbound until controller demand creates a distinct
+one-shot implementer session.
+Non-repair phase polling's adoption and runtime recovery behavior remains
+unchanged. For the first workflow-order phase with an unassigned ready bead,
+polling selects that phase's durable session identity. During demand-time
+orchestration,
 if that selected session has since closed or is not found, it creates one fresh
 same-template replacement, updates the selected ID, wakes the replacement, and
 performs the supervisor reconciliation. Otherwise, if the selected session is
