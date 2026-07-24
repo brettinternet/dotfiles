@@ -7,6 +7,9 @@ import json
 from pathlib import Path
 import sys
 
+from .backlog import MarkdownBacklog
+from .backlog.base import BacklogError
+from .backlog.beads import BeadsClient, import_task, writeback_task
 from .main import run_server
 
 
@@ -18,9 +21,7 @@ def _add_serve_options(parser: argparse.ArgumentParser) -> None:
         action="store_true",
         help="explicitly permit a non-loopback bind address",
     )
-from .backlog import MarkdownBacklog
-from .backlog.base import BacklogError
-from .backlog.beads import BeadsClient, import_task, writeback_task
+
 
 def _source_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--source", type=Path, required=True, help="Markdown backlog path")
