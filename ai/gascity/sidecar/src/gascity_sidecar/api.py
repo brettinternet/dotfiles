@@ -154,7 +154,9 @@ def _operator_page(
     result_markup = _result_markup(result) if result is not None else ""
     return (
         '<!doctype html><html><head><meta charset="utf-8">'
-        '<meta http-equiv="refresh" content="5">'
+        # Refresh explicitly to "/": a bare refresh after a form POST would GET
+        # the POST-only action URL and land the operator on a 405 error.
+        '<meta http-equiv="refresh" content="5;url=/">'
         "<title>Gas City Sidecar - " + _text(city_name) + "</title></head><body>"
         "<h1>Gas City Sidecar</h1><p>City: <strong>"
         + _text(city_name)

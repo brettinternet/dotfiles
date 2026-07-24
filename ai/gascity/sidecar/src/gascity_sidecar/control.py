@@ -246,6 +246,11 @@ class ControlPlane:
                 "config persisted but Gas City reload failed/pending; "
                 f"retry reload when available: {exc}"
             ]
+        if new.codex_budget_mode is CodexBudgetMode.CONSERVE:
+            warnings.append(
+                "conserve budget mode holds the workspace cap at 1; the new "
+                "concurrency takes effect after leaving conserve"
+            )
         return self._result(previous, new, operation, "immediate", warnings)
 
     async def set_max_repair_attempts(self, value: Any) -> ControlResult:
@@ -281,31 +286,29 @@ class ControlPlane:
         previous = self._load_state()
         new = self._copy_state(previous)
         new.codex_budget_mode = mode
-        warnings: list[str] = []
-        operation: str | None = None
-        if mode in {CodexBudgetMode.NORMAL, CodexBudgetMode.CONSERVE}:
-            if new != previous:
-                self._save_state(new)
-            try:
-                operation, warnings = await self._apply_sidecar_config(new)
-            except Exception as exc:
-                operation = None
-                warnings = [
-                    "config persisted but Gas City reload failed/pending; "
-                    f"retry reload when available: {exc}"
-                ]
-            if mode is CodexBudgetMode.CONSERVE:
-                warnings.append(
-                    "conserve mode uses the supported workspace cap of 1; installed "
-                    "Gas City v1.3.5 lacks a verified per-provider dynamic cap, so "
-                    "this also constrains non-Codex sessions"
-                )
-        else:
+        if new != previous:
+            self._save_state(new)
+        # Apply the sidecar config in every mode: only conserve caps the
+        # workspace at 1, so leaving conserve (including for critical/paused)
+        # must restore the desired concurrency rather than keep a stale cap.
+        try:
+            operation, warnings = await self._apply_sidecar_config(new)
+        except Exception as exc:
+            operation = None
+            warnings = [
+                "config persisted but Gas City reload failed/pending; "
+                f"retry reload when available: {exc}"
+            ]
+        if mode is CodexBudgetMode.CONSERVE:
+            warnings.append(
+                "conserve mode uses the supported workspace cap of 1; installed "
+                "Gas City v1.3.5 lacks a verified per-provider dynamic cap, so "
+                "this also constrains non-Codex sessions"
+            )
+        elif mode in {CodexBudgetMode.CRITICAL, CodexBudgetMode.PAUSED}:
             warnings.append(
                 f"{mode.value} mode is sidecar admission only; installed Gas City suspend behavior is unverified"
             )
-            if new != previous:
-                self._save_state(new)
         return self._result(previous, new, operation, "immediate", warnings)
 
     async def emergency_stop(self, confirmation: Any) -> ControlResult:

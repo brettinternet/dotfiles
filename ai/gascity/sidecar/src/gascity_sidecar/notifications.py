@@ -4,8 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
-from collections.abc import Mapping
-from typing import Any, Protocol
+from typing import Protocol
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 

@@ -179,6 +179,60 @@ def test_concurrency_writes_sidecar_only_and_reloads(tmp_path: Path) -> None:
     assert client.reload_calls == 3
 
 
+@pytest.mark.parametrize(
+    "mode", [CodexBudgetMode.CRITICAL, CodexBudgetMode.PAUSED]
+)
+def test_leaving_conserve_for_admission_only_modes_restores_workspace_cap(
+    tmp_path: Path, mode: CodexBudgetMode
+) -> None:
+    plane, _, client, city_path = make_plane(tmp_path)
+    (city_path / "city.toml").write_text(
+        'include = ["city.sidecar.toml"]\n', encoding="utf-8"
+    )
+    sidecar_config = city_path / "city.sidecar.toml"
+
+    run(plane.set_concurrency(4))
+    run(plane.set_codex_budget_mode(CodexBudgetMode.CONSERVE))
+    assert tomllib.loads(sidecar_config.read_text(encoding="utf-8")) == {
+        "workspace": {"max_active_sessions": 1}
+    }
+
+    result = run(plane.set_codex_budget_mode(mode))
+
+    assert tomllib.loads(sidecar_config.read_text(encoding="utf-8")) == {
+        "workspace": {"max_active_sessions": 4}
+    }
+    assert result.gc_operation_performed == "reload"
+    assert any("admission only" in warning for warning in result.warnings)
+
+
+def test_concurrency_under_conserve_warns_that_cap_stays_at_one(
+    tmp_path: Path,
+) -> None:
+    plane, _, _, city_path = make_plane(tmp_path)
+    (city_path / "city.toml").write_text(
+        'include = ["city.sidecar.toml"]\n', encoding="utf-8"
+    )
+    sidecar_config = city_path / "city.sidecar.toml"
+    run(plane.set_codex_budget_mode(CodexBudgetMode.CONSERVE))
+
+    result = run(plane.set_concurrency(8))
+
+    assert result.new_state.desired_concurrency == 8
+    assert tomllib.loads(sidecar_config.read_text(encoding="utf-8")) == {
+        "workspace": {"max_active_sessions": 1}
+    }
+    warning = " ".join(result.warnings).lower()
+    assert "conserve" in warning
+    assert "after leaving conserve" in warning
+
+    restored = run(plane.set_codex_budget_mode(CodexBudgetMode.NORMAL))
+    assert restored.gc_operation_performed == "reload"
+    assert tomllib.loads(sidecar_config.read_text(encoding="utf-8")) == {
+        "workspace": {"max_active_sessions": 8}
+    }
+
+
 @pytest.mark.parametrize("value", [0, 65, "1", 1.0, True])
 def test_concurrency_rejects_invalid_values(tmp_path: Path, value: object) -> None:
     plane, _, client, city_path = make_plane(tmp_path)

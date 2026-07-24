@@ -1245,3 +1245,15 @@ override the tracked root value (and`gc config show` reports the same precedence
   performed no unverified `gc suspend`/`gc resume` operation. Public-host override
   regression coverage also proves status remains readable while all mutations are
   forbidden, including when the non-loopback status-view opt-in is enabled.
+- 2026-07-23 — GC-13 — post-completion evaluation found and fixed three defects:
+  (1) the operator page's bare `content="5"` meta refresh re-navigated by GET to
+  the POST-only form action after every mutation, stranding the operator on a 405
+  — refresh now targets `url=/`; (2) leaving conserve for critical/paused never
+  rewrote `city.sidecar.toml`, silently keeping the workspace capped at 1 for all
+  providers — budget-mode changes now apply the sidecar config in every mode so
+  only conserve holds the cap; (3) a concurrency change made while in conserve
+  reported success with no warning although the cap stayed at 1 — it now warns
+  the new value takes effect after leaving conserve. Also cleared five Ruff
+  errors that predated the GC-13 commit (misplaced imports in `cli.py`, unused
+  imports in `notifications.py`) despite the earlier "Ruff passed" note. Suite
+  91 passed + 1 opt-in skip; Ruff clean.

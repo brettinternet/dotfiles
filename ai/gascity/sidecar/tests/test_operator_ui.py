@@ -262,6 +262,11 @@ def test_form_pause_renders_all_control_result_fields_and_loopback_mutates(
         assert response.status_code == 200, response.text
         for field in RESULT_FIELDS:
             assert field in response.text
+        # The refresh must navigate to "/": a bare refresh would GET this
+        # POST-only action URL and strand the operator on a 405 error.
+        assert re.search(
+            r"content=[\"']5;\s*url=/[\"']", response.text, re.IGNORECASE
+        )
 
         # A loopback bind permits every native control and JSON mutation.
         assert client.post("/ui/control/resume").status_code == 200
