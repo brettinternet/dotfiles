@@ -592,11 +592,18 @@ dispatch against the local fixture city.
 
 Acceptance:
 
-- [ ] API validation tests (bad path, unknown id, ambiguous id → 4xx typed errors).
-- [ ] Import endpoint idempotent (re-POST → same bead, `created: false`).
-- [ ] Dispatch refused while paused/critical (per provider), allowed after resume —
+- [x] API validation tests (bad path, unknown id, ambiguous id → 4xx typed errors).
+- [x] Import endpoint idempotent (re-POST → same bead, `created: false`).
+- [x] Dispatch refused while paused/critical (per provider), allowed after resume —
       tested with fake client; smoke test proves the real path end-to-end.
-- [ ] Normal test suite requires no real agent calls.
+- [x] Normal test suite requires no real agent calls.
+
+Completed (2026-07-23): typed preview/import/dispatch routes retain portable source
+identity, gate the explicitly resolved provider through admission, and invoke the
+installed formula-v2 sling syntax without shell interpolation. Offline verification
+passed with 105 tests and 2 opt-in skips; targeted Ruff checks passed. The opt-in
+fixture smoke then passed preview → idempotent import → real dispatch without source
+edits or workflow polling.
 
 Depends on: GC-13, GC-09
 

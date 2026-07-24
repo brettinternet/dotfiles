@@ -2,20 +2,44 @@
 
 from __future__ import annotations
 
+import asyncio
 import html
 import ipaddress
 import json
 from dataclasses import asdict, is_dataclass
+from pathlib import Path
 from typing import Any, Awaitable, Callable
 from urllib.parse import parse_qs
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 
+from .admission import AdmissionController
+from .backlog.base import (
+    BacklogError,
+    DuplicateTaskIdError,
+    TaskNotFoundError,
+)
+from .backlog.beads import (
+    AmbiguousExternalRefError,
+    BeadNotFoundError,
+    BeadsClient,
+    import_task,
+)
+from .backlog.markdown import MarkdownBacklog
 from .config import Settings, validate_bind
 from .control import ControlPlane, ControlResult
 from .events import EventProcessor
 from .gascity import GasCityClient, GasCityError
+from .models import (
+    DependencyRecord,
+    MarkdownImportRecord,
+    MarkdownImportRequest,
+    MarkdownPreviewRequest,
+    MarkdownTaskRecord,
+    WorkflowDispatchRecord,
+    WorkflowDispatchRequest,
+)
 from .notifications import PushoverNotifier
 from .state import StateStore
 
@@ -105,6 +129,83 @@ async def _request_form(request: Request) -> dict[str, str]:
         raise ValueError("form body must be UTF-8") from exc
     parsed = parse_qs(decoded, keep_blank_values=True)
     return {name: values[-1] if values else "" for name, values in parsed.items()}
+
+
+class _ApiError(Exception):
+    def __init__(self, status_code: int, code: str, detail: str) -> None:
+        super().__init__(detail)
+        self.status_code = status_code
+        self.code = code
+        self.detail = detail
+
+
+def _api_error(status_code: int, code: str, detail: str) -> JSONResponse:
+    return JSONResponse(
+        status_code=status_code,
+        content={"code": code, "detail": detail},
+    )
+
+
+def _resolve_markdown_source(
+    settings: Settings, source_path: str, relative_path: str | None
+) -> tuple[Path, str]:
+    root = Path(settings.city_path).expanduser().resolve()
+    requested = Path(source_path)
+    if (
+        not source_path.strip()
+        or requested.is_absolute()
+        or any(part in {"", ".", ".."} for part in requested.parts)
+    ):
+        raise _ApiError(
+            422,
+            "invalid_source_path",
+            "source_path must be a relative Markdown file path",
+        )
+    resolved = (root / requested).resolve()
+    try:
+        resolved.relative_to(root)
+    except ValueError as exc:
+        raise _ApiError(
+            422,
+            "invalid_source_path",
+            "source_path must resolve within the configured city path",
+        ) from exc
+    if not resolved.exists():
+        raise _ApiError(
+            404,
+            "source_not_found",
+            f"Markdown source {source_path!r} was not found",
+        )
+    if not resolved.is_file():
+        raise _ApiError(
+            422,
+            "invalid_source_path",
+            "source_path must identify a regular Markdown file",
+        )
+
+    portable = relative_path if relative_path is not None else requested.name
+    portable_path = Path(portable)
+    if (
+        not portable.strip()
+        or portable_path.is_absolute()
+        or any(part in {"", ".", ".."} for part in portable_path.parts)
+    ):
+        raise _ApiError(
+            422,
+            "invalid_source_path",
+            "relative_path must be a portable relative path",
+        )
+    return resolved, portable_path.as_posix()
+
+
+def _backlog_error_response(exc: BacklogError) -> JSONResponse:
+    if isinstance(exc, (TaskNotFoundError, BeadNotFoundError)):
+        return _api_error(404, "task_not_found", str(exc))
+    if isinstance(exc, DuplicateTaskIdError):
+        return _api_error(409, "duplicate_task_id", str(exc))
+    if isinstance(exc, AmbiguousExternalRefError):
+        return _api_error(409, "ambiguous_external_ref", str(exc))
+    return _api_error(422, "backlog_error", str(exc))
 
 
 def _display(value: Any) -> str:
@@ -228,6 +329,7 @@ def create_app(
     *,
     state_store: StateStore | None = None,
     gc_client: Any | None = None,
+    beads_client: Any | None = None,
 ) -> FastAPI:
     settings = settings or Settings()
     validate_bind(
@@ -265,6 +367,7 @@ def create_app(
     app.state.state_store = store
     app.state.gc_client = client
     app.state.control_plane = control
+    app.state.beads_client = beads_client
     mutations_allowed = _is_loopback_bind(settings.bind_host)
 
     async def load_status() -> dict[str, Any]:
@@ -339,6 +442,7 @@ def create_app(
                 status_code=400,
             )
         payload = await load_status()
+
         return HTMLResponse(
             _operator_page(
                 city_name=_city_name(client, settings),
@@ -347,6 +451,134 @@ def create_app(
                 result=result,
             )
         )
+
+    @app.post(
+        "/backlogs/markdown/preview",
+        response_model=list[MarkdownTaskRecord],
+    )
+    async def markdown_preview(request: MarkdownPreviewRequest):
+        try:
+            source_path, portable_path = _resolve_markdown_source(
+                settings, request.source_path, request.relative_path
+            )
+            source = MarkdownBacklog(
+                source_path,
+                relative_path=portable_path,
+            )
+            tasks = await asyncio.to_thread(source.preview)
+            return [
+                MarkdownTaskRecord(
+                    id=task.id,
+                    title=task.title,
+                    actionable=task.actionable,
+                    external_ref=task.external_ref,
+                ).model_dump(mode="json")
+                for task in tasks
+            ]
+        except _ApiError as exc:
+            return _api_error(exc.status_code, exc.code, exc.detail)
+        except BacklogError as exc:
+            return _backlog_error_response(exc)
+        except FileNotFoundError as exc:
+            return _api_error(404, "source_not_found", str(exc))
+        except OSError as exc:
+            return _api_error(422, "backlog_error", str(exc))
+
+    @app.post(
+        "/backlogs/markdown/import",
+        response_model=MarkdownImportRecord,
+        response_model_exclude_none=True,
+    )
+    async def markdown_import(request: MarkdownImportRequest):
+        if not mutations_allowed:
+            return JSONResponse(
+                status_code=403,
+                content={"detail": "control mutations require a loopback bind"},
+            )
+        try:
+            source_path, portable_path = _resolve_markdown_source(
+                settings, request.source_path, request.relative_path
+            )
+            source = MarkdownBacklog(
+                source_path,
+                relative_path=portable_path,
+            )
+            importer = (
+                beads_client
+                if beads_client is not None
+                else BeadsClient(cwd=source_path.parent)
+            )
+            materialized = await asyncio.to_thread(
+                import_task,
+                source,
+                request.task_id,
+                importer,
+            )
+            record = MarkdownImportRecord(
+                task_id=materialized.task_id,
+                title=materialized.title,
+                external_ref=materialized.external_ref,
+                bead_id=materialized.bead_id,
+                action=materialized.action,
+                created=materialized.action == "created",
+                dependencies=[
+                    DependencyRecord(
+                        dependency_id=dependency.dependency_id,
+                        action=dependency.action,
+                        bead_id=dependency.bead_id,
+                    )
+                    for dependency in materialized.dependencies
+                ],
+            )
+            return record.model_dump(mode="json", exclude_none=True)
+        except _ApiError as exc:
+            return _api_error(exc.status_code, exc.code, exc.detail)
+        except BacklogError as exc:
+            return _backlog_error_response(exc)
+        except FileNotFoundError as exc:
+            return _api_error(404, "source_not_found", str(exc))
+        except OSError as exc:
+            return _api_error(422, "backlog_error", str(exc))
+
+    @app.post(
+        "/workflows/dispatch",
+        response_model=WorkflowDispatchRecord,
+    )
+    async def workflow_dispatch(request: WorkflowDispatchRequest):
+        if not mutations_allowed:
+            return JSONResponse(
+                status_code=403,
+                content={"detail": "control mutations require a loopback bind"},
+            )
+        desired = store.load_desired_state()
+        if not AdmissionController(desired).allows(request.provider):
+            return _api_error(
+                409,
+                "admission_refused",
+                f"provider {request.provider!r} is not admitted by the current policy",
+            )
+        max_repair_attempts = (
+            request.max_repair_attempts
+            if request.max_repair_attempts is not None
+            else desired.default_max_repair_attempts
+        )
+        try:
+            result = await client.dispatch_workflow(
+                request.target,
+                request.bead_id,
+                max_repair_attempts,
+            )
+        except GasCityError as exc:
+            return _api_error(502, "gascity_error", str(exc))
+        record = WorkflowDispatchRecord(
+            bead_id=request.bead_id,
+            external_source_ref=request.external_source_ref,
+            target=request.target,
+            provider=request.provider,
+            max_repair_attempts=max_repair_attempts,
+            result=result,
+        )
+        return record.model_dump(mode="json")
 
     @app.get("/health")
     async def health() -> dict[str, str]:
