@@ -117,7 +117,7 @@ max_attempts = 2
 [steps.check.check]
 mode = "exec"
 path = "../../../assets/scripts/review-check.sh"
-timeout = "10m"
+timeout = "15m"
 
 [[steps]]
 id = "verify"

@@ -101,14 +101,17 @@ session claiming two phase beads is an isolation defect, not an optimization.
 
 The current demo prepares a durable nonterminal session record for each exact
 phase template for the happy and halt paths. The repair path prepares the four
-non-iterating phase pools but leaves implementer demand unbound: the controller
-spawns a new one-shot implementer for each check iteration, and polling adopts
-that attempt’s assigned session ID. These durable records do not imply five
-simultaneous workers; the workspace cap still bounds active runtime sessions.
-The normal dispatch target is the qualified `fixture/gc.intake`, never the bare
-rig name. Session discovery, wake/reload reconciliation, same-template race
-replacement, and post-closure session disappearance are bounded orchestration
-around the controller; they do not manually assign or close phase beads.
+non-iterating phase pools but leaves implementer demand unbound. Gas City 1.3.5
+has a proven reuse race here: if a failed implementer session remains open while
+the formula emits its next iteration, that iteration can claim the same one-shot
+session. Outer polling retirement is too late to guarantee fresh repair
+contexts. These durable records do not imply five simultaneous workers; the
+workspace cap still bounds active runtime sessions. The normal dispatch target
+is the qualified `fixture/gc.intake`, never the bare rig name. Session
+discovery, wake/reload reconciliation, same-template race replacement, and
+post-closure session disappearance remain bounded orchestration around the
+controller; they do not assign phase beads. Fresh repair retirement is enforced
+at the check boundary below.
 
 Review context is deliberately narrow. A reviewer receives the plan, acceptance
 criteria, current diff, and latest implementer report. It does not receive prior
@@ -131,11 +134,55 @@ two attempts.
 The implement step’s `[steps.check]` is the repair loop. Gas City compiles that
 check into its `ralph` control bead. The check script invokes a one-shot reviewer
 from a different provider (for example, `claude -p` or an OMP Claude profile),
-validates the structured verdict, persists findings, and returns an exit status.
-A passing status releases the graph to verification. A failing status causes
-bounded re-iteration until the literal attempt budget is exhausted. Iterations
-are retained as `<step>.iteration.N` beads with matching per-attempt artifact
-directories; they are not hidden retries.
+validates structured output, and persists the reviewer input plus either a
+valid verdict/findings pair or a reviewer infrastructure/malformed-output
+failure. Valid `fail` verdicts and those persisted failures share the
+synchronous check-boundary finalizer. It reads the compiled Ralph control bead's
+literal `gc.max_attempts`—not an independently supplied root variable—to choose
+retirement for a non-final failed check or exhaustion metadata at the limit.
+For an intentional non-final reviewer failure, the finalizer identifies the
+exact closed implementer attempt and session using exact identity equality; the
+permitted normalization is stripping one leading `s-` prefix. It proves that no
+active work remains, retires that session synchronously, and polls `gc session
+list --state all --json` until that exact session is observably missing or
+terminal. Only after that proof does it return the nonzero retry status that
+permits the formula to emit the next unbound iteration; the controller then
+demand-spawns a distinct one-shot implementer context.
+If retirement cannot be proved, or the finalizer cannot safely record the
+retry/exhaustion control state, it does not return an ordinary retry status. It
+records `gc.outcome = "fail"` and
+`gc.failure_class = "review_session_retirement_unverified"` with root, attempt,
+and session diagnostics, force-closes the root with the supported root-oriented
+`gc convoy delete ROOT --force`, confirms that the root is terminal, and exits
+zero solely to suppress Ralph's retry signal; the durable root outcome remains
+`fail`. If terminal closure cannot be confirmed, it exits 2 with the combined
+diagnostic rather than pretending the workflow passed.
+This check-boundary invariant, rather than eventual polling, guarantees fresh
+repair contexts. A passing status releases the graph to verification. Only a
+verified intentional reviewer failure causes bounded re-iteration until the
+compiled literal budget is exhausted. Iterations are retained as
+`<step>.iteration.N` beads with matching per-attempt artifact directories; they
+are not hidden retries.
+
+The formula `[steps.check.check]` timeout is `15m`; the script starts a hard
+internal deadline of `840s` at entry, so repository/root resolution and input
+assembly also consume the bounded budget. The artifact root comes directly from
+`GC_ROOT_BEAD_ID`, or from the root-ID basename exported in `GC_MOLECULE_DIR`,
+without a normal-path Beads lookup. Primary reviewer attempts are individually
+bounded. The OMP fallback has its own 180-second bound and cannot run past 360
+seconds before the internal deadline, reserving the maximum 300-second
+retirement plus the 60-second abort window. For a non-final failed check, the
+retirement command/poll deadline starts before the first `gc session list` or
+`gc session close` invocation and reserves at least 60 seconds of the internal
+budget for the fail-closed root-abort helper. The compiled-control lookup ends
+before the maximum retirement-plus-abort window; the current-root active-work
+audit, `gc session list`, and `gc session close` are TERM/KILL bounded by the
+remaining retirement time. The exhaustion write ends before the abort window,
+and each abort helper `gc bd update`, `gc convoy delete`, and `gc bd show` is
+TERM/KILL bounded by the remaining internal deadline. These bounds use a Bash
+deadline wrapper and do not assume that GNU `timeout` is installed. Retirement
+polls for the exact session to become missing or terminal rather than treating
+a close request alone as proof.
 
 Installed-version constraints shape the formulas:
 
@@ -154,9 +201,10 @@ Installed-version constraints shape the formulas:
   separately claimable Gas City session. This is an accepted boundary of the
   installed implementation.
 
-On genuine exhaustion, the always-schedulable finalizer records
+On genuine exhaustion, the check-boundary finalizer records
 `gc.outcome = "fail"`, `gc.failure_class = "review_attempts_exhausted"`, and the
-number of exhausted attempts. Verification is not produced. The durable result
+number of exhausted attempts. The always-schedulable workflow finalizer then
+completes the durable result. Verification is not produced. The durable result
 contains `brief.md`, `plan.md`, a failed `final.md`, and exactly one report,
 review, and verdict for each materialized failed attempt; the source bead remains
 open and no writeback occurs.

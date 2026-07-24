@@ -6,13 +6,13 @@ tasks:
     desc: Create the ignored sidecar config when absent
     cmds:
       - |
-          if [ -e city.sidecar.toml ] || [ -L city.sidecar.toml ]; then
-            exit 0
-          fi
-          printf '%s\n' \
-            '[workspace]' \
-            'max_active_sessions = 2' \
-            > city.sidecar.toml
+        if [ -e city.sidecar.toml ] || [ -L city.sidecar.toml ]; then
+          exit 0
+        fi
+        printf '%s\n' \
+          '[workspace]' \
+          'max_active_sessions = 2' \
+          > city.sidecar.toml
   init:
     desc: Install Gas City dependencies and run diagnostics
     deps:

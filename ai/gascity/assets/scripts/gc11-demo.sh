@@ -909,26 +909,6 @@ wake_ready_phase_sessions() {
       ((active_other == 0)) ||
         fail "refusing to reset phase session with unrelated active work (root=$root_id template=$template session=$session_id count=$active_other)"
     fi
-    if ((matching_ready > 0)) &&
-       [[ $MODE == repair && $template == fixture/gc.implementer ]]; then
-      retire_err="$TMP_DIR/repair-implementer-retire-${i}.err"
-      if "${GC_CMD[@]}" session close "$session_id" --json >/dev/null 2>"$retire_err"; then
-        :
-      else
-        retire_status=$?
-        retire_diag=
-        [[ -s $retire_err ]] && retire_diag=$(tr '\n' ' ' <"$retire_err")
-        if [[ $retire_diag != *"$session_id"* ]] ||
-           [[ ! $retire_diag =~ ([Cc]losed|[Nn]ot[[:space:]]+found) ]]; then
-          fail "cannot retire completed repair implementer session (root=$root_id template=$template session=$session_id exit=$retire_status${retire_diag:+; stderr=$retire_diag})"
-        fi
-      fi
-      PHASE_SESSION_IDS[i]=
-      PHASE_RUNTIME_WAKE_KEYS[i]=
-      PHASE_ACTIVE_REPLACEMENT_KEYS[i]=
-      reset_templates+=("$template")
-      continue
-    fi
     if ((matching_ready > 0)); then
       if [[ ${PHASE_RESET_BEAD_IDS[i]} == "$ready_bead_id" ]]; then
         session_state=$(session_state_for_reset "$i" "$template" "$session_id")
