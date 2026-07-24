@@ -54,12 +54,12 @@ tasks:
     deps:
       - sidecar:init-config
     cmds:
-      - set -a && [ -f .env ] && . .env; set +a; uv run --project sidecar gascity-sidecar serve
+      - set -a && [ -f ./.env ] && . ./.env; set +a; uv run --project sidecar gascity-sidecar serve
 
   sidecar:test:
     desc: Run focused sidecar tests
     cmds:
-      - set -a && [ -f .env ] && . .env; set +a; uv run --project sidecar pytest
+      - set -a && [ -f ./.env ] && . ./.env; set +a; uv run --project sidecar pytest
 
   demo:
     desc: Run GC-11 happy-path with exact-template durable prewarm; wait up to 60 seconds (GC11_PREWARM_SECONDS) only for a healthy running controller, then sling immediately with --nudge; phase startup is current-root demand-driven with demand-time same-template replacement for closed/not-found sessions, stale-session reset/wake/reconcile at most once per selected phase session ID, later polls waiting for startup, and a newly replaced ID receiving its own single wake request; GC11_WAIT_SECONDS defaults to 3600 seconds

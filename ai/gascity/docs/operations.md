@@ -99,14 +99,14 @@ suspended session and therefore is not a read-only command.
 ## Retry or cancel a workflow
 
 Gas City 1.3.5 does not expose a `gc workflow cancel` command. `gc workflow`
-is a deprecated alias for the convoy dispatch commands. Preview workflow
-cleanup first, then close the workflow subtree without deleting its durable
-beads:
+is a deprecated alias for the convoy dispatch commands. Use the workflow root
+ID returned as `workflow_id` by dispatch. Preview cleanup first, then close the
+workflow subtree without deleting its durable beads:
 
 ```sh
 cd ai/gascity
-mise exec -- gc convoy delete-source SOURCE_BEAD_ID
-mise exec -- gc convoy delete-source SOURCE_BEAD_ID --apply
+mise exec -- gc convoy delete WORKFLOW_ROOT_ID
+mise exec -- gc convoy delete WORKFLOW_ROOT_ID --force
 ```
 
 To retry a session without closing its bead, request a fresh provider context:
@@ -127,9 +127,9 @@ mise exec -- gc sling TARGET backlog-item --formula \
 ```
 
 Use the exact configured target and formula variables for the selected city;
-`gc sling --dry-run` previews routing without dispatching. Do not use
-`--delete` on `delete-source` unless the closed workflow beads are intentionally
-being garbage-collected.
+`gc sling --dry-run` previews routing without dispatching. `convoy delete
+--force` closes the workflow; do not also pass `--delete` unless its durable
+beads are intentionally being garbage-collected.
 
 ## Crash and reboot recovery
 
@@ -142,6 +142,7 @@ mise exec -- gc start
 mise exec -- gc status
 mise exec -- gc session list --state all --json
 mise exec -- gc events --seq
+set -a && [ -f ./.env ] && . ./.env; set +a
 uv run --project sidecar gascity-sidecar serve
 ```
 
@@ -172,8 +173,8 @@ path in the ignored `ai/gascity/.env` (for example, the output of
 `command -v uv` from the shell where `uv` is installed) before loading the
 rendered service.
 
-Keep the example unloaded in the repository. To render, validate, load, and
-inspect a user-local copy:
+Keep the example unloaded in the repository. Rendering and validating a
+user-local copy is safe and does not install the service:
 
 ```sh
 cd ai/gascity
@@ -183,14 +184,28 @@ sed "s#__REPO_ROOT__#${REPO_ROOT}#g" \
   sidecar/com.gascity.sidecar.plist \
   > .local/launchd/com.gascity.sidecar.plist
 plutil -lint .local/launchd/com.gascity.sidecar.plist
+```
+
+Confirm that the example remains unloaded; `launchctl print` should report that
+the service could not be found:
+
+```sh
+launchctl print "gui/$(id -u)/com.gascity.sidecar"
+```
+
+The following load and loaded-state inspection commands are reference-only for
+an operator who chooses to enable the service. Do not run them during
+repository setup or GC-16 verification:
+
+```sh
 launchctl bootstrap "gui/$(id -u)" .local/launchd/com.gascity.sidecar.plist
 launchctl print "gui/$(id -u)/com.gascity.sidecar"
 ```
 
 The rendered copy writes stdout/stderr to
 `ai/gascity/.local/sidecar.stdout.log` and
-`ai/gascity/.local/sidecar.stderr.log`. Unload it before removing the rendered
-copy:
+`ai/gascity/.local/sidecar.stderr.log`. If an operator loaded the service,
+unload it before removing the rendered copy:
 
 ```sh
 launchctl bootout "gui/$(id -u)/com.gascity.sidecar"
