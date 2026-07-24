@@ -623,11 +623,15 @@ Acceptance:
 
 - [x] Plist validates (`plutil -lint`); not loaded; instructions include load/unload
       commands and log locations.
-- [ ] Every operations-guide command actually run once against the fixture city;
+- [x] Every operations-guide command actually run once against the fixture city;
       outputs sanity-checked (note any verb that differs from this plan in the
       Decision log).
 
-Content finalized after GC-11.
+Completed (2026-07-23): every permitted guide command was exercised against the
+generated fixture, including foreground sidecar and dashboard probes, workflow
+retry/cancel, reload/restart, durable stop/start, and post-recovery inspection.
+The launchd load/unload commands remain reference-only under the explicit
+no-install rule. Static checks and the sidecar suite passed.
 
 Depends on: GC-12
 
@@ -647,9 +651,9 @@ and where auth env vars would live.
 
 Acceptance:
 
-- [ ] A reader can add a real repo rig using only the docs (dry-run the steps against
+- [x] A reader can add a real repo rig using only the docs (dry-run the steps against
       a second generated fixture rig to prove the instructions).
-- [ ] No doc contradicts the installed-version findings in the Decision log.
+- [x] No doc contradicts the installed-version findings in the Decision log.
 
 Ideally written after GC-13–15 so sidecar docs are accurate.
 
@@ -1264,3 +1268,30 @@ override the tracked root value (and`gc config show` reports the same precedence
   errors that predated the GC-13 commit (misplaced imports in `cli.py`, unused
   imports in `notifications.py`) despite the earlier "Ruff passed" note. Suite
   91 passed + 1 opt-in skip; Ruff clean.
+- 2026-07-23 — GC-17 — committed `d818ff3` with architecture, state-ownership,
+  and real-rig onboarding documentation. The onboarding proof registered a second
+  generated fixture as suspended with the installed `gc rig add --include .`
+  path, listed it, previewed `fix-independent` as actionable, imported it as
+  `f17-odp` with external reference `md:backlog.md#fix-independent`, and dry-ran
+  formula dispatch to `fixture-gc17/import.intake` with `success=true` without
+  changing `backlog.md`; the temporary rig registration and runtime were removed.
+  Targeted Prettier and diff checks passed. The repository-wide check reached the
+  existing `ai/gascity/Taskfile.yaml` formatting failure outside this diff.
+  Independent verification passed every GC-17 criterion and found no conflict
+  with installed Gas City 1.3.5, Beads 1.1.0, Dolt 2.2.0, or prior Decision-log
+  findings.
+- 2026-07-23 — GC-16 — installed Gas City v1.3.5 direct formula dispatch returned
+  workflow root `fx-kx5q`, but `gc convoy delete-source fx-tih` reported
+  `already_clean` and did not match that root. Use the installed root-oriented
+  cancellation path: `gc convoy delete WORKFLOW_ROOT_ID` for preview, then
+  `gc convoy delete WORKFLOW_ROOT_ID --force` to close the durable subtree.
+  The fixture proof closed all 9 open beads under `fx-kx5q`; its source `fx-tih`
+  was restored closed afterward.
+- 2026-07-23 — GC-16 — every permitted operations-guide command was exercised
+  against the generated fixture. Sidecar health/status/events and dashboard
+  probes passed; reload/restart and durable stop/start recovered the city; the
+  rendered plist, wrapper checks, and unloaded-service probe passed; the sidecar
+  suite passed 105 tests with 2 opt-in skips. `gc doctor` reported one pre-existing
+  stale scheduled order while the controller, stores, and supervisor remained
+  usable. `launchctl bootstrap`/`bootout` were intentionally not run because
+  GC-16 forbids installing or enabling the example service.
