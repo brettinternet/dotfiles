@@ -1316,3 +1316,13 @@ override the tracked root value (and`gc config show` reports the same precedence
   halted after its compiled one-attempt budget with no write-back; final doctor
   reported 78 passed, zero failed/blocking failures; repository checks/tests,
   sidecar 105 passed + 2 skipped, gitleaks, and independent verification passed.
+- 2026-07-24 — post-GC-18 — evaluation sweep found the sidecar `gc_api_port`
+  default (8080) never matched the installed supervisor API (8372; only the
+  launchd plist overrode it, so a default `sidecar:serve` silently used the CLI
+  fallback) → default changed to 8372. Also: `review-check.sh` OMP reviewer
+  fallback now resolves `omp` from PATH before the `MISE_DATA_DIR`-aware install
+  path instead of one hardcoded mise layout; `trash` documented as an
+  `assets/scripts/` dependency in `docs/environment.md`; tracked
+  `.config/bd/config.yaml` metrics upload disabled. Known accepted residue:
+  `.omp/hooks/gc-hook.ts` is `gc hooks install`-managed and keeps its upstream
+  `/opt/homebrew/bin:/usr/local/bin` PATH prefix.

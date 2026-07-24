@@ -17,6 +17,9 @@ Verified 2026-07-17 on macOS arm64.
 
 The six gc runtime dependencies resolve in the gc environment: `tmux`, `jq`,
 `git`, `dolt`, `flock`, and the `bd` executable.
+The demo and check scripts under `assets/scripts/` additionally require
+`trash` for recoverable deletions (`/usr/bin/trash` ships with recent macOS;
+install an equivalent before running them elsewhere).
 The gc and bd release tarballs were GitHub-attestation verified by mise before
 extraction. Dolt installed through mise's `ubi` backend; mise warns that this
 backend is deprecated, but the release resolved and installed successfully.
