@@ -155,6 +155,41 @@ class GasCityClient:
         """Durably stop the city through the installed Gas City CLI."""
         return await self._run_cli("stop", "stop")
 
+    async def dispatch_workflow(
+        self, target: str, bead_id: str, max_repair_attempts: int
+    ) -> dict[str, Any]:
+        """Dispatch a backlog item through the installed Gas City CLI."""
+        if not target:
+            raise ValueError("target must be non-empty")
+        if not bead_id:
+            raise ValueError("bead_id must be non-empty")
+        if (
+            isinstance(max_repair_attempts, bool)
+            or not isinstance(max_repair_attempts, int)
+            or not 0 <= max_repair_attempts <= 100
+        ):
+            raise ValueError("max_repair_attempts must be between 0 and 100")
+        raw = await self._run_cli(
+            "dispatch",
+            "sling",
+            target,
+            "backlog-item",
+            "--formula",
+            "--var",
+            f"item={bead_id}",
+            "--var",
+            f"max_repair_attempts={max_repair_attempts}",
+            "--json",
+        )
+        try:
+            decoded = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            raise GasCitySchemaError(
+                "Gas City dispatch CLI returned invalid JSON"
+            ) from exc
+        return self._json_object(decoded, "dispatch")
+
+
     @staticmethod
     def _json_object(raw: Any, category: str) -> dict[str, Any]:
         if not isinstance(raw, Mapping):
