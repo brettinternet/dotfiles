@@ -1053,7 +1053,10 @@ for reviewer_try in 1 2 3; do
   fi
 done
 if ((reviewer_status != 0)); then
-  omp_reviewer=$reviewer_home/.local/share/mise/installs/github-can1357-oh-my-pi/latest/omp
+  omp_reviewer=omp
+  if ! command -v "$omp_reviewer" >/dev/null 2>&1; then
+    omp_reviewer=${MISE_DATA_DIR:-$reviewer_home/.local/share/mise}/installs/github-can1357-oh-my-pi/latest/omp
+  fi
   omp_output=$tmp_dir/reviewer.txt
   omp_error=$tmp_dir/reviewer.err
   omp_failure=

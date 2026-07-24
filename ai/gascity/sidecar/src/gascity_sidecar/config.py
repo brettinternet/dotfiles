@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     bind_port: int = 8787
     allow_non_loopback_bind: bool = False
     gc_api_url: str | None = None
-    gc_api_port: int = 8080
+    gc_api_port: int = 8372
     gc_command: str = "gc"
     gc_timeout_seconds: float = 90.0
     drain_poll_interval_seconds: float = 1.0
