@@ -104,6 +104,18 @@ prefix:bind(
 )
 local caffeine = require("caffeine").start()
 prefix:bind("cmd", "K", prefixFn(caffeine.toggle))
+local systemIdleType = "systemIdle"
+prefix:bind(
+  "cmd",
+  "J",
+  prefixFn(function()
+    local systemIdlePrevention = hs.caffeinate.toggle(systemIdleType) and "enabled" or "disabled"
+    local displayIdlePrevention = caffeine.isEnabled() and "enabled" or "disabled"
+    hs.alert.show(
+      "System-idle prevention: " .. systemIdlePrevention .. "\nDisplay-idle prevention: " .. displayIdlePrevention
+    )
+  end)
+)
 prefix:bind(
   "cmd",
   "C",
