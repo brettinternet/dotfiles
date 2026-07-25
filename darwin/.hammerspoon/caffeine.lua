@@ -1,7 +1,8 @@
 local caffeine = {}
 
 local batteryThreshold = 20
-local idleType = "displayIdle"
+local displayIdleType = "displayIdle"
+local systemIdleType = "systemIdle"
 local subscribers = {}
 local override = false
 local overrideAlert = nil
@@ -27,7 +28,11 @@ local function disabledReason()
 end
 
 function caffeine.isEnabled()
-  return hs.caffeinate.get(idleType)
+  return hs.caffeinate.get(displayIdleType)
+end
+
+function caffeine.isSystemIdleEnabled()
+  return hs.caffeinate.get(systemIdleType)
 end
 
 local function updateMenubar()
@@ -37,7 +42,14 @@ local function updateMenubar()
 
   if caffeine.isEnabled() then
     menubar:setTitle("Awake")
-    menubar:setTooltip("Display sleep is disabled")
+    if caffeine.isSystemIdleEnabled() then
+      menubar:setTooltip("Display and system idle sleep are disabled")
+    else
+      menubar:setTooltip("Display sleep is disabled")
+    end
+  elseif caffeine.isSystemIdleEnabled() then
+    menubar:setTitle("System")
+    menubar:setTooltip("System idle sleep is disabled; display sleep is allowed")
   else
     menubar:setTitle("Sleep")
     menubar:setTooltip("Display sleep is allowed")
@@ -52,6 +64,12 @@ local function notify()
       print("Caffeine subscriber failed: " .. tostring(message))
     end
   end
+end
+
+function caffeine.toggleSystemIdle()
+  local enabled = hs.caffeinate.toggle(systemIdleType)
+  updateMenubar()
+  return enabled
 end
 
 local function closeOverrideAlert()
@@ -91,7 +109,7 @@ end
 
 local function applyState(enabled)
   if caffeine.isEnabled() ~= enabled then
-    local result = hs.caffeinate.toggle(idleType)
+    local result = hs.caffeinate.toggle(displayIdleType)
     if result ~= enabled then
       error("failed to set display idle prevention")
     end
