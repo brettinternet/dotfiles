@@ -4,6 +4,8 @@ This directory is the portable city configuration and pack. Runtime state,
 beads, and machine-local overrides remain ignored (`.gc/`, `.beads/`,
 `city.local.toml`, and `.env`).
 
+Setup and daily commands: [workflow quick reference](docs/workflows.md).
+
 ## Initialize
 
 The city was initialized with:
