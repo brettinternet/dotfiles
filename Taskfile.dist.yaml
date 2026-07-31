@@ -29,6 +29,11 @@ tasks:
     cmds:
       - mise trust -q -a
       - mise install -q
+      # Extensions are outside Mise's gh install; converge gh-stack on each setup.
+      - |
+          if command -v gh >/dev/null 2>&1; then
+            gh extension install github/gh-stack --force
+          fi
     preconditions:
       - sh: command -v mise
         msg: Mise is not installed

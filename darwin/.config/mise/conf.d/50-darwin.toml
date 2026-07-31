@@ -12,7 +12,7 @@ uv = "latest"
 node = "latest"
 bun = "latest"
 k9s = "latest"
-gh = "latest"
+gh = { version = "latest", postinstall = "gh extension install github/gh-stack --force" }
 biome = "latest"
 
 # ai
