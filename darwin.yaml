@@ -47,3 +47,10 @@
       if: '[ -x "$(command -v nix)" ]'
     ~/.vscode/extensions/local.kaile-theme:
       path: darwin/vscode/extensions/kaile-theme
+
+- shell:
+    # gh-stack is user-scoped; converge it through Mise after linking its configuration.
+    - command: |
+        if command -v mise >/dev/null 2>&1; then
+          mise exec gh -- gh extension install github/gh-stack --force
+        fi
