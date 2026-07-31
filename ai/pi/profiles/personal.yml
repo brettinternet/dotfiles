@@ -1,12 +1,12 @@
 modelRoles:
   default: openai-codex/gpt-5.6-terra:high
-  smol: openai-codex/gpt-5.6-luna:low
+  smol: openai-codex/gpt-5.6-luna:medium
   slow: openai-codex/gpt-5.6-sol:max
   designer: openrouter/moonshotai/kimi-k3:xhigh
   vision: openai-codex/gpt-5.6-sol:high
-  task: openai-codex/gpt-5.6-luna:xhigh
-  commit: openai-codex/gpt-5.6-luna:low
+  task: openai-codex/gpt-5.6-luna:max
+  commit: openai-codex/gpt-5.3-codex-spark:high
   plan: openai-codex/gpt-5.6-sol:high
   advisor: openai-codex/gpt-5.6-luna:high
-  title: openai-codex/gpt-5.6-luna:low
+  title: openai-codex/gpt-5.3-codex-spark:high
   tiny: nvidia/nvidia/nemotron-3-ultra-550b-a55b:medium
