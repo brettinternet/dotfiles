@@ -9,6 +9,7 @@ local overrideAlert = nil
 local lastDisabledReason = nil
 local menubar = nil
 local watchers = {}
+local notificationDepth = 0
 
 local function disabledReason()
   local reasons = {}
@@ -57,6 +58,10 @@ local function updateMenubar()
 end
 
 local function notify()
+  if notificationDepth > 0 then
+    return
+  end
+
   updateMenubar()
   for _, subscriber in ipairs(subscribers) do
     local ok, message = pcall(subscriber, caffeine.isEnabled())
@@ -68,8 +73,33 @@ end
 
 function caffeine.toggleSystemIdle()
   local enabled = hs.caffeinate.toggle(systemIdleType)
-  updateMenubar()
+  notify()
   return enabled
+end
+
+function caffeine.setLifecycleState(displayEnabled, systemEnabled, allowOverride)
+  notificationDepth = notificationDepth + 1
+  local ok, result = pcall(function()
+    local displayApplied = caffeine.setEnabled(displayEnabled, allowOverride)
+    if displayEnabled and not displayApplied then
+      return false
+    end
+
+    if caffeine.isSystemIdleEnabled() ~= systemEnabled then
+      caffeine.toggleSystemIdle()
+    end
+    return true
+  end)
+  notificationDepth = notificationDepth - 1
+
+  if notificationDepth == 0 then
+    notify()
+  end
+
+  if not ok then
+    error(result, 2)
+  end
+  return result
 end
 
 local function closeOverrideAlert()
