@@ -35,3 +35,12 @@ min_active_sessions = 1
 name = "intake"
 dir = "fixture"
 min_active_sessions = 1
+
+[[rigs]]
+name = "goblinhealth"
+prefix = "gh"
+default_branch = "main"
+suspended_on_start = true
+[rigs.imports]
+[rigs.imports.import]
+source = "./."
