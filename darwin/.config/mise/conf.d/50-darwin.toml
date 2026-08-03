@@ -21,6 +21,7 @@ claude = "latest"
 opencode = "latest"
 codex = "latest"
 "github:can1357/oh-my-pi" = "latest"
+amp = "latest"
 ast-grep = "latest"
 
 # lsp
