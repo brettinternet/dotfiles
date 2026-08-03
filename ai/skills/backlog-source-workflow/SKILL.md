@@ -1,6 +1,6 @@
 ---
 name: backlog-source-workflow
-description: Resolve and operate on backlog sources consistently across loose Markdown, Backlog.md, GitHub Issues, Linear, and other supported providers. Use whenever a backlog command or skill reads or changes provider-backed work.
+description: Resolve and operate on backlog sources consistently across loose Markdown, Backlog.md, Beads, GitHub Issues, Linear, and other supported providers. Use whenever a backlog command or skill reads or changes provider-backed work.
 ---
 
 # Backlog Source Workflow
@@ -15,11 +15,23 @@ Keep the user's backlog authoritative. This skill supplies the shared source, sc
 4. Use the provider's supported interface:
    - loose Markdown: preserve its existing structure and vocabulary
    - Backlog.md: use `backlog` CLI/MCP; never edit task files directly
+   - Beads: use `bd` with `--json` for machine-readable reads and writes; in Gas City, route all Beads operations through explicitly scoped `gc bd --rig` or `gc bd --city` commands; never edit `.beads` exports or database files
    - GitHub Issues: use `gh`
    - Linear or another remote provider: use its authenticated first-party integration
-5. For Backlog.md in a Git worktree, read and write provider state from the primary/control checkout. Implementation worktrees contain code only.
+5. For Backlog.md in a Git worktree, read and write provider state from the primary/control checkout. Beads supports linked Git worktrees; invoke `bd` from the active worktree so it discovers the shared workspace. In Gas City, invoke `gc bd` with an explicit `--rig` or `--city` scope instead.
 
 Source-only input means the whole collection for scheduling, not permission to mutate every item or review the whole collection.
+
+## Beads
+
+Treat the Beads database as authoritative; its JSONL export is passive and is not a synchronization protocol. For direct Beads with a configured Dolt remote, run `bd dolt pull` before scheduling, then `bd dolt commit` and `bd dolt push` after the final verified checkpoint. For Gas City, pull with `gc --city <city-path> [--rig <rig-name>] dolt pull` before scheduling and sync with the matching `gc --city <city-path> [--rig <rig-name>] dolt sync` after the final verified checkpoint; do not forward `bd dolt` operations through `gc bd`.
+
+For Gas City sources, replace every `bd` command below with an explicitly scoped `gc bd` command. Use `gc bd --rig <rig-name> <bd-args>` for rig-scoped beads and `gc bd --city <city-path> <bd-args>` for city-level beads. Never invoke raw or unscoped `bd` from a Gas City city or rig when the intended store matters.
+
+1. Schedule from `bd ready --json`; inspect candidates and dependencies with `bd show <id> --json`. Use `bd blocked --json` to distinguish an explicit dependency from ordinary implementation difficulty.
+2. After acquiring the canonical Worklease resource, atomically claim a selected item with `bd update <id> --claim --json`. On any claim failure, reread the provider state; only an already-claimed item requires choosing another ready item.
+3. Record cumulative durable progress with `bd update <id> --append-notes "<progress or decision>" --json`. Create discovered work with `bd create ... --json`, and represent prerequisites with `bd dep add <blocked-id> <prerequisite-id> --json`; verify the direction with `bd blocked --json`.
+4. Close only after the requested work and its verification are complete: `bd close <id> --reason "<delivered result and verification>" --json`. Reread the closed item before releasing its Worklease.
 
 ## Select work
 
