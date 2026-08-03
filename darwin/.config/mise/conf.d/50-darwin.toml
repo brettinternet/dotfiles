@@ -21,7 +21,7 @@ claude = "latest"
 opencode = "latest"
 codex = "latest"
 "github:can1357/oh-my-pi" = "latest"
-amp = "latest"
+amp = { version = "latest", depends = ["bun"], minimum_release_age = "0", postinstall = 'cd "$MISE_TOOL_INSTALL_PATH" && "${MISE_DATA_DIR:-$HOME/.local/share/mise}/installs/bun/latest/bin/bun" pm trust @ampcode/cli' }
 ast-grep = "latest"
 
 # lsp
