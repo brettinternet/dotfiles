@@ -7,7 +7,7 @@
     - ~/.claude/commands
     - ~/.claude/skills
     - ~/.agents/skills
-
+    - ~/.omp/agent/skills
 - shell:
     - command: |
         set -eu
@@ -66,8 +66,8 @@
       description: Seed Claude Code settings as a local copy
       stdout: true
       stderr: true
-    - command: ai/.bin/install-codex-command-skills
-      description: Generate explicit-only Codex skills from shared commands
+    - command: ai/.bin/install-agent-commands
+      description: Generate shared agent command skills and Claude command adapters
       stdout: true
       stderr: true
     - command: ai/.bin/install-codex-agents
@@ -84,30 +84,24 @@
       path: ai/AGENTS.md
     ~/.claude/statusline-command.sh:
       path: ai/claude/statusline-command.sh
-    ~/.claude/commands/:
-      glob: true
-      relink: false
-      path: ai/commands/*
     ~/.claude/agents/:
       glob: true
       path: ai/claude/agents/*
     ~/.claude/skills/:
       glob: true
       relink: false
-      path: ai/skills/*
+      path: ai/.agents/skills/*
     # Codex
     ~/.codex/AGENTS.md:
       path: ai/AGENTS.md
     ~/.agents/skills/:
       glob: true
       relink: false
-      path: ai/skills/*
+      path: ai/.agents/skills/*
     # pi
     # OMP already reads ~/.claude/CLAUDE.md
     ~/.omp/agent/config.yml:
       path: ai/pi/config.yml
-    ~/.omp/agent/skills:
-      path: ai/skills
     ~/.omp/agents/:
       glob: true
       path: ai/pi/agents/*
