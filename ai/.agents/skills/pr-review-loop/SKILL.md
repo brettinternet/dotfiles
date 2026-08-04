@@ -112,9 +112,9 @@ Posting mechanics (`bash` with `gh`):
   Use `gh pr view <N> --json files` to get valid paths. Only comment on lines
   present in the diff. Attach every finding to a changed file line whenever
   possible; use a top-level review comment only when no changed line fits.
-- **Approval:** if there are no blockers and the change is sound, approve with a short comment:
+- **Approval:** if there are no blockers and the change is sound, approve without a body. Do not attach validation, praise, or status commentary to an approval:
   ```bash
-  gh pr review <N> --approve --body "<short casual approval>"
+  gh pr review <N> --approve
   ```
 - **Blockers:** submit a `COMMENT` review, keeping line-specific findings inline
   and using its top-level body only for concerns that cannot map to a changed
