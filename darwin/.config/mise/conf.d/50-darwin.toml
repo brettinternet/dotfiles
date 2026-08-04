@@ -49,7 +49,7 @@ docker-cli = "latest"
 version = "latest"
 postinstall = '''
 mkdir -p ~/.docker/cli-plugins ~/.local/bin
-compose_plugin="$(which docker-cli-plugin-docker-compose)"
+compose_plugin="$MISE_TOOL_INSTALL_PATH/docker-compose"
 ln -sf "$compose_plugin" ~/.docker/cli-plugins/docker-compose
 ln -sf "$compose_plugin" ~/.local/bin/docker-compose
 '''
