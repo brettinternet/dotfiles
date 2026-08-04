@@ -68,9 +68,21 @@ gh pr view <N> --json files,additions,deletions,commits
 Review the actual changes with the lens of: correctness, regressions, breaking changes, security, and whether the tests cover the new/changed behavior. Read the surrounding code in the repo when context is needed — use `read`/`grep` to ground your review, don't review blind.
 When available, apply the `implementation-review` skill as the shared review method. This command's new-commit scope, read-only boundary, posting policy, and oracle cap override that skill. Apply the separate `user-voice` skill only when drafting external GitHub communication.
 
+Before drafting any finding, read the complete existing PR discussion and review
+history, including inline review comments and their replies:
+
+```bash
+gh pr view <N> --json comments,reviews
+gh api repos/:owner/:repo/pulls/<N>/comments --paginate
+```
+
+Compare each potential finding with that discussion. Do not post a duplicate
+concern, including when the existing discussion shows the author already
+addressed it.
+
 ### 4. Consult the oracle for load-bearing review decisions
 
-Before approving or posting a blocker as a `COMMENT` review based on a
+Before approving or posting a material concern as a `COMMENT` review based on a
 load-bearing assumption, consult the **oracle** agent when the finding depends
 on architecture, design intent, security posture, ownership, invariants, or a
 broad blast radius. Record the assumption and the oracle's read in your private
@@ -78,8 +90,8 @@ notes; apply the `user-voice` skill to posted GitHub comments.
 
 Consult the oracle when competing interpretations of the diff both look
 plausible, when surrounding code suggests an intentional tradeoff you don't
-understand, or before declaring a PR human-blocked because the right fix
-requires an architecture, product, or design decision.
+understand, or before concluding that a concern needs a human decision because
+the right fix requires an architecture, product, or design decision.
 
 Make at most one oracle consultation per PR for each reviewed commit set, batching all related load-bearing concerns. Do not consult when repository evidence resolves the concern or no judgment meets that bar.
 
@@ -90,7 +102,7 @@ comments, approval bodies, top-level PR comments, and replies to existing
 comments or review threads. This command grants the posting authority; the
 skill controls wording only. For each new finding directed at the PR author,
 ask exactly one sincere question they can answer or push back on. Do not stack
-questions; for a blocker, ask one direct question that names the concern. Use
+questions; for a material concern, ask one direct question that names it. Use
 declarative forms for approvals, status updates, and explanatory replies.
 
 Posting mechanics (`bash` with `gh`):
@@ -108,15 +120,16 @@ Posting mechanics (`bash` with `gh`):
   Use `gh pr view <N> --json files` to get valid paths. Only comment on lines
   present in the diff. Attach every finding to a changed file line whenever
   possible; use a top-level review comment only when no changed line fits.
-- **Approval:** if there are no blockers and the change is sound, approve with a short comment:
+- **Approval:** if the change is sound, approve without a body. Do not attach validation, praise, or status commentary to an approval:
   ```bash
-  gh pr review <N> --approve --body "<short casual approval>"
+  gh pr review <N> --approve
   ```
-- **Blockers:** submit a `COMMENT` review, keeping line-specific findings inline
-  and using its top-level body only for concerns that cannot map to a changed
-  line. Never use `--request-changes` or a `REQUEST_CHANGES` review event.
+- **Material concerns:** submit a `COMMENT` review, keeping line-specific
+  findings inline and using its top-level body only for concerns that cannot map
+  to a changed line. Never use `--request-changes` or a `REQUEST_CHANGES`
+  review event.
 
-If you already reviewed this PR before (new PR-authored commits since = the trigger for this pass), post fresh comments only on the diff introduced by the **new** commits (the entries in `commit_subjects` that weren't in `reviewed_commits`), not on unchanged code the author only rebased. If scoping to just those commits is hard to determine, review the full current diff but skip posting findings you've already raised (check the PR's existing comments via `gh pr view <N> --json comments` to avoid duplicates).
+If you already reviewed this PR before (new PR-authored commits since = the trigger for this pass), post fresh comments only on the diff introduced by the **new** commits (the entries in `commit_subjects` that weren't in `reviewed_commits`), not on unchanged code the author only rebased. Review the existing PR discussion before posting and skip any concern already raised or addressed there.
 
 ### 6. Update state
 
@@ -140,9 +153,9 @@ After every candidate PR in this iteration is processed (or skipped), print a on
 - **MUST NOT** post anything on a PR I've **already approved** when there are no new PR-authored commits since — no re-approval, no new comment. Skip it (re-review only once the author pushes new work past my approval).
 - **MUST NOT** post trivial nitpicks, style nags, or "consider X" suggestions that don't matter.
 - **MUST NOT** re-review a PR whose PR-authored commit subjects match what you've already reviewed — check the state file.
-- **MUST NOT** duplicate comments already on the PR — check existing comments first.
-- **MUST NOT** approve a PR that has real blockers; submit a `COMMENT` review instead.
-- **MUST** consult the oracle before making a load-bearing architecture, design, security, or product judgment that determines approval, a review comment, or a human-required blocker.
+- **MUST NOT** duplicate an existing PR concern, including one the author already addressed — read the complete discussion and inline review comments before posting.
+- **MUST NOT** approve a PR with an unresolved material concern; submit a `COMMENT` review instead.
+- **MUST** consult the oracle before making a load-bearing architecture, design, security, or product judgment that determines approval, a review comment, or a concern requiring human input.
 - **MUST NOT** push, merge, close PRs, or request changes. You only comment and approve.
 - **MUST NOT** expand scope beyond review — don't check out branches or edit files.
 - **MUST** keep each iteration's console output short — one status line + per-PR one-liners. Don't dump diffs or reviews into the terminal.
