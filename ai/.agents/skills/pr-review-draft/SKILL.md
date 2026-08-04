@@ -39,6 +39,9 @@ Produce a review with:
 - At most 1-4 priority comments, only for issues that could plausibly break behavior, data, deployments, security, or compatibility, if there's already a comment in the PR that addresses an issue then call that out
 
 Only include the highest-priority comments. If nothing meets that bar, say there are no potentially breaking concerns.
+
+Reject nitpicks, style preferences, and nonessential suggestions. Do not include
+them in the draft or post them when authorized.
 Reference the file and the _REAL_ line number from the file in the diff that's related to your comment.
 
 ## Posting when explicitly requested

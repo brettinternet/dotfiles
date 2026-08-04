@@ -1,6 +1,6 @@
 # AI agent setup
 
-Shared config for Claude Code (`~/.claude`), oh-my-pi (`~/.omp`), Codex, and OpenCode (`~/.config/opencode`), installed by [`ai.yaml`](../ai.yaml). `AGENTS.md` is the global instruction file for all four. `ai/.agents/` is the canonical source for shared skills and command workflows. Tool-specific agent definitions remain in `claude/agents/`, `pi/agents/`, and `opencode/agents/` because their configuration formats and discovery paths differ; Codex profiles are generated from the Claude definitions with role-specific model mappings.
+Shared config for Claude Code (`~/.claude`), oh-my-pi (`~/.omp`), Codex, Amp CLI (`~/.config/amp`), and OpenCode (`~/.config/opencode`), installed by [`ai.yaml`](../ai.yaml). `AGENTS.md` is the global instruction file for all five. `ai/.agents/` is the canonical source for shared skills and command workflows. Tool-specific agent definitions remain in `claude/agents/`, `pi/agents/`, and `opencode/agents/` because their configuration formats and discovery paths differ; Codex profiles are generated from the Claude definitions with role-specific model mappings.
 
 ## OpenCode profiles
 
@@ -37,9 +37,9 @@ The complete find/do/check/judge/watch loop. No tester (executor writes tests, v
 
 ## Shared skills and commands
 
-- `ai/.agents/skills/<distinct-name>/` is the only source for reusable skills. Codex, OMP, and OpenCode discover its `~/.agents/skills/` links; Claude receives links to the same packages at `~/.claude/skills/`.
-- `ai/.agents/commands/*.md` is the source for shared slash-command workflows. `install-agent-commands` generates explicit-only skill adapters in `ai/.agents/skills/` and marked Claude command copies at `~/.claude/commands/`; OMP continues to read those Claude-compatible commands.
-- `make ai` removes stale generated command adapters, stale Claude command copies, legacy generated Codex adapters, and the retired `~/.omp/agent/skills` link. It never replaces unmanaged skills or commands.
+- `ai/.agents/skills/<distinct-name>/` is the only source for reusable skills. Codex, OMP, OpenCode, and Amp discover its `~/.agents/skills/` links natively; Claude receives links to the same packages at `~/.claude/skills/`.
+- `ai/.agents/commands/*.md` is the source for shared slash-command workflows. `install-agent-commands` generates explicit-only skill adapters in `ai/.agents/skills/` and marked Claude command copies at `~/.claude/commands/`; OMP continues to read those Claude-compatible commands. Amp has no file-based custom command format, so it consumes the generated adapters as skills when explicitly invoked with `$<command>`.
+- `make ai` removes stale generated command adapters, stale Claude command copies, legacy generated Codex adapters, and the retired `~/.omp/agent/skills` link; it also links Amp's settings file. It never replaces unmanaged skills or commands.
 - Keep optional Codex `agents/openai.yaml` metadata inside authored skill packages; the common `.agents` links carry it unchanged.
 
 ## Bounded backlog loop

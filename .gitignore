@@ -30,3 +30,4 @@ CLAUDE.md
 /ai/pi/config.yml
 /ai/pi/.active
 /ai/pi/config.yml.tmp.*
+/ai/pi/config.yml.lock
