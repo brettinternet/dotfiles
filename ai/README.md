@@ -1,10 +1,10 @@
 # AI agent setup
 
-Shared config for Claude Code (`~/.claude`), oh-my-pi (`~/.omp`), Codex, Amp CLI (`~/.config/amp`), and OpenCode (`~/.config/opencode`), installed by [`ai.yaml`](../ai.yaml). `AGENTS.md` is the global instruction file for all five. `ai/.agents/` is the canonical source for shared skills and command workflows. Tool-specific agent definitions remain in `claude/agents/`, `pi/agents/`, and `opencode/agents/` because their configuration formats and discovery paths differ; Codex profiles are generated from the Claude definitions with role-specific model mappings.
+Shared config for Claude Code (`~/.claude`), oh-my-pi (`~/.omp`), Codex, Amp CLI (`~/.config/amp`), and OpenCode (`~/.config/opencode`), installed by [`ai.yaml`](../ai.yaml). `AGENTS.md` is the global instruction file for all five. `ai/.agents/` is the canonical source for authored shared skills and command workflows. Tool-specific agent definitions remain in `claude/agents/`, `pi/agents/`, and `opencode/agents/` because their configuration formats and discovery paths differ; Codex profiles are generated from the Claude definitions with role-specific model mappings.
 
 ## OpenCode profiles
 
-OpenCode renders `opencode.jsonc` from `opencode/profiles/common.jsonc` plus a selected overlay. `opencode-profile list` shows `gpt`, `claude`, `claude-gpt`, `gpt-cc-proxy`, and `openrouter`; `opencode-profile use <name>` regenerates the active config. Its six global subagents mirror the pi roster; each profile supplies their OpenCode model routing. `gpt-cc-proxy` retains Meridian-backed Anthropic routing and requires `MERIDIAN_BASE_URL`. OpenCode uses neither oh-my-openagent nor OCX.
+OpenCode renders `~/.config/opencode/opencode.jsonc` from `opencode/profiles/common.jsonc` plus a selected overlay. `opencode-profile list` shows `gpt`, `claude`, `claude-gpt`, `gpt-cc-proxy`, and `openrouter`; `opencode-profile use <name>` regenerates the local active config. Its six global subagents mirror the pi roster; each profile supplies their OpenCode model routing. `gpt-cc-proxy` retains Meridian-backed Anthropic routing and requires `MERIDIAN_BASE_URL`. OpenCode uses neither oh-my-openagent nor OCX.
 
 ## Orchestration strategy
 
@@ -31,15 +31,15 @@ The complete find/do/check/judge/watch loop. No tester (executor writes tests, v
 
 - **Role + tier**: agent frontmatter — never inherited from the session.
 - **Policy** (when to delegate/escalate/verify, the two-failure escalation ladder, don't-delegate list, subagent guard): `AGENTS.md` § Subagents, one source for all tools.
-- **Workflow entrypoints**: `ai/.agents/commands/*.md` templates plus their generated explicit-only `ai/.agents/skills/*/SKILL.md` adapters.
-- **Reusable workflow methods**: `ai/.agents/skills/*/SKILL.md` plus optional references, templates, scripts, and source-controlled tool metadata.
+- **Workflow entrypoints**: `ai/.agents/commands/*.md` templates; `install-agent-commands` renders their explicit-only adapters into each tool's local skill directory.
+- **Reusable workflow methods**: authored `ai/.agents/skills/*/SKILL.md` packages plus optional references, templates, scripts, and source-controlled tool metadata.
 - **Orchestrator tier**: chosen per session; the oracle nudge is the safety net when starting cheap.
 
 ## Shared skills and commands
 
-- `ai/.agents/skills/<distinct-name>/` is the only source for reusable skills. Codex, OMP, OpenCode, and Amp discover its `~/.agents/skills/` links natively; Claude receives links to the same packages at `~/.claude/skills/`.
-- `ai/.agents/commands/*.md` is the source for shared slash-command workflows. `install-agent-commands` generates explicit-only skill adapters in `ai/.agents/skills/` and marked Claude command copies at `~/.claude/commands/`; OMP continues to read those Claude-compatible commands. Amp has no file-based custom command format, so it consumes the generated adapters as skills when explicitly invoked with `$<command>`.
-- `make ai` removes stale generated command adapters, stale Claude command copies, legacy generated Codex adapters, and the retired `~/.omp/agent/skills` link; it also links Amp's settings file. It never replaces unmanaged skills or commands.
+- `ai/.agents/skills/<distinct-name>/` is the source for authored reusable skills. Codex, OMP, OpenCode, and Amp discover its `~/.agents/skills/` links natively; Claude receives links to the same packages at `~/.claude/skills/`.
+- `ai/.agents/commands/*.md` is the source for shared slash-command workflows. `install-agent-commands` renders marked explicit-only adapters into `~/.agents/skills/` and `~/.claude/skills/`, and marked Claude command copies into `~/.claude/commands/`. OMP continues to read those Claude-compatible commands. Amp consumes the adapters as skills when explicitly invoked with `$<command>`.
+- `make ai` writes generated adapters, active profile state, and rendered profile configuration only under `$HOME`; it never modifies the checkout. It removes only marked generated local artifacts, legacy generated Codex adapters, and the retired `~/.omp/agent/skills` link.
 - Keep optional Codex `agents/openai.yaml` metadata inside authored skill packages; the common `.agents` links carry it unchanged.
 
 ## Bounded backlog loop

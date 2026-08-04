@@ -26,8 +26,3 @@ AGENTS.local.md
 docs/superpowers
 CLAUDE.md
 .sisyphus
-# pi (omp) per-machine active profile
-/ai/pi/config.yml
-/ai/pi/.active
-/ai/pi/config.yml.tmp.*
-/ai/pi/config.yml.lock
