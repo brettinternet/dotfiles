@@ -1,0 +1,139 @@
+#!/bin/sh
+# opencode-profile — select a local oh-my-openagent routing profile
+# Usage: opencode-profile [show|list|use <name>|config|path [<name>]|edit [<name>]|new <name> [--from <other>]]
+set -eu
+
+# Resolve dotfiles root: $DOTFILES env, or walk up from this script's realpath.
+# The script is typically invoked via a symlink (dotbot), so resolve symlinks
+# on $0 before walking up — otherwise we'd land in the symlink's dir.
+if [ -z "${DOTFILES:-}" ]; then
+  _src="$0"
+  while [ -L "$_src" ]; do
+    _dir="$(cd "$(dirname "$_src")" && pwd -P)"
+    _src="$(readlink "$_src")"
+    case "$_src" in
+      /*) ;;
+      *) _src="$_dir/$_src" ;;
+    esac
+  done
+  _self="$(cd "$(dirname "$_src")" && pwd -P)"
+  DOTFILES="$(cd "$_self/../.." && pwd -P)"
+fi
+
+PROFILES_DIR="$DOTFILES/ai/opencode/profiles"
+CONFIG_FILE="$DOTFILES/ai/opencode/oh-my-openagent.jsonc"
+ACTIVE_FILE="$DOTFILES/ai/opencode/.active"
+DEFAULT_PROFILE="gpt"
+
+die() { printf '%s\n' "$*" >&2; exit 1; }
+
+profile_path() {
+  printf '%s/%s.jsonc\n' "$PROFILES_DIR" "$1"
+}
+
+active_profile() {
+  if [ -f "$ACTIVE_FILE" ]; then
+    cat "$ACTIVE_FILE"
+  elif [ -L "$CONFIG_FILE" ]; then
+    basename "$(readlink "$CONFIG_FILE")" .jsonc
+  else
+    printf '%s\n' "$DEFAULT_PROFILE"
+  fi
+}
+
+cmd_show() {
+  profile="$(active_profile)"
+  printf '%s\t%s\n' "$profile" "$(profile_path "$profile")"
+}
+
+cmd_list() {
+  active="$(active_profile)"
+  for f in "$PROFILES_DIR"/*.jsonc; do
+    [ -f "$f" ] || continue
+    name="$(basename "$f" .jsonc)"
+    if [ "$name" = "$active" ]; then
+      printf '* %s\n' "$name"
+    else
+      printf '  %s\n' "$name"
+    fi
+  done
+}
+
+cmd_use() {
+  name="${1:-}"
+  [ -n "$name" ] || die "usage: opencode-profile use <name>"
+  target="$(profile_path "$name")"
+  [ -f "$target" ] || die "opencode-profile: profile '$name' not found ($target)"
+  if [ -e "$CONFIG_FILE" ] && [ ! -L "$CONFIG_FILE" ]; then
+    die "opencode-profile: active config is not a symlink ($CONFIG_FILE)"
+  fi
+  ln -sfn "profiles/$name.jsonc" "$CONFIG_FILE"
+  printf '%s\n' "$name" > "$ACTIVE_FILE"
+  printf 'switched to %s\n' "$name"
+}
+
+cmd_path() {
+  name="${1:-$(active_profile)}"
+  target="$(profile_path "$name")"
+  [ -f "$target" ] || die "opencode-profile: profile '$name' not found ($target)"
+  printf '%s\n' "$target"
+}
+
+cmd_config() {
+  [ $# -eq 0 ] || die "usage: opencode-profile config"
+  printf '%s\n' "$CONFIG_FILE"
+}
+
+cmd_edit() {
+  name="${1:-$(active_profile)}"
+  target="$(profile_path "$name")"
+  [ -f "$target" ] || die "opencode-profile: profile '$name' not found ($target)"
+  "${EDITOR:-vi}" "$target"
+}
+
+cmd_new() {
+  name="${1:-}"
+  [ -n "$name" ] || die "usage: opencode-profile new <name> [--from <other>]"
+  shift
+  from="$(active_profile)"
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --from) [ $# -gt 1 ] || die "usage: opencode-profile new <name> [--from <other>]"; from="$2"; shift 2 ;;
+      *) die "opencode-profile new: unknown option '$1'" ;;
+    esac
+  done
+  src="$(profile_path "$from")"
+  dst="$PROFILES_DIR/$name.jsonc"
+  [ -f "$src" ] || die "opencode-profile: source profile '$from' not found ($src)"
+  [ ! -e "$dst" ] || die "opencode-profile: profile '$name' already exists ($dst)"
+  cp "$src" "$dst"
+  printf 'created %s\n' "$dst"
+}
+
+usage() {
+  cat <<EOF
+usage: opencode-profile [show]             print active profile and source profile path
+       opencode-profile list               list selectable profiles (active marked with *)
+       opencode-profile use <name>         select a profile for oh-my-openagent
+       opencode-profile config             print active oh-my-openagent config path
+       opencode-profile path [<name>]      print source profile path (default: active)
+       opencode-profile edit [<name>]      open source profile in \$EDITOR (default: active)
+       opencode-profile new <name> [--from <other>]  copy a profile (default: active)
+       opencode-profile -h|--help          show this help
+EOF
+}
+
+case "${1:-show}" in
+  show)
+    if [ "$#" -gt 0 ]; then shift; fi
+    cmd_show "$@"
+    ;;
+  list)       shift; cmd_list "$@" ;;
+  use)        shift; cmd_use "$@" ;;
+  path)       shift; cmd_path "$@" ;;
+  config)     shift; cmd_config "$@" ;;
+  edit)       shift; cmd_edit "$@" ;;
+  new)        shift; cmd_new "$@" ;;
+  -h|--help)  usage ;;
+  *)          die "opencode-profile: unknown command '${1}'. Try: opencode-profile --help" ;;
+esac
