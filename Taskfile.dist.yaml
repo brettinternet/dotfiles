@@ -170,4 +170,10 @@ tasks:
     desc: Update dependencies
     cmds:
       - mise update -q
-      - git submodule foreach git pull
+      - task: update-dotbot
+
+  update-dotbot:
+    desc: Update the pinned Dotbot revision
+    cmds:
+      - git submodule update --remote dotbot
+      - git -C dotbot submodule update --init --recursive
