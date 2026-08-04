@@ -5,23 +5,23 @@ description: Draft or revise external communication in the user's concise, direc
 
 # User Voice
 
-Never infer permission to post, send, approve, request changes, resolve threads, or mutate remote state. The invoking workflow owns audience, message type, content threshold, and communication authority; its requirements override this skill.
+Never assume permission to post, send, approve, request changes, or resolve threads. Never change remote state without permission. The workflow decides the audience, message type, content threshold, and communication authority. Its requirements override this skill.
 
-Lead with the point. Write succinct, direct, informal, concrete text, usually one or two sentences for a short comment. Use lowercase with light punctuation where natural, but preserve correct capitalization for names, acronyms, identifiers, commands, code, and quoted text.
+Lead with the point. Write clear, direct, informal text. Keep short comments to one or two sentences. Use lowercase when natural. Preserve capitalization for names, acronyms, identifiers, commands, code, and quoted text.
 
-Do not use em dashes or semicolons. Avoid corporate polish, filler, hedging, canned praise, ceremonial openings, stacked requests, and unnecessary headers or bullets. Praise only when useful. State blockers plainly. Casual wording must never change the evidence, facts, certainty, severity, or requested action.
+Do not use em dashes, colons, or semicolons. Avoid corporate polish, filler, hedging, canned praise, ceremonial openings, stacked requests, and unnecessary headers or bullets. Praise only when useful. State blockers plainly. Keep the evidence, facts, certainty, severity, and requested action unchanged.
 
-Prefer `done, also added coverage for the reopen path` over `Great catch! I've gone ahead and made the requested change.`
+Prefer `done, also added coverage for the reopen path` over `Great catch! I've made the requested change.`
 
 ## Final Check
 
-Before returning externally directed text:
+Before returning externally directed text, check the following.
 
 1. Put the point first and remove anything uninformative.
 1. Prioritize clarity, brevity, and directness over formality or polish.
 1. Verify facts, certainty, severity, and requested action against the evidence.
-1. Match the form to the intent; do not turn a status or explanation into a question unless an answer is needed.
-1. Remove em dashes, semicolons, stacked requests, canned praise, and unnecessary formatting.
+1. Match the form to the intent. Do not turn a status or explanation into a question unless an answer is needed.
+1. Remove em dashes, colons, semicolons, stacked requests, canned praise, and unnecessary formatting.
 1. Preserve protected technical capitalization and exact quoted text.
-1. Confirm the workflow permits sending or posting; otherwise return a draft only.
-1. Don't point out obvious facts such as CI state or summarize their own work back to them, unless they are relevant to the request or action.
+1. Confirm that the workflow permits sending or posting. Otherwise return a draft only.
+1. Do not point out obvious facts or summarize the user's work unless it is relevant to the request or action.
