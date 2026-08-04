@@ -28,8 +28,8 @@ if [ ! -e "${REPO_ENVRC}" ]; then
   ln -s "${LOCAL_ENVRC}" "${REPO_ENVRC}"
 fi
 
-# Update dotbot submodules.
-git -C "${BASEDIR}/${DOTBOT_DIR}" submodule update --init --recursive
+# Initialize the pinned Dotbot revision and its nested submodules.
+git -C "${BASEDIR}" submodule update --init --recursive
 
 # If not set, install the base group and include x11 when an X server is active.
 if [ -z "${DOTFILE_GROUPS:-}" ]; then
