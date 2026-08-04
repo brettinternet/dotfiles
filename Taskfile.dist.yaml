@@ -94,9 +94,7 @@ tasks:
                 esac
                 ;;
               *.yaml|*.yml|*.json|*.jsonc)
-                if [ ! -L "$file" ]; then
-                  format_files+=("$file")
-                fi
+                format_files+=("$file")
                 ;;
             esac
           done < <({{.FILES_CMD}})
@@ -155,9 +153,7 @@ tasks:
                 lua_files+=("$file")
                 ;;
               *.yaml|*.yml|*.json|*.jsonc)
-                if [ ! -L "$file" ]; then
-                  format_files+=("$file")
-                fi
+                format_files+=("$file")
                 ;;
             esac
           done < <({{.FILES_CMD}})

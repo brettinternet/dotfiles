@@ -1,6 +1,6 @@
 #!/bin/sh
-# opencode-profile — select a local oh-my-openagent routing profile
-# Usage: opencode-profile [show|list|use <name>|config|path [<name>]|edit [<name>]|new <name> [--from <other>]]
+# opencode-profile — manage OpenCode config profile overlays
+# Usage: opencode-profile [show|list|use <name>|config|path [<name>|common]|edit [<name>|common]|new <name> [--from <other>]]
 set -eu
 
 # Resolve dotfiles root: $DOTFILES env, or walk up from this script's realpath.
@@ -21,21 +21,24 @@ if [ -z "${DOTFILES:-}" ]; then
 fi
 
 PROFILES_DIR="$DOTFILES/ai/opencode/profiles"
-CONFIG_FILE="$DOTFILES/ai/opencode/oh-my-openagent.jsonc"
+COMMON_PROFILE="$PROFILES_DIR/common.jsonc"
+CONFIG_FILE="$DOTFILES/ai/opencode/opencode.jsonc"
 ACTIVE_FILE="$DOTFILES/ai/opencode/.active"
+MERGE_PROFILE="$DOTFILES/ai/opencode/merge-profile.py"
 DEFAULT_PROFILE="gpt"
 
 die() { printf '%s\n' "$*" >&2; exit 1; }
 
 profile_path() {
-  printf '%s/%s.jsonc\n' "$PROFILES_DIR" "$1"
+  case "$1" in
+    common) printf '%s\n' "$COMMON_PROFILE" ;;
+    *)      printf '%s/%s.jsonc\n' "$PROFILES_DIR" "$1" ;;
+  esac
 }
 
 active_profile() {
   if [ -f "$ACTIVE_FILE" ]; then
     cat "$ACTIVE_FILE"
-  elif [ -L "$CONFIG_FILE" ]; then
-    basename "$(readlink "$CONFIG_FILE")" .jsonc
   else
     printf '%s\n' "$DEFAULT_PROFILE"
   fi
@@ -51,6 +54,7 @@ cmd_list() {
   for f in "$PROFILES_DIR"/*.jsonc; do
     [ -f "$f" ] || continue
     name="$(basename "$f" .jsonc)"
+    [ "$name" = common ] && continue
     if [ "$name" = "$active" ]; then
       printf '* %s\n' "$name"
     else
@@ -59,15 +63,27 @@ cmd_list() {
   done
 }
 
+render_config() {
+  name="$1"
+  [ "$name" != common ] || die "opencode-profile: 'common' is a shared base, not a selectable profile"
+  target="$(profile_path "$name")"
+  [ -f "$COMMON_PROFILE" ] || die "opencode-profile: common profile not found ($COMMON_PROFILE)"
+  [ -f "$target" ] || die "opencode-profile: profile '$name' not found ($target)"
+  [ -f "$MERGE_PROFILE" ] || die "opencode-profile: merge helper not found ($MERGE_PROFILE)"
+
+  tmp="${CONFIG_FILE}.tmp.$$"
+  if python3 "$MERGE_PROFILE" "$COMMON_PROFILE" "$target" "$tmp"; then
+    mv "$tmp" "$CONFIG_FILE"
+  else
+    [ ! -e "$tmp" ] || unlink "$tmp"
+    return 1
+  fi
+}
+
 cmd_use() {
   name="${1:-}"
   [ -n "$name" ] || die "usage: opencode-profile use <name>"
-  target="$(profile_path "$name")"
-  [ -f "$target" ] || die "opencode-profile: profile '$name' not found ($target)"
-  if [ -e "$CONFIG_FILE" ] && [ ! -L "$CONFIG_FILE" ]; then
-    die "opencode-profile: active config is not a symlink ($CONFIG_FILE)"
-  fi
-  ln -sfn "profiles/$name.jsonc" "$CONFIG_FILE"
+  render_config "$name"
   printf '%s\n' "$name" > "$ACTIVE_FILE"
   printf 'switched to %s\n' "$name"
 }
@@ -102,6 +118,7 @@ cmd_new() {
       *) die "opencode-profile new: unknown option '$1'" ;;
     esac
   done
+  [ "$from" != common ] || die "opencode-profile: 'common' is a shared base, not a profile template"
   src="$(profile_path "$from")"
   dst="$PROFILES_DIR/$name.jsonc"
   [ -f "$src" ] || die "opencode-profile: source profile '$from' not found ($src)"
@@ -114,11 +131,11 @@ usage() {
   cat <<EOF
 usage: opencode-profile [show]             print active profile and source profile path
        opencode-profile list               list selectable profiles (active marked with *)
-       opencode-profile use <name>         select a profile for oh-my-openagent
-       opencode-profile config             print active oh-my-openagent config path
-       opencode-profile path [<name>]      print source profile path (default: active)
-       opencode-profile edit [<name>]      open source profile in \$EDITOR (default: active)
-       opencode-profile new <name> [--from <other>]  copy a profile (default: active)
+       opencode-profile use <name>         generate config from common + profile <name>
+       opencode-profile config             print generated active config path
+       opencode-profile path [<name>|common]  print source profile path (default: active)
+       opencode-profile edit [<name>|common]  open source profile in \$EDITOR (default: active)
+       opencode-profile new <name> [--from <other>]  create a profile overlay (copy from another overlay)
        opencode-profile -h|--help          show this help
 EOF
 }

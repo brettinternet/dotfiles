@@ -20,16 +20,18 @@
         set -eu
         profile="$(ai/.bin/opencode-profile show | cut -f1)"
         ai/.bin/opencode-profile use "$profile"
-      description: Select the active OpenCode routing profile
+      description: Generate the active OpenCode config from its selected profile
       stdout: true
       stderr: true
     - command: |
         set -eu
-        target="$HOME/.config/opencode/ocx.jsonc"
-        if [ -e "$target" ] || [ -L "$target" ]; then
-          trash "$target"
-        fi
-      description: Remove the retired OCX configuration
+        for name in ocx.jsonc oh-my-openagent.jsonc; do
+          target="$HOME/.config/opencode/$name"
+          if [ -e "$target" ] || [ -L "$target" ]; then
+            trash "$target"
+          fi
+        done
+      description: Remove retired OCX and oh-my-openagent configuration
       stdout: true
       stderr: true
 
@@ -114,7 +116,8 @@
       path: ai/AGENTS.md
     ~/.config/opencode/opencode.jsonc:
       path: ai/opencode/opencode.jsonc
-    ~/.config/opencode/oh-my-openagent.jsonc:
-      path: ai/opencode/oh-my-openagent.jsonc
+    ~/.config/opencode/agents/:
+      glob: true
+      path: ai/opencode/agents/*
     ~/.config/opencode/tui.jsonc:
       path: ai/opencode/tui.jsonc

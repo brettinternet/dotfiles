@@ -1,10 +1,10 @@
 # AI agent setup
 
-Shared config for Claude Code (`~/.claude`), oh-my-pi (`~/.omp`), and Codex, installed by [`ai.yaml`](../ai.yaml). `AGENTS.md` is the global instruction file for all three. `commands/` contains shared slash-command entrypoints: OMP reads the Claude commands, while `install-codex-command-skills` generates explicit-only Codex adapters and translates their argument placeholders. Authored `skills/` packages are linked unchanged to all three tools. Agent definitions are duplicated per tool in `claude/agents/` and `pi/agents/` with identical bodies and per-tool frontmatter; Codex profiles are generated from the Claude definitions with role-specific Codex model mappings.
+Shared config for Claude Code (`~/.claude`), oh-my-pi (`~/.omp`), Codex, and OpenCode (`~/.config/opencode`), installed by [`ai.yaml`](../ai.yaml). `AGENTS.md` is the global instruction file for all four. `commands/` contains shared slash-command entrypoints: OMP reads the Claude commands, while `install-codex-command-skills` generates explicit-only Codex adapters and translates their argument placeholders. Authored `skills/` packages are linked unchanged to the supported tools. Agent definitions are duplicated per tool in `claude/agents/`, `pi/agents/`, and `opencode/agents/` with identical bodies and tool-specific frontmatter; Codex profiles are generated from the Claude definitions with role-specific Codex model mappings.
 
 ## OpenCode profiles
 
-OpenCode uses the `oh-my-openagent` plugin with a local routing profile. `opencode-profile list` shows `gpt`, `claude`, `claude-gpt`, and `openrouter`; `opencode-profile use <name>` switches immediately. Source profiles are `opencode/profiles/*.jsonc`; the active `oh-my-openagent.jsonc` is a symlink selected by the helper. OCX and its registry are not used.
+OpenCode renders `opencode.jsonc` from `opencode/profiles/common.jsonc` plus a selected overlay. `opencode-profile list` shows `gpt`, `claude`, `claude-gpt`, `gpt-cc-proxy`, and `openrouter`; `opencode-profile use <name>` regenerates the active config. Its six global subagents mirror the pi roster; each profile supplies their OpenCode model routing. `gpt-cc-proxy` retains Meridian-backed Anthropic routing and requires `MERIDIAN_BASE_URL`. OpenCode uses neither oh-my-openagent nor OCX.
 
 ## Orchestration strategy
 

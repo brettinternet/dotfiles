@@ -23,4 +23,12 @@
       "variant": "medium",
     },
   },
+  "provider": {
+    "anthropic": {
+      "options": {
+        "baseURL": "{env:MERIDIAN_BASE_URL}",
+        "apiKey": "dummy",
+      },
+    },
+  },
 }
