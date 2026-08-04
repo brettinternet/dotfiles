@@ -96,6 +96,15 @@ require_managed_active_file() {
   [ -f "$ACTIVE_FILE" ] && [ -n "$active_profile_name" ] && [ "$active_profile_name" != common ] && [ -f "$(profile_path "$active_profile_name")" ] && return
   die "opencode-profile: refusing to overwrite unmanaged active profile: $ACTIVE_FILE"
 }
+cleanup_legacy_checkout_state() {
+  if [ -f "$LEGACY_CONFIG_FILE" ] && sed -n '1p' "$LEGACY_CONFIG_FILE" | grep -Fq "$GENERATED_HEADER"; then
+    trash "$LEGACY_CONFIG_FILE"
+  fi
+  if [ -f "$LEGACY_ACTIVE_FILE" ] && [ "$(cat "$LEGACY_ACTIVE_FILE")" = "$name" ]; then
+    trash "$LEGACY_ACTIVE_FILE"
+  fi
+}
+
 
 
 
@@ -126,6 +135,7 @@ cmd_use() {
   tmp="${ACTIVE_FILE}.tmp.$$"
   printf '%s\n' "$name" > "$tmp"
   mv "$tmp" "$ACTIVE_FILE"
+  cleanup_legacy_checkout_state
   printf 'switched to %s\n' "$name"
 }
 
