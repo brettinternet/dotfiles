@@ -1,6 +1,6 @@
 # AI agent setup
 
-Shared config for Claude Code (`~/.claude`), oh-my-pi (`~/.omp`), Codex, Amp CLI (`~/.config/amp`), and OpenCode (`~/.config/opencode`), installed by [`ai.yaml`](../ai.yaml). `AGENTS.md` is the global instruction file for all five. `ai/.agents/` is the canonical source for authored shared skills and command workflows. Tool-specific agent definitions remain in `claude/agents/`, `pi/agents/`, and `opencode/agents/` because their configuration formats and discovery paths differ; Codex profiles are generated from the Claude definitions with role-specific model mappings.
+Shared config for Claude Code (`~/.claude`), oh-my-pi (`~/.omp`), Codex, Amp CLI (`~/.config/amp`), and OpenCode (`~/.config/opencode`), installed by [`ai.yaml`](../ai.yaml). `AGENTS.md` is the global instruction file for all five. `ai/.agents/` is the canonical source for authored shared skills and command workflows. `ai/agents/` is the canonical source for subagent definitions: one file per role holding the shared description, the per-tool model/effort tiers, and the single instruction body. `install-agents` renders the Claude, pi, OpenCode, and Codex formats from it, since their frontmatter and discovery paths differ.
 
 ## OpenCode profiles
 
@@ -13,7 +13,7 @@ Two complementary patterns; which one is active depends only on the session mode
 - **Escalation (advisor)** — a cheap/mid session does the work and escalates judgment to the `oracle` (pinned to the strongest model, fresh context). Right when the plan already exists — the command file or a refined backlog item is the decomposition. Example: one `/backlog-implement-review-loop` pass on a mid-tier session.
 - **Delegation (orchestrator)** — a smart session keeps decisions, synthesis, and shared-interface coordination, and delegates only materially substantial, independent volume branches to cheap pinned workers under an explicit per-command budget. Small or tightly coupled work stays in the session. Right when judgment is continuous and the surface is broad: refinement, review, diagnosis.
 
-The pipeline is deliberately asymmetric: smart refine → cheap implement → independent verify/review. Worker and oracle tiers are pinned in agent frontmatter, so both patterns hold from any starting tier; pick the orchestrator via `/model` (Claude) or the pi profile's `modelRoles.default`.
+The pipeline is deliberately asymmetric: smart refine → cheap implement → independent verify/review. Worker and oracle tiers are pinned in `ai/agents/*.md` frontmatter, so both patterns hold from any starting tier; pick the orchestrator via `/model` (Claude) or the pi profile's `modelRoles.default`.
 
 ## Agent roster
 
@@ -23,7 +23,7 @@ The pipeline is deliberately asymmetric: smart refine → cheap implement → in
 | `executor`   | mid (`sonnet` / `pi/task`)                    | well-specified implementation; returns questions instead of guessing |
 | `verifier`   | mid (`sonnet` / `pi/task`)                    | independent acceptance check from criteria + commits; never fixes    |
 | `pr-watcher` | low (`haiku` / `pi/smol`)                     | CI/review delta watching                                             |
-| `oracle`     | max (`fable` / `pi/slow`, xhigh)              | second-opinion judgment: tradeoffs, diagnoses, blocker triage        |
+| `oracle`     | max (`opus` / `pi/slow`, xhigh)               | second-opinion judgment: tradeoffs, diagnoses, blocker triage        |
 
 The complete find/do/check/judge/watch loop. No tester (executor writes tests, verifier runs them skeptically) and no librarian (context7/web search cover docs).
 
@@ -31,7 +31,7 @@ pi and OpenCode ship a sixth subagent, `thermo-nuclear-code-quality-review`, pin
 
 ## Where each concern lives
 
-- **Role + tier**: agent frontmatter — never inherited from the session.
+- **Role + tier**: `ai/agents/<role>.md` frontmatter — the shared description plus each tool's model and effort, never inherited from the session. `install-agents` renders it into `~/.claude/agents/`, `~/.omp/agents/`, `~/.config/opencode/agents/`, and `~/.codex/`; OpenCode is the exception, taking its model from the active profile's `agent.<role>` entry.
 - **Policy** (when to delegate/escalate/verify, the two-failure escalation ladder, don't-delegate list, subagent guard): `AGENTS.md` § Subagents, one source for all tools.
 - **Workflow entrypoints**: `ai/.agents/commands/*.md` templates, rendered per tool by `install-agent-commands` as described below.
 - **Reusable workflow methods**: authored `ai/.agents/skills/*/SKILL.md` packages plus optional references, templates, scripts, and source-controlled tool metadata.
@@ -41,7 +41,7 @@ pi and OpenCode ship a sixth subagent, `thermo-nuclear-code-quality-review`, pin
 
 - `ai/.agents/skills/<distinct-name>/` is the source for authored reusable skills. Codex, OMP, OpenCode, and Amp discover its `~/.agents/skills/` links natively; Claude receives links to the same packages at `~/.claude/skills/`.
 - `ai/.agents/commands/*.md` is the source for shared slash-command workflows. `install-agent-commands` renders marked explicit-only adapters into `~/.agents/skills/` and `~/.claude/skills/`, and marked Claude command copies into `~/.claude/commands/`. OMP continues to read those Claude-compatible commands. Amp consumes the adapters as skills when explicitly invoked with `$<command>`.
-- `make ai` writes generated adapters, active profile state, and rendered profile configuration only under `$HOME`; it never modifies the checkout. It removes only marked generated local artifacts, legacy generated Codex adapters, and the retired `~/.omp/agent/skills` link.
+- `make ai` writes generated agent definitions and adapters, active profile state, and rendered profile configuration only under `$HOME`; it never modifies the checkout. It removes only marked generated local artifacts, legacy generated Codex adapters, and the retired `~/.omp/agent/skills` link.
 - Keep optional Codex `agents/openai.yaml` metadata inside authored skill packages; the common `.agents` links carry it unchanged.
 
 ## Bounded backlog loop

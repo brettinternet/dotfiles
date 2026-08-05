@@ -8,6 +8,10 @@
     - ~/.claude/skills
     - ~/.agents/skills
     - ~/.omp/agent/skills
+    # Reap the symlinks that predated install-agents before it regenerates them.
+    - ~/.claude/agents
+    - ~/.omp/agents
+    - ~/.config/opencode/agents
 - shell:
     - command: |
         set -eu
@@ -70,8 +74,8 @@
       description: Generate shared agent command skills and Claude command adapters
       stdout: true
       stderr: true
-    - command: ai/.bin/install-codex-agents
-      description: Generate Codex agent profiles from Claude agent definitions
+    - command: ai/.bin/install-agents
+      description: Generate Claude, pi, OpenCode, and Codex agent definitions
       stdout: true
       stderr: true
 
@@ -84,9 +88,6 @@
       path: ai/AGENTS.md
     ~/.claude/statusline-command.sh:
       path: ai/claude/statusline-command.sh
-    ~/.claude/agents/:
-      glob: true
-      path: ai/claude/agents/*
     ~/.claude/skills/:
       glob: true
       relink: false
@@ -103,14 +104,8 @@
       path: ai/amp/settings.json
     ~/.config/amp/AGENTS.md:
       path: ai/AGENTS.md
-    ~/.omp/agents/:
-      glob: true
-      path: ai/pi/agents/*
     # OpenCode
     ~/.config/opencode/AGENTS.md:
       path: ai/AGENTS.md
-    ~/.config/opencode/agents/:
-      glob: true
-      path: ai/opencode/agents/*
     ~/.config/opencode/tui.jsonc:
       path: ai/opencode/tui.jsonc
