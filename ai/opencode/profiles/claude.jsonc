@@ -1,24 +1,24 @@
 {
   "agent": {
     "executor": {
-      "model": "anthropic/claude-sonnet-4-6",
+      "model": "anthropic/claude-sonnet-5",
     },
     "explore": {
       "model": "anthropic/claude-haiku-4-5",
     },
     "oracle": {
-      "model": "anthropic/claude-opus-4-7",
+      "model": "anthropic/claude-opus-5",
       "variant": "max",
     },
     "pr-watcher": {
       "model": "anthropic/claude-haiku-4-5",
     },
     "thermo-nuclear-code-quality-review": {
-      "model": "anthropic/claude-opus-4-7",
+      "model": "anthropic/claude-opus-5",
       "variant": "max",
     },
     "verifier": {
-      "model": "anthropic/claude-sonnet-4-6",
+      "model": "anthropic/claude-sonnet-5",
     },
   },
 }

@@ -1,26 +1,28 @@
 {
   "agent": {
     "executor": {
-      "model": "openai/gpt-5.5",
-      "variant": "medium",
+      "model": "openai/gpt-5.6-terra",
+      "variant": "high",
     },
     "explore": {
-      "model": "openai/gpt-5.4-mini-fast",
+      "model": "openai/gpt-5.6-luna",
+      "variant": "medium",
     },
     "oracle": {
-      "model": "openai/gpt-5.5",
-      "variant": "high",
+      "model": "openai/gpt-5.6-sol",
+      "variant": "max",
     },
     "pr-watcher": {
-      "model": "openai/gpt-5.4-mini-fast",
+      "model": "openai/gpt-5.6-luna",
+      "variant": "medium",
     },
     "thermo-nuclear-code-quality-review": {
-      "model": "openai/gpt-5.5",
-      "variant": "high",
+      "model": "openai/gpt-5.6-sol",
+      "variant": "max",
     },
     "verifier": {
-      "model": "openai/gpt-5.5",
-      "variant": "medium",
+      "model": "openai/gpt-5.6-luna",
+      "variant": "max",
     },
   },
 }
