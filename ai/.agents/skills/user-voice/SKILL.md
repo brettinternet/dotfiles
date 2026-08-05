@@ -1,27 +1,47 @@
 ---
 name: user-voice
-description: Draft or revise external communication in the user's concise, direct, informal voice. Use whenever Codex is asked to write, draft, reply, post, or comment on the user's behalf, including posting comments for them without an explicit "as the user" instruction. This skill controls wording only and never grants permission to send or post.
+description: Draft or revise external communication in the user's concise, direct, informal voice. Use whenever you are asked to write, draft, reply, post, or comment on the user's behalf, including posting comments for them without an explicit "as the user" instruction. This skill controls wording only and never grants permission to send or post.
 ---
 
 # User Voice
 
-Never assume permission to post, send, approve, request changes, or resolve threads. Never change remote state without permission. The workflow decides the audience, message type, content threshold, and communication authority. Its requirements override this skill.
+This skill controls wording only. Never assume permission to post, send, approve, request changes, or resolve threads, and never change remote state without permission. The workflow owns the audience, message type, content threshold, and communication authority, and its requirements override this skill.
 
-Lead with the point. Write clear, direct, informal text. Keep short comments to one or two sentences. Use mostly conventional grammar and punctuation, while allowing lowercase when natural. Preserve capitalization for names, acronyms, identifiers, commands, code, and quoted text.
+## Voice
 
-Do not use em dashes, colons, or semicolons. Avoid corporate polish, filler, hedging, canned praise, ceremonial openings, stacked requests, and unnecessary headers or bullets. Praise only when useful. State significant concerns plainly. Keep the evidence, facts, certainty, severity, and requested action unchanged.
+Lead with the point. Write clear, direct, informal text. Keep short comments to one or two sentences. Use mostly conventional grammar and punctuation, allowing lowercase when natural. Preserve capitalization for names, acronyms, identifiers, commands, code, and quoted text.
+
+Do not use em dashes, colons, or semicolons. Cut corporate polish, filler, hedging, canned praise, ceremonial openings, stacked requests, and any header or bullet the message does not need. State significant concerns plainly and keep the evidence, facts, certainty, severity, and requested action unchanged.
 
 Prefer `Done. I also added coverage for the reopen path.` over `Great catch! I've made the requested change.`
 
-## Final Check
+## Structure
 
-Before returning externally directed text, check the following.
+One message carries one point. State the point in the first sentence, then at most one supporting fact and at most one request. Put the location or identifier next to the thing it refers to instead of in a preamble.
 
-1. Put the point first and remove anything uninformative.
-1. Use clear, direct, succinct language with mostly conventional grammar and punctuation.
-1. Verify facts, certainty, severity, and requested action against the evidence.
-1. Match the form to the intent. Do not turn a status or explanation into a question unless an answer is needed.
-1. Remove em dashes, colons, semicolons, stacked requests, canned praise, and unnecessary formatting.
-1. Preserve protected technical capitalization and exact quoted text.
-1. Confirm that the workflow permits sending or posting. Otherwise return a draft only.
-1. Do not point out obvious facts or summarize the user's work unless it is relevant to the request or action.
+## Be specific or drop it
+
+Every request names its exact target and the exact action wanted. Every claim names the concrete thing that goes wrong. When you cannot name the target, the action, or the failure, delete the sentence. Do not keep it as a hedge, a caveat, a heads up, or a softer question.
+
+Delete these outright rather than rewording them.
+
+- `consider ...`, `might want to ...`, `you may want to look at ...`, `worth checking ...`
+- `double check ...`, `are you sure ...`, `just to be safe ...`, `no strong opinion but ...`
+- `could be a problem`, `might cause issues`, `feels off`, `seems fragile`
+- `thoughts?`, `just flagging this`, `keep an eye on this`
+- praise that isn't the point of the message, a summary of work the reader already did, and any sentence that can be deleted without changing what the reader does
+
+`Deleting the row leaves orders.customer_id pointing at a missing customer. Should this cascade instead?` beats `Might be worth double checking the delete path here, could be a problem?`
+
+## Final check
+
+Before returning externally directed text, confirm each item.
+
+1. The point is first and every uninformative sentence is gone.
+2. Language is clear, direct, and succinct with mostly conventional grammar and punctuation.
+3. Facts, certainty, severity, and the requested action match the evidence.
+4. Every request names one target and one action, and anything vague was deleted rather than softened.
+5. Form matches intent. A status or explanation is not phrased as a question unless an answer is needed.
+6. No em dashes, colons, semicolons, stacked requests, canned praise, or unnecessary formatting.
+7. Protected technical capitalization and exact quoted text are preserved.
+8. The workflow permits sending or posting. Otherwise return a draft only.
