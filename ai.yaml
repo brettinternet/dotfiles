@@ -70,6 +70,42 @@
       description: Seed Claude Code settings as a local copy
       stdout: true
       stderr: true
+    - command: |
+        set -eu
+        mkdir -p "$HOME/.config/herdr"
+        target="$HOME/.config/herdr/config.toml"
+        if [ -L "$target" ]; then
+          rm "$target"
+        fi
+        if [ -e "$target" ] && [ ! -f "$target" ]; then
+          printf 'herdr config target exists but is not a regular file: %s\n' "$target" >&2
+          exit 1
+        fi
+        if [ ! -e "$target" ]; then
+          cp ai/herdr/config.toml "$target"
+        fi
+      description: Seed herdr configuration as a local copy
+      stdout: true
+      stderr: true
+    - command: |
+        set -eu
+        if ! command -v herdr >/dev/null 2>&1; then
+          echo 'herdr not on PATH; skipping integrations (mise install herdr)'
+          exit 0
+        fi
+        # Each integration refuses with a nonzero status when its agent's config
+        # directory is absent, so skip those instead of failing the whole run.
+        # Reinstalling is byte-idempotent: hook entries are replaced, not appended.
+        for name in omp opencode claude codex; do
+          if herdr integration install "$name" >/dev/null 2>&1; then
+            echo "herdr integration: $name"
+          else
+            echo "herdr integration: $name skipped (agent not installed)"
+          fi
+        done
+      description: Install herdr agent integrations for locally installed agents
+      stdout: true
+      stderr: true
     - command: ai/.bin/install-agent-commands
       description: Generate shared agent command skills and Claude command adapters
       stdout: true

@@ -1,6 +1,6 @@
 # AI agent setup
 
-Shared config for Claude Code (`~/.claude`), oh-my-pi (`~/.omp`), Codex, Amp CLI (`~/.config/amp`), and OpenCode (`~/.config/opencode`), installed by [`ai.yaml`](../ai.yaml). `AGENTS.md` is the global instruction file for all five. `ai/.agents/` is the canonical source for authored shared skills and command workflows. `ai/agents/` is the canonical source for subagent definitions: one file per role holding the shared description, the per-tool model/effort tiers, and the single instruction body. `install-agents` renders the Claude, pi, OpenCode, and Codex formats from it, since their frontmatter and discovery paths differ.
+Shared config for Claude Code (`~/.claude`), oh-my-pi (`~/.omp`), Codex, Amp CLI (`~/.config/amp`), OpenCode (`~/.config/opencode`), and herdr (`~/.config/herdr`), installed by [`ai.yaml`](../ai.yaml). `AGENTS.md` is the global instruction file for all five agent tools. `ai/.agents/` is the canonical source for authored shared skills and command workflows. `ai/agents/` is the canonical source for subagent definitions: one file per role holding the shared description, the per-tool model/effort tiers, and the single instruction body. `install-agents` renders the Claude, pi, OpenCode, and Codex formats from it, since their frontmatter and discovery paths differ.
 
 ## OpenCode profiles
 
@@ -43,6 +43,16 @@ pi and OpenCode ship a sixth subagent, `thermo-nuclear-code-quality-review`, pin
 - `ai/.agents/commands/*.md` is the source for shared slash-command workflows. `install-agent-commands` renders marked explicit-only adapters into `~/.agents/skills/` and `~/.claude/skills/`, and marked Claude command copies into `~/.claude/commands/`. OMP continues to read those Claude-compatible commands. Amp consumes the adapters as skills when explicitly invoked with `$<command>`.
 - `make ai` writes generated agent definitions and adapters, active profile state, and rendered profile configuration under `$HOME`; it removes only recognized legacy checkout state and explicitly retired local artifacts.
 - Keep optional Codex `agents/openai.yaml` metadata inside authored skill packages; the common `.agents` links carry it unchanged.
+
+## herdr
+
+[herdr](https://herdr.dev/docs/) is an agent-aware multiplexer for local agent sessions. It keeps them alive after the client closes and shows their status. Use tmux for servers and non-agent CLI work.
+
+Run herdr outside a remote tmux session: herdr manages local agents; tmux preserves remote work over SSH. Defaults avoid prefix conflicts (`ctrl+b` for herdr, `ctrl+a` for tmux).
+
+`ai/herdr/config.toml` is copied to `~/.config/herdr/config.toml` by `make ai`. It is a copy, not a symlink, because herdr writes its own config. Edit the repo file for defaults; delete the local copy and run `make ai` to reseed it. Use `herdr server reload-config` for a running server.
+
+`make ai` also installs available agent integrations. Check or manage them with `herdr integration status`, `install`, and `uninstall`.
 
 ## Bounded backlog loop
 
