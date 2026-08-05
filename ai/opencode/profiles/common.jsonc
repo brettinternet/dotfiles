@@ -1,6 +1,11 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "disabled_providers": ["opencode"],
+  "permission": {
+    "external_directory": {
+      "/tmp/*": "allow",
+    },
+  },
   "mcp": {
     "context7": {
       "type": "remote",
