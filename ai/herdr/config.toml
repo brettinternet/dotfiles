@@ -1,0 +1,30 @@
+# herdr — agent-aware terminal multiplexer (~/.config/herdr/config.toml)
+#
+# Seeded as a local copy by ai.yaml, not a symlink: herdr writes back to this
+# file (onboarding completion, Settings changes, `herdr config reset-keys`).
+# Print every key and default with `herdr --default-config`.
+#
+# The prefix stays at herdr's default ctrl+b so it does not collide with the
+# ctrl+a tmux prefix in base/.tmux.conf — ssh into a tmux server from a herdr
+# pane and both multiplexers keep their own bindings.
+
+# Settings were chosen here; skip the first-run flow.
+onboarding = false
+
+[theme]
+# Follow the host terminal's ANSI palette, like base/.tmux.conf does.
+name = "terminal"
+
+[keys]
+# tmux muscle memory: `prefix s` splits down alongside herdr's prefix+minus.
+split_horizontal = ["prefix+minus", "prefix+s"]
+
+[ui]
+# Order the Agent panel as an attention queue rather than by space, so whoever
+# is blocked surfaces first.
+agent_panel_sort = "priority"
+prompt_new_tab_name = false
+
+[ui.toast]
+# Let the outer terminal own notifications; this also works over `herdr --remote`.
+delivery = "terminal"
