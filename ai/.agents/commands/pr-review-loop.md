@@ -3,161 +3,150 @@ description: Continuously loop, reviewing PRs by an author, optionally scoped to
 argument-hint: <github-author> [linear-project] [gh-search-qualifiers...]
 ---
 
-You are running a **continuous review loop**. You do not stop after one pass — you loop until the user interrupts you.
+You are running a **continuous review loop**. You do not stop after one pass. The only exit is the user interrupting you.
 
 ## Arguments
 
-- `$1`: GitHub author handle (required)
-- `$2`: Linear project identifier (optional). If omitted, or if it's actually a `gh search prs` qualifier (contains `:` or looks like a flag rather than a project identifier), treat it as absent and shift it into `$@` instead — skip the Linear lookup entirely and review **all** open PRs by `$1` in the repo.
-- `$@`: `gh search prs` qualifiers passed through verbatim (e.g. `draft:false`, `label:bug`). Ignore a bare `PRs`/`prs` token — that's just a trigger word the user typed, not a qualifier.
+- `$1`: GitHub author handle, required.
+- `$2`: Linear project identifier, optional. When it contains `:` or looks like a flag it is a `gh search prs` qualifier instead, so shift it into `$@`, skip the Linear lookup, and review **all** open PRs by `$1` in this repo.
+- `$@`: `gh search prs` qualifiers passed through verbatim, for example `draft:false` or `label:bug`. Ignore a bare `PRs`/`prs` token, which is a trigger word the user typed rather than a qualifier.
 
-If `$1` is empty, stop immediately and tell the user the usage:
+If `$1` is empty, stop and print the usage:
 `/pr-review-loop <github-author> [linear-project] [extra gh qualifiers...]`
 
 ## Loop state
 
-Persist a state file so you don't re-review unchanged PRs and so the loop survives between iterations. Scope it to the current repo so concurrent loops on different repos don't clobber each other:
+Keep `/tmp/pr-review-loop-state.json` so you never re-review unchanged PRs and the loop survives between iterations. Key it by `<owner>/<repo>`, resolved once per run with `gh repo view --json nameWithOwner`, so concurrent loops on different repos don't clobber each other.
 
-- `/tmp/pr-review-loop-state.json` — a JSON object keyed by `<owner>/<repo>`, whose value is an object keyed by PR number, each entry `{ "head_sha": "...", "reviewed_commits": ["<subject>", ...], "reviewed": true }`. Resolve `<owner>/<repo>` once per run via `gh repo view --json nameWithOwner`. `reviewed_commits` is the list of PR-authored commit subjects (excluding merge/rebase-from-main noise) at the time of the last review — it's how you tell a real new commit from a rebase.
+```json
+{ "<owner>/<repo>": { "<N>": { "head_sha": "<headRefOid>", "reviewed_commits": ["<subject>", ...], "reviewed": true } } }
+```
 
-Load it at the start of each iteration and read only the current repo's sub-object. Update that sub-object after each review; never drop other repos' entries.
+`reviewed_commits` holds the PR-authored commit subjects at the time of the last review, excluding merge and main-sync noise. It is how you tell a real new commit from a rebase. Read only the current repo's sub-object each iteration, update that sub-object after each review, and never drop another repo's entries.
 
 ## The loop
 
-Run this cycle forever. Between iterations, wait **5 minutes** using whatever wait mechanism the harness allows (a scheduled wake-up, a monitored timer, or `sleep 300` where permitted), then start the next iteration. Print a one-line status line at the top of each iteration like `[pr-review-loop] iteration N — <timestamp>` so the user can see it's alive.
+Run this cycle forever. Print `[pr-review-loop] iteration N — <timestamp>` at the top of each iteration so the user can see it's alive, work steps 1 through 7, then wait 5 minutes using whatever wait mechanism the harness allows (a scheduled wake-up, a monitored timer, or `sleep 300` where permitted).
 
-### 1. Discover PRs to review
+### 1. Discover PRs
 
-a. If `$2` (a Linear project) was given, use the **linear** MCP tools to fetch open, in-progress issues in that project. The goal is to identify the set of Linear ticket identifiers (e.g. `TICK-42`) that the author is actively working on. If the linear tool isn't available or fails, fall back to **all** open PRs by `$1` in this repo and infer ticket refs from PR titles/bodies. If `$2` was omitted, skip this step entirely — there's no project scoping, just review all of the author's open PRs.
+a. When `$2` names a Linear project, use the **linear** MCP tools to fetch open, in-progress issues in it and collect the ticket identifiers the author is actively working on, for example `TICK-42`. If the linear tool is unavailable or fails, fall back to all open PRs by `$1` and infer ticket refs from PR titles and bodies. When `$2` was omitted, skip this step.
 
-b. Use `gh search prs` (via `bash`) to find **open** PRs authored by `$1` in the current repo's remote (`gh repo view --json nameWithOwner` to resolve owner/repo). Combine:
+b. Find open PRs with `gh search prs` in the current repo, combining `--author "$1" --state open`, any qualifiers from `$@`, and a title/body filter for the step (a) tickets only when a Linear project was given and the lookup succeeded.
 
-- `--author "$1" --state open`
-- any user-supplied qualifiers from `$@`
-- scope to PRs whose title/body reference a ticket from step (a) only when a Linear project was given and the lookup succeeded
+c. For each candidate, fetch `gh pr view <N> --json number,title,headRefOid,state,isDraft,headRefName,author,body`. Skip drafts unless the user passed `draft:false`.
 
-c. For each candidate PR, fetch `gh pr view <N> --json number,title,headRefOid,state,isDraft,headRefName,author,body`. Skip drafts unless the user passed `draft:false` (i.e. respect their qualifier choice — by default skip drafts since they're not ready).
+### 2. Decide what needs a review
 
-### 2. Decide what needs a (re)review
+Resolve my handle once per run with `gh api user --jq .login`. The loop reviews _as me_.
 
-First, resolve **my** handle once per run: `gh api user --jq .login` (this is the reviewer identity — the loop reviews _as me_).
+**Re-review only on genuinely new commits, never on a rebase or a merge from main.** A head SHA change alone is not new work, since a rebase or a `Merge branch 'main'` rewrites SHAs without adding any of the author's work.
 
-**Re-review only on genuinely new commits to the PR — never on a rebase or a merge/update from main.** A head SHA change alone is not enough: a rebase onto main or a "Merge branch 'main'" rewrites SHAs without adding any of the author's work, and you MUST NOT re-review or re-comment for that. When the **pr-watcher** subagent is available, delegate this check: hand it each candidate PR number plus its `reviewed_commits` baseline from the state file (dispatch the batch in parallel) and use its verdict — new PR-authored subjects vs "rebase/main-sync only". Otherwise distinguish inline: build the PR's current commit list and reduce it to the author's real work:
+When the **pr-watcher** subagent is available, delegate this check by handing it each candidate PR number plus its `reviewed_commits` baseline, dispatching the batch in parallel, and using its verdict. Otherwise build the list inline:
 
 ```bash
 gh pr view <N> --json commits --jq '.commits[] | {subject: (.messageHeadline), parents: (.parents|length)}'
 ```
 
-Filter that list down to **PR-authored commits**: drop anything that looks like a sync from main — merge commits (more than one parent) and commits whose subject matches `Merge branch 'main'`, `Merge remote-tracking`, `Merge branch 'master'`, or similar. Call the remaining ordered subjects the PR's `commit_subjects`.
+Drop merge commits (more than one parent) and main-sync subjects such as `Merge branch 'main'`, `Merge remote-tracking`, or `Merge branch 'master'`. The remaining ordered subjects are the PR's `commit_subjects`.
 
-For each candidate PR, check my own latest review, then compare `commit_subjects` to the state file's `reviewed_commits`:
+Fetch my reviews with `gh api repos/:owner/:repo/pulls/<N>/reviews`, then decide:
 
-- **Already approved by me and no new PR-authored commits since** → skip entirely, post nothing. Fetch my reviews (`gh api repos/:owner/:repo/pulls/<N>/reviews`); if my most-recent review is `APPROVED` and the PR's `commit_subjects` are unchanged vs `reviewed_commits` (SHA may differ from a rebase — that's fine), print `PR #N — already approved by me, no new commits, skipping` and move on. Do not re-approve and do not re-comment.
-- **`commit_subjects` unchanged since my last review** (rebase/main-sync only, or nothing new) → skip. Print `PR #N — no new commits since last review (rebase/main-sync ignored), skipping`.
-- **New PR, or `commit_subjects` gained one or more entries not in `reviewed_commits`** → review it now. The author pushed real new work; any prior approval is stale and a fresh pass is warranted. Only the added commits are "new" — see step 4 for scoping comments to them.
+- **My latest review is `APPROVED` and `commit_subjects` is unchanged** → print `PR #N — already approved by me, no new commits, skipping` and post nothing.
+- **`commit_subjects` is unchanged** (rebase or main-sync only) → print `PR #N — no new commits since last review (rebase/main-sync ignored), skipping`.
+- **New PR, or `commit_subjects` gained entries not in `reviewed_commits`** → review it now. Any prior approval is stale, and only the added commits are in scope for comments.
 
 ### 3. Review a PR
-
-For each PR that needs review, fetch the diff and review it as you would a normal PR:
 
 ```bash
 gh pr diff <N>
 gh pr view <N> --json files,additions,deletions,commits
 ```
 
-Review the actual changes with the lens of: correctness, regressions, breaking changes, security, and whether the tests cover the new/changed behavior. Read the surrounding code in the repo when context is needed — use `read`/`grep` to ground your review, don't review blind.
-When available, apply the `implementation-review` skill as the shared review method. This command's new-commit scope, read-only boundary, posting policy, and oracle cap override that skill. Apply the separate `user-voice` skill only when drafting external GitHub communication.
+Review the changes for correctness, regressions, breaking changes, security, and whether tests cover the new or changed behavior. Read the surrounding repo code with `read`/`grep` to ground every claim, never review blind. When available, apply the `implementation-review` skill as the shared review method. This command's new-commit scope, read-only boundary, finding bar, posting policy, and oracle cap override that skill.
 
-Before drafting any finding, read the complete existing PR discussion and review
-history, including inline review comments and their replies:
+Read the complete existing discussion and review history first.
 
 ```bash
 gh pr view <N> --json comments,reviews
 gh api repos/:owner/:repo/pulls/<N>/comments --paginate
 ```
 
-Compare each potential finding with that discussion. Do not post a duplicate
-concern, including when the existing discussion shows the author already
-addressed it.
+Drop every concern already raised there, including one the author already addressed.
 
-### 4. Consult the oracle for load-bearing review decisions
+#### Finding bar
 
-Before approving or posting a material concern as a `COMMENT` review based on a
-load-bearing assumption, consult the **oracle** agent when the finding depends
-on architecture, design intent, security posture, ownership, invariants, or a
-broad blast radius. Record the assumption and the oracle's read in your private
-notes; apply the `user-voice` skill to posted GitHub comments.
+Post a finding only when you can state all three of these from code you actually read.
 
-Consult the oracle when competing interpretations of the diff both look
-plausible, when surrounding code suggests an intentional tradeoff you don't
-understand, or before concluding that a concern needs a human decision because
-the right fix requires an architecture, product, or design decision.
+1. `path:line`, the real line in the file, and present in the diff.
+2. The trigger, meaning the input, state, or code path that reaches the problem.
+3. The breakage, meaning the observable effect on behavior, data, deployment, security, or compatibility.
 
-Make at most one oracle consultation per PR for each reviewed commit set, batching all related load-bearing concerns. Do not consult when repository evidence resolves the concern or no judgment meets that bar.
+Missing any one of the three, drop the finding. Do not soften it into a hedge, a caveat, a heads up, or a `worth checking`. Drop nitpicks, style nags, refactor suggestions, and speculation you did not trace in the code. Posting nothing on a sound PR is the expected outcome.
 
-### 5. Post comments / approval / replies
+### 4. Consult the oracle for load-bearing decisions
 
-Load and apply the `user-voice` skill to everything posted as me: review
-comments, approval bodies, top-level PR comments, and replies to existing
-comments or review threads. This command grants the posting authority; the
-skill controls wording only. For each new finding directed at the PR author,
-ask exactly one sincere question they can answer or push back on. Do not stack
-questions; for a material concern, ask one direct question that names it. Use
-declarative forms for approvals, status updates, and explanatory replies.
+Consult the **oracle** agent before approving or posting a material concern that turns on architecture, design intent, security posture, ownership, invariants, or broad blast radius. Consult it when two readings of the diff both look plausible, when surrounding code suggests an intentional tradeoff you don't understand, or before concluding that a concern needs a human decision.
 
-Posting mechanics (`bash` with `gh`):
+One consultation per PR per reviewed commit set, batching every related concern. Skip it when repository evidence resolves the concern or nothing meets that bar. Keep the assumption and the oracle's read in your private notes, not in the posted comment.
 
-- **Inline comments on specific lines:** `gh pr review` can't target individual lines; use the GitHub API via `gh api` instead. Prefer a single review payload with inline comments when there are multiple findings:
-  ```bash
-  gh api repos/:owner/:repo/pulls/<N>/reviews \
-    -f event=COMMENT \
-    -f body="<top-level summary if needed, usually omit>" \
-    -F "comments[][path]=<file>" \
-    -F "comments[][line]=<line>" \
-    -F "comments[][side]=RIGHT" \
-    -F "comments[][body]=<casual comment>"
-  ```
-  Use `gh pr view <N> --json files` to get valid paths. Only comment on lines
-  present in the diff. Attach every finding to a changed file line whenever
-  possible; use a top-level review comment only when no changed line fits.
-- **Approval:** if the change is sound, approve without a body. Do not attach validation, praise, or status commentary to an approval:
-  ```bash
-  gh pr review <N> --approve
-  ```
-- **Material concerns:** submit a `COMMENT` review, keeping line-specific
-  findings inline and using its top-level body only for concerns that cannot map
-  to a changed line. Never use `--request-changes` or a `REQUEST_CHANGES`
-  review event.
+### 5. Post comments, approval, and replies
 
-If you already reviewed this PR before (new PR-authored commits since = the trigger for this pass), post fresh comments only on the diff introduced by the **new** commits (the entries in `commit_subjects` that weren't in `reviewed_commits`), not on unchanged code the author only rebased. Review the existing PR discussion before posting and skip any concern already raised or addressed there.
+Apply the `user-voice` skill to everything posted as me, including review comments, approval bodies, top-level PR comments, and replies to existing comments or threads. This command grants the posting authority and the skill controls wording only.
+
+Every finding is exactly this, attached to the changed line it belongs to.
+
+```text
+<one sentence naming the trigger and the breakage>
+<one question the author can answer or push back on>
+```
+
+One question per finding, never stacked. Use declarative form for approvals, status updates, and explanatory replies.
+
+**Inline comments:** `gh pr review` can't target individual lines, so use the API. Prefer a single review payload carrying every inline finding.
+
+```bash
+gh api repos/:owner/:repo/pulls/<N>/reviews \
+  -f event=COMMENT \
+  -f body="<only for a concern no changed line fits, usually omit>" \
+  -F "comments[][path]=<file>" \
+  -F "comments[][line]=<line>" \
+  -F "comments[][side]=RIGHT" \
+  -F "comments[][body]=<comment>"
+```
+
+Use `gh pr view <N> --json files` for valid paths and comment only on lines present in the diff.
+
+**Approval:** when the change is sound, approve with no body. Attach no validation, praise, or status commentary.
+
+```bash
+gh pr review <N> --approve
+```
+
+**Material concerns:** submit a `COMMENT` review with line-specific findings inline. Never use `--request-changes` or a `REQUEST_CHANGES` event.
+
+On a repeat pass, comment only on the diff introduced by the new commits, meaning the `commit_subjects` entries that weren't in `reviewed_commits`, not on code the author only rebased.
 
 ### 6. Update state
 
-After processing each PR, update the current repo's sub-object in `/tmp/pr-review-loop-state.json`, preserving other repos' entries:
-
-```json
-{ "<owner>/<repo>": { "<N>": { "head_sha": "<current headRefOid>", "reviewed_commits": ["<subject>", ...], "reviewed": true } } }
-```
-
-Store the PR's current `commit_subjects` (the filtered, main-sync-excluded list from step 2) as `reviewed_commits` so the next iteration can tell a real new commit from a rebase.
+Update the current repo's sub-object in `/tmp/pr-review-loop-state.json` after each PR, preserving other repos' entries. Store the current `headRefOid` as `head_sha` and the filtered `commit_subjects` from step 2 as `reviewed_commits`, so the next iteration can tell a real new commit from a rebase.
 
 ### 7. Sleep and repeat
 
-After every candidate PR in this iteration is processed (or skipped), print a one-line summary: `[pr-review-loop] iteration N done — reviewed X, skipped Y, sleeping 5m`. Then wait 5 minutes (same wait mechanism as above) and start the next iteration from step 1. When the **pr-watcher** subagent is available, you may instead dispatch it in the background against the candidate PRs with their `reviewed_commits` baselines and start the next iteration when it reports real new work — but never tighter than the 5-minute cadence.
+Once every candidate is processed or skipped, print `[pr-review-loop] iteration N done — reviewed X, skipped Y, sleeping 5m`, wait 5 minutes, and start the next iteration at step 1. When the **pr-watcher** subagent is available you may instead dispatch it in the background against the candidates with their `reviewed_commits` baselines and start the next iteration when it reports real new work, never tighter than the 5-minute cadence.
 
 ## Rules
 
-- **MUST** loop continuously. Do not exit after one pass. The only exit is the user interrupting.
-- **MUST** apply the `user-voice` skill to **everything** posted to GitHub: review comments, approval bodies, top-level PR comments, and replies to review threads or existing comments. Re-run its final check immediately before posting.
-- **MUST NOT** re-review or re-comment because of a **rebase or a merge/update from main**. A head SHA change with no new PR-authored commit subjects is not new work — skip it. Only genuinely new commits to the PR trigger a fresh pass.
-- **MUST NOT** post anything on a PR I've **already approved** when there are no new PR-authored commits since — no re-approval, no new comment. Skip it (re-review only once the author pushes new work past my approval).
-- **MUST NOT** post trivial nitpicks, style nags, or "consider X" suggestions that don't matter.
-- **MUST NOT** re-review a PR whose PR-authored commit subjects match what you've already reviewed — check the state file.
-- **MUST NOT** duplicate an existing PR concern, including one the author already addressed — read the complete discussion and inline review comments before posting.
-- **MUST NOT** approve a PR with an unresolved material concern; submit a `COMMENT` review instead.
-- **MUST** consult the oracle before making a load-bearing architecture, design, security, or product judgment that determines approval, a review comment, or a concern requiring human input.
+- **MUST** loop continuously. The only exit is the user interrupting.
+- **MUST** apply the `user-voice` skill to everything posted to GitHub, re-running its final check immediately before posting.
+- **MUST** drop any finding that cannot name a real line, a trigger, and a breakage. No nitpicks, style nags, `consider X` suggestions, or vague heads ups.
+- **MUST NOT** post a concern already in the PR discussion, including one the author already addressed.
+- **MUST NOT** re-review or re-comment when the PR-authored commit subjects match `reviewed_commits`. A rebase or a merge from main changes SHAs without adding work.
+- **MUST NOT** post anything on a PR I already approved until the author pushes new work past that approval. No re-approval, no new comment.
+- **MUST NOT** approve a PR with an unresolved material concern. Submit a `COMMENT` review instead.
+- **MUST** consult the oracle before a load-bearing architecture, design, security, or product judgment that decides an approval, a comment, or a concern requiring human input.
 - **MUST NOT** push, merge, close PRs, or request changes. You only comment and approve.
-- **MUST NOT** expand scope beyond review — don't check out branches or edit files.
-- **MUST** keep each iteration's console output short — one status line + per-PR one-liners. Don't dump diffs or reviews into the terminal.
-- If `gh` is not authenticated or the repo has no remote, stop and tell the user clearly.
-- If the linear MCP tools are unavailable, degrade gracefully to all open PRs by the author (step 1.a fallback) and keep looping.
+- **MUST NOT** expand scope beyond review. No branch checkouts, no file edits.
+- **MUST** keep console output to one status line per iteration plus one line per PR. Never dump diffs or reviews into the terminal.
+- If `gh` is not authenticated or the repo has no remote, stop and tell the user.
+- If the linear MCP tools are unavailable, fall back to all open PRs by the author and keep looping.
