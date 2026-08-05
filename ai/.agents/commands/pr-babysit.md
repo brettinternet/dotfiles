@@ -41,18 +41,20 @@ active PR is silently omitted.
 
 ## External communication
 
-Load and apply the `user-voice` skill to everything posted to GitHub:
-review-thread and inline-comment replies, top-level PR comments, reviewer-request
-summaries, and approval or review-comment bodies. This command grants the
-posting authority; the skill controls wording only. Skip trivial nits. Treat
-completed-fix, stale-finding, and disagreement replies as declarative replies.
-For new feedback directed at the PR author, ask exactly one sincere question
-they can answer or push back on. Do not stack questions; for a blocker, ask one
-direct question that names the concern.
-When posting a new finding, use a file-line review comment whenever it maps to a
-line in the current diff; use a top-level review comment only when no specific
-changed line fits. Never submit a `REQUEST_CHANGES` review: post a `COMMENT`
-review instead, so the author receives the feedback without an explicit block.
+Apply the `user-voice` skill to everything posted to GitHub: review-thread and
+inline-comment replies, top-level PR comments, reviewer-request summaries, and
+review bodies. This command grants the posting authority and the skill controls
+wording only.
+
+Keep completed-fix, stale-finding, and disagreement replies declarative. A new
+finding directed at the PR author is one sentence naming the trigger and the
+breakage plus one question they can answer or push back on, never stacked
+questions. Skip trivial nits.
+
+Attach a new finding to a line in the current diff whenever one fits, and use a
+top-level review comment only when none does. Never submit a `REQUEST_CHANGES`
+review; post a `COMMENT` review so the author gets the feedback without an
+explicit block.
 
 ## 0. Locate the PR
 
@@ -185,10 +187,9 @@ discarding changes.
 
 CI and review feedback are one loop, not sequential phases. Keep CI green while
 you work feedback, and after every push re-check both CI and unresolved review
-threads before moving on.
-In batch mode, this section is executed independently by each PR worker; the
-parent does not share CI state, review threads, or a checkout between workers.
-
+threads before moving on. In batch mode, each PR worker runs this section
+independently; the parent shares no CI state, review threads, or checkout
+between workers.
 
 ### 1a. CI
 
@@ -249,14 +250,13 @@ when valid, and reply clearly when it is stale, wrong, or needs reviewer input.
    - Resolve the thread only when it is genuinely handled: a fix landed, the
      finding is proven stale/wrong, or the reviewer agreed it is a non-issue.
      Leave it open if the ball is in a human reviewer's court.
-3. Apply the `user-voice` skill and reply on the thread itself.
-4. Reply to review threads through the GitHub API:
+3. Reply on the thread itself, never as a new top-level comment:
    ```
    gh api repos/<owner>/<repo>/pulls/<n>/comments/<comment_db_id>/replies -f body=...
    ```
    Resolve handled threads with `resolveReviewThread(input:{threadId:"<thread_id>"})`
    via the GraphQL API.
-5. If you made code changes: run the project's validation gate before pushing.
+4. If you made code changes: run the project's validation gate before pushing.
    Discover the exact command from the repo's agent/context files or scripts
    (e.g. a `precommit`/`check` task, or the formatter + linter + typecheck +
    the specific tests you touched). Never push red. Then commit (conventional
@@ -264,7 +264,7 @@ when valid, and reply clearly when it is stale, wrong, or needs reviewer input.
    selected PR's explicit source push URL and
    `HEAD:refs/heads/<headRefName>`; never let Git choose an implicit remote.
 
-6. After any push, re-check CI and feedback. Automation may re-review the new
+5. After any push, re-check CI and feedback. Automation may re-review the new
    commit; humans may add follow-up comments. Do not consider this loop cleared
    while gating CI is failing, pending after your push, or newly blocked by a
    review thread.
@@ -321,19 +321,8 @@ After the reviewer is requested, keep working their feedback until they **approv
    scheduled wake-up, a monitored timer, or `sleep 180` where permitted). Print
    a one-line heartbeat each pass
    (`[babysit] waiting on <reviewer> review — <timestamp>`), and don't spam the API.
-   ```
-   gh pr view <n> --json reviewDecision,reviews
-   gh api graphql -f query='{ repository(owner:"<owner>", name:"<repo>") {
-     pullRequest(number:<n>) { reviewThreads(first:100) { nodes {
-       id isResolved isOutdated path
-       comments(first:5){ nodes{ databaseId author{login} body } pageInfo { hasNextPage endCursor } }
-       pageInfo { hasNextPage endCursor } } } } } }'
-   ```
-   Treat `first:100` and `first:5` as page sizes, not caps: follow each
-   `pageInfo.hasNextPage`/`endCursor`; when a page has more results, re-run the
-   relevant connection with `after:<endCursor>`, including a separate cursor
-   for nested comments on each thread, until exhausted. Inspect each thread's
-   latest comment.
+   Each pass, re-read `reviewDecision` and the unresolved threads with the same
+   queries and pagination rules as step 1b.1.
 
 2. Process new or unresolved feedback with the same CI + PR feedback loop and
    guardrails from step 1.
