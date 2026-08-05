@@ -78,16 +78,26 @@ is_legacy_config_link() {
   [ "$legacy_target" = "$LEGACY_CONFIG_FILE" ] || { [ "${LEGACY_CONFIG_FILE#/private}" != "$LEGACY_CONFIG_FILE" ] && [ "$legacy_target" = "${LEGACY_CONFIG_FILE#/private}" ]; }
 }
 
-require_managed_config() {
-  [ ! -e "$CONFIG_FILE" ] && [ ! -L "$CONFIG_FILE" ] && return
-  is_legacy_config_link && return
-  [ -f "$CONFIG_FILE" ] && sed -n '1p' "$CONFIG_FILE" | grep -Fq "$GENERATED_HEADER" && return
-  die "pi-profile: refusing to overwrite unmanaged config: $CONFIG_FILE"
-}
 is_legacy_active_link() {
   [ -L "$ACTIVE_FILE" ] || return 1
   legacy_target=$(readlink "$ACTIVE_FILE")
   [ "$legacy_target" = "$LEGACY_ACTIVE_FILE" ] || { [ "${LEGACY_ACTIVE_FILE#/private}" != "$LEGACY_ACTIVE_FILE" ] && [ "$legacy_target" = "${LEGACY_ACTIVE_FILE#/private}" ]; }
+}
+
+is_managed_active_file() {
+  [ -f "$ACTIVE_FILE" ] && [ ! -L "$ACTIVE_FILE" ] || return 1
+  active_profile_name=$(cat "$ACTIVE_FILE")
+  [ -n "$active_profile_name" ] && [ "$active_profile_name" != common ] && [ -f "$(profile_path "$active_profile_name")" ]
+}
+
+require_managed_config() {
+  [ ! -e "$CONFIG_FILE" ] && [ ! -L "$CONFIG_FILE" ] && return
+  is_legacy_config_link && return
+  [ -f "$CONFIG_FILE" ] && sed -n '1p' "$CONFIG_FILE" | grep -Fq "$GENERATED_HEADER" && return
+  # OMP rewrites YAML when settings change and drops the generated header.
+  # The selected profile is durable out-of-band proof that this config is ours.
+  [ -f "$CONFIG_FILE" ] && [ ! -L "$CONFIG_FILE" ] && is_managed_active_file && return
+  die "pi-profile: refusing to overwrite unmanaged config: $CONFIG_FILE"
 }
 
 require_managed_active_file() {
@@ -96,10 +106,10 @@ require_managed_active_file() {
     die "pi-profile: refusing to overwrite unmanaged active profile: $ACTIVE_FILE"
   fi
   [ ! -e "$ACTIVE_FILE" ] && return
-  active_profile_name=$(cat "$ACTIVE_FILE")
-  [ -f "$ACTIVE_FILE" ] && [ -n "$active_profile_name" ] && [ "$active_profile_name" != common ] && [ -f "$(profile_path "$active_profile_name")" ] && return
+  is_managed_active_file && return
   die "pi-profile: refusing to overwrite unmanaged active profile: $ACTIVE_FILE"
 }
+
 cleanup_legacy_checkout_state() {
   if [ -f "$LEGACY_CONFIG_FILE" ] && sed -n '1p' "$LEGACY_CONFIG_FILE" | grep -Fq "$GENERATED_HEADER"; then
     trash "$LEGACY_CONFIG_FILE"
