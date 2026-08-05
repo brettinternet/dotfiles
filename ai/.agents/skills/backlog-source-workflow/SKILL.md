@@ -15,10 +15,10 @@ Keep the user's backlog authoritative. This skill supplies the shared source, sc
 4. Use the provider's supported interface:
    - loose Markdown: preserve its existing structure and vocabulary
    - Backlog.md: use `backlog` CLI/MCP; never edit task files directly
-   - Beads: use `bd` with `--json` for machine-readable reads and writes; in Gas City, route all Beads operations through explicitly scoped `gc bd --rig` or `gc bd --city` commands; never edit `.beads` exports or database files
+   - Beads: use `bd` with `--json` for machine-readable reads and writes; never edit `.beads` exports or database files. Gas City scoping is in § Beads below
    - GitHub Issues: use `gh`
    - Linear or another remote provider: use its authenticated first-party integration
-5. For Backlog.md in a Git worktree, read and write provider state from the primary/control checkout. Beads supports linked Git worktrees; invoke `bd` from the active worktree so it discovers the shared workspace. In Gas City, invoke `gc bd` with an explicit `--rig` or `--city` scope instead.
+5. For Backlog.md in a Git worktree, read and write provider state from the primary/control checkout. Beads supports linked Git worktrees; invoke it from the active worktree so it discovers the shared workspace.
 
 Source-only input means the whole collection for scheduling, not permission to mutate every item or review the whole collection.
 
@@ -26,7 +26,7 @@ Source-only input means the whole collection for scheduling, not permission to m
 
 Treat the Beads database as authoritative; its JSONL export is passive and is not a synchronization protocol. For direct Beads with a configured Dolt remote, run `bd dolt pull` before scheduling, then `bd dolt commit` and `bd dolt push` after the final verified checkpoint. For Gas City, pull with `gc --city <city-path> [--rig <rig-name>] dolt pull` before scheduling and sync with the matching `gc --city <city-path> [--rig <rig-name>] dolt sync` after the final verified checkpoint; do not forward `bd dolt` operations through `gc bd`.
 
-For Gas City sources, replace every `bd` command below with an explicitly scoped `gc bd` command. Use `gc bd --rig <rig-name> <bd-args>` for rig-scoped beads and `gc bd --city <city-path> <bd-args>` for city-level beads. Never invoke raw or unscoped `bd` from a Gas City city or rig when the intended store matters.
+For Gas City sources, replace every `bd` command below with an explicitly scoped `gc bd` command: `gc bd --rig <rig-name> <bd-args>` for rig-scoped beads, `gc bd --city <city-path> <bd-args>` for city-level beads. Never invoke raw or unscoped `bd` from a Gas City city or rig when the intended store matters.
 
 1. Schedule from `bd ready --json`; inspect candidates and dependencies with `bd show <id> --json`. Use `bd blocked --json` to distinguish an explicit dependency from ordinary implementation difficulty.
 2. After acquiring the canonical Worklease resource, atomically claim a selected item with `bd update <id> --claim --json`. On any claim failure, reread the provider state; only an already-claimed item requires choosing another ready item.

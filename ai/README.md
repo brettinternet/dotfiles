@@ -27,11 +27,13 @@ The pipeline is deliberately asymmetric: smart refine → cheap implement → in
 
 The complete find/do/check/judge/watch loop. No tester (executor writes tests, verifier runs them skeptically) and no librarian (context7/web search cover docs).
 
+pi and OpenCode ship a sixth subagent, `thermo-nuclear-code-quality-review`, pinned to the oracle tier. It is an explicitly invoked maintainability audit outside that loop, and it applies the `thermo-nuclear-code-quality-review` skill as its rubric; Claude invokes that skill directly instead.
+
 ## Where each concern lives
 
 - **Role + tier**: agent frontmatter — never inherited from the session.
 - **Policy** (when to delegate/escalate/verify, the two-failure escalation ladder, don't-delegate list, subagent guard): `AGENTS.md` § Subagents, one source for all tools.
-- **Workflow entrypoints**: `ai/.agents/commands/*.md` templates; `install-agent-commands` renders their explicit-only adapters into each tool's local skill directory.
+- **Workflow entrypoints**: `ai/.agents/commands/*.md` templates, rendered per tool by `install-agent-commands` as described below.
 - **Reusable workflow methods**: authored `ai/.agents/skills/*/SKILL.md` packages plus optional references, templates, scripts, and source-controlled tool metadata.
 - **Orchestrator tier**: chosen per session; the oracle nudge is the safety net when starting cheap.
 
