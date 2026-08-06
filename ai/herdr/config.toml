@@ -31,6 +31,15 @@ prompt_new_tab_name = false
 
 sidebar_start_collapsed = true
 sidebar_collapsed_mode = "hidden"
+# Show each running agent's current terminal activity and semantic state below
+# its workspace location. `terminal_title_stripped` removes transient spinners.
+[ui.sidebar.agents]
+rows = [
+  ["state_icon", "workspace", "tab"],
+  ["terminal_title_stripped"],
+  ["agent", "state_text"],
+]
+
 
 [ui.toast]
 # Let the outer terminal own notifications; this also works over `herdr --remote`.
