@@ -8,13 +8,13 @@ name = "terminal"
 prefix = "ctrl+a"                               # remove to avoid conflict with tmux if nesting
 split_horizontal = ["prefix+minus", "prefix+s"] # from tmux
 rename_tab = "prefix+,"
-rename_workspace = "prefix+r"
 close_pane = "prefix+shift+x"                   # what I'm used to from tmux
 close_tab = "prefix+shift+d"                    # overwrites close workspace
 focus_agent = "prefix+shift+1..9"               # panel order: prefix+!, prefix+@, … prefix+(
 previous_workspace = "prefix+p"
 next_workspace = "prefix+n"
 new_workspace = "prefix+shift+c"
+switch_workspace = "prefix+ctrl+1..9"
 
 [ui]
 # Order the Agent panel as an attention queue rather than by space, so whoever
