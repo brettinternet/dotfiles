@@ -16,14 +16,21 @@ onboarding = false
 name = "terminal"
 
 [keys]
+prefix = "ctrl+a" # remove to avoid conflict with tmux if nesting
 # tmux muscle memory: `prefix s` splits down alongside herdr's prefix+minus.
 split_horizontal = ["prefix+minus", "prefix+s"]
+
+close_pane = "prefix+shift+x" # what I'm used to from tmux
+close_tab = "prefix+shift+d"  # overwrites close workspace
 
 [ui]
 # Order the Agent panel as an attention queue rather than by space, so whoever
 # is blocked surfaces first.
 agent_panel_sort = "priority"
 prompt_new_tab_name = false
+
+sidebar_start_collapsed = true
+sidebar_collapsed_mode = "hidden"
 
 [ui.toast]
 # Let the outer terminal own notifications; this also works over `herdr --remote`.
