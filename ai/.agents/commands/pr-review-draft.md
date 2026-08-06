@@ -58,9 +58,11 @@ Use exactly this shape.
 
 One block per finding. One question per finding, never stacked. No praise, no restatement of the author's work, no closing note, and nothing that failed the finding bar.
 
+Apply the `draft-in-editor` skill with the slug `pr-review-<N>`, so the draft lands in a file the user can edit before anything is posted. Do this even when there are no findings, since the user may want to add one.
+
 ## Posting when explicitly requested
 
-Only when the user explicitly asks to proceed with posting this draft's comments:
+Only when the user explicitly asks to proceed with posting this draft's comments. Read the draft file back first and post exactly what it contains, including any edit the user made:
 
 - Attach every finding that maps to a changed line as a file-line comment in a `COMMENT` review. Use the top-level body only for a concern that no changed line fits.
 - Approve with no body when there are no material concerns.
@@ -71,11 +73,12 @@ Use the GitHub review API through `gh api`, since `gh pr review` cannot attach c
 
 ## Voice
 
-Apply the `user-voice` skill to the final draft and to any GitHub review explicitly authorized above. It controls wording only and never authorizes posting.
+Apply the `user-voice` skill to the draft before writing it to the file. It controls wording only and never authorizes posting. Anything the user edits into the file afterward is already their voice, so leave it alone.
 
 ## Rules
 
 - **MUST** stay read-only until the user explicitly authorizes posting.
 - **MUST** consult the oracle before a load-bearing architecture, design, security, or product judgment, once per PR with all such judgments batched.
 - **MUST** drop any finding that cannot name a real line, a trigger, and a breakage.
+- **MUST** post the draft file as saved, never the version held in the transcript.
 - **MUST NOT** include a duplicate concern, a nitpick, a style preference, or a vague suggestion.
