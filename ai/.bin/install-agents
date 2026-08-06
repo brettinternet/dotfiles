@@ -214,9 +214,11 @@ awk -v begin="$codex_begin" -v end="$codex_end" '
       blanks--
     }
   }
-  $0 == begin { blanks=0; skipping=1; next }
-  $0 == end { skipping=0; next }
-  skipping { next }
+  $0 == begin { generated=1; skipping_agent=0; next }
+  $0 == end { generated=0; skipping_agent=0; next }
+  generated && /^\[agents\.[^]]+\]$/ { skipping_agent=1; next }
+  generated && /^\[/ { skipping_agent=0 }
+  generated && skipping_agent { next }
   $0 == "" { blanks++; next }
   { flush_blanks(); print }
 ' "$codex_config" > "$tmp"
