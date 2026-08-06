@@ -1,14 +1,3 @@
-# herdr — agent-aware terminal multiplexer (~/.config/herdr/config.toml)
-#
-# Linked from ai/herdr/config.toml by ai.yaml. Herdr writes configuration back
-# here (onboarding, Settings, `herdr config reset-keys`), so commit intended changes.
-# Print every key and default with `herdr --default-config`.
-#
-# The prefix stays at herdr's default ctrl+b so it does not collide with the
-# ctrl+a tmux prefix in base/.tmux.conf — ssh into a tmux server from a herdr
-# pane and both multiplexers keep their own bindings.
-
-# Settings were chosen here; skip the first-run flow.
 onboarding = false
 
 [theme]
@@ -16,28 +5,38 @@ onboarding = false
 name = "terminal"
 
 [keys]
-prefix = "ctrl+a" # remove to avoid conflict with tmux if nesting
-# tmux muscle memory: `prefix s` splits down alongside herdr's prefix+minus.
-split_horizontal = ["prefix+minus", "prefix+s"]
-
-close_pane = "prefix+shift+x" # what I'm used to from tmux
-close_tab = "prefix+shift+d"  # overwrites close workspace
+prefix = "ctrl+a"                               # remove to avoid conflict with tmux if nesting
+split_horizontal = ["prefix+minus", "prefix+s"] # from tmux
+rename_tab = "prefix+,"
+rename_workspace = "prefix+r"
+close_pane = "prefix+shift+x"                   # what I'm used to from tmux
+close_tab = "prefix+shift+d"                    # overwrites close workspace
 
 [ui]
 # Order the Agent panel as an attention queue rather than by space, so whoever
 # is blocked surfaces first.
 agent_panel_sort = "priority"
 prompt_new_tab_name = false
+hide_tab_bar_when_single_tab = true
+show_agent_labels_on_pane_borders = true
 
-sidebar_start_collapsed = true
-sidebar_collapsed_mode = "hidden"
-# Show each running agent's current terminal activity and semantic state below
-# its workspace location. `terminal_title_stripped` removes transient spinners.
+# sidebar_start_collapsed = true
+# sidebar_collapsed_mode = "hidden"
+
 [ui.sidebar.agents]
 rows = [
-  ["state_icon", "workspace", "tab"],
-  ["terminal_title_stripped"],
-  ["agent", "state_text"],
+  [
+    "state_icon",
+    "workspace",
+    "tab",
+  ],
+  [
+    "terminal_title_stripped",
+  ],
+  [
+    "agent",
+    "state_text",
+  ],
 ]
 
 
