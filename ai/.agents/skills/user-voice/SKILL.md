@@ -9,7 +9,7 @@ This skill controls wording only. Never assume permission to post, send, approve
 
 ## Voice
 
-Lead with the point. Write clear, direct, informal text. Keep short comments to one or two sentences. Use mostly conventional grammar and punctuation, allowing lowercase when natural. Preserve capitalization for names, acronyms, identifiers, commands, code, and quoted text.
+Lead with the point. Write clear, direct, informal text. Keep short comments to one or two sentences. Use contractions and vary sentence length instead of uniform blocks. Use mostly conventional grammar and punctuation, allowing lowercase when natural. Preserve capitalization for names, acronyms, identifiers, commands, code, and quoted text.
 
 Do not use em dashes, colons, or semicolons. Cut corporate polish, filler, hedging, canned praise, ceremonial openings, stacked requests, and any header or bullet the message does not need. State significant concerns plainly and keep the evidence, facts, certainty, severity, and requested action unchanged.
 
@@ -17,7 +17,17 @@ Prefer `Done. I also added coverage for the reopen path.` over `Great catch! I'v
 
 ## Structure
 
-One message carries one point. State the point in the first sentence, then at most one supporting fact and at most one request. Put the location or identifier next to the thing it refers to instead of in a preamble.
+One message carries one point. State the point in the first sentence, then at most one supporting fact and at most one request. Put the location or identifier next to the thing it refers to instead of in a preamble. Never open with a sweeping statement about the state of anything or close with a summary or inspirational wrap-up.
+
+## AI tells
+
+These vocabulary and phrasing patterns mark text as AI-written. Rewrite the sentence to state the concrete fact, or delete it.
+
+- Marker words, especially in figurative use. `delve`, `dive into`, `navigate`, `landscape`, `realm`, `unpack`, `harness`, `leverage`, `foster`, `bolster`, `underscore`, `shed light on`, `pave the way`, `pivotal`, `groundbreaking`, `cutting-edge`, `transformative`, `game-changing`, `robust`, `seamless`, `comprehensive`, `holistic`, `multifaceted`, `vibrant`, `testament`
+- Filler phrases. `In today's ... world`, `it's important to note`, `it's worth noting`, `when it comes to`, `at its core`, `at the end of the day`, `this is where X comes in`, `let's break it down`, `plays a crucial role`, `cannot be overstated`
+- Fake-contrast constructions that mimic insight. `It's not just X, it's Y`, `Not only X but Y`, `This isn't about X. It's about Y.`, `No X. No Y. Just Z.`
+- The `**Bold term**: explanation` bullet format.
+- Saying the same point twice in different words.
 
 ## Be specific or drop it
 
@@ -43,5 +53,6 @@ Before returning externally directed text, confirm each item.
 4. Every request names one target and one action, and anything vague was deleted rather than softened.
 5. Form matches intent. A status or explanation is not phrased as a question unless an answer is needed.
 6. No em dashes, colons, semicolons, stacked requests, canned praise, or unnecessary formatting.
-7. Protected technical capitalization and exact quoted text are preserved.
-8. The workflow permits sending or posting. Otherwise return a draft only.
+7. No AI tells. Read it back and rewrite anything that sounds like a press release.
+8. Protected technical capitalization and exact quoted text are preserved.
+9. The workflow permits sending or posting. Otherwise return a draft only.
