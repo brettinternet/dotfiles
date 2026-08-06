@@ -1,7 +1,7 @@
 # herdr — agent-aware terminal multiplexer (~/.config/herdr/config.toml)
 #
-# Seeded as a local copy by ai.yaml, not a symlink: herdr writes back to this
-# file (onboarding completion, Settings changes, `herdr config reset-keys`).
+# Linked from ai/herdr/config.toml by ai.yaml. Herdr writes configuration back
+# here (onboarding, Settings, `herdr config reset-keys`), so commit intended changes.
 # Print every key and default with `herdr --default-config`.
 #
 # The prefix stays at herdr's default ctrl+b so it does not collide with the
@@ -35,3 +35,7 @@ sidebar_collapsed_mode = "hidden"
 [ui.toast]
 # Let the outer terminal own notifications; this also works over `herdr --remote`.
 delivery = "terminal"
+
+[experimental]
+# CAO launches agent workspaces from a Herdr-managed pane.
+allow_nested = true

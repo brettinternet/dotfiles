@@ -50,7 +50,7 @@ pi and OpenCode ship a sixth subagent, `thermo-nuclear-code-quality-review`, pin
 
 Run herdr outside a remote tmux session: herdr manages local agents; tmux preserves remote work over SSH. Defaults avoid prefix conflicts (`ctrl+b` for herdr, `ctrl+a` for tmux).
 
-`ai/herdr/config.toml` is copied to `~/.config/herdr/config.toml` by `make ai`. It is a copy, not a symlink, because herdr writes its own config. Edit the repo file for defaults; delete the local copy and run `make ai` to reseed it. Use `herdr server reload-config` for a running server.
+`make ai` symlinks `ai/herdr/config.toml` to `~/.config/herdr/config.toml`, backing up an existing local file as `config.toml.dotbot-backup.<timestamp>`. Herdr writes configuration through the link, so commit intended changes. Use `herdr server reload-config` for a running server.
 
 `make ai` also installs available agent integrations. Check or manage them with `herdr integration status`, `install`, and `uninstall`.
 
