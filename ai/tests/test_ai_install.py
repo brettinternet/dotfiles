@@ -117,6 +117,37 @@ class AiInstallTests(unittest.TestCase):
         )
         self.assertEqual(before, self.repository_status())
 
+    def test_agent_definitions_preserve_codex_hook_trust_state(self) -> None:
+        config = self.home / ".codex/config.toml"
+        config.parent.mkdir()
+        config.write_text(
+            """[features]
+hooks = true
+
+# BEGIN generated Codex agents
+
+[agents.executor]
+description = "obsolete"
+config_file = "/tmp/obsolete.toml"
+
+[hooks.state]
+
+[hooks.state."/Users/brett/.codex/hooks.json:session_start:0:0"]
+trusted_hash = "sha256:trusted"
+# END generated Codex agents
+"""
+        )
+
+        self.run_command("ai/.bin/install-agents")
+
+        rendered = config.read_text()
+        self.assertIn('trusted_hash = "sha256:trusted"', rendered)
+        self.assertLess(
+            rendered.index("[hooks.state]"),
+            rendered.index("# BEGIN generated Codex agents"),
+        )
+        self.assertNotIn('description = "obsolete"', rendered)
+
     def test_agent_definitions_share_one_body_across_tools(self) -> None:
         self.run_command("ai/.bin/install-agents")
 
