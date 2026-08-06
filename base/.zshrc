@@ -89,11 +89,15 @@ key[Control-Left]="${terminfo[kLFT5]}"
 key[Control-Right]="${terminfo[kRIT5]}"
 key[Alt-b]=$'\e[98;3u'
 key[Alt-f]=$'\e[102;3u'
+key[Alt-Left]=$'\e[1;3D'
+key[Alt-Right]=$'\e[1;3C'
 
 # [[ -n "${key[Control-Left]}"  ]] && bindkey -- "${key[Control-Left]}"  backward-word
 # [[ -n "${key[Control-Right]}" ]] && bindkey -- "${key[Control-Right]}" forward-word
 [[ -n "${key[Alt-b]}"        ]] && bindkey -- "${key[Alt-b]}"        backward-word
 [[ -n "${key[Alt-f]}"        ]] && bindkey -- "${key[Alt-f]}"        forward-word
+[[ -n "${key[Alt-Left]}"     ]] && bindkey -- "${key[Alt-Left]}"     backward-word
+[[ -n "${key[Alt-Right]}"    ]] && bindkey -- "${key[Alt-Right]}"    forward-word
 
 
 # -- Modules ----------------------------------------
