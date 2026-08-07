@@ -1,30 +1,32 @@
 " -- vim-plug ----------------------------------------
 
-" Suggested plugins: https://www.archlinux.org/groups/x86_64/vim-plugins/
+" Plugins for real Vim only; Neovim is configured separately under
+" ~/.config/nvim. Keep this list slim: it is the fallback for machines that
+" only have vim. Bootstrap vim-plug, then :PlugInstall (see ~/.vimrc).
 
 call plug#begin('~/.vim/plugged')
 
-" Theme
-Plug 'navarasu/onedark.nvim', {'as': 'onedark'} " https://github.com/gruvbox-material/vim
+" Theme. Must be a Vimscript colorscheme; Lua-only Neovim themes such as
+" navarasu/onedark.nvim silently fail to load in Vim.
+Plug 'sainnhe/gruvbox-material'
 
 " Tooling
 Plug 'vim-airline/vim-airline'                              " Status line, written in Vimscript
-Plug 'airblade/vim-gitgutter'                               " Vim plugin which shows a git diff in the gutter (sign column)
-" Potentially replace with vanilla netrw: https://stackoverflow.com/a/5636941/6817437
-Plug 'preservim/nerdtree', { 'on':  'NERDTreeToggle' }      " Tree explorer plugin for navigating the filesystem
-
-" https://github.com/preservim/nerdcommenter
-Plug 'preservim/nerdcommenter'                              " Plugin that allows for easy commenting of code for many filetypes
-
+Plug 'airblade/vim-gitgutter'                               " Shows a git diff in the sign column
+Plug 'preservim/nerdtree', { 'on':  'NERDTreeToggle' }      " Tree explorer for navigating the filesystem
+Plug 'preservim/nerdcommenter'                              " Easy commenting of code for many filetypes
 Plug 'austintaylor/vim-indentobject'                        " Text objects based on indent levels
-Plug 'christoomey/vim-tmux-navigator'
-Plug 'ctrlpvim/ctrlp.vim'                                   " Fuzzy file, buffer, mru, tag, etc finder.
-Plug 'majutsushi/tagbar'                                    " Plugin to browse the tags of the current file and get an overview of its structure
+Plug 'christoomey/vim-tmux-navigator'                       " Move between vim splits and tmux panes
+Plug 'ctrlpvim/ctrlp.vim'                                   " Fuzzy file, buffer, mru, tag finder
+Plug 'preservim/tagbar'                                     " Browse the tags of the current file
+
+" Linting. ALE only: running ALE and syntastic together double-reports
+" diagnostics and fights over the sign column.
 Plug 'dense-analysis/ale'                                   " Asynchronous Lint Engine
-Plug 'vim-syntastic/syntastic'                              " Automatic syntax checking for Vim
-"Plug 'sheerun/vim-polyglot'
+
 Plug 'tpope/vim-fugitive'                                   " Git wrapper so awesome, it should be illegal
-Plug 'tpope/vim-surround'                                   " Provides mappings to easily delete, change, and add paired surroundings
+Plug 'tpope/vim-surround'                                   " Mappings to delete, change and add surroundings
+Plug 'tpope/vim-repeat'                                     " Make `.` repeat surround/commentary maps
 Plug 'tpope/vim-eunuch'                                     " Helpers for UNIX
 
 " Language
