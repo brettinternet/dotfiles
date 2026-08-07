@@ -14,6 +14,7 @@ previous_agent = "prefix+p"
 next_agent = "prefix+n"
 new_workspace = "prefix+shift+c"
 switch_workspace = "prefix+shift+1..9"
+detach = ["prefix+d", "prefix+ctrl+d"]
 
 [ui]
 # Order the Agent panel as an attention queue rather than by space, so whoever
