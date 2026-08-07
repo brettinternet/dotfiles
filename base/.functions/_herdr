@@ -1,0 +1,6 @@
+#compdef herdr
+
+_herdr() {
+  (( $+commands[herdr] )) || return 1
+  eval "$(herdr completion zsh)"
+}
