@@ -26,17 +26,17 @@ ast-grep = "latest"
 herdr = "latest"
 
 # lsp
+# lua-language-server, marksman, ruff and taplo live in the base fragment so the
+# Linux servers get them too; only runtime-dependent servers are listed here.
 "go:golang.org/x/tools/gopls" = "latest"
 "npm:pyright" = "latest"
-ruff = "latest"
-"npm:typescript" = "latest"
+# Pinned to 5.x deliberately: typescript-language-server drives `tsserver.js`,
+# which TypeScript 7 no longer ships. `latest` here silently breaks ts_ls.
+"npm:typescript" = "5"
 "npm:typescript-language-server" = "latest"
 "npm:bash-language-server" = "latest"
 "npm:yaml-language-server" = "latest"
 "npm:vscode-langservers-extracted" = "latest"
-marksman = "latest"
-taplo = "latest"
-lua-language-server = "latest"
 erlang = "latest"
 elixir = "latest"
 "github:elixir-lsp/elixir-ls" = { version = "latest", postinstall = "ln -sf \"$MISE_TOOL_INSTALL_PATH/language_server.sh\" \"$MISE_TOOL_INSTALL_PATH/elixir-ls\"" }

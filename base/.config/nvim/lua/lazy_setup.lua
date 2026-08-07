@@ -11,12 +11,14 @@ require("lazy").setup({
       update_notifications = true, -- Enable/disable notification about running `:Lazy update` twice to update pinned plugins
     },
   },
-  { import = "community" },
   { import = "plugins" },
 } --[[@as LazySpec]], {
   -- Configure any other `lazy.nvim` configuration options here
   install = { colorscheme = { "kaile", "astrotheme", "habamax" } },
   ui = { backdrop = 100 },
+  -- No installed plugin needs luarocks, and leaving it on makes `:checkhealth`
+  -- report a missing hererocks/luarocks install on every machine.
+  rocks = { enabled = false },
   performance = {
     rtp = {
       -- disable some rtp plugins, add more to your liking

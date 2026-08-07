@@ -1,6 +1,5 @@
 # env
 .envrc
-lazy-lock.json
 
 # macos
 Brewfile.lock.json

@@ -16,3 +16,13 @@ fd = "latest"
 fzf = "latest"
 rg = "latest"
 yq = "latest"
+
+# lsp
+# Only self-contained binaries belong here so every machine (including the
+# Arch/Debian servers) gets language support for the things actually edited
+# there: Neovim's own Lua config, Markdown, Python and TOML. Servers that need
+# a language runtime (Node, Go, Erlang/Elixir) stay in the darwin fragment.
+lua-language-server = "latest"
+marksman = "latest"
+ruff = "latest"
+taplo = "latest"
