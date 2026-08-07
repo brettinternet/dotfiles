@@ -102,6 +102,9 @@
     ~/.bin/:
       glob: true
       path: ai/.bin/*
+    ~/.functions/:
+      glob: true
+      path: ai/.functions/*
     # Claude
     ~/.claude/CLAUDE.md:
       path: ai/AGENTS.md
