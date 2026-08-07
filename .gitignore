@@ -12,6 +12,7 @@ Brewfile.lock.json
 mise.local.yaml
 *.dump
 .trees
+/*.html
 
 # python
 __pycache__/
