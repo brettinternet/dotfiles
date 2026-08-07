@@ -219,8 +219,9 @@ zinit as="command" lucid from="gh-r" for \
     pick"mise" \
     atclone='[[ -x ./mise/bin/mise ]] && command mv -f ./mise/bin/mise ./mise-bin && command rm -rf ./mise && command mv -f ./mise-bin ./mise; chmod +x ./mise && ./mise completion zsh > _mise' \
     atpull="%atclone" \
-    atload='[[ -f ./mise && -x ./mise ]] && eval "$(./mise activate zsh)"' \
     jdx/mise
+
+eval "$(mise activate zsh)"
 
 # -- Prompt
 
