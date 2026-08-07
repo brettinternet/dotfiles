@@ -46,17 +46,22 @@ One consultation per PR, batching every related concern. Skip it entirely when n
 
 ## Output
 
-Use exactly this shape.
+First print in chat, for the user only and never in the draft:
 
 ```text
 <two sentences on what the PR does, naming the call stack or execution path for the changed behavior>
+Action: <APPROVE when no finding clears the bar, COMMENT when one does>
+```
 
+The draft holds findings and nothing else. Use exactly this shape, one block per finding.
+
+```text
 <path:line>
 <one sentence naming the trigger and the breakage>
 <one question the author can answer or push back on>
 ```
 
-One block per finding. One question per finding, never stacked. No praise, no restatement of the author's work, no closing note, and nothing that failed the finding bar.
+One question per finding, never stacked. No summary, no praise, no restatement of the author's work, no closing note, and nothing that failed the finding bar.
 
 Apply the `draft-in-editor` skill with the slug `pr-review-<N>`, so the draft lands in a file the user can edit before anything is posted. Do this even when there are no findings, since the user may want to add one.
 
@@ -82,3 +87,4 @@ Apply the `user-voice` skill to the draft before writing it to the file. It cont
 - **MUST** drop any finding that cannot name a real line, a trigger, and a breakage.
 - **MUST** post the draft file as saved, never the version held in the transcript.
 - **MUST NOT** include a duplicate concern, a nitpick, a style preference, or a vague suggestion.
+- **MUST NOT** put the PR summary or the intended action in the draft file; both belong in chat before the handoff.
