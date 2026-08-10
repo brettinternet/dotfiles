@@ -72,7 +72,9 @@ gh pr view <N> --json comments,reviews
 gh api repos/:owner/:repo/pulls/<N>/comments --paginate
 ```
 
-Drop every concern already raised there, including one the author already addressed.
+Build a private ledger of concerns already raised by any reviewer. Match on the underlying trigger and breakage, not exact wording or file location. A concern remains owned by that earlier discussion when its thread is resolved, outdated, minimized, answered, or claims to be fixed, and when later commits move the affected code.
+
+Never post a ledgered concern again. Do not revive it because it still appears present, the earlier fix looks incomplete, or a fresh review independently rediscovers it. Account for its current resolved or unresolved state only in the per-PR console status; never include that state in inline comments, a review body, or a top-level PR comment.
 
 #### Finding bar
 
@@ -127,6 +129,8 @@ gh pr review <N> --approve
 
 On a repeat pass, comment only on the diff introduced by the new commits, meaning the `commit_subjects` entries that weren't in `reviewed_commits`, not on code the author only rebased.
 
+**Console status:** the single per-PR status line may report the overall review state, including counts or a brief status for new findings and previously raised resolved or unresolved concerns. This is private terminal output only; never turn it into drafted or posted PR-comment content.
+
 ### 6. Update state
 
 Update the current repo's sub-object in `/tmp/pr-review-loop-state.json` after each PR, preserving other repos' entries. Store the current `headRefOid` as `head_sha` and the filtered `commit_subjects` from step 2 as `reviewed_commits`, so the next iteration can tell a real new commit from a rebase.
@@ -140,7 +144,7 @@ Once every candidate is processed or skipped, print `[pr-review-loop] iteration 
 - **MUST** loop continuously. The only exit is the user interrupting.
 - **MUST** apply the `user-voice` skill to everything posted to GitHub, re-running its final check immediately before posting.
 - **MUST** drop any finding that cannot name a real line, a trigger, and a breakage. No nitpicks, style nags, `consider X` suggestions, or vague heads ups.
-- **MUST NOT** post a concern already in the PR discussion, including one the author already addressed.
+- **MUST NOT** post a concern already raised by any reviewer, regardless of thread state, later replies, attempted fixes, code movement, or independently rediscovering it. Track its current state in private console output only.
 - **MUST NOT** re-review or re-comment when the PR-authored commit subjects match `reviewed_commits`. A rebase or a merge from main changes SHAs without adding work.
 - **MUST NOT** post anything on a PR I already approved until the author pushes new work past that approval. No re-approval, no new comment.
 - **MUST NOT** approve a PR with an unresolved material concern. Submit a `COMMENT` review instead.
