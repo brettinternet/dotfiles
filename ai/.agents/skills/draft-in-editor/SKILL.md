@@ -20,6 +20,8 @@ Use a `<slug>` that identifies the artifact, such as `pr-review-1234` or `commit
 
 ## Handoff
 
+Before writing an externally directed draft, apply the `user-voice` skill. The destination workflow still owns content and structure, and anything the user edits afterward remains untouched.
+
 Write the file, print the draft in chat as well, then open it without waiting.
 
 ```bash
@@ -41,7 +43,7 @@ Before sending, posting, or committing, read the file fresh. The user may have r
 - Treat the file contents as final wording. Do not re-apply voice rules, re-run a finding bar, or reconcile it against what you originally drafted.
 - An empty file, or one reduced to whitespace, means cancel. Say so and do nothing.
 - If the file is missing, the user discarded it. Ask before regenerating.
-- If the edits break a structural requirement the destination needs, such as a `path:line` a comment must attach to, say which part cannot be posted as written and ask. Never silently repair it.
+- Treat any location marker used to route a comment, such as `path:line`, as metadata, never as part of the comment body. Try the exact location first, then a nearby valid location in the same file when the destination rejects it. If no suitable inline location exists, post the comment without location metadata. **MUST NOT** prepend, append, or otherwise copy the marker into the posted text.
 
 Delete the file once the artifact is sent, posted, or committed.
 
