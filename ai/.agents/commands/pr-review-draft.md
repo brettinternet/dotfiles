@@ -16,7 +16,9 @@ gh pr view <N> --json comments,reviews
 gh api repos/:owner/:repo/pulls/<N>/comments --paginate
 ```
 
-Drop every concern already raised there, including one the author already addressed.
+Build a private ledger of concerns already raised by any reviewer. Match on the underlying trigger and breakage, not exact wording or file location. A concern remains owned by that earlier discussion when its thread is resolved, outdated, minimized, answered, or claims to be fixed, and when later commits move the affected code.
+
+Never put a ledgered concern in the comment draft. Do not revive it because it still appears present, the earlier fix looks incomplete, or a fresh review independently rediscovers it. Account for its current resolved or unresolved state in the chat summary instead.
 
 ## Review mode
 
@@ -50,10 +52,11 @@ First print in chat, for the user only and never in the draft:
 
 ```text
 <two sentences on what the PR does, naming the call stack or execution path for the changed behavior>
-Action: <APPROVE when no finding clears the bar, COMMENT when one does>
+State: <overall review state, including the current state of previously raised concerns when relevant>
+Action: <APPROVE only when no new finding clears the bar and no prior material concern remains unresolved; otherwise COMMENT>
 ```
 
-The draft holds findings and nothing else. Use exactly this shape, one block per finding.
+The state may briefly distinguish new findings, previously raised unresolved concerns, and previously raised addressed concerns. Do not copy those prior concerns into the draft.
 
 ```text
 <path:line>
@@ -61,7 +64,7 @@ The draft holds findings and nothing else. Use exactly this shape, one block per
 <one question the author can answer or push back on>
 ```
 
-One question per finding, never stacked. No summary, no praise, no restatement of the author's work, no closing note, and nothing that failed the finding bar.
+One question per finding, never stacked. No summary, prior concern, praise, restatement of the author's work, closing note, or anything that failed the finding bar.
 
 Apply the `draft-in-editor` skill with the slug `pr-review-<N>`, so the draft lands in a file the user can edit before anything is posted. Do this even when there are no findings, since the user may want to add one.
 
@@ -86,5 +89,5 @@ Apply the `user-voice` skill to the draft before writing it to the file. It cont
 - **MUST** consult the oracle before a load-bearing architecture, design, security, or product judgment, once per PR with all such judgments batched.
 - **MUST** drop any finding that cannot name a real line, a trigger, and a breakage.
 - **MUST** post the draft file as saved, never the version held in the transcript.
-- **MUST NOT** include a duplicate concern, a nitpick, a style preference, or a vague suggestion.
-- **MUST NOT** put the PR summary or the intended action in the draft file; both belong in chat before the handoff.
+- **MUST NOT** include a concern already raised by any reviewer, regardless of thread state, later replies, attempted fixes, code movement, or independently rediscovering it.
+- **MUST NOT** put the PR summary, prior-concern state, overall review state, or intended action in the draft file; those belong in chat before the handoff.
