@@ -40,7 +40,7 @@ pi and OpenCode ship a sixth subagent, `thermo-nuclear-code-quality-review`, pin
 ## Shared skills and commands
 
 - `ai/.agents/skills/<distinct-name>/` is the source for authored reusable skills. Codex, OMP, OpenCode, and Amp discover its `~/.agents/skills/` links natively; Claude receives links to the same packages at `~/.claude/skills/`.
-- `ai/.agents/commands/*.md` is the source for shared slash-command workflows. `install-agent-commands` renders marked explicit-only adapters into `~/.agents/skills/` and `~/.claude/skills/`, and marked Claude command copies into `~/.claude/commands/`. OMP continues to read those Claude-compatible commands. Amp consumes the adapters as skills when explicitly invoked with `$<command>`.
+- `ai/.agents/commands/*.md` is the source for shared slash-command workflows. `install-agent-commands` renders marked explicit-only adapters into `~/.agents/skills/` and `~/.claude/skills/`; Claude exposes the skill adapters as slash commands, while Codex, OMP, OpenCode, and Amp consume them from their native skill locations. The installer removes its legacy `~/.claude/commands/` copies so Claude does not index each workflow twice.
 - `make ai` writes generated agent definitions and adapters, active profile state, and rendered profile configuration under `$HOME`; it removes only recognized legacy checkout state and explicitly retired local artifacts.
 - Keep optional Codex `agents/openai.yaml` metadata inside authored skill packages; the common `.agents` links carry it unchanged.
 

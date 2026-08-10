@@ -72,7 +72,7 @@ Apply the `draft-in-editor` skill with the slug `pr-review-<N>`, so the draft la
 
 Only when the user explicitly asks to proceed with posting this draft's comments. Read the draft file back first and post exactly what it contains, including any edit the user made:
 
-- Attach every finding that maps to a changed line as a file-line comment in a `COMMENT` review. Use the top-level body only for a concern that no changed line fits.
+- Parse each standalone `path:line` marker as routing metadata, never comment text. Try the exact changed line first, then a nearby valid changed line in the same file. If no suitable inline location exists, put the concern in the top-level review body with the marker omitted entirely.
 - Approve with no body when there are no material concerns.
 - Submit a `COMMENT` review for material concerns. Never submit `REQUEST_CHANGES`.
 - Never post a review or approval merely because this command was invoked.
