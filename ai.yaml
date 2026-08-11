@@ -89,6 +89,16 @@
       description: Install herdr agent integrations for locally installed agents
       stdout: true
       stderr: true
+    - command: |
+        set -eu
+        if ! command -v herdr >/dev/null 2>&1; then
+          echo 'herdr not on PATH; skipping active pane window title plugin'
+          exit 0
+        fi
+        herdr plugin link ai/herdr/plugins/window-title
+      description: Mirror the active Herdr pane title to the outer terminal
+      stdout: true
+      stderr: true
     - command: ai/.bin/install-agent-commands
       description: Generate shared agent command skills and Claude command adapters
       stdout: true
