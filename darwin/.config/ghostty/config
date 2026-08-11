@@ -1,7 +1,8 @@
 # Styles
 font-size = 16
 font-family = "Fira Code"
-macos-titlebar-style = transparent
+macos-titlebar-style = tabs
+macos-window-buttons = hidden
 macos-titlebar-proxy-icon = hidden
 palette = 0=#2a2a2a
 palette = 1=#ff0000
