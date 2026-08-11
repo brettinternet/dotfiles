@@ -1,5 +1,5 @@
 modelRoles:
-  default: openrouter/openai/gpt-5.6-terra:high
+  default: openrouter/openai/gpt-5.6-sol:medium
   smol: openrouter/openai/gpt-5.6-luna:low
   slow: openrouter/anthropic/opus-latest:xhigh
   designer: openrouter/moonshotai/kimi-k3:xhigh
