@@ -1,7 +1,7 @@
 # Styles
 font-size = 16
 font-family = "Fira Code"
-macos-titlebar-style = tabs
+macos-titlebar-style = transparent
 macos-titlebar-proxy-icon = hidden
 palette = 0=#2a2a2a
 palette = 1=#ff0000
@@ -43,7 +43,7 @@ quick-terminal-screen = mouse
 quick-terminal-autohide = false
 quick-terminal-space-behavior = remain
 quick-terminal-animation-duration = 0
-keybind = global:cmd+shift+semicolon=toggle_quick_terminal
+keybind = global:cmd+alt+semicolon=toggle_quick_terminal
 
 # Behavior
 confirm-close-surface = false
