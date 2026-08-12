@@ -35,6 +35,12 @@ If you are running as a subagent of any kind, ignore this section entirely and d
 - Consult the `oracle` agent for judgment-dense calls: architecture tradeoffs, competing diagnoses, blockers that may be stale. The weaker the model you are running as, the earlier you should consult it.
 - Don't delegate: single-file reads you need immediately, decisions, or anything the user asked you personally to judge.
 
+## Human-required blockers
+
+- Exhaust repository evidence and available tools, and complete everything not blocked, before escalating. When only a person can supply a consequential decision, credential or permission, external action, private input, or environment state, actively prompt the user in the current session with the available question or user-input tool; do not merely announce the blocker and end.
+- Make the request actionable: name the exact input or action, what it blocks, evidence and attempts, the recommended response, and only materially different alternatives. Batch related questions.
+- Stay in the workflow and resume after the answer. End blocked only when user interaction is unavailable or noninteractive, the user cannot or declines to unblock it, or the required external state remains unavailable. For provider-backed work, checkpoint the request and objective unblock condition before ending.
+
 ## Git
 
 - Never run `git push` without explicit instruction.

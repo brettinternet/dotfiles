@@ -39,6 +39,12 @@ Before editing:
 - Use the one optional oracle consultation only after gathering repository evidence, and only for consequential, hard-to-reverse design tradeoffs or a possible genuine external blocker. Batch related questions; do not consult for ordinary choices or routine check failures.
 - Before reporting a human-required blocker, include the exact blocker, attempted paths, and evidence in that consultation. Report it as human-required only if no safe, repo-evidenced path remains.
 
+## Human-required blockers
+
+- Finish and verify every unblocked part before escalating. When a consequential user decision, credential or permission, external action, private input, or environment state is the only remaining path, actively prompt the user in the current session with the available question or user-input tool.
+- State the exact request, the acceptance criterion it blocks, evidence and attempted paths, and a recommended response with only materially different alternatives. Batch related requests, stay in the workflow, and resume implementation after the answer.
+- Do not emit `IMPLEMENTATION BLOCKED` before making that request. Use the blocked status only when interaction is unavailable or noninteractive, the user cannot or declines to provide what is needed, or the requested external state remains unavailable after the request.
+
 ## Completion criteria
 
 Treat the feature as complete only when:
