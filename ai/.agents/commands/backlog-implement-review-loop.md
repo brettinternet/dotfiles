@@ -3,7 +3,7 @@ description: Run one bounded implementation/review pass from a backlog
 argument-hint: <backlog-source|remote-ref> [item selectors]
 ---
 
-Run one fresh-context work pass for `$ARGUMENTS`, then stop. `backlog-source-workflow` owns source resolution, scheduling rules, blocker classification, and provider writes; `worklease-workflow` owns the claim lifecycle. Follow both — their rules are not restated here. Durable provider state, not chat history, is the handoff: the next iteration reruns with `$ARGUMENTS` unchanged and recomputes everything fresh.
+Run one fresh-context work pass for `$ARGUMENTS`, then stop. `backlog-source-workflow` owns source resolution, scheduling rules, blocker classification, and provider writes. Durable provider state, not chat history, is the handoff: the next iteration reruns with `$ARGUMENTS` unchanged and recomputes everything fresh.
 
 ## Select one item
 
