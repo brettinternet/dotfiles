@@ -229,7 +229,7 @@ eval "$(mise activate zsh)"
 
 function load_prompt {
   prompt_hostname() {
-    ansi 008 "[$(uname -n)]"
+    ansi 008 "[${$(uname -n)%.local}]"
   }
 
   prompt_virtualenv() {
@@ -242,8 +242,9 @@ function load_prompt {
   GEOMETRY_PATH_COLOR=04
   GEOMETRY_STATUS_COLOR="$(geometry::hostcolor)"
 
-  # Show hostname is prompt for remote sessions
-  if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
+  # Herdr panes can retain SSH variables from when a persistent session was created.
+  # They do not describe the client currently attached to that session.
+  if [[ -z "$HERDR_ENV" && ( -n "$SSH_CLIENT" || -n "$SSH_TTY" ) ]]; then
     GEOMETRY_PROMPT=(geometry_echo prompt_hostname prompt_virtualenv geometry_status geometry_path)
   else
     GEOMETRY_PROMPT=(geometry_echo prompt_virtualenv geometry_status geometry_path)
