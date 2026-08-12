@@ -19,7 +19,7 @@ Refresh the item and investigate backlog context, dependencies, repository evide
 
 ## Resolve decisions
 
-Do not ask the user to repeat repository investigation. For each genuinely unresolved decision, state what it blocks, summarize the evidence, recommend a viable option, and offer a small set of materially different alternatives. Combine questions that share one decision.
+Do not ask the user to repeat repository investigation. For each genuinely unresolved decision, state what it blocks, summarize the evidence, recommend a viable option, and offer a small set of materially different alternatives. Combine questions that share one decision. Use the available question or user-input tool to ask in the current session and wait for the answer; do not merely print the questions in a final blocker report. If interaction is unavailable or noninteractive, persist the exact request and objective unblock condition in provider state.
 
 After the answer, claim the affected selected item or explicit item bundle. Write the decision near the requirement it affects, including constraints and acceptance impact. Resolve only blocker records satisfied by that decision; preserve unrelated blockers. Complete a decision-only item only when the recorded answer satisfies its entire purpose and no implementation or external action remains.
 
