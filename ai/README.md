@@ -62,8 +62,6 @@ OMP's `/loop` can run this command a fixed number of times as a bounded [Ralph l
 
 Every iteration starts fresh and chooses one coherent implementation, review, or unblock pass from authoritative provider state. The agent claims the provider item before work, records resumable progress, and releases after verifying the checkpoint. All work on an item uses the same lease resource, while independent items in the same dependency-ready wave may proceed concurrently. Active claims mean wait or choose independent work; unfinished defined prerequisites are dependency gates, not blockers.
 
-`worklease` provides same-host coordination among cooperating agents. It does not turn remote provider writes into cross-host fencing. Backlog.md provider state stays in the primary/control checkout; implementation worktrees contain code only.
-
 ## Harness delegation triggers
 
 - Claude Code recognizes "fan out subagents".
