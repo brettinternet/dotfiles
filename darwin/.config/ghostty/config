@@ -57,5 +57,6 @@ window-inherit-working-directory = false
 # Keyboard
 keybind = alt+backspace=text:\x1b\x7f
 keybind = shift+enter=text:\n
-keybind = super+c=copy_to_clipboard # required for copying inside herdr
+# required for copying inside herdr
+keybind = super+c=copy_to_clipboard
 keybind = super+v=paste_from_clipboard
