@@ -17,7 +17,7 @@ gh = { version = "latest", postinstall = "gh extension install github/gh-stack -
 biome = "latest"
 
 # ai
-claude = "latest"
+"npm:@anthropic-ai/claude-code" = { version = "latest", minimum_release_age = "0" }
 opencode = "latest"
 codex = "latest"
 "github:can1357/oh-my-pi" = "latest"
