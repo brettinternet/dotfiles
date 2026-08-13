@@ -1,5 +1,6 @@
 ---
 modelRoles:
+  reviewer: github-copilot/claude-opus-4-8
   default: github-copilot/claude-sonnet-5
   smol: github-copilot/claude-haiku-4-5
   slow: github-copilot/claude-opus-4-8

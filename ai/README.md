@@ -4,7 +4,7 @@ Shared config for Claude Code (`~/.claude`), oh-my-pi (`~/.omp`), Codex, Amp CLI
 
 ## OpenCode profiles
 
-OpenCode renders `~/.config/opencode/opencode.jsonc` from `opencode/profiles/common.jsonc` plus a selected overlay. `opencode-profile list` shows `gpt`, `claude`, `claude-gpt`, `gpt-cc-proxy`, and `openrouter`; `opencode-profile use <name>` regenerates the local active config. Its six global subagents mirror the pi roster; each profile supplies their OpenCode model routing. `gpt-cc-proxy` retains Meridian-backed Anthropic routing and requires `MERIDIAN_BASE_URL`. OpenCode uses neither oh-my-openagent nor OCX.
+OpenCode renders `~/.config/opencode/opencode.jsonc` from `opencode/profiles/common.jsonc` plus a selected overlay. `opencode-profile list` shows `gpt`, `claude`, `claude-gpt`, `gpt-cc-proxy`, and `openrouter`; `opencode-profile use <name>` regenerates the local active config. Its seven global subagents mirror the pi roster; each profile supplies their OpenCode model routing. `gpt-cc-proxy` retains Meridian-backed Anthropic routing and requires `MERIDIAN_BASE_URL`. OpenCode uses neither oh-my-openagent nor OCX.
 
 ## Orchestration strategy
 
@@ -17,17 +17,18 @@ The pipeline is deliberately asymmetric: smart refine → cheap implement → in
 
 ## Agent roster
 
-| Agent        | Tier                                          | Role                                                                 |
-| ------------ | --------------------------------------------- | -------------------------------------------------------------------- |
-| `explore`    | low (`pi/smol`; Claude uses built-in Explore) | read-only discovery, evidence gathering                              |
-| `executor`   | mid (`sonnet` / `pi/task`)                    | well-specified implementation; returns questions instead of guessing |
-| `verifier`   | mid (`sonnet` / `pi/task`)                    | independent acceptance check from criteria + commits; never fixes    |
-| `pr-watcher` | low (`haiku` / `pi/smol`)                     | CI/review delta watching                                             |
-| `oracle`     | max (`opus` / `pi/slow`, xhigh)               | second-opinion judgment: tradeoffs, diagnoses, blocker triage        |
+| Agent        | Tier                                                                                                          | Role                                                                 |
+| ------------ | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `reviewer`   | benchmark leader where available (`Claude Opus 4.8`; OpenAI-only profiles use `GPT-5.6 Terra`)                | read-only falsification review with independently validated findings |
+| `explore`    | low (`pi/smol`; Claude uses built-in Explore)                                                                 | read-only discovery, evidence gathering                              |
+| `executor`   | mid (`sonnet` / `pi/task`)                                                                                    | well-specified implementation; returns questions instead of guessing |
+| `verifier`   | mid (`sonnet` / `pi/task`)                                                                                    | independent acceptance check from criteria + commits; never fixes    |
+| `pr-watcher` | low (`haiku` / `pi/smol`)                                                                                     | CI/review delta watching                                             |
+| `oracle`     | max (`opus` / `pi/slow`, xhigh)                                                                               | second-opinion judgment: tradeoffs, diagnoses, blocker triage        |
 
-The complete find/do/check/judge/watch loop. No tester (executor writes tests, verifier runs them skeptically) and no librarian (context7/web search cover docs).
+The base roster covers the complete find/do/check/judge/watch loop. No tester (executor writes tests, verifier runs them skeptically) and no librarian (context7/web search cover docs).
 
-pi and OpenCode ship a sixth subagent, `thermo-nuclear-code-quality-review`, pinned to the oracle tier. It is an explicitly invoked maintainability audit outside that loop, and it applies the `thermo-nuclear-code-quality-review` skill as its rubric; Claude invokes that skill directly instead.
+pi and OpenCode also ship `reviewer` and `thermo-nuclear-code-quality-review`, pinned to their strongest applicable tiers. The reviewer applies the full `implementation-review` skill and tries to falsify correctness claims; the thermo-nuclear reviewer applies its dedicated maintainability rubric. Claude and Codex receive `reviewer`; Claude invokes the thermo-nuclear skill directly.
 
 ## Where each concern lives
 
@@ -71,6 +72,7 @@ Every iteration starts fresh and chooses one coherent implementation, review, or
 
 ## Model notes
 
+- `reviewer` is manually pinned from the [BullshitBench v2 leaderboard](https://petergpt.github.io/bullshit-benchmark/viewer/index.v2.html). Accessed 2026-08-13; dataset generated 2026-07-31T22:07:20Z. Claude Opus 4.8 is first overall; GPT-5.6 Terra is the highest-ranked OpenAI model available to OpenAI-only profiles. Recheck this pin when the leaderboard or provider catalogs change.
 - https://artificialanalysis.ai/models/gpt-5-6-luna#intelligence
 - https://openrouter.ai/compare/openai/gpt-5.6-sol-pro/openai/gpt-5.6-sol/anthropic/claude-fable-5/anthropic/claude-opus-4.8
 

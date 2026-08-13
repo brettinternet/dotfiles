@@ -1,5 +1,9 @@
 {
   "agent": {
+    "reviewer": {
+      "model": "openrouter/anthropic/claude-opus-4.8",
+      "variant": "xhigh",
+    },
     "executor": {
       "model": "openrouter/openai/gpt-5.6-terra",
       "variant": "high",

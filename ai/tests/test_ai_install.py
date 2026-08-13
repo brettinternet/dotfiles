@@ -149,6 +149,21 @@ class AiInstallTests(unittest.TestCase):
         self.assertIn("mode: subagent", opencode.read_text())
         self.assertIn('model = "gpt-5.6-luna"', codex.read_text())
         self.assertIn(
+            "model: claude-opus-4-8",
+            (self.home / ".claude/agents/reviewer.md").read_text(),
+        )
+        self.assertIn(
+            "model: pi/reviewer",
+            (self.home / ".omp/agents/reviewer.md").read_text(),
+        )
+        self.assertTrue(
+            (self.home / ".config/opencode/agents/reviewer.md").is_file()
+        )
+        self.assertIn(
+            'model = "gpt-5.6-terra"',
+            (self.home / ".codex/agents/reviewer.toml").read_text(),
+        )
+        self.assertIn(
             "config_file", (self.home / ".codex/config.toml").read_text()
         )
         self.assertIn(
@@ -191,7 +206,13 @@ trusted_hash = "sha256:trusted"
     def test_agent_definitions_share_one_body_across_tools(self) -> None:
         self.run_command("ai/.bin/install-agents")
 
-        for role in ("executor", "verifier", "pr-watcher", "oracle"):
+        for role in (
+            "reviewer",
+            "executor",
+            "verifier",
+            "pr-watcher",
+            "oracle",
+        ):
             claude = self.agent_body(self.home / f".claude/agents/{role}.md")
             pi = self.agent_body(self.home / f".omp/agents/{role}.md")
             opencode = self.agent_body(
@@ -279,6 +300,11 @@ trusted_hash = "sha256:trusted"
         opencode_config = self.home / ".config/opencode/opencode.jsonc"
         self.assertIn("ai/pi/profiles/codex.yml", pi_config.read_text())
         self.assertIn("ai/opencode/profiles/gpt.jsonc", opencode_config.read_text())
+        self.assertIn(
+            "reviewer: openai-codex/gpt-5.6-terra:max",
+            pi_config.read_text(),
+        )
+        self.assertIn('"reviewer"', opencode_config.read_text())
         self.assertEqual("codex\n", (self.home / ".omp/agent/.active").read_text())
         self.assertEqual("gpt\n", (self.home / ".config/opencode/.active").read_text())
         self.assertEqual(before, self.repository_status())

@@ -1,5 +1,8 @@
 {
   "agent": {
+    "reviewer": {
+      "model": "github-copilot/claude-opus-4.8",
+    },
     "executor": {
       "model": "github-copilot/claude-sonnet-5",
     },
