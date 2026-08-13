@@ -16,7 +16,7 @@ Read only enough collection state to find the earliest dependency-ready work. Pr
 
 Stall guard: if provider history shows two prior attempts at the same next step with no new progress, do not retry the same approach — spend this invocation's oracle consultation on it; if an earlier iteration already consulted on this stall, record a precise blocker with the evidence instead.
 
-Select exactly one unclaimed item and acquire its claim; keep heartbeats, checkpointing, and release in this session. If nothing is eligible because of active claims or dependency gates, report that state and stop. If the scoped work instead has a genuine human-required blocker, use `backlog-unblock` and actively prompt the user in the current session before stopping.
+Select exactly one unclaimed item and acquire its claim; keep heartbeats, checkpointing, and release in this session. If nothing is eligible, report the active claims, dependency gates, or genuine blockers and stop.
 
 ## Work the item
 
@@ -32,12 +32,6 @@ A code-editing executor works in an isolated worktree and never spawns subagents
 - Complete the largest coherent slice that can be finished, verified, and committed in this pass — prefer the whole item. Stop only at a clean resumable boundary: an interface, dependency, risky migration, or unresolved decision. Checklist count is not a size limit; leave tasks needing separate ownership or integration for later item-level passes.
 - Run targeted checks, fix in-scope failures, and commit the item-scoped change per repository instructions.
 - Failing tests and ordinary difficulty are unfinished work, not blockers.
-
-## Human-required blockers
-
-- Complete and checkpoint every unblocked slice first. When a consequential user decision, credential or permission, external action, private input, or environment state is the only remaining path, use the available question or user-input tool to ask for it now rather than only recording a blocker for another context.
-- Include the exact request, blocked acceptance criterion, evidence and attempted paths, and a recommended response with only materially different alternatives. If the user answers, persist the decision or unblock condition through `backlog-source-workflow` and continue this pass when possible.
-- End without an interactive request only when the invocation is noninteractive, the user cannot or declines to act, or the required external state remains unavailable. In that case checkpoint the request and objective unblock condition so the next context does not repeat the investigation.
 
 ## Review pass
 

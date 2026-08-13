@@ -75,7 +75,7 @@ class AiInstallTests(unittest.TestCase):
         self.assertEqual("Unmanaged command\n", unmanaged_command.read_text())
         self.assertEqual(before, self.repository_status())
 
-    def test_implementation_workflows_request_human_input_before_blocking(
+    def test_interactive_workflows_request_human_input_before_blocking(
         self,
     ) -> None:
         self.run_command("ai/.bin/install-agent-commands")
@@ -83,10 +83,6 @@ class AiInstallTests(unittest.TestCase):
         expected_guidance = {
             self.home / ".agents/skills/implement/SKILL.md": (
                 "Do not emit `IMPLEMENTATION BLOCKED` before making that request."
-            ),
-            self.home
-            / ".agents/skills/backlog-implement-review-loop/SKILL.md": (
-                "use the available question or user-input tool to ask for it now"
             ),
             ROOT / "ai/.agents/skills/backlog-unblock/SKILL.md": (
                 "do not merely print the questions in a final blocker report"
@@ -99,6 +95,14 @@ class AiInstallTests(unittest.TestCase):
         for path, guidance in expected_guidance.items():
             with self.subTest(path=path):
                 self.assertIn(guidance, path.read_text())
+
+    def test_ralph_loop_does_not_request_interactive_human_input(self) -> None:
+        self.run_command("ai/.bin/install-agent-commands")
+
+        generated_skill = (
+            self.home / ".agents/skills/backlog-implement-review-loop/SKILL.md"
+        )
+        self.assertNotIn("question or user-input tool", generated_skill.read_text())
 
 
     def test_command_adapters_preserve_unmanaged_skill_files(self) -> None:
