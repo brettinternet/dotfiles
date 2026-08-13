@@ -86,33 +86,38 @@ Emit exactly these five sections, in this order, always — an empty one prints
 ## Shipped
 | Ref | What | Landed |
 |---|---|---|
-| houston#10081 | ticket due date stored as calendar date | ✅ 11:57 · +491/−34 |
+| [houston#10081](https://github.com/pdq/houston/pull/10081) | ticket due date stored as calendar date | ✅ 11:57 · +491/−34 |
 
 ## In flight
 | Ref | What | State | Next |
 |---|---|---|---|
-| cli-agent-orchestrator#572 | Oh My Pi provider | 🔴 changes requested | address feedback |
-| houston#10090 | Amp orbs for Houston dev | 👀 awaiting review · CI green | ping reviewer |
+| [cli-agent-orchestrator#572](https://github.com/awslabs/cli-agent-orchestrator/pull/572) | Oh My Pi provider | 🔴 changes requested | address feedback |
+| [houston#10090](https://github.com/pdq/houston/pull/10090) | Amp orbs for Houston dev | 👀 awaiting review · CI green | ping reviewer |
 
 ## Reviewed
 | Ref | What | Verdict |
 |---|---|---|
-| rover#812 | list supported shells | 💬 commented |
+| [rover#812](https://github.com/pdq/rover/pull/812) | list supported shells | 💬 commented |
 
 ## Blocked
 | Ref | Blocker | Needs |
 |---|---|---|
-| GC-19 | formula run_targets fixture-bound | real-rig decision from Brett |
+| [GC-19](backlog/tasks/GC-19-formula-run-targets.md) | formula run_targets fixture-bound | real-rig decision from Brett |
 
 ## Today
-- Land houston#10090
-- Start GC-19
+- Land [houston#10090](https://github.com/pdq/houston/pull/10090)
+- Start [GC-19](backlog/tasks/GC-19-formula-run-targets.md)
 ```
 
 Column and glyph vocabulary is closed. Do not invent new ones.
 
 - `Ref` — repo name without owner, plus `#number`; backlog items use their
   stable ID. Include the owner only when two repos in the report share a name.
+  Always link the ref, and link the same way anywhere else a ref appears,
+  including Today. Use the `url` the query already returned for a PR or issue;
+  for a backlog item use the provider's item URL, or its task file path relative
+  to the repo root when the provider is file-backed. Leave a ref bare only when
+  no locator exists — never guess a URL.
 - `What` — the subject, ≤ 50 chars: strip the conventional-commit prefix, the
   trailing ticket tag, and any `[patch]`-style marker.
 - Glyphs — `✅` merged/done, `👀` awaiting review, `🔵` approved, `🟡` draft,
