@@ -1,5 +1,6 @@
 ---
 modelRoles:
+  reviewer: anthropic/claude-opus-5:xhigh
   default: anthropic/claude-sonnet-5:medium
   smol: openai-codex/gpt-5.6-luna:medium
   slow: anthropic/claude-opus-5:xhigh

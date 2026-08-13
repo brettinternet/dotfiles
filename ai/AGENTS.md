@@ -33,6 +33,7 @@ If you are running as a subagent of any kind, ignore this section entirely and d
 - Explore findings are inputs, not verified outputs: when a decision hinges on a single scouted fact, re-check it.
 - Verify independently: before declaring implementation work complete, run the `verifier` agent with the acceptance criteria and the commits/diff — not your conclusions — and treat any FAIL or UNVERIFIED criterion as open work. Skip it only when an independent review pass is already part of the workflow.
 - Consult the `oracle` agent for judgment-dense calls: architecture tradeoffs, competing diagnoses, blockers that may be stale. The weaker the model you are running as, the earlier you should consult it.
+- Use `reviewer` for an explicit adversarial review of a non-trivial implementation when the goal is to falsify its correctness claims; use `verifier` for routine acceptance checks and `thermo-nuclear-code-quality-review` for maintainability-only audits.
 - Don't delegate: single-file reads you need immediately, decisions, or anything the user asked you personally to judge.
 
 ## Human-required blockers

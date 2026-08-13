@@ -1,5 +1,9 @@
 {
   "agent": {
+    "reviewer": {
+      "model": "anthropic/claude-opus-4.8",
+      "variant": "max",
+    },
     "executor": {
       "model": "anthropic/claude-sonnet-5",
     },
