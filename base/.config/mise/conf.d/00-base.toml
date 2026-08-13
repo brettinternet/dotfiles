@@ -5,6 +5,7 @@
 task = "latest"
 tmux = "latest"
 neovim = "latest"
+tree-sitter = "latest"
 sops = "latest"
 lsd = "latest"
 lazygit = "latest"
