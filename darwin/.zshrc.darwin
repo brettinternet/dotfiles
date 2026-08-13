@@ -12,6 +12,3 @@ fi
 if [ -f "$gcloud_sdk_path/completion.zsh.inc" ]; then
   . "$gcloud_sdk_path/completion.zsh.inc"
 fi
-
-export VISUAL="code --wait"
-export EDITOR="$VISUAL"

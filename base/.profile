@@ -13,8 +13,12 @@ fi
 # Personal binaries
 export PATH="$HOME/.bin:/opt/bin:$PATH"
 
-# https://wiki.archlinux.org/index.php/Sudo#Using_visudo
-export VISUAL=vim
+# Use the agent-aware launcher when the AI bundle is installed.
+if [ -x "$HOME/.bin/agent-editor" ]; then
+  export VISUAL="$HOME/.bin/agent-editor"
+else
+  export VISUAL=vim
+fi
 export EDITOR="$VISUAL"
 export SYSTEMD_EDITOR="$EDITOR"
 

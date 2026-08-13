@@ -1,0 +1,246 @@
+#!/usr/bin/env bash
+
+set -u
+
+usage() {
+  cat <<'EOF'
+Usage: agent-editor [--mode MODE] FILE
+       agent-editor --child FILE COMPLETION_FILE NVIM
+
+Open an external-editor file without covering the agent pane when possible.
+
+Modes:
+  auto         Herdr pane when reachable; current terminal over SSH; otherwise
+               Ghostty on macOS, VS Code in a graphical session, or terminal
+  ask          Prompt for a mode
+  herdr-pane   Neovim in a new pane beside the current Herdr pane
+  herdr-tab    Neovim in a new tab in the current Herdr workspace
+  ghostty      Neovim in a new Ghostty window (macOS)
+  code         VS Code using --wait
+  terminal     Neovim in the current terminal
+
+AGENT_EDITOR_MODE sets the default mode (default: auto).
+AGENT_EDITOR_NVIM and AGENT_EDITOR_CODE override the nvim/code executables.
+AGENT_EDITOR_GHOSTTY_APP overrides the Ghostty application path.
+EOF
+}
+
+die() {
+  printf 'agent-editor: %s\n' "$*" >&2
+  exit 1
+}
+
+is_remote() {
+  [[ -n "${SSH_CONNECTION:-}" || -n "${SSH_TTY:-}" || -n "${SSH_CLIENT:-}" ]]
+}
+
+herdr_context() {
+  [[ "${HERDR_ENV:-}" == "1" ]] || return 1
+  [[ -n "${HERDR_WORKSPACE_ID:-}" && -n "${HERDR_PANE_ID:-}" ]] || return 1
+  command -v herdr >/dev/null 2>&1 || return 1
+  command -v jq >/dev/null 2>&1 || return 1
+
+  local response pane_id
+  response="$(herdr pane current --current 2>/dev/null)" || return 1
+  pane_id="$(jq -er '.result.pane.pane_id' <<<"$response" 2>/dev/null)" || return 1
+  [[ -n "$pane_id" ]]
+}
+
+ghostty_app() {
+  if [[ -n "${AGENT_EDITOR_GHOSTTY_APP:-}" ]]; then
+    printf '%s\n' "$AGENT_EDITOR_GHOSTTY_APP"
+  elif [[ -d /Applications/Ghostty.app ]]; then
+    printf '%s\n' /Applications/Ghostty.app
+  elif [[ -d "$HOME/Applications/Ghostty.app" ]]; then
+    printf '%s\n' "$HOME/Applications/Ghostty.app"
+  else
+    return 1
+  fi
+}
+
+resolve_auto_mode() {
+  if herdr_context; then
+    printf '%s\n' herdr-pane
+    return
+  fi
+
+  if is_remote; then
+    if [[ "${HERDR_ENV:-}" == "1" ]]; then
+      printf 'agent-editor: Herdr control is unavailable; using current-terminal Neovim over SSH\n' >&2
+    fi
+    printf '%s\n' terminal
+    return
+  fi
+
+  if [[ "$(uname -s)" == "Darwin" ]] && command -v osascript >/dev/null 2>&1 && ghostty_app >/dev/null; then
+    printf '%s\n' ghostty
+  elif [[ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]] && command -v "${AGENT_EDITOR_CODE:-code}" >/dev/null 2>&1; then
+    printf '%s\n' code
+  else
+    printf '%s\n' terminal
+  fi
+}
+
+choose_mode() {
+  local choice
+  cat >/dev/tty <<'EOF'
+Open editor in:
+  [p] Herdr pane
+  [h] Herdr tab
+  [g] Ghostty window
+  [c] VS Code
+  [t] Current terminal
+Choice:
+EOF
+  IFS= read -r choice </dev/tty || die "could not read editor choice"
+  case "$choice" in
+    p|P) printf '%s\n' herdr-pane ;;
+    h|H) printf '%s\n' herdr-tab ;;
+    g|G) printf '%s\n' ghostty ;;
+    c|C) printf '%s\n' code ;;
+    t|T) printf '%s\n' terminal ;;
+    *) die "unknown editor choice: $choice" ;;
+  esac
+}
+
+child_interrupted() {
+  printf '129\n' >"$completion_file"
+  exit 129
+}
+
+run_child() {
+  local file=$1 completion_file=$2 nvim=$3 status
+  trap child_interrupted HUP INT TERM
+  "$nvim" "$file"
+  status=$?
+  printf '%s\n' "$status" >"$completion_file"
+  exit "$status"
+}
+
+wait_for_child() {
+  local completion_file=$1 status
+  while [[ ! -s "$completion_file" ]]; do
+    sleep 0.1
+  done
+  IFS= read -r status <"$completion_file"
+  [[ "$status" =~ ^[0-9]+$ ]] || status=1
+  return "$status"
+}
+
+shell_join() {
+  local argument quoted command=''
+  for argument in "$@"; do
+    printf -v quoted '%q' "$argument"
+    command+="${command:+ }$quoted"
+  done
+  printf '%s\n' "$command"
+}
+
+run_herdr() {
+  local kind=$1 file=$2 created pane_id='' tab_id='' completion_file child_command status=0
+  herdr_context || die "mode '$kind' requires a reachable current Herdr pane"
+  completion_file="$(mktemp "${TMPDIR:-/tmp}/agent-editor.XXXXXX")" || die "could not create completion file"
+  : >"$completion_file"
+
+  cleanup_herdr() {
+    if [[ -n "$tab_id" ]]; then
+      herdr tab close "$tab_id" >/dev/null 2>&1 || true
+    elif [[ -n "$pane_id" ]]; then
+      herdr pane close "$pane_id" >/dev/null 2>&1 || true
+    fi
+    [[ ! -e "$completion_file" ]] || unlink "$completion_file"
+  }
+  abort_herdr() {
+    cleanup_herdr
+    trap - EXIT HUP INT TERM
+    exit 130
+  }
+  trap cleanup_herdr EXIT
+  trap abort_herdr HUP INT TERM
+
+  if [[ "$kind" == "herdr-tab" ]]; then
+    created="$(herdr tab create --workspace "$HERDR_WORKSPACE_ID" --cwd "$PWD" --label editor --focus)" || die "could not create Herdr tab"
+    pane_id="$(jq -er '.result.root_pane.pane_id' <<<"$created")" || die "Herdr did not return a root pane"
+    tab_id="$(jq -er '.result.tab.tab_id' <<<"$created")" || die "Herdr did not return a tab"
+  else
+    created="$(herdr pane split --current --direction right --cwd "$PWD" --focus)" || die "could not split current Herdr pane"
+    pane_id="$(jq -er '.result.pane.pane_id' <<<"$created")" || die "Herdr did not return a pane"
+  fi
+
+  child_command="$(shell_join "$self" --child "$file" "$completion_file" "${AGENT_EDITOR_NVIM:-nvim}")"
+  herdr pane run "$pane_id" "$child_command" >/dev/null || die "could not start Neovim in Herdr pane $pane_id"
+  wait_for_child "$completion_file" || status=$?
+  cleanup_herdr
+  trap - EXIT HUP INT TERM
+  return "$status"
+}
+
+run_ghostty() {
+  local file=$1 completion_file status=0
+  [[ "$(uname -s)" == "Darwin" ]] || die "mode 'ghostty' is only supported on macOS"
+  command -v osascript >/dev/null 2>&1 || die "mode 'ghostty' requires osascript"
+  ghostty_app >/dev/null || die "Ghostty.app was not found"
+  completion_file="$(mktemp "${TMPDIR:-/tmp}/agent-editor.XXXXXX")" || die "could not create completion file"
+  : >"$completion_file"
+
+  cleanup_ghostty() {
+    [[ ! -e "$completion_file" ]] || unlink "$completion_file"
+  }
+  abort_ghostty() {
+    cleanup_ghostty
+    trap - EXIT HUP INT TERM
+    exit 130
+  }
+  trap cleanup_ghostty EXIT
+  trap abort_ghostty HUP INT TERM
+
+  osascript - "$self" "$file" "$completion_file" "$PWD" "${AGENT_EDITOR_NVIM:-nvim}" <<'APPLESCRIPT' || die "could not open Ghostty editor window"
+on run argv
+  set editorPath to item 1 of argv
+  set promptPath to item 2 of argv
+  set completionPath to item 3 of argv
+  set workingDirectory to item 4 of argv
+  set nvimPath to item 5 of argv
+  set commandText to quoted form of editorPath & " --child " & quoted form of promptPath & " " & quoted form of completionPath & " " & quoted form of nvimPath
+  tell application "Ghostty"
+    make new window with configuration {command:commandText, initial working directory:workingDirectory, wait after command:false}
+    activate
+  end tell
+end run
+APPLESCRIPT
+
+  wait_for_child "$completion_file" || status=$?
+  cleanup_ghostty
+  trap - EXIT HUP INT TERM
+  return "$status"
+}
+
+mode="${AGENT_EDITOR_MODE:-auto}"
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  usage
+  exit 0
+fi
+if [[ "${1:-}" == "--child" ]]; then
+  [[ $# -eq 4 ]] || die "--child requires FILE, COMPLETION_FILE, and NVIM"
+  run_child "$2" "$3" "$4"
+fi
+if [[ "${1:-}" == "--mode" ]]; then
+  [[ $# -ge 3 ]] || die "--mode requires MODE and FILE"
+  mode=$2
+  shift 2
+fi
+[[ $# -eq 1 ]] || die "expected one file; run agent-editor --help for usage"
+file=$1
+[[ -e "$file" ]] || die "file does not exist: $file"
+self="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
+
+[[ "$mode" != "auto" ]] || mode="$(resolve_auto_mode)"
+[[ "$mode" != "ask" ]] || mode="$(choose_mode)"
+
+case "$mode" in
+  herdr-pane|herdr-tab) run_herdr "$mode" "$file" ;;
+  ghostty) run_ghostty "$file" ;;
+  code) "${AGENT_EDITOR_CODE:-code}" --wait "$file" ;;
+  terminal) "${AGENT_EDITOR_NVIM:-nvim}" "$file" ;;
+  *) die "unknown mode '$mode'" ;;
+esac
