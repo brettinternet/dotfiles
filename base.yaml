@@ -73,6 +73,15 @@
       if: '[ "$(uname)" = Linux ]'
 
 - shell:
+    - command: |
+        set -eu
+        retired="$HOME/.bin/agent-editor"
+        if [ -L "$retired" ]; then
+          case "$(readlink "$retired")" in
+            */ai/.bin/agent-editor) unlink "$retired" ;;
+          esac
+        fi
+      description: Remove retired agent editor link
     # Allow direnv access to ~/.envrc
     - ['[ -f "$HOME/.zinit/plugins/direnv---direnv/direnv" ] && direnv allow "$HOME" || true']
     - ['[ -f "$HOME/.zinit/plugins/mise/mise" ] && chmod u+x "$HOME/.zinit/plugins/mise/mise" || true']

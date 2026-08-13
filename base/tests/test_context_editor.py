@@ -9,10 +9,10 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-EDITOR = ROOT / "ai/.bin/agent-editor"
+EDITOR = ROOT / "base/.bin/context-editor"
 
 
-class AgentEditorTests(unittest.TestCase):
+class ContextEditorTests(unittest.TestCase):
     def setUp(self) -> None:
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)
@@ -27,10 +27,10 @@ class AgentEditorTests(unittest.TestCase):
             for key, value in os.environ.items()
             if key
             not in {
-                "AGENT_EDITOR_CODE",
-                "AGENT_EDITOR_GHOSTTY_APP",
-                "AGENT_EDITOR_MODE",
-                "AGENT_EDITOR_NVIM",
+                "CONTEXT_EDITOR_CODE",
+                "CONTEXT_EDITOR_GHOSTTY_APP",
+                "CONTEXT_EDITOR_MODE",
+                "CONTEXT_EDITOR_NVIM",
                 "DISPLAY",
                 "HERDR_ENV",
                 "HERDR_PANE_ID",
@@ -39,22 +39,24 @@ class AgentEditorTests(unittest.TestCase):
                 "SSH_CLIENT",
                 "SSH_CONNECTION",
                 "SSH_TTY",
+                "TMUX",
+                "TMUX_PANE",
                 "WAYLAND_DISPLAY",
             }
         }
         self.environment.update(
             {
-                "AGENT_EDITOR_TEST_LOG": str(self.log),
+                "CONTEXT_EDITOR_TEST_LOG": str(self.log),
                 "PATH": f"{self.bin}:{self.environment['PATH']}",
             }
         )
         self.write_command(
             "nvim",
-            '#!/bin/sh\nprintf "nvim:%s\\n" "$*" >>"$AGENT_EDITOR_TEST_LOG"\n',
+            '#!/bin/sh\nprintf "nvim:%s\\n" "$*" >>"$CONTEXT_EDITOR_TEST_LOG"\n',
         )
         self.write_command(
             "code",
-            '#!/bin/sh\nprintf "code:%s\\n" "$*" >>"$AGENT_EDITOR_TEST_LOG"\n',
+            '#!/bin/sh\nprintf "code:%s\\n" "$*" >>"$CONTEXT_EDITOR_TEST_LOG"\n',
         )
 
     def write_command(self, name: str, content: str) -> Path:
@@ -87,7 +89,7 @@ class AgentEditorTests(unittest.TestCase):
         for installed in (False, True):
             with self.subTest(installed=installed):
                 home = self.root / f"home-{installed}"
-                editor = home / ".bin/agent-editor"
+                editor = home / ".bin/context-editor"
                 editor.parent.mkdir(parents=True)
                 if installed:
                     editor.write_text("#!/bin/sh\n")
@@ -122,7 +124,7 @@ class AgentEditorTests(unittest.TestCase):
             "herdr",
             """#!/usr/bin/env bash
 set -eu
-printf 'herdr:%s\\n' "$*" >>"$AGENT_EDITOR_TEST_LOG"
+printf 'herdr:%s\n' "$*" >>"$CONTEXT_EDITOR_TEST_LOG"
 case "$1:$2" in
   pane:current)
     printf '%s\\n' '{"result":{"pane":{"pane_id":"w1:p1"}}}'
@@ -137,6 +139,30 @@ case "$1:$2" in
     /bin/bash -c "$4" &
     ;;
   pane:close|tab:close)
+    ;;
+  *)
+    exit 2
+    ;;
+esac
+""",
+        )
+
+    def install_tmux(self) -> None:
+        self.write_command(
+            "tmux",
+            """#!/usr/bin/env bash
+set -eu
+printf 'tmux:%s\\n' "$*" >>"$CONTEXT_EDITOR_TEST_LOG"
+case "$1" in
+  display-message)
+    printf '%s\\n' "$TMUX_PANE"
+    ;;
+  split-window)
+    child_command="${!#}"
+    /bin/bash -c "$child_command" >/dev/null 2>&1 &
+    printf '%%2\\n'
+    ;;
+  kill-pane)
     ;;
   *)
     exit 2
@@ -161,6 +187,49 @@ esac
         )
         self.assertIn(f"nvim:{self.prompt}", calls)
         self.assertIn("herdr:pane close w1:p2", calls)
+
+    def test_auto_prefers_herdr_over_tmux(self) -> None:
+        self.install_herdr()
+        self.install_tmux()
+
+        self.run_editor(
+            HERDR_ENV="1",
+            HERDR_WORKSPACE_ID="w1",
+            HERDR_PANE_ID="w1:p1",
+            TMUX="/tmp/tmux/default,1,0",
+            TMUX_PANE="%1",
+            SSH_CONNECTION="client remote 22",
+        )
+
+        self.assertFalse(any(call.startswith("tmux:") for call in self.calls()))
+
+    def test_auto_uses_tmux_pane_over_ssh(self) -> None:
+        self.install_tmux()
+
+        self.run_editor(
+            TMUX="/tmp/tmux/default,1,0",
+            TMUX_PANE="%1",
+            SSH_CONNECTION="client remote 22",
+        )
+
+        calls = self.calls()
+        self.assertTrue(
+            any(call.startswith("tmux:split-window -h -t %1") for call in calls)
+        )
+        self.assertIn(f"nvim:{self.prompt}", calls)
+        self.assertIn("tmux:kill-pane -t %2", calls)
+
+    def test_auto_falls_back_when_tmux_control_is_unreachable(self) -> None:
+        self.write_command("tmux", "#!/bin/sh\nexit 1\n")
+
+        completed = self.run_editor(
+            TMUX="/tmp/tmux/default,1,0",
+            TMUX_PANE="%1",
+            SSH_TTY="/dev/pts/1",
+        )
+
+        self.assertIn("tmux control is unavailable", completed.stderr)
+        self.assertEqual([f"nvim:{self.prompt}"], self.calls())
 
     def test_auto_uses_terminal_over_ssh_without_herdr(self) -> None:
         self.run_editor(SSH_CONNECTION="client remote 22")
@@ -197,6 +266,19 @@ esac
         self.assertIn("herdr:tab close w1:t2", calls)
         self.assertNotIn("herdr:pane close w1:p1", calls)
 
+    def test_tmux_child_failure_is_returned_and_created_pane_is_closed(self) -> None:
+        self.install_tmux()
+        self.write_command("nvim", "#!/bin/sh\nexit 7\n")
+
+        self.run_editor(
+            "tmux-pane",
+            expected_code=7,
+            TMUX="/tmp/tmux/default,1,0",
+            TMUX_PANE="%1",
+        )
+
+        self.assertIn("tmux:kill-pane -t %2", self.calls())
+
     def test_explicit_code_waits_for_vscode(self) -> None:
         self.run_editor("code")
         self.assertEqual([f"code:--wait {self.prompt}"], self.calls())
@@ -207,7 +289,7 @@ esac
             "nvim",
             """#!/bin/sh
 trap 'exit 0' HUP INT TERM
-printf 'ready\\n' >>"$AGENT_EDITOR_TEST_LOG"
+printf 'ready\n' >>"$CONTEXT_EDITOR_TEST_LOG"
 while :; do sleep 1; done
 """,
         )
@@ -243,7 +325,7 @@ while :; do sleep 1; done
             "nvim",
             """#!/bin/sh
 trap 'exit 0' HUP INT TERM
-printf 'ready\\n' >>"$AGENT_EDITOR_TEST_LOG"
+printf 'ready\n' >>"$CONTEXT_EDITOR_TEST_LOG"
 while :; do sleep 1; done
 """,
         )
@@ -280,6 +362,48 @@ while :; do sleep 1; done
                 pass
             process.communicate(timeout=5)
 
+    def test_tmux_parent_signal_closes_created_pane_and_exits(self) -> None:
+        self.install_tmux()
+        self.write_command(
+            "nvim",
+            """#!/bin/sh
+trap 'exit 0' HUP INT TERM
+printf 'ready\n' >>"$CONTEXT_EDITOR_TEST_LOG"
+while :; do sleep 1; done
+""",
+        )
+        environment = {
+            **self.environment,
+            "TMUX": "/tmp/tmux/default,1,0",
+            "TMUX_PANE": "%1",
+        }
+        process = subprocess.Popen(
+            [str(EDITOR), "--mode", "tmux-pane", str(self.prompt)],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=ROOT,
+            env=environment,
+            start_new_session=True,
+        )
+        try:
+            for _ in range(100):
+                if "ready" in self.calls():
+                    break
+                time.sleep(0.02)
+            else:
+                self.fail("tmux child editor did not start")
+            process.send_signal(signal.SIGTERM)
+            process.wait(timeout=5)
+            self.assertEqual(130, process.returncode)
+            self.assertIn("tmux:kill-pane -t %2", self.calls())
+        finally:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            process.communicate(timeout=5)
+
     def test_auto_uses_ghostty_locally_on_macos(self) -> None:
         ghostty = self.root / "Ghostty.app"
         ghostty.mkdir()
@@ -287,14 +411,21 @@ while :; do sleep 1; done
         self.write_command(
             "osascript",
             """#!/bin/sh
-printf 'osascript:%s\\n' "$*" >>"$AGENT_EDITOR_TEST_LOG"
+printf 'osascript:%s\n' "$*" >>"$CONTEXT_EDITOR_TEST_LOG"
 printf '0\\n' >"$4"
 """,
         )
 
-        self.run_editor(AGENT_EDITOR_GHOSTTY_APP=str(ghostty))
+        self.run_editor(CONTEXT_EDITOR_GHOSTTY_APP=str(ghostty))
 
         self.assertTrue(any(call.startswith("osascript:- ") for call in self.calls()))
+
+    def test_auto_uses_vscode_in_graphical_non_macos_session(self) -> None:
+        self.write_command("uname", "#!/bin/sh\nprintf 'Linux\\n'\n")
+
+        self.run_editor(DISPLAY=":0")
+
+        self.assertEqual([f"code:--wait {self.prompt}"], self.calls())
 
     def test_ghostty_launch_failure_returns_without_waiting(self) -> None:
         ghostty = self.root / "Ghostty.app"
@@ -305,7 +436,7 @@ printf '0\\n' >"$4"
         completed = self.run_editor(
             "ghostty",
             expected_code=1,
-            AGENT_EDITOR_GHOSTTY_APP=str(ghostty),
+            CONTEXT_EDITOR_GHOSTTY_APP=str(ghostty),
         )
 
         self.assertIn("could not open Ghostty editor window", completed.stderr)

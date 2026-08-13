@@ -13,9 +13,9 @@ fi
 # Personal binaries
 export PATH="$HOME/.bin:/opt/bin:$PATH"
 
-# Use the agent-aware launcher when the AI bundle is installed.
-if [ -x "$HOME/.bin/agent-editor" ]; then
-  export VISUAL="$HOME/.bin/agent-editor"
+# Prefer the context-aware launcher when installed.
+if [ -x "$HOME/.bin/context-editor" ]; then
+  export VISUAL="$HOME/.bin/context-editor"
 else
   export VISUAL=vim
 fi
