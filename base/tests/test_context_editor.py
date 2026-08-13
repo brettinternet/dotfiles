@@ -199,18 +199,34 @@ esac
         self.assertIn(f"nvim:{self.prompt}", calls)
         self.assertIn("herdr:pane close w1:p2", calls)
 
-    def test_tall_herdr_pane_splits_down(self) -> None:
+    def test_physically_tall_herdr_pane_splits_down(self) -> None:
         self.install_herdr()
 
         self.run_editor(
             HERDR_ENV="1",
             HERDR_PANE_ID="w1:p1",
-            HERDR_TEST_LAYOUT='{"result":{"layout":{"panes":[{"pane_id":"w1:p1","rect":{"width":60,"height":120}}]}}}',
+            HERDR_TEST_LAYOUT='{"result":{"layout":{"panes":[{"pane_id":"w1:p1","rect":{"width":79,"height":67}}]}}}',
         )
 
         self.assertTrue(
             any(
                 call.startswith("herdr:pane split w1:p1 --direction down")
+                for call in self.calls()
+            )
+        )
+
+    def test_physically_wide_herdr_pane_splits_right(self) -> None:
+        self.install_herdr()
+
+        self.run_editor(
+            HERDR_ENV="1",
+            HERDR_PANE_ID="w1:p1",
+            HERDR_TEST_LAYOUT='{"result":{"layout":{"panes":[{"pane_id":"w1:p1","rect":{"width":158,"height":67}}]}}}',
+        )
+
+        self.assertTrue(
+            any(
+                call.startswith("herdr:pane split w1:p1 --direction right")
                 for call in self.calls()
             )
         )

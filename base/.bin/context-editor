@@ -62,7 +62,7 @@ herdr_split_direction() {
         | select((.width | type) == "number" and (.height | type) == "number")
         | select(.width > 0 and .height > 0)
       )
-      | if .height > .width then "down" else "right" end
+      | if .height * 2 > .width then "down" else "right" end
     ' <<<"$layout" 2>/dev/null
   )" || direction=right
   printf '%s\n' "$direction"
