@@ -37,7 +37,7 @@ is_remote() {
 
 herdr_context() {
   [[ "${HERDR_ENV:-}" == "1" ]] || return 1
-  [[ -n "${HERDR_WORKSPACE_ID:-}" && -n "${HERDR_PANE_ID:-}" ]] || return 1
+  [[ -n "${HERDR_PANE_ID:-}" ]] || return 1
   command -v herdr >/dev/null 2>&1 || return 1
   command -v jq >/dev/null 2>&1 || return 1
 
@@ -156,7 +156,7 @@ shell_join() {
 }
 
 run_herdr() {
-  local kind=$1 file=$2 created pane_id='' tab_id='' completion_file child_command status=0
+  local kind=$1 file=$2 nvim=$3 created pane_id='' tab_id='' current workspace_id completion_file child_command status=0
   herdr_context || die "mode '$kind' requires a reachable current Herdr pane"
   completion_file="$(mktemp "${TMPDIR:-/tmp}/context-editor.XXXXXX")" || die "could not create completion file"
   : >"$completion_file"
@@ -178,7 +178,9 @@ run_herdr() {
   trap abort_herdr HUP INT TERM
 
   if [[ "$kind" == "herdr-tab" ]]; then
-    created="$(herdr tab create --workspace "$HERDR_WORKSPACE_ID" --cwd "$PWD" --label editor --focus)" || die "could not create Herdr tab"
+    current="$(herdr pane current --current 2>/dev/null)" || die "could not read current Herdr pane"
+    workspace_id="$(jq -er '.result.pane.workspace_id' <<<"$current")" || die "Herdr did not return the current workspace"
+    created="$(herdr tab create --workspace "$workspace_id" --cwd "$PWD" --label editor --focus)" || die "could not create Herdr tab"
     pane_id="$(jq -er '.result.root_pane.pane_id' <<<"$created")" || die "Herdr did not return a root pane"
     tab_id="$(jq -er '.result.tab.tab_id' <<<"$created")" || die "Herdr did not return a tab"
   else
@@ -186,7 +188,7 @@ run_herdr() {
     pane_id="$(jq -er '.result.pane.pane_id' <<<"$created")" || die "Herdr did not return a pane"
   fi
 
-  child_command="$(shell_join "$self" --child "$file" "$completion_file" "${CONTEXT_EDITOR_NVIM:-nvim}")"
+  child_command="$(shell_join "$self" --child "$file" "$completion_file" "$nvim")"
   herdr pane run "$pane_id" "$child_command" >/dev/null || die "could not start Neovim in Herdr pane $pane_id"
   wait_for_child "$completion_file" || status=$?
   cleanup_herdr
@@ -195,7 +197,7 @@ run_herdr() {
 }
 
 run_tmux() {
-  local file=$1 pane_id='' completion_file child_command status=0
+  local file=$1 nvim=$2 pane_id='' completion_file child_command status=0
   tmux_context || die "mode 'tmux-pane' requires a reachable current tmux pane"
   completion_file="$(mktemp "${TMPDIR:-/tmp}/context-editor.XXXXXX")" || die "could not create completion file"
   : >"$completion_file"
@@ -214,7 +216,7 @@ run_tmux() {
   trap cleanup_tmux EXIT
   trap abort_tmux HUP INT TERM
 
-  child_command="$(shell_join "$self" --child "$file" "$completion_file" "${CONTEXT_EDITOR_NVIM:-nvim}")"
+  child_command="$(shell_join "$self" --child "$file" "$completion_file" "$nvim")"
   pane_id="$(tmux split-window -h -t "$TMUX_PANE" -P -F '#{pane_id}' -c "$PWD" "$child_command")" ||
     die "could not split current tmux pane"
   wait_for_child "$completion_file" || status=$?
@@ -224,7 +226,7 @@ run_tmux() {
 }
 
 run_ghostty() {
-  local file=$1 completion_file status=0
+  local file=$1 nvim=$2 completion_file status=0
   [[ "$(uname -s)" == "Darwin" ]] || die "mode 'ghostty' is only supported on macOS"
   command -v osascript >/dev/null 2>&1 || die "mode 'ghostty' requires osascript"
   ghostty_app >/dev/null || die "Ghostty.app was not found"
@@ -242,7 +244,7 @@ run_ghostty() {
   trap cleanup_ghostty EXIT
   trap abort_ghostty HUP INT TERM
 
-  osascript - "$self" "$file" "$completion_file" "$PWD" "${CONTEXT_EDITOR_NVIM:-nvim}" <<'APPLESCRIPT' || die "could not open Ghostty editor window"
+  osascript - "$self" "$file" "$completion_file" "$PWD" "$nvim" <<'APPLESCRIPT' || die "could not open Ghostty editor window"
 on run argv
   set editorPath to item 1 of argv
   set promptPath to item 2 of argv
@@ -251,7 +253,7 @@ on run argv
   set nvimPath to item 5 of argv
   set commandText to quoted form of editorPath & " --child " & quoted form of promptPath & " " & quoted form of completionPath & " " & quoted form of nvimPath
   tell application "Ghostty"
-    make new window with configuration {command:commandText, initial working directory:workingDirectory, wait after command:false}
+    new window with configuration {command:commandText, initial working directory:workingDirectory, wait after command:false}
     activate
   end tell
 end run
@@ -285,11 +287,19 @@ self="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
 [[ "$mode" != "auto" ]] || mode="$(resolve_auto_mode)"
 [[ "$mode" != "ask" ]] || mode="$(choose_mode)"
 
+nvim=''
 case "$mode" in
-  herdr-pane|herdr-tab) run_herdr "$mode" "$file" ;;
-  tmux-pane) run_tmux "$file" ;;
-  ghostty) run_ghostty "$file" ;;
+  herdr-pane|herdr-tab|tmux-pane|ghostty|terminal)
+    nvim="$(command -v "${CONTEXT_EDITOR_NVIM:-nvim}")" ||
+      die "Neovim executable not found: ${CONTEXT_EDITOR_NVIM:-nvim}"
+    ;;
+esac
+
+case "$mode" in
+  herdr-pane|herdr-tab) run_herdr "$mode" "$file" "$nvim" ;;
+  tmux-pane) run_tmux "$file" "$nvim" ;;
+  ghostty) run_ghostty "$file" "$nvim" ;;
   code) "${CONTEXT_EDITOR_CODE:-code}" --wait "$file" ;;
-  terminal) "${CONTEXT_EDITOR_NVIM:-nvim}" "$file" ;;
+  terminal) "$nvim" "$file" ;;
   *) die "unknown mode '$mode'" ;;
 esac

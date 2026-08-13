@@ -127,7 +127,7 @@ set -eu
 printf 'herdr:%s\n' "$*" >>"$CONTEXT_EDITOR_TEST_LOG"
 case "$1:$2" in
   pane:current)
-    printf '%s\\n' '{"result":{"pane":{"pane_id":"w1:p1"}}}'
+    printf '%s\\n' '{"result":{"pane":{"pane_id":"w1:p1","workspace_id":"w1"}}}'
     ;;
   pane:split)
     printf '%s\\n' '{"result":{"pane":{"pane_id":"w1:p2"}}}'
@@ -136,7 +136,7 @@ case "$1:$2" in
     printf '%s\\n' '{"result":{"tab":{"tab_id":"w1:t2"},"root_pane":{"pane_id":"w1:p3"}}}'
     ;;
   pane:run)
-    /bin/bash -c "$4" &
+    PATH=/usr/bin:/bin /bin/bash -c "$4" &
     ;;
   pane:close|tab:close)
     ;;
@@ -171,12 +171,11 @@ esac
 """,
         )
 
-    def test_auto_uses_herdr_pane_when_control_is_reachable(self) -> None:
+    def test_auto_uses_herdr_pane_without_workspace_environment(self) -> None:
         self.install_herdr()
 
         self.run_editor(
             HERDR_ENV="1",
-            HERDR_WORKSPACE_ID="w1",
             HERDR_PANE_ID="w1:p1",
             SSH_CONNECTION="client remote 22",
         )
@@ -255,7 +254,7 @@ esac
         self.run_editor(
             "herdr-tab",
             HERDR_ENV="1",
-            HERDR_WORKSPACE_ID="w1",
+            HERDR_WORKSPACE_ID="stale",
             HERDR_PANE_ID="w1:p1",
         )
 
@@ -426,6 +425,21 @@ printf '0\\n' >"$4"
         self.run_editor(DISPLAY=":0")
 
         self.assertEqual([f"code:--wait {self.prompt}"], self.calls())
+
+    def test_ghostty_child_uses_resolved_nvim_path(self) -> None:
+        ghostty = self.root / "Ghostty.app"
+        ghostty.mkdir()
+        self.write_command("uname", "#!/bin/sh\nprintf 'Darwin\\n'\n")
+        self.write_command(
+            "osascript",
+            """#!/bin/sh
+PATH=/usr/bin:/bin "$2" --child "$3" "$4" "$6"
+""",
+        )
+
+        self.run_editor("ghostty", CONTEXT_EDITOR_GHOSTTY_APP=str(ghostty))
+
+        self.assertEqual([f"nvim:{self.prompt}"], self.calls())
 
     def test_ghostty_launch_failure_returns_without_waiting(self) -> None:
         ghostty = self.root / "Ghostty.app"
