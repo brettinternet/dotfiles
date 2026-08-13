@@ -47,6 +47,27 @@ herdr_context() {
   [[ -n "$pane_id" ]]
 }
 
+herdr_split_direction() {
+  local layout direction
+  layout="$(herdr pane layout --pane "$HERDR_PANE_ID" 2>/dev/null)" || {
+    printf '%s\n' right
+    return
+  }
+  direction="$(
+    jq -er --arg pane "$HERDR_PANE_ID" '
+      first(
+        .result.layout.panes[]?
+        | select(.pane_id == $pane)
+        | .rect
+        | select((.width | type) == "number" and (.height | type) == "number")
+        | select(.width > 0 and .height > 0)
+      )
+      | if .height > .width then "down" else "right" end
+    ' <<<"$layout" 2>/dev/null
+  )" || direction=right
+  printf '%s\n' "$direction"
+}
+
 tmux_context() {
   [[ -n "${TMUX:-}" && -n "${TMUX_PANE:-}" ]] || return 1
   command -v tmux >/dev/null 2>&1 || return 1
@@ -156,7 +177,7 @@ shell_join() {
 }
 
 run_herdr() {
-  local kind=$1 file=$2 nvim=$3 created pane_id='' tab_id='' current workspace_id completion_file child_command status=0
+  local kind=$1 file=$2 nvim=$3 created pane_id='' tab_id='' current workspace_id direction completion_file child_command status=0
   herdr_context || die "mode '$kind' requires a reachable current Herdr pane"
   completion_file="$(mktemp "${TMPDIR:-/tmp}/context-editor.XXXXXX")" || die "could not create completion file"
   : >"$completion_file"
@@ -184,7 +205,8 @@ run_herdr() {
     pane_id="$(jq -er '.result.root_pane.pane_id' <<<"$created")" || die "Herdr did not return a root pane"
     tab_id="$(jq -er '.result.tab.tab_id' <<<"$created")" || die "Herdr did not return a tab"
   else
-    created="$(herdr pane split --current --direction right --cwd "$PWD" --focus)" || die "could not split current Herdr pane"
+    direction="$(herdr_split_direction)"
+    created="$(herdr pane split "$HERDR_PANE_ID" --direction "$direction" --cwd "$PWD" --focus)" || die "could not split current Herdr pane"
     pane_id="$(jq -er '.result.pane.pane_id' <<<"$created")" || die "Herdr did not return a pane"
   fi
 
@@ -226,7 +248,7 @@ run_tmux() {
 }
 
 run_ghostty() {
-  local file=$1 nvim=$2 completion_file status=0
+  local file=$1 nvim=$2 completion_file terminal_id='' status=0
   [[ "$(uname -s)" == "Darwin" ]] || die "mode 'ghostty' is only supported on macOS"
   command -v osascript >/dev/null 2>&1 || die "mode 'ghostty' requires osascript"
   ghostty_app >/dev/null || die "Ghostty.app was not found"
@@ -234,6 +256,16 @@ run_ghostty() {
   : >"$completion_file"
 
   cleanup_ghostty() {
+    if [[ -n "$terminal_id" ]]; then
+      osascript - "$terminal_id" >/dev/null 2>&1 <<'APPLESCRIPT' || true
+on run argv
+  set terminalId to item 1 of argv
+  tell application "Ghostty"
+    close (first terminal whose id is terminalId)
+  end tell
+end run
+APPLESCRIPT
+    fi
     [[ ! -e "$completion_file" ]] || unlink "$completion_file"
   }
   abort_ghostty() {
@@ -244,7 +276,7 @@ run_ghostty() {
   trap cleanup_ghostty EXIT
   trap abort_ghostty HUP INT TERM
 
-  osascript - "$self" "$file" "$completion_file" "$PWD" "$nvim" <<'APPLESCRIPT' || die "could not open Ghostty editor window"
+  terminal_id="$(osascript - "$self" "$file" "$completion_file" "$PWD" "$nvim" <<'APPLESCRIPT'
 on run argv
   set editorPath to item 1 of argv
   set promptPath to item 2 of argv
@@ -253,11 +285,14 @@ on run argv
   set nvimPath to item 5 of argv
   set commandText to quoted form of editorPath & " --child " & quoted form of promptPath & " " & quoted form of completionPath & " " & quoted form of nvimPath
   tell application "Ghostty"
-    new window with configuration {command:commandText, initial working directory:workingDirectory, wait after command:false}
+    set editorWindow to new window with configuration {command:commandText, initial working directory:workingDirectory, wait after command:false}
     activate
+    return id of first terminal of editorWindow
   end tell
 end run
 APPLESCRIPT
+  )" || die "could not open Ghostty editor window"
+  [[ -n "$terminal_id" ]] || die "Ghostty did not return the created terminal"
 
   wait_for_child "$completion_file" || status=$?
   cleanup_ghostty

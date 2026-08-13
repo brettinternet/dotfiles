@@ -129,6 +129,14 @@ case "$1:$2" in
   pane:current)
     printf '%s\\n' '{"result":{"pane":{"pane_id":"w1:p1","workspace_id":"w1"}}}'
     ;;
+  pane:layout)
+    [[ "${3:-}:${4:-}" == "--pane:w1:p1" ]] || exit 2
+    if [[ -n "${HERDR_TEST_LAYOUT:-}" ]]; then
+      printf '%s\\n' "$HERDR_TEST_LAYOUT"
+    else
+      printf '%s\\n' '{"result":{"layout":{"focused_pane_id":"w1:p9","panes":[{"pane_id":"w1:p1","rect":{"width":120,"height":60}},{"pane_id":"w1:p9","rect":{"width":40,"height":100}}]}}}'
+    fi
+    ;;
   pane:split)
     printf '%s\\n' '{"result":{"pane":{"pane_id":"w1:p2"}}}'
     ;;
@@ -181,11 +189,47 @@ esac
         )
 
         calls = self.calls()
+        self.assertIn("herdr:pane layout --pane w1:p1", calls)
         self.assertTrue(
-            any(call.startswith("herdr:pane split --current") for call in calls)
+            any(
+                call.startswith("herdr:pane split w1:p1 --direction right")
+                for call in calls
+            )
         )
         self.assertIn(f"nvim:{self.prompt}", calls)
         self.assertIn("herdr:pane close w1:p2", calls)
+
+    def test_tall_herdr_pane_splits_down(self) -> None:
+        self.install_herdr()
+
+        self.run_editor(
+            HERDR_ENV="1",
+            HERDR_PANE_ID="w1:p1",
+            HERDR_TEST_LAYOUT='{"result":{"layout":{"panes":[{"pane_id":"w1:p1","rect":{"width":60,"height":120}}]}}}',
+        )
+
+        self.assertTrue(
+            any(
+                call.startswith("herdr:pane split w1:p1 --direction down")
+                for call in self.calls()
+            )
+        )
+
+    def test_malformed_herdr_layout_falls_back_to_right(self) -> None:
+        self.install_herdr()
+
+        self.run_editor(
+            HERDR_ENV="1",
+            HERDR_PANE_ID="w1:p1",
+            HERDR_TEST_LAYOUT='{"result":{"layout":{"panes":"invalid"}}}',
+        )
+
+        self.assertTrue(
+            any(
+                call.startswith("herdr:pane split w1:p1 --direction right")
+                for call in self.calls()
+            )
+        )
 
     def test_auto_prefers_herdr_over_tmux(self) -> None:
         self.install_herdr()
@@ -403,6 +447,59 @@ while :; do sleep 1; done
                 pass
             process.communicate(timeout=5)
 
+    def test_ghostty_parent_signal_closes_created_window_and_exits(self) -> None:
+        ghostty = self.root / "Ghostty.app"
+        ghostty.mkdir()
+        self.write_command("uname", "#!/bin/sh\nprintf 'Darwin\\n'\n")
+        self.write_command(
+            "nvim",
+            """#!/bin/sh
+trap 'exit 0' HUP INT TERM
+printf 'ready\n' >>"$CONTEXT_EDITOR_TEST_LOG"
+while :; do sleep 1; done
+""",
+        )
+        self.write_command(
+            "osascript",
+            """#!/bin/sh
+printf 'osascript:%s\n' "$*" >>"$CONTEXT_EDITOR_TEST_LOG"
+if [ "$#" -eq 6 ]; then
+  PATH=/usr/bin:/bin "$2" --child "$3" "$4" "$6" >/dev/null 2>&1 &
+  printf 'terminal-1\n'
+fi
+""",
+        )
+        environment = {
+            **self.environment,
+            "CONTEXT_EDITOR_GHOSTTY_APP": str(ghostty),
+        }
+        process = subprocess.Popen(
+            [str(EDITOR), "--mode", "ghostty", str(self.prompt)],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=ROOT,
+            env=environment,
+            start_new_session=True,
+        )
+        try:
+            for _ in range(100):
+                if "ready" in self.calls():
+                    break
+                time.sleep(0.02)
+            else:
+                self.fail("Ghostty child editor did not start")
+            process.send_signal(signal.SIGTERM)
+            process.wait(timeout=5)
+            self.assertEqual(130, process.returncode)
+            self.assertIn("osascript:- terminal-1", self.calls())
+        finally:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            process.communicate(timeout=5)
+
     def test_auto_uses_ghostty_locally_on_macos(self) -> None:
         ghostty = self.root / "Ghostty.app"
         ghostty.mkdir()
@@ -411,13 +508,17 @@ while :; do sleep 1; done
             "osascript",
             """#!/bin/sh
 printf 'osascript:%s\n' "$*" >>"$CONTEXT_EDITOR_TEST_LOG"
-printf '0\\n' >"$4"
+if [ "$#" -eq 6 ]; then
+  printf '0\n' >"$4"
+  printf 'terminal-1\n'
+fi
 """,
         )
 
         self.run_editor(CONTEXT_EDITOR_GHOSTTY_APP=str(ghostty))
 
         self.assertTrue(any(call.startswith("osascript:- ") for call in self.calls()))
+        self.assertIn("osascript:- terminal-1", self.calls())
 
     def test_auto_uses_vscode_in_graphical_non_macos_session(self) -> None:
         self.write_command("uname", "#!/bin/sh\nprintf 'Linux\\n'\n")
@@ -433,13 +534,42 @@ printf '0\\n' >"$4"
         self.write_command(
             "osascript",
             """#!/bin/sh
-PATH=/usr/bin:/bin "$2" --child "$3" "$4" "$6"
+printf 'osascript:%s\n' "$*" >>"$CONTEXT_EDITOR_TEST_LOG"
+if [ "$#" -eq 6 ]; then
+  PATH=/usr/bin:/bin "$2" --child "$3" "$4" "$6"
+  printf 'terminal-1\n'
+fi
 """,
         )
 
         self.run_editor("ghostty", CONTEXT_EDITOR_GHOSTTY_APP=str(ghostty))
 
-        self.assertEqual([f"nvim:{self.prompt}"], self.calls())
+        self.assertIn(f"nvim:{self.prompt}", self.calls())
+        self.assertIn("osascript:- terminal-1", self.calls())
+
+    def test_ghostty_child_failure_closes_created_window(self) -> None:
+        ghostty = self.root / "Ghostty.app"
+        ghostty.mkdir()
+        self.write_command("uname", "#!/bin/sh\nprintf 'Darwin\\n'\n")
+        self.write_command("nvim", "#!/bin/sh\nexit 7\n")
+        self.write_command(
+            "osascript",
+            """#!/bin/sh
+printf 'osascript:%s\n' "$*" >>"$CONTEXT_EDITOR_TEST_LOG"
+if [ "$#" -eq 6 ]; then
+  PATH=/usr/bin:/bin "$2" --child "$3" "$4" "$6"
+  printf 'terminal-1\n'
+fi
+""",
+        )
+
+        self.run_editor(
+            "ghostty",
+            expected_code=7,
+            CONTEXT_EDITOR_GHOSTTY_APP=str(ghostty),
+        )
+
+        self.assertIn("osascript:- terminal-1", self.calls())
 
     def test_ghostty_launch_failure_returns_without_waiting(self) -> None:
         ghostty = self.root / "Ghostty.app"
