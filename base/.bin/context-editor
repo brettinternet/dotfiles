@@ -151,7 +151,7 @@ child_interrupted() {
 run_child() {
   local file=$1 completion_file=$2 nvim=$3 status
   trap child_interrupted HUP INT TERM
-  "$nvim" "$file"
+  "$nvim" --cmd 'set wrap' "$file"
   status=$?
   printf '%s\n' "$status" >"$completion_file"
   exit "$status"
@@ -335,6 +335,6 @@ case "$mode" in
   tmux-pane) run_tmux "$file" "$nvim" ;;
   ghostty) run_ghostty "$file" "$nvim" ;;
   code) "${CONTEXT_EDITOR_CODE:-code}" --wait "$file" ;;
-  terminal) "$nvim" "$file" ;;
+  terminal) "$nvim" --cmd 'set wrap' "$file" ;;
   *) die "unknown mode '$mode'" ;;
 esac
