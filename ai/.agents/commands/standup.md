@@ -3,7 +3,7 @@ description: Emit a scannable standup report of your GitHub and backlog activity
 argument-hint: [daily|weekly|Nd|YYYY-MM-DD[..YYYY-MM-DD]] [repo:owner/name|org:name]
 ---
 
-Report what the user did, what is in flight, and what is blocked, for a standup
+Report what the user did, what is in progress, and what is blocked, for a standup
 meeting they are about to speak in. Read-only: never push, comment, review,
 merge, or mutate backlog state.
 
@@ -36,25 +36,26 @@ Resolve the login once: `gh api user --jq .login`. Then make one GraphQL call �
 `@me` works in search qualifiers, but `reviews(author:)` needs the literal
 login. `$SCOPE` is the scope qualifier or empty. `$FROM`/`$TO` are the window
 bounds as `YYYY-MM-DD`. `$SINCE` is the earlier of `$FROM` and 14 days ago, so a
-PR that has been sitting in review since last week still shows as in flight.
+PR that has been sitting in review since last week still shows as in progress.
 
 ```sh
 gh api graphql \
-  -f shipped="is:pr author:@me is:merged merged:$FROM..$TO $SCOPE" \
-  -f inflight="is:pr author:@me is:open updated:>=$SINCE sort:updated-desc $SCOPE" \
+  -f merged="is:pr author:@me is:merged merged:$FROM..$TO $SCOPE" \
+  -f inprogress="is:pr author:@me is:open updated:>=$SINCE sort:updated-desc $SCOPE" \
   -f reviewed="is:pr reviewed-by:@me updated:>=$FROM sort:updated-desc $SCOPE" \
   -f issues="is:issue assignee:@me is:closed closed:$FROM..$TO $SCOPE" \
   -f me="$LOGIN" -f query='
-query($shipped: String!, $inflight: String!, $reviewed: String!, $issues: String!, $me: String!) {
-  shipped: search(query: $shipped, type: ISSUE, first: 30) {
+query($merged: String!, $inprogress: String!, $reviewed: String!, $issues: String!, $me: String!) {
+  merged: search(query: $merged, type: ISSUE, first: 30) {
     nodes { ... on PullRequest { number title url mergedAt additions deletions
       repository { nameWithOwner } } } }
-  inflight: search(query: $inflight, type: ISSUE, first: 30) {
+  inprogress: search(query: $inprogress, type: ISSUE, first: 30) {
     nodes { ... on PullRequest { number title url isDraft reviewDecision updatedAt
       repository { nameWithOwner }
       commits(last: 1) { nodes { commit { statusCheckRollup { state } } } } } } }
   reviewed: search(query: $reviewed, type: ISSUE, first: 30) {
     nodes { ... on PullRequest { number title url state repository { nameWithOwner }
+      author { login ... on User { name } }
       reviews(author: $me, last: 5) { nodes { state submittedAt } } } } }
   issues: search(query: $issues, type: ISSUE, first: 30) {
     nodes { ... on Issue { number title url closedAt repository { nameWithOwner } } } }
@@ -68,9 +69,9 @@ to one verdict, most significant first: `CHANGES_REQUESTED`, `APPROVED`,
 `COMMENTED`. Ignore `DISMISSED` and `PENDING`.
 
 If a backlog source resolves in the current directory, add its window activity
-via `backlog-source-workflow`, read-only: completed items to Shipped,
-in-progress to In flight, blocked items to Blocked. Skip the backlog silently
-when no source resolves — do not report its absence.
+via `backlog-source-workflow`, read-only: in-progress items to In progress and
+blocked items to Blocked. Skip the backlog silently when no source resolves —
+do not report its absence.
 
 Use the current session's own state only for the Today section and for blockers
 you directly observed. Do not run builds, tests, or broad validation.
@@ -83,21 +84,21 @@ Emit exactly these five sections, in this order, always — an empty one prints
 ```
 # Standup — Tue Aug 12 → Wed Aug 13 (daily)
 
-## Shipped
+## Merged to main
 | Ref | What | Landed |
 |---|---|---|
 | [houston#10081](https://github.com/pdq/houston/pull/10081) | ticket due date stored as calendar date | ✅ 11:57 · +491/−34 |
 
-## In flight
+## In progress
 | Ref | What | State | Next |
 |---|---|---|---|
 | [cli-agent-orchestrator#572](https://github.com/awslabs/cli-agent-orchestrator/pull/572) | Oh My Pi provider | 🔴 changes requested | address feedback |
 | [houston#10090](https://github.com/pdq/houston/pull/10090) | Amp orbs for Houston dev | 👀 awaiting review · CI green | ping reviewer |
 
 ## Reviewed
-| Ref | What | Verdict |
-|---|---|---|
-| [rover#812](https://github.com/pdq/rover/pull/812) | list supported shells | 💬 commented |
+| Ref | What | Author | Verdict |
+|---|---|---|---|
+| [rover#812](https://github.com/pdq/rover/pull/812) | list supported shells | Jane Doe | 💬 commented |
 
 ## Blocked
 | Ref | Blocker | Needs |
@@ -126,18 +127,20 @@ Column and glyph vocabulary is closed. Do not invent new ones.
 - `State` combines review state and CI: `👀 awaiting review · CI green`. Omit
   the CI half when there are no checks.
 - `Next` is ≤ 5 words, imperative.
+- `Author` is the PR author's display name when present, otherwise their GitHub
+  username.
 - `Landed` is local `HH:MM` for a daily window, `Ddd HH:MM` for anything longer.
 - Blocked rows come from `CHANGES_REQUESTED`, a failing check rollup, a
   `blocked` label, a blocked backlog item, or a blocker you observed this
-  session. A PR already listed in flight may repeat here — the blocker is the
+  session. A PR already listed in progress may repeat here — the blocker is the
   point.
 - `Today` is at most 3 bullets, each grounded in a row above, an unfinished
   backlog item, or in-session state. Write `_nothing queued_` rather than
   inventing plans.
 
-Sort Shipped and Reviewed newest first; sort In flight by most blocking first
-(`🔴`, then `👀`, then `🟡`). Cap each table at 8 rows for a daily window and 12
-for anything longer, then add one `+N more` row. Never silently truncate.
+Sort Merged to main and Reviewed newest first; sort In progress by most blocking
+first (`🔴`, then `👀`, then `🟡`). Cap each table at 8 rows for a daily window
+and 12 for anything longer, then add one `+N more` row. Never silently truncate.
 
 For a window longer than a day, add a single line directly under the heading
 before the first section: `N merged · N open · N reviewed · N closed issues`.
