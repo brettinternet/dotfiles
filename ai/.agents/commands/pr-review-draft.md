@@ -7,7 +7,7 @@ Draft a review of PR $ARGUMENTS. Switch to plan mode or otherwise operate strict
 
 ## Context
 
-Read the PR with `gh pr view` and `gh pr diff`. Find the linked Linear, Jira, or GitHub issue from the branch name or PR comments and use it for intent and acceptance criteria.
+Read the PR with `gh pr view` and `gh pr diff`. Find the linked Linear, Jira, or GitHub issue from the branch name or PR comments and use it to understand intent and acceptance criteria, not as a strict boundary on which changes may be reviewed.
 
 Read the complete existing discussion and review history before drafting anything.
 
@@ -27,6 +27,12 @@ Start in **light mode** for a small, tightly scoped, coherent diff. Establish in
 Use **full mode** when the diff is materially large or spans independent subsystems, crosses an authentication, authorization, security, or privacy boundary, changes schema, migrations, or data integrity, changes concurrency or transactions, affects a public API or compatibility surface, carries meaningful performance risk, or comes with an explicit deep-review request. Full mode runs the light-mode checks, then loads and applies the `implementation-review` skill for every relevant rubric section. This command's read-only boundary, finding bar, and output cap override that skill.
 
 Correctness is mandatory in both modes. Light mode still inspects security, performance, migration, concurrency, or compatibility when the changed behavior touches them. Proportionality never permits ignoring a relevant risk.
+
+## Change scope
+
+Review every change in the diff on its merits, including changes that appear outside the linked ticket's scope. Do not raise scope drift, suggest splitting the PR, or object to an otherwise sound change merely because the ticket did not require it.
+
+A concern is in scope only when the PR introduces it, makes it newly reachable or observable, or materially worsens it. Surrounding unchanged code may establish the trigger and breakage, but it is not independently under review. Do not report pre-existing issues merely discovered while tracing the change, and do not turn adjacent cleanup or refactoring opportunities into suggestions.
 
 ## Finding bar
 
@@ -88,6 +94,8 @@ Apply the `user-voice` skill to the draft before writing it to the file. It cont
 - **MUST** stay read-only until the user explicitly authorizes posting.
 - **MUST** consult the oracle before a load-bearing architecture, design, security, or product judgment, once per PR with all such judgments batched.
 - **MUST** drop any finding that cannot name a real line, a trigger, and a breakage.
+- **MUST** tie every finding to a problem introduced, newly exposed, or worsened by the changes under review.
+- **MUST NOT** report a pre-existing issue merely discovered in unchanged code or object to a sound change solely because it exceeds the linked ticket's scope.
 - **MUST** post the draft file as saved, never the version held in the transcript.
 - **MUST NOT** include a concern already raised by any reviewer, regardless of thread state, later replies, attempted fixes, code movement, or independently rediscovering it.
 - **MUST NOT** put the PR summary, prior-concern state, overall review state, or intended action in the draft file; those belong in chat before the handoff.

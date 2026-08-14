@@ -65,6 +65,12 @@ gh pr view <N> --json files,additions,deletions,commits
 
 Review the changes for correctness, regressions, breaking changes, security, and whether tests cover the new or changed behavior. Read the surrounding repo code with `read`/`grep` to ground every claim, never review blind. When available, apply the `implementation-review` skill as the shared review method. This command's new-commit scope, read-only boundary, finding bar, posting policy, and oracle cap override that skill.
 
+#### Change scope
+
+Use the PR description and linked ticket to understand intent and acceptance criteria, not as a strict boundary on which changes may be reviewed. Review every authored change in the current review scope on its merits, including changes that appear outside the ticket's scope. Do not post scope-drift concerns, suggest splitting the PR, or object to an otherwise sound change merely because the ticket did not require it.
+
+A concern is in scope only when the authored changes under review introduce it, make it newly reachable or observable, or materially worsen it. Surrounding unchanged code may establish the trigger and breakage, but it is not independently under review. Do not report pre-existing issues merely discovered while tracing the change, and do not turn adjacent cleanup or refactoring opportunities into suggestions. On repeat passes, "changes under review" means only the commits added since `reviewed_commits`.
+
 Read the complete existing discussion and review history first.
 
 ```bash
@@ -144,6 +150,8 @@ Once every candidate is processed or skipped, print `[pr-review-loop] iteration 
 - **MUST** loop continuously. The only exit is the user interrupting.
 - **MUST** apply the `user-voice` skill to everything posted to GitHub, re-running its final check immediately before posting.
 - **MUST** drop any finding that cannot name a real line, a trigger, and a breakage. No nitpicks, style nags, `consider X` suggestions, or vague heads ups.
+- **MUST** tie every finding to a problem introduced, newly exposed, or worsened by the authored changes in the current review scope.
+- **MUST NOT** report a pre-existing issue merely discovered in unchanged code or object to a sound change solely because it exceeds the linked ticket's scope.
 - **MUST NOT** post a concern already raised by any reviewer, regardless of thread state, later replies, attempted fixes, code movement, or independently rediscovering it. Track its current state in private console output only.
 - **MUST NOT** re-review or re-comment when the PR-authored commit subjects match `reviewed_commits`. A rebase or a merge from main changes SHAs without adding work.
 - **MUST NOT** post anything on a PR I already approved until the author pushes new work past that approval. No re-approval, no new comment.
