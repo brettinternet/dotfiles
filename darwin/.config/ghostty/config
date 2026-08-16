@@ -60,3 +60,7 @@ keybind = shift+enter=text:\n
 # required for copying inside herdr
 keybind = super+c=copy_to_clipboard
 keybind = super+v=paste_from_clipboard
+# Run from an empty shell prompt; use pane-local history inside Herdr.
+keybind = super+shift+f=text:context-scrollback\x20
+keybind = chain=write_screen_file:paste
+keybind = chain=text:\n

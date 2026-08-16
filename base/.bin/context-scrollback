@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+set -u
+
+die() {
+  printf 'context-scrollback: %s\n' "$*" >&2
+  exit 1
+}
+
+[[ $# -eq 1 ]] || die "expected Ghostty scrollback file"
+[[ -e "$1" ]] || die "file does not exist: $1"
+
+scrollback_file=$1
+captured_file=''
+
+cleanup() {
+  [[ -z "$captured_file" || ! -e "$captured_file" ]] || unlink "$captured_file"
+}
+trap cleanup EXIT
+
+if [[ "${HERDR_ENV:-}" == "1" && -n "${HERDR_PANE_ID:-}" ]]; then
+  command -v herdr >/dev/null 2>&1 || die "Herdr CLI not found"
+  captured_file="$(mktemp "${TMPDIR:-/tmp}/context-scrollback.XXXXXX")" || die "could not create temporary file"
+  herdr pane read "$HERDR_PANE_ID" --source recent-unwrapped --format text --lines 1000000 >"$captured_file" ||
+    die "could not read Herdr pane $HERDR_PANE_ID"
+  scrollback_file=$captured_file
+fi
+
+"${EDITOR:-vi}" "$scrollback_file"
