@@ -24,3 +24,22 @@ if not pcall(require, "lazy") then
 end
 
 require "lazy_setup"
+
+vim.api.nvim_create_user_command("Code", function()
+  local path = vim.api.nvim_buf_get_name(0)
+  if path == "" then
+    vim.notify("Current buffer has no file", vim.log.levels.ERROR)
+    return
+  end
+  if vim.fn.executable "code" ~= 1 then
+    vim.notify("VS Code CLI not found", vim.log.levels.ERROR)
+    return
+  end
+
+  vim.cmd.update()
+  local cursor = vim.api.nvim_win_get_cursor(0)
+  vim.system(
+    { "code", "--reuse-window", "--goto", ("%s:%d:%d"):format(path, cursor[1], cursor[2] + 1) },
+    { detach = true }
+  )
+end, { desc = "Open the current buffer in VS Code" })
