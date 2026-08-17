@@ -38,7 +38,7 @@ After opening, stop and say the draft is in the editor and that the workflow wil
 
 ## Reading it back
 
-Before sending, posting, or committing, read the file fresh. The user may have rewritten, reordered, or deleted anything in it.
+After the user authorizes sending, posting, or committing, read the file fresh in a new tool call. Construct the outbound body exclusively from the contents returned by that read—never from the original draft, the chat transcript, or memory. Do not rewrite, reconcile, or regenerate it. If the file cannot be read, do not act. The user may have rewritten, reordered, or deleted anything in it.
 
 - Treat the file contents as final wording. Do not re-apply voice rules, re-run a finding bar, or reconcile it against what you originally drafted.
 - An empty file, or one reduced to whitespace, means cancel. Say so and do nothing.
