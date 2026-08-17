@@ -13,6 +13,9 @@ mise.local.yaml
 .trees
 /*.html
 
+# Neovim plugin revisions
+/base/.config/nvim/lazy-lock.json
+
 # python
 __pycache__/
 *.py[cod]
