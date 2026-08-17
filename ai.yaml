@@ -12,6 +12,7 @@
     - ~/.claude/agents
     - ~/.omp/agents
     - ~/.config/opencode/agents
+    - ~/.config/opencode/commands
 - shell:
     - command: |
         set -eu
@@ -100,7 +101,7 @@
       stdout: true
       stderr: true
     - command: ai/.bin/install-agent-commands
-      description: Generate shared agent command skills and Claude command adapters
+      description: Generate shared skills plus Claude and OpenCode command adapters
       stdout: true
       stderr: true
     - command: ai/.bin/install-agents
