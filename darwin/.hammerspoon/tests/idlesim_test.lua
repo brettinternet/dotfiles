@@ -8,22 +8,25 @@ end
 local mark = 970417
 local recordedEvents = {}
 local inputCallback
-local burstCallback
+local pulseCallback
+local sleepCallback
 local focusedWindow
 local modalWindow
 local killCount = 0
+local foreignKillCount = 0
 local alerts = {}
 local launchArguments
 local requestedFullscreen
 local requestedSize
 local centered = false
+local applicationForPIDOverride
 
 local simWindow = {
   id = function()
     return 42
   end,
   title = function()
-    return "hs-idlesim"
+    return "System Monitor"
   end,
   subrole = function()
     return "AXStandardWindow"
@@ -39,9 +42,6 @@ local simWindow = {
   end,
   centerOnScreen = function()
     centered = true
-  end,
-  focus = function(self)
-    focusedWindow = self
   end,
 }
 
@@ -62,6 +62,37 @@ local app = {
     killCount = killCount + 1
   end,
 }
+
+local foreignWindow = {
+  title = function()
+    return "System Monitor"
+  end,
+}
+
+local foreignApp = {
+  pid = function()
+    return 54321
+  end,
+  allWindows = function()
+    return { foreignWindow }
+  end,
+  kill = function()
+    foreignKillCount = foreignKillCount + 1
+  end,
+}
+
+local recycledApp = {
+  bundleID = function()
+    return "com.example.recycled"
+  end,
+  allWindows = function()
+    return { simWindow }
+  end,
+  kill = function()
+    killCount = killCount + 1
+  end,
+}
+
 local applicationQueries = 0
 
 local function stoppable(callback)
@@ -78,6 +109,7 @@ local function stoppable(callback)
 end
 
 _G.hs = {
+  configdir = "/tmp/hs-test",
   eventtap = {
     event = {
       properties = { eventSourceUserData = "eventSourceUserData" },
@@ -113,13 +145,10 @@ _G.hs = {
   },
   timer = {
     doEvery = function(_interval, callback)
-      burstCallback = callback
+      pulseCallback = callback
       return stoppable(callback)
     end,
-    doAfter = function(delay, callback)
-      if delay == 2 then
-        callback()
-      end
+    doAfter = function(_delay, callback)
       return stoppable(callback)
     end,
     waitUntil = function(predicate, callback, _interval)
@@ -127,7 +156,6 @@ _G.hs = {
       callback()
       return stoppable(callback)
     end,
-    usleep = function() end,
   },
   task = {
     new = function(_path, _callback, arguments)
@@ -141,6 +169,9 @@ _G.hs = {
   },
   application = {
     applicationForPID = function(pid)
+      if applicationForPIDOverride then
+        return applicationForPIDOverride
+      end
       if pid == 12345 then
         return app
       end
@@ -152,9 +183,9 @@ _G.hs = {
       end
       applicationQueries = applicationQueries + 1
       if applicationQueries % 2 == 1 then
-        return {}
+        return { foreignApp }
       end
-      return { app }
+      return { foreignApp, app }
     end,
   },
   window = {
@@ -186,6 +217,7 @@ _G.hs = {
     watcher = {
       systemWillSleep = 1,
       new = function(callback)
+        sleepCallback = callback
         return stoppable(callback)
       end,
     },
@@ -211,57 +243,45 @@ end
 local idlesim = require("idlesim")
 local action = require("idlesim_action")
 
+local function assert_pulse(message)
+  assert_equal(#recordedEvents, 2, message .. " should post exactly one event pair")
+  assert_equal(recordedEvents[1].isDown, true, message .. " should press Shift")
+  assert_equal(recordedEvents[2].isDown, false, message .. " should release Shift")
+  for i = 1, 2 do
+    assert_equal(recordedEvents[i].key, "shift", message .. " event key")
+    assert_equal(recordedEvents[i].properties.eventSourceUserData, mark, message .. " event marker")
+    assert_equal(recordedEvents[i].postTarget, nil, message .. " should post at session level")
+  end
+  assert_equal(#recordedEvents[1].mods, 0, message .. " should not smuggle modifiers")
+end
+
 assert_equal(action.appearance({}).title, "Sim\noff", "inactive action title")
+recordedEvents = {}
 assert(idlesim.start(), "sim should start")
 assert_equal(
   launchArguments[4],
-  "--command=/opt/homebrew/bin/nvim -u NONE -n " .. os.getenv("HOME") .. "/.local/state/hammerspoon/idlesim.md",
-  "sim editor should avoid user config and swap prompts"
+  "--command=direct:/tmp/hs-test/idlesim-dashboard",
+  "sim should launch dashboard directly"
 )
+assert_equal(launchArguments[5], "--title=System Monitor", "sim window should use a generic title")
+for _, argument in ipairs(launchArguments) do
+  assert(not tostring(argument):match("nvim"), "launch arguments should not reference Neovim")
+end
 assert_equal(launchArguments[6], "--window-save-state=never", "sim should ignore saved window state")
 assert_equal(launchArguments[7], "--fullscreen=false", "sim window should not be full-screen")
-assert_equal(launchArguments[8], "--window-width=60", "sim window should be narrow")
-assert_equal(launchArguments[9], "--window-height=16", "sim window should be short")
-assert(#recordedEvents > 2, "startup should toggle full-screen and type an initial burst")
-for i = 1, 2 do
-  local event = recordedEvents[i]
-  assert_equal(event.key, "f", "full-screen startup should use Ghostty's toggle binding")
-  assert_equal(event.properties.eventSourceUserData, mark, "full-screen toggle should be marked")
-  assert_equal(event.postTarget, nil, "full-screen toggle should post to the session")
-end
+assert_equal(launchArguments[8], "--window-width=69", "sim window should use measured column count")
+assert_equal(launchArguments[9], "--window-height=19", "sim window should use measured row count")
 assert_equal(requestedFullscreen, false, "sim window should exit full-screen mode")
 assert_equal(requestedSize.w, 720, "sim window point width")
 assert_equal(requestedSize.h, 440, "sim window point height")
 assert_equal(centered, true, "sim window should be centered")
+assert_pulse("startup pulse")
 assert_equal(idlesim.isRunning(), true, "sim should be running")
 assert_equal(action.appearance({}).title, "Sim\nactive", "active action title")
 
 recordedEvents = {}
-burstCallback()
-assert(#recordedEvents > 0, "focused burst should post key events")
-local sawTimestampColon = false
-local sawSpace = false
-for _, event in ipairs(recordedEvents) do
-  assert_equal(event.properties.eventSourceUserData, mark, "every synthetic event should be marked")
-  assert_equal(event.postTarget, nil, "every synthetic event should post to the session")
-  assert(event.key ~= ":", "text typing should not pass an invalid colon key name")
-  assert(event.key ~= " ", "text typing should not pass an invalid literal space key name")
-  if event.key == ";" and event.mods[1] == "shift" then
-    sawTimestampColon = true
-  end
-  if event.key == "space" then
-    sawSpace = true
-  end
-end
-assert_equal(sawTimestampColon, true, "timestamp colon should use shift-semicolon")
-assert_equal(sawSpace, true, "text spaces should use the named space key")
-
-inputCallback({
-  getProperty = function()
-    return mark
-  end,
-})
-assert_equal(idlesim.isRunning(), true, "own events should be ignored")
+pulseCallback()
+assert_pulse("interval pulse")
 
 focusedWindow = {
   id = function()
@@ -269,24 +289,32 @@ focusedWindow = {
   end,
 }
 recordedEvents = {}
-burstCallback()
-assert_equal(#recordedEvents, 0, "unfocused burst should not post events")
-assert_equal(idlesim.isRunning(), true, "unfocused burst should keep the sim running")
+pulseCallback()
+assert_pulse("unfocused pulse")
+assert_equal(idlesim.isRunning(), true, "unfocused pulse should keep the sim running")
+
+inputCallback({
+  getProperty = function()
+    return mark
+  end,
+})
+assert_equal(idlesim.isRunning(), true, "marked pulses should be ignored")
 
 inputCallback({
   getProperty = function()
     return 0
   end,
 })
-assert_equal(idlesim.isRunning(), false, "real input should stop the sim")
-assert_equal(killCount, 1, "real input should kill the launched Ghostty instance")
+assert_equal(idlesim.isRunning(), false, "unmarked input should stop the sim")
+assert_equal(killCount, 1, "unmarked input should kill the launched Ghostty instance")
+assert_equal(foreignKillCount, 0, "unmarked input should preserve existing Ghostty instances")
 
 modalWindow = {
   id = function()
     return 77
   end,
   title = function()
-    return "Allow Ghostty to execute nvim?"
+    return "Allow Ghostty to execute idlesim-dashboard?"
   end,
   subrole = function()
     return "AXDialog"
@@ -294,6 +322,7 @@ modalWindow = {
 }
 assert(idlesim.start(), "sim should restart for modal test")
 assert_equal(idlesim.isRunning(), false, "a Ghostty modal should stop the sim")
+assert_equal(foreignKillCount, 0, "modal stop should preserve existing Ghostty instances")
 modalWindow = nil
 
 local realTime = os.time
@@ -303,8 +332,32 @@ os.time = function()
 end
 assert(idlesim.start(), "sim should restart for timeout test")
 now = now + 3 * 60 * 60 + 1
-burstCallback()
+pulseCallback()
 os.time = realTime
 assert_equal(idlesim.isRunning(), false, "the hard timeout should stop the sim")
+
+assert(idlesim.start(), "sim should restart for sleep test")
+local killsBeforeSleep = killCount
+sleepCallback(hs.caffeinate.watcher.systemWillSleep)
+assert_equal(idlesim.isRunning(), false, "system sleep should stop the sim")
+assert_equal(killCount, killsBeforeSleep + 1, "system sleep should kill the launched Ghostty instance")
+assert_equal(foreignKillCount, 0, "sleep stop should preserve existing Ghostty instances")
+
+assert(idlesim.start(), "sim should restart for reload cleanup test")
+local killsBeforeReload = killCount
+local alertsBeforeReload = #alerts
+idlesim.stop()
+assert_equal(idlesim.isRunning(), false, "reload cleanup should stop the sim")
+assert_equal(killCount, killsBeforeReload + 1, "reload cleanup should kill the launched Ghostty instance")
+assert_equal(foreignKillCount, 0, "reload cleanup should preserve existing Ghostty instances")
+assert_equal(#alerts, alertsBeforeReload, "reload cleanup should stay silent")
+
+assert(idlesim.start(), "sim should restart for stale PID test")
+local killsBeforeStalePid = killCount
+applicationForPIDOverride = recycledApp
+idlesim.stop()
+applicationForPIDOverride = nil
+assert_equal(killCount, killsBeforeStalePid, "a recycled PID should not be killed")
+assert_equal(foreignKillCount, 0, "stale PID cleanup should preserve existing Ghostty instances")
 
 print("idlesim tests passed")

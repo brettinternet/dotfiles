@@ -1,16 +1,14 @@
 local idlesim = {}
 
 local mark = 970417
-local scratchPath = os.getenv("HOME") .. "/.local/state/hammerspoon/idlesim.md"
-local nvimPath = "/opt/homebrew/bin/nvim"
-local windowTitle = "hs-idlesim"
-local typeInterval = 20
+local dashboardPath = hs.configdir .. "/idlesim-dashboard"
+local windowTitle = "System Monitor"
+local pulseInterval = 20
 local maxDuration = 3 * 60 * 60
-local settleDelay = 0.15
 
 local launchedPid = nil
 local windowId = nil
-local typeTimer = nil
+local pulseTimer = nil
 local inputTap = nil
 local screenTap = nil
 local subscribers = {}
@@ -21,7 +19,7 @@ local burstIndex = 0
 local props = hs.eventtap.event.properties
 
 function idlesim.isRunning()
-  return typeTimer ~= nil
+  return pulseTimer ~= nil
 end
 
 local function updateMenubar()
@@ -53,15 +51,14 @@ function idlesim.subscribe(callback)
   return idlesim
 end
 
-local function markedKey(mods, key)
-  local down = hs.eventtap.event.newKeyEvent(mods, key, true)
+local function pulse()
+  local down = hs.eventtap.event.newKeyEvent({}, "shift", true)
   down:setProperty(props.eventSourceUserData, mark)
   down:post()
 
-  local up = hs.eventtap.event.newKeyEvent(mods, key, false)
+  local up = hs.eventtap.event.newKeyEvent({}, "shift", false)
   up:setProperty(props.eventSourceUserData, mark)
   up:post()
-  hs.timer.usleep(settleDelay * 1000000)
 end
 
 local function simWindow()
@@ -80,20 +77,7 @@ local function simWindow()
   return nil
 end
 
-local function typeText(text)
-  for i = 1, #text do
-    local character = text:sub(i, i)
-    if character == ":" then
-      markedKey({ "shift" }, ";")
-    elseif character == " " then
-      markedKey({}, "space")
-    else
-      markedKey({}, character)
-    end
-  end
-end
-
-local function typeBurst()
+local function pulseTick()
   if os.time() - startedAt > maxDuration then
     return idlesim.stop("timeout")
   end
@@ -113,27 +97,8 @@ local function typeBurst()
     end
   end
 
-  local focusedWindow = hs.window.focusedWindow()
-  if not focusedWindow or focusedWindow:id() ~= window:id() then
-    return
-  end
-
   burstIndex = burstIndex + 1
-  if burstIndex % 30 == 0 then
-    markedKey({}, "escape")
-    markedKey({}, "g")
-    markedKey({}, "g")
-    markedKey({}, "d")
-    markedKey({ "shift" }, "g")
-  end
-
-  markedKey({}, "escape")
-  markedKey({}, "o")
-  typeText(string.format("%s pass %d", os.date("%H:%M:%S"), burstIndex))
-  markedKey({}, "escape")
-  markedKey({ "shift" }, ";")
-  markedKey({}, "w")
-  markedKey({}, "return")
+  pulse()
   notify()
 end
 
@@ -156,9 +121,9 @@ local function startInputWatcher()
 end
 
 function idlesim.stop(reason)
-  if typeTimer then
-    typeTimer:stop()
-    typeTimer = nil
+  if pulseTimer then
+    pulseTimer:stop()
+    pulseTimer = nil
   end
   if inputTap then
     inputTap:stop()
@@ -187,19 +152,6 @@ function idlesim.start()
     return true
   end
 
-  local home = os.getenv("HOME")
-  hs.fs.mkdir(home .. "/.local/state")
-  hs.fs.mkdir(home .. "/.local/state/hammerspoon")
-  if hs.fs.attributes(scratchPath) == nil then
-    local file, message = io.open(scratchPath, "w")
-    if not file then
-      hs.alert.show("Idle sim failed to create scratch file: " .. tostring(message))
-      return false
-    end
-    file:write("# idle sim scratch\n")
-    file:close()
-  end
-
   local launchComplete = false
   local matchedApp = nil
   local matchedWindow = nil
@@ -212,12 +164,12 @@ function idlesim.start()
     "-na",
     "Ghostty",
     "--args",
-    "--command=" .. nvimPath .. " -u NONE -n " .. scratchPath,
+    "--command=direct:" .. dashboardPath,
     "--title=" .. windowTitle,
     "--window-save-state=never",
     "--fullscreen=false",
-    "--window-width=60",
-    "--window-height=16",
+    "--window-width=69",
+    "--window-height=19",
     "--confirm-close-surface=false",
   })
   if not task or not task:start() then
@@ -229,7 +181,6 @@ function idlesim.start()
     matchedWindow:setFullScreen(false)
     matchedWindow:setSize({ w = 720, h = 440 })
     matchedWindow:centerOnScreen()
-    matchedWindow:focus()
     startedAt = os.time()
     burstIndex = 0
     startInputWatcher()
@@ -240,8 +191,8 @@ function idlesim.start()
         end
       end)
       :start()
-    typeTimer = hs.timer.doEvery(typeInterval, typeBurst)
-    typeBurst()
+    pulseTimer = hs.timer.doEvery(pulseInterval, pulseTick)
+    pulseTick()
   end
 
   hs.timer.waitUntil(function()
@@ -261,13 +212,7 @@ function idlesim.start()
     launchComplete = true
     launchedPid = matchedApp:pid()
     windowId = matchedWindow:id()
-    if matchedWindow:isFullScreen() then
-      matchedWindow:focus()
-      markedKey({ "cmd", "ctrl" }, "f")
-      hs.timer.doAfter(2, finishStart)
-    else
-      finishStart()
-    end
+    finishStart()
   end, 0.3)
 
   hs.timer.doAfter(8, function()
