@@ -196,7 +196,7 @@ esac
                 for call in calls
             )
         )
-        self.assertIn(f"nvim:{self.prompt}", calls)
+        self.assertIn(f"nvim:{self.prompt} -c setlocal wrap", calls)
         self.assertIn("herdr:pane close w1:p2", calls)
 
     def test_physically_tall_herdr_pane_splits_down(self) -> None:
@@ -275,7 +275,7 @@ esac
         self.assertTrue(
             any(call.startswith("tmux:split-window -h -t %1") for call in calls)
         )
-        self.assertIn(f"nvim:{self.prompt}", calls)
+        self.assertIn(f"nvim:{self.prompt} -c setlocal wrap", calls)
         self.assertIn("tmux:kill-pane -t %2", calls)
 
     def test_auto_falls_back_when_tmux_control_is_unreachable(self) -> None:
@@ -288,12 +288,12 @@ esac
         )
 
         self.assertIn("tmux control is unavailable", completed.stderr)
-        self.assertEqual([f"nvim:{self.prompt}"], self.calls())
+        self.assertEqual([f"nvim:{self.prompt} -c setlocal wrap"], self.calls())
 
     def test_auto_uses_terminal_over_ssh_without_herdr(self) -> None:
         self.run_editor(SSH_CONNECTION="client remote 22")
 
-        self.assertEqual([f"nvim:{self.prompt}"], self.calls())
+        self.assertEqual([f"nvim:{self.prompt} -c setlocal wrap"], self.calls())
 
     def test_auto_falls_back_when_herdr_context_is_unreachable(self) -> None:
         self.write_command("herdr", "#!/bin/sh\nexit 1\n")
@@ -306,7 +306,7 @@ esac
         )
 
         self.assertIn("Herdr control is unavailable", completed.stderr)
-        self.assertEqual([f"nvim:{self.prompt}"], self.calls())
+        self.assertEqual([f"nvim:{self.prompt} -c setlocal wrap"], self.calls())
 
     def test_explicit_herdr_tab_closes_only_created_tab(self) -> None:
         self.install_herdr()
@@ -560,7 +560,7 @@ fi
 
         self.run_editor("ghostty", CONTEXT_EDITOR_GHOSTTY_APP=str(ghostty))
 
-        self.assertIn(f"nvim:{self.prompt}", self.calls())
+        self.assertIn(f"nvim:{self.prompt} -c setlocal wrap", self.calls())
         self.assertIn("osascript:- terminal-1", self.calls())
 
     def test_ghostty_child_failure_closes_created_window(self) -> None:
