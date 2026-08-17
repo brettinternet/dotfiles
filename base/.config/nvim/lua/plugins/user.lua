@@ -15,11 +15,6 @@ return {
   { "jay-babu/mason-null-ls.nvim", enabled = false },
   { "jay-babu/mason-nvim-dap.nvim", enabled = false },
 
-  -- Automatic parser installs race across concurrent Neovim processes because
-  -- nvim-treesitter uses one shared temporary directory per language. Install
-  -- new parsers explicitly with :TSInstall instead.
-  { "AstroNvim/astrocore", opts = { treesitter = { auto_install = false } } },
-
   {
     "nvim-neo-tree/neo-tree.nvim",
     opts = {
