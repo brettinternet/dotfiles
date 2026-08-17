@@ -1,0 +1,178 @@
+#!/bin/bash
+PATH="/usr/bin:/bin:/usr/sbin:/sbin:$HOME/.bin"
+export PATH
+
+state_dir="$HOME/.local/state/hammerspoon"
+cache="$state_dir/weather.txt"
+weather_timeout=15
+metrics_ticks=20
+weather_ticks=300
+pending_pid=""
+pending_file=""
+pending_started=0
+napper=""
+stale=0
+tick=0
+
+mkdir -p "$state_dir"
+
+start_weather() {
+  [ -z "$pending_pid" ] || return 0
+  pending_file="$state_dir/.weather.tmp"
+  set -m
+  { weather -f 4 >"$pending_file" 2>/dev/null; } &
+  pending_pid=$!
+  set +m
+  pending_started=$(date +%s)
+}
+
+reap_weather() {
+  [ -n "$pending_pid" ] || return 1
+
+  if kill -0 "$pending_pid" 2>/dev/null; then
+    if [ $(( $(date +%s) - pending_started )) -ge "$weather_timeout" ]; then
+      kill -TERM "-$pending_pid" 2>/dev/null
+      wait "$pending_pid" 2>/dev/null
+      rm -f "$pending_file"
+      pending_pid=""
+      pending_file=""
+      stale=1
+      return 0
+    fi
+    return 1
+  fi
+
+  wait "$pending_pid"
+  rc=$?
+  if [ "$rc" -eq 0 ] && [ -s "$pending_file" ]; then
+    mv -f "$pending_file" "$cache"
+    stale=0
+  else
+    rm -f "$pending_file"
+    stale=1
+  fi
+  pending_pid=""
+  pending_file=""
+  return 0
+}
+
+cleanup() {
+  trap - EXIT INT TERM HUP
+  [ -n "$pending_pid" ] && kill -TERM "-$pending_pid" 2>/dev/null
+  [ -n "$napper" ] && kill "$napper" 2>/dev/null
+  [ -n "$pending_file" ] && rm -f "$pending_file"
+  printf '\033[?25h'
+  exit 0
+}
+trap cleanup EXIT INT TERM HUP
+
+nap() {
+  sleep "$1" &
+  napper=$!
+  while kill -0 "$napper" 2>/dev/null; do
+    wait "$napper" 2>/dev/null && break
+  done
+  napper=""
+}
+
+row() {
+  printf '│ %-11.11s │ %-20.20s │\n' "$1" "$2"
+}
+
+uptime_value() {
+  boot=$(sysctl -n kern.boottime | awk '{print $4}' | tr -d ',')
+  secs=$(( $(date +%s) - boot ))
+  days=$(( secs / 86400 ))
+  hours=$(( (secs % 86400) / 3600 ))
+  minutes=$(( (secs % 3600) / 60 ))
+  if [ "$days" -gt 0 ]; then
+    printf '%dd %dh' "$days" "$hours"
+  else
+    printf '%dh %dm' "$hours" "$minutes"
+  fi
+}
+
+memory_value() {
+  vm_stat | awk -v total="$(sysctl -n hw.memsize)" '
+    /page size of/ { page_size = $8 }
+    /Pages active:/ { active = $3 }
+    /Pages wired down:/ { wired = $4 }
+    /Pages occupied by compressor:/ { compressor = $5 }
+    END {
+      gsub(/\./, "", active)
+      gsub(/\./, "", wired)
+      gsub(/\./, "", compressor)
+      if (total > 0 && page_size > 0) {
+        printf "%d%% used", ((active + wired + compressor) * page_size / total) * 100
+      } else {
+        printf "unavailable"
+      }
+    }
+  '
+}
+
+battery_value() {
+  pmset -g batt | awk -F'; ' '
+    NR == 2 {
+      split($1, parts, "\t")
+      state = $2
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", state)
+      printf "%s %s", parts[length(parts)], state
+      found = 1
+    }
+    END { if (!found) printf "no battery" }
+  '
+}
+
+render() {
+  if [ -s "$cache" ]; then
+    weather_line=$(head -n 1 "$cache")
+    updated="Updated $(date -r "$(stat -f %m "$cache")" '+%-l:%M %p') · refreshes every 5 minutes"
+    [ "$stale" -eq 0 ] || updated="$updated · stale"
+  else
+    weather_line="Loading weather..."
+    updated="Refreshes every 5 minutes"
+  fi
+
+  time_value=$(date '+%-l:%M:%S %p')
+  uptime=$(uptime_value)
+  load=$(sysctl -n vm.loadavg | awk '{printf "%s %s %s", $2, $3, $4}')
+  memory=$(memory_value)
+  disk=$(df -k /System/Volumes/Data | awk 'NR == 2 {gsub(/%/, "", $5); printf "%s%% used", $5}')
+  battery=$(battery_value)
+
+  output=$(
+    printf 'IDLE SIM\n\n'
+    printf 'WEATHER\n'
+    printf '%.69s\n' "$weather_line"
+    printf '%s\n\n' "$updated"
+    printf 'SYSTEM\n'
+    printf '┌─────────────┬──────────────────────┐\n'
+    row "Time" "$time_value"
+    row "Uptime" "$uptime"
+    row "Load" "$load"
+    row "Memory" "$memory"
+    row "Disk" "$disk"
+    row "Battery" "$battery"
+    printf '└─────────────┴──────────────────────┘\n'
+  )
+  printf '\033[H%s\033[J' "$output"
+}
+trap render WINCH
+
+printf '\033[?25l'
+start_weather
+render
+while :; do
+  nap 1
+  tick=$(( tick + 1 ))
+  if reap_weather; then
+    render
+  fi
+  if [ $(( tick % weather_ticks )) -eq 0 ]; then
+    start_weather
+  fi
+  if [ $(( tick % metrics_ticks )) -eq 0 ]; then
+    render
+  fi
+done
