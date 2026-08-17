@@ -115,6 +115,17 @@ prefix:bind(
     )
   end)
 )
+local idlesim = require("idlesim")
+prefix:bind(
+  "cmd",
+  "I",
+  prefixFn(function()
+    idlesim.toggle()
+  end)
+)
+hs.shutdownCallback = function()
+  idlesim.stop()
+end
 prefix:bind(
   "cmd",
   "C",

@@ -128,6 +128,9 @@ local actions = {
     youtubeShortcut("seek_90")
   end,
   ["/bounce_displays"] = bounceDisplays,
+  ["/idlesim/toggle"] = function()
+    require("idlesim").toggle()
+  end,
   -- ["/sleep"] = systemSleep,
   ["/outlook"] = function()
     local browser = "org.chromium.Chromium"

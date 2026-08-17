@@ -11,6 +11,7 @@ local actionCatalog = require("streamdeck.actions")
 local applicationAction = require("application")
 local actions = {
   (require("caffeinate")),
+  (require("idlesim_action")),
   applicationAction,
 }
 
@@ -36,6 +37,7 @@ for _, action in ipairs(actions) do
 end
 
 caffeine.subscribe(refreshAll)
+require("idlesim").subscribe(refreshAll)
 local relevantApplicationEvents = {
   [hs.application.watcher.activated] = true,
   [hs.application.watcher.deactivated] = true,
