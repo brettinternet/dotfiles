@@ -142,7 +142,7 @@ render() {
   battery=$(battery_value)
 
   output=$(
-    printf 'IDLE SIM\n\n'
+    printf 'SYSTEM MONITOR\n\n'
     printf 'WEATHER\n'
     printf '%.69s\n' "$weather_line"
     printf '%s\n\n' "$updated"
