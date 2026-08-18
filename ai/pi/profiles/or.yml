@@ -1,12 +1,12 @@
 modelRoles:
-  reviewer: openrouter/anthropic/claude-opus-4.8:xhigh
   default: openrouter/openai/gpt-5.6-sol:medium
   smol: openrouter/openai/gpt-5.6-luna:low
   slow: openrouter/anthropic/opus-latest:xhigh
   designer: openrouter/moonshotai/kimi-k3:max
   vision: openrouter/openai/gpt-latest:high
   task: openrouter/openai/gpt-5.6-luna:max
-  commit: openrouter/openai/gpt-5.6-luna:medium
+  commit: openrouter/deepseek/deepseek-v4-flash-latest:medium
   plan: openrouter/anthropic/claude-fable-latest:high
   advisor: openrouter/moonshotai/kimi-k3:max
-  title: openrouter/openai/gpt-5.6-luna:low
+  title: openrouter/deepseek/deepseek-v4-flash-latest:medium
+  reviewer: openrouter/anthropic/claude-opus-4.8:xhigh
