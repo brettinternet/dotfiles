@@ -112,6 +112,7 @@ colors
 
 autoload -Uz edit-command-line
 zle -N edit-command-line
+bindkey '^G' edit-command-line
 
 autoload -Uz select-word-style
 select-word-style shell
