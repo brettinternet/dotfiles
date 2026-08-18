@@ -3,12 +3,14 @@ local idlesim = {}
 local mark = 970417
 local dashboardPath = hs.configdir .. "/idlesim-dashboard"
 local windowTitle = "System Monitor"
-local pulseInterval = 20
-local maxDuration = 3 * 60 * 60
+local pulseMin = 15
+local pulseMax = 45
+local maxDuration = 60 * 60
 
 local launchedPid = nil
 local windowId = nil
 local pulseTimer = nil
+local launchPoll = nil
 local inputTap = nil
 local screenTap = nil
 local subscribers = {}
@@ -100,6 +102,7 @@ local function pulseTick()
   burstIndex = burstIndex + 1
   pulse()
   notify()
+  pulseTimer = hs.timer.doAfter(math.random(pulseMin, pulseMax), pulseTick)
 end
 
 local function startInputWatcher()
@@ -121,6 +124,10 @@ local function startInputWatcher()
 end
 
 function idlesim.stop(reason)
+  if launchPoll then
+    launchPoll:stop()
+    launchPoll = nil
+  end
   if pulseTimer then
     pulseTimer:stop()
     pulseTimer = nil
@@ -186,16 +193,15 @@ function idlesim.start()
     startInputWatcher()
     screenTap = hs.caffeinate.watcher
       .new(function(event)
-        if event == hs.caffeinate.watcher.systemWillSleep then
-          idlesim.stop("sleep")
+        if event == hs.caffeinate.watcher.systemWillSleep or event == hs.caffeinate.watcher.screensDidLock then
+          idlesim.stop("sleep/lock")
         end
       end)
       :start()
-    pulseTimer = hs.timer.doEvery(pulseInterval, pulseTick)
     pulseTick()
   end
 
-  hs.timer.waitUntil(function()
+  launchPoll = hs.timer.waitUntil(function()
     for _, app in ipairs(hs.application.applicationsForBundleID("com.mitchellh.ghostty")) do
       if not existingPids[app:pid()] then
         for _, window in ipairs(app:allWindows()) do
@@ -210,6 +216,7 @@ function idlesim.start()
     return false
   end, function()
     launchComplete = true
+    launchPoll = nil
     launchedPid = matchedApp:pid()
     windowId = matchedWindow:id()
     finishStart()

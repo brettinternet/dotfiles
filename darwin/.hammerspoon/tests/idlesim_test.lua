@@ -9,6 +9,7 @@ local mark = 970417
 local recordedEvents = {}
 local inputCallback
 local pulseCallback
+local lastPulseDelay
 local sleepCallback
 local focusedWindow
 local modalWindow
@@ -144,11 +145,11 @@ _G.hs = {
     end,
   },
   timer = {
-    doEvery = function(_interval, callback)
-      pulseCallback = callback
-      return stoppable(callback)
-    end,
-    doAfter = function(_delay, callback)
+    doAfter = function(delay, callback)
+      lastPulseDelay = delay
+      if not pulseCallback then
+        pulseCallback = callback
+      end
       return stoppable(callback)
     end,
     waitUntil = function(predicate, callback, _interval)
@@ -216,6 +217,7 @@ _G.hs = {
   caffeinate = {
     watcher = {
       systemWillSleep = 1,
+      screensDidLock = 2,
       new = function(callback)
         sleepCallback = callback
         return stoppable(callback)
@@ -282,6 +284,7 @@ assert_equal(action.appearance({}).title, "Sim\nactive", "active action title")
 recordedEvents = {}
 pulseCallback()
 assert_pulse("interval pulse")
+assert(lastPulseDelay >= 15 and lastPulseDelay <= 45, "pulse should reschedule within 15-45s")
 
 focusedWindow = {
   id = function()
@@ -331,7 +334,7 @@ os.time = function()
   return now
 end
 assert(idlesim.start(), "sim should restart for timeout test")
-now = now + 3 * 60 * 60 + 1
+now = now + 60 * 60 + 1
 pulseCallback()
 os.time = realTime
 assert_equal(idlesim.isRunning(), false, "the hard timeout should stop the sim")
@@ -342,6 +345,13 @@ sleepCallback(hs.caffeinate.watcher.systemWillSleep)
 assert_equal(idlesim.isRunning(), false, "system sleep should stop the sim")
 assert_equal(killCount, killsBeforeSleep + 1, "system sleep should kill the launched Ghostty instance")
 assert_equal(foreignKillCount, 0, "sleep stop should preserve existing Ghostty instances")
+
+assert(idlesim.start(), "sim should restart for lock test")
+local killsBeforeLock = killCount
+sleepCallback(hs.caffeinate.watcher.screensDidLock)
+assert_equal(idlesim.isRunning(), false, "screen lock should stop the sim")
+assert_equal(killCount, killsBeforeLock + 1, "screen lock should kill the launched Ghostty instance")
+assert_equal(foreignKillCount, 0, "lock stop should preserve existing Ghostty instances")
 
 assert(idlesim.start(), "sim should restart for reload cleanup test")
 local killsBeforeReload = killCount
