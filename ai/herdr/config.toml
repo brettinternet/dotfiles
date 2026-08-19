@@ -7,6 +7,7 @@ name = "terminal"
 [keys]
 prefix = "ctrl+a"                               # remove to avoid conflict with tmux if nesting
 split_horizontal = ["prefix+minus", "prefix+s"] # from tmux
+split_vertical = "prefix+v"
 rename_tab = "prefix+,"
 close_pane = "prefix+shift+x"                   # what I'm used to from tmux
 close_tab = "prefix+shift+d"                    # overwrites close workspace
@@ -15,6 +16,18 @@ next_agent = "prefix+n"
 new_workspace = "prefix+shift+c"
 switch_workspace = "prefix+shift+1..9"
 detach = ["prefix+d", "prefix+ctrl+d"]
+
+[[keys.command]]
+key = "prefix+shift+s"
+type = "shell"
+command = "herdr-split-before horizontal"
+description = "split horizontal before current pane"
+
+[[keys.command]]
+key = "prefix+shift+v"
+type = "shell"
+command = "herdr-split-before vertical"
+description = "split vertical before current pane"
 
 [ui]
 # Order the Agent panel as an attention queue rather than by space, so whoever

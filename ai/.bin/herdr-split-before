@@ -1,0 +1,26 @@
+#!/bin/sh
+
+set -eu
+
+case "${1:-}" in
+  horizontal) direction=down ;;
+  vertical) direction=right ;;
+  *)
+    printf 'usage: herdr-split-before horizontal|vertical\n' >&2
+    exit 2
+    ;;
+esac
+
+: "${HERDR_BIN_PATH:?must run from a Herdr custom keybinding}"
+: "${HERDR_ACTIVE_PANE_ID:?no active Herdr pane}"
+
+set -- "$HERDR_BIN_PATH" pane split "$HERDR_ACTIVE_PANE_ID" \
+  --direction "$direction" --focus
+if [ -n "${HERDR_ACTIVE_PANE_CWD:-}" ]; then
+  set -- "$@" --cwd "$HERDR_ACTIVE_PANE_CWD"
+fi
+
+new_pane_id="$("$@" | jq -er '.result.pane.pane_id')"
+"$HERDR_BIN_PATH" pane swap \
+  --source-pane "$new_pane_id" \
+  --target-pane "$HERDR_ACTIVE_PANE_ID" >/dev/null
