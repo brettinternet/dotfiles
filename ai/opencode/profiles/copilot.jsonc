@@ -21,5 +21,8 @@
     "verifier": {
       "model": "github-copilot/gpt-5.6-luna",
     },
+    "writer": {
+      "model": "github-copilot/claude-sonnet-5",
+    },
   },
 }

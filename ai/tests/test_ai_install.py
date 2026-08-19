@@ -111,6 +111,13 @@ class AiInstallTests(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertIn(guidance, path.read_text())
 
+    def test_external_messages_route_through_writer(self) -> None:
+        voice = (ROOT / "ai/.agents/skills/user-voice/SKILL.md").read_text()
+        draft = (ROOT / "ai/.agents/skills/draft-in-editor/SKILL.md").read_text()
+
+        self.assertIn("delegate final wording", voice)
+        self.assertIn("including its `writer` routing", draft)
+
     def test_ralph_loop_does_not_request_interactive_human_input(self) -> None:
         self.run_command("ai/.bin/install-agent-commands")
 
@@ -179,6 +186,19 @@ class AiInstallTests(unittest.TestCase):
             (self.home / ".codex/agents/reviewer.toml").read_text(),
         )
         self.assertIn(
+            "model: sonnet", (self.home / ".claude/agents/writer.md").read_text()
+        )
+        self.assertIn(
+            "model: pi/writer", (self.home / ".omp/agents/writer.md").read_text()
+        )
+        self.assertTrue(
+            (self.home / ".config/opencode/agents/writer.md").is_file()
+        )
+        self.assertIn(
+            'model = "gpt-5.6-terra"',
+            (self.home / ".codex/agents/writer.toml").read_text(),
+        )
+        self.assertIn(
             "config_file", (self.home / ".codex/config.toml").read_text()
         )
         self.assertIn(
@@ -227,6 +247,7 @@ trusted_hash = "sha256:trusted"
             "verifier",
             "pr-watcher",
             "oracle",
+            "writer",
         ):
             claude = self.agent_body(self.home / f".claude/agents/{role}.md")
             pi = self.agent_body(self.home / f".omp/agents/{role}.md")
@@ -320,6 +341,11 @@ trusted_hash = "sha256:trusted"
             pi_config.read_text(),
         )
         self.assertIn('"reviewer"', opencode_config.read_text())
+        self.assertIn(
+            "writer: openai-codex/gpt-5.6-terra:low", pi_config.read_text()
+        )
+        self.assertIn('"writer"', opencode_config.read_text())
+        self.assertIn('"model": "openai/gpt-5.6-terra"', opencode_config.read_text())
         self.assertEqual("codex\n", (self.home / ".omp/agent/.active").read_text())
         self.assertEqual("gpt\n", (self.home / ".config/opencode/.active").read_text())
         self.assertEqual(before, self.repository_status())

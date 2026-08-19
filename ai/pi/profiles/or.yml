@@ -10,3 +10,4 @@ modelRoles:
   advisor: openrouter/moonshotai/kimi-k3:max
   title: openrouter/deepseek/deepseek-v4-flash-latest:medium
   reviewer: openrouter/anthropic/claude-opus-4.8:xhigh
+  writer: openrouter/~anthropic/claude-sonnet-latest:low

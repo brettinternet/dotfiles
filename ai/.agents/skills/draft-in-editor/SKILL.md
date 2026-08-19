@@ -20,7 +20,7 @@ Use a `<slug>` that identifies the artifact, such as `pr-review-1234` or `commit
 
 ## Handoff
 
-Before writing an externally directed draft, apply the `user-voice` skill. The destination workflow still owns content and structure, and anything the user edits afterward remains untouched.
+Before writing an externally directed draft, apply the `user-voice` skill, including its `writer` routing. The destination workflow still owns content and structure, and anything the user edits afterward remains untouched.
 
 Write the file, print the draft in chat as well, then open it without waiting.
 

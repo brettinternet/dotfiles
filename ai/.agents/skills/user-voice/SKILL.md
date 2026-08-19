@@ -7,6 +7,12 @@ description: Draft or revise external communication in the user's concise, direc
 
 This skill controls wording only. Never assume permission to post, send, approve, request changes, or resolve threads, and never change remote state without permission. The workflow owns the audience, message type, content threshold, and communication authority, and its requirements override this skill.
 
+## Writer routing
+
+When the `writer` subagent is available and you are not that agent, delegate final wording to it before returning, writing, sending, or posting the message. Give it a compact brief with the audience, message type, purpose, evidence and facts, certainty and severity, exact identifiers or quoted text, required action, and workflow-owned format or content threshold. Do not prewrite prose merely for it to polish.
+
+The caller retains content, factual, routing, and communication authority. Check that the returned wording preserves the brief, then use it verbatim. If it needs a factual or format correction, ask `writer` to revise it instead of rewriting it in the caller. Never route text through `writer` after the user has edited it. If the agent is unavailable or delegation fails, apply this skill directly.
+
 ## Voice
 
 Lead with the point. Write clear, direct, informal text. Keep short comments to one or two sentences. Use contractions and vary sentence length instead of uniform blocks. Use mostly conventional grammar and punctuation, allowing lowercase when natural. Preserve capitalization for names, acronyms, identifiers, commands, code, and quoted text.

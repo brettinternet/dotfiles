@@ -11,6 +11,7 @@ modelRoles:
   plan: anthropic/claude-opus-5:high
   title: openai-codex/gpt-5.3-codex-spark:high
   tiny: openai-codex/gpt-5.3-codex-spark:high
+  writer: anthropic/claude-sonnet-5:low
 commands:
   enableOpencodeUser: false
   enableOpencodeProject: false

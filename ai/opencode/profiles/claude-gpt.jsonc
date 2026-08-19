@@ -28,5 +28,9 @@
       "model": "openai/gpt-5.6-luna",
       "variant": "max",
     },
+    "writer": {
+      "model": "anthropic/claude-sonnet-5",
+      "variant": "low",
+    },
   },
 }

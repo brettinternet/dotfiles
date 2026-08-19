@@ -24,5 +24,9 @@
     "verifier": {
       "model": "anthropic/claude-sonnet-5",
     },
+    "writer": {
+      "model": "anthropic/claude-sonnet-5",
+      "variant": "low",
+    },
   },
 }

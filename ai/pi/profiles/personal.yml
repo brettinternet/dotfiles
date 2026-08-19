@@ -11,3 +11,4 @@ modelRoles:
   advisor: openai-codex/gpt-5.6-luna:high
   title: openai-codex/gpt-5.3-codex-spark:high
   tiny: nvidia/nvidia/nemotron-3-ultra-550b-a55b:medium
+  writer: openrouter/~anthropic/claude-sonnet-latest:low

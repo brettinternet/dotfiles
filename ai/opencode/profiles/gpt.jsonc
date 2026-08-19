@@ -28,5 +28,9 @@
       "model": "openai/gpt-5.6-luna",
       "variant": "max",
     },
+    "writer": {
+      "model": "openai/gpt-5.6-terra",
+      "variant": "low",
+    },
   },
 }
