@@ -28,6 +28,7 @@ Before introducing a new pattern, search for an existing implementation and reus
 If you are running as a subagent of any kind, ignore this section entirely and do the task you were given.
 
 - Keep the orchestrating context for decisions, synthesis, and shared-interface coordination; delegate volume work when the agents are available: `explore` (or the built-in Explore) for repo discovery and evidence gathering, `executor` for well-specified implementation, `verifier` for independent acceptance checks, `pr-watcher` for CI/review watching.
+- Delegate externally directed wording to `writer` whenever the `user-voice` or `draft-in-editor` skill applies. Give it the facts and constraints, then use its returned wording without rewriting it in the caller.
 - Spec delegated work in one shot: goal, constraints, done-criteria, relevant paths, and the why behind the request — not only the what.
 - Start with the cheapest agent that can plausibly succeed; after two failed attempts, escalate one tier or take over — don't retry the same tier a third time. Ad-hoc fan-outs should set a model explicitly rather than inherit the session model.
 - Explore findings are inputs, not verified outputs: when a decision hinges on a single scouted fact, re-check it.

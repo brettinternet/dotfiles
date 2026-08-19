@@ -4,7 +4,7 @@ Shared config for Claude Code (`~/.claude`), oh-my-pi (`~/.omp`), Codex, Amp CLI
 
 ## OpenCode profiles
 
-OpenCode renders `~/.config/opencode/opencode.jsonc` from `opencode/profiles/common.jsonc` plus a selected overlay. `opencode-profile list` shows `gpt`, `claude`, `claude-gpt`, `gpt-cc-proxy`, and `openrouter`; `opencode-profile use <name>` regenerates the local active config. Its seven global subagents mirror the pi roster; each profile supplies their OpenCode model routing. `gpt-cc-proxy` retains Meridian-backed Anthropic routing and requires `MERIDIAN_BASE_URL`. OpenCode uses neither oh-my-openagent nor OCX.
+OpenCode renders `~/.config/opencode/opencode.jsonc` from `opencode/profiles/common.jsonc` plus a selected overlay. `opencode-profile list` shows `gpt`, `claude`, `claude-gpt`, `gpt-cc-proxy`, and `openrouter`; `opencode-profile use <name>` regenerates the local active config. Its eight global subagents mirror the pi roster; each profile supplies their OpenCode model routing. `gpt-cc-proxy` retains Meridian-backed Anthropic routing and requires `MERIDIAN_BASE_URL`. OpenCode uses neither oh-my-openagent nor OCX.
 
 ## Orchestration strategy
 
@@ -25,8 +25,9 @@ The pipeline is deliberately asymmetric: smart refine → cheap implement → in
 | `verifier`   | mid (`sonnet` / `pi/task`)                                                                                    | independent acceptance check from criteria + commits; never fixes    |
 | `pr-watcher` | low (`haiku` / `pi/smol`)                                                                                     | CI/review delta watching                                             |
 | `oracle`     | max (`opus` / `pi/slow`, xhigh)                                                                               | second-opinion judgment: tradeoffs, diagnoses, blocker triage        |
+| `writer`     | independently pinned per harness or active provider profile                                                   | final wording for externally directed messages                       |
 
-The base roster covers the complete find/do/check/judge/watch loop. No tester (executor writes tests, verifier runs them skeptically) and no librarian (context7/web search cover docs).
+The base roster covers the complete find/do/check/judge/watch/write loop. No tester (executor writes tests, verifier runs them skeptically) and no librarian (context7/web search cover docs).
 
 pi and OpenCode also ship `reviewer` and `thermo-nuclear-code-quality-review`, pinned to their strongest applicable tiers. The reviewer applies the full `implementation-review` skill and tries to falsify correctness claims; the thermo-nuclear reviewer applies its dedicated maintainability rubric. Claude and Codex receive `reviewer`; Claude invokes the thermo-nuclear skill directly.
 
@@ -37,6 +38,19 @@ pi and OpenCode also ship `reviewer` and `thermo-nuclear-code-quality-review`, p
 - **Workflow entrypoints**: `ai/.agents/commands/*.md` templates, rendered per tool by `install-agent-commands` as described below.
 - **Reusable workflow methods**: authored `ai/.agents/skills/*/SKILL.md` packages plus optional references, templates, scripts, and source-controlled tool metadata.
 - **Orchestrator tier**: chosen per session; the oracle nudge is the safety net when starting cheap.
+
+## Writer model routing
+
+The `user-voice` skill delegates final wording to `writer`; `draft-in-editor` reaches it through `user-voice`. The caller supplies facts, constraints, and authority, while `writer` returns wording only. User-edited drafts bypass it when read back.
+
+Customize the model at the harness-owned routing point:
+
+- Claude Code: `claude-model` and `claude-effort` in `ai/agents/writer.md`.
+- Codex: `codex-model` and `codex-effort` in `ai/agents/writer.md`.
+- OMP: `modelRoles.writer` in each `ai/pi/profiles/*.yml` overlay; the generated agent targets `pi/writer`.
+- OpenCode: `agent.writer` in each `ai/opencode/profiles/*.jsonc` overlay.
+
+Run `make ai` after changing a route. New sessions then use the regenerated global `writer` definition and active profile config.
 
 ## Shared skills and commands
 
