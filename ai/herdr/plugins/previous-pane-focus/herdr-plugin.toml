@@ -1,0 +1,14 @@
+id = "brett.previous-pane-focus"
+name = "Focus previous pane on close"
+version = "0.1.0"
+min_herdr_version = "0.8.0"
+description = "When a pane closes, focus whichever pane was focused right before it (MRU) instead of herdr's default next-pane pick"
+platforms = ["macos"]
+
+[[events]]
+on = "pane.focused"
+command = ["sh", "track-focus.sh"]
+
+[[events]]
+on = "pane.closed"
+command = ["sh", "restore-previous.sh"]
