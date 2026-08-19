@@ -41,6 +41,14 @@
       stderr: true
 
     - command: |
+        if command -v claude >/dev/null 2>&1; then
+          claude mcp remove time --scope user >/dev/null 2>&1 || true
+        fi
+      description: Remove retired time MCP server
+      stdout: true
+      stderr: true
+
+    - command: |
         set -eu
         DOTFILES="$(pwd -P)"
         for src in "$DOTFILES/ai/pi/profiles"/*.yml; do
