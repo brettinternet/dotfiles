@@ -342,6 +342,23 @@ esac
         self.run_editor("code")
         self.assertEqual([f"code:--wait {self.prompt}"], self.calls())
 
+    def test_no_terminal_refuses_auto_terminal_fallback(self) -> None:
+        self.write_command("uname", "#!/bin/sh\nprintf 'Linux\\n'\n")
+
+        completed = subprocess.run(
+            [str(EDITOR), "--no-terminal", str(self.prompt)],
+            text=True,
+            capture_output=True,
+            cwd=ROOT,
+            env=self.environment,
+            check=False,
+            timeout=10,
+        )
+
+        self.assertEqual(1, completed.returncode)
+        self.assertIn("refusing foreground terminal mode", completed.stderr)
+        self.assertEqual([], self.calls())
+
     def test_child_signal_records_failure_before_exiting(self) -> None:
         completion = self.root / "completion"
         self.write_command(

@@ -27,14 +27,18 @@ Before writing an externally directed draft, apply the `user-voice` skill, inclu
 Write the file, print the draft in chat as well, then open it without waiting.
 
 ```bash
-editor="${VISUAL:-${EDITOR:-}}"
-editor="${editor% --wait}"; editor="${editor% -w}"
-nohup $editor "$path" >/dev/null 2>&1 &
+if [ -x "$HOME/.bin/context-editor" ]; then
+  nohup "$HOME/.bin/context-editor" --no-terminal "$path" >/dev/null 2>&1 &
+else
+  editor="${VISUAL:-${EDITOR:-}}"
+  editor="${editor% --wait}"; editor="${editor% -w}"
+  nohup $editor "$path" >/dev/null 2>&1 &
+fi
 ```
 
-Strip the wait flag and detach the process. `EDITOR` commonly carries `--wait` for git, but a tool call times out long before a real edit session ends, so waiting here just kills the editor mid-edit.
+Prefer the known context-aware launcher over the inherited editor variables. `--no-terminal` lets it use a reachable Herdr/tmux pane, Ghostty window, or VS Code while refusing its foreground Neovim fallback, which is unsafe in a tool call without a TTY. Agent tool environments do not consistently inherit interactive shell startup files and may replace `VISUAL` or `EDITOR` with a no-op such as `true`. Only fall back to those variables when the launcher is unavailable. Strip their wait flag and detach the process: a tool call times out long before a real edit session ends, so waiting here just kills the editor mid-edit.
 
-The Bash tool has no TTY, so a terminal editor such as `vim`, `nvim`, or `helix` will hang or corrupt the session. Check the editor's base command against that list first and skip the open when it matches. Skip it too when `VISUAL` and `EDITOR` are both unset. In either case print the path so the user can open it themselves.
+The Bash tool has no TTY, so a fallback terminal editor such as `vim`, `nvim`, or `helix` will hang or corrupt the session. Check the fallback editor's base command against that list first and skip the open when it matches, is a no-op such as `true`, `false`, or `:`, or is unset. In that case print the path so the user can open it themselves.
 
 After opening, stop and say the draft is in the editor and that the workflow will use the file as saved. Do not summarize the draft again, and do not ask whether it looks good.
 
