@@ -32,7 +32,7 @@ herdr = "latest"
 "npm:pyright" = "latest"
 # Pinned to 5.x deliberately: typescript-language-server drives `tsserver.js`,
 # which TypeScript 7 no longer ships. `latest` here silently breaks ts_ls.
-"npm:typescript" = "5"
+"npm:typescript" = "7"
 "npm:typescript-language-server" = "latest"
 "npm:bash-language-server" = "latest"
 "npm:yaml-language-server" = "latest"
