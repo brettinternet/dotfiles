@@ -1,0 +1,12 @@
+id = "brett.pane-collapse"
+name = "Toggle pane collapse"
+version = "0.1.0"
+min_herdr_version = "0.8.0"
+description = "Collapse the focused pane to a sliver and restore its exact split ratio"
+platforms = ["macos"]
+
+[[actions]]
+id = "toggle"
+title = "Toggle pane collapse"
+contexts = ["pane"]
+command = ["python3", "toggle.py"]

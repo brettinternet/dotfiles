@@ -101,11 +101,13 @@
     - command: |
         set -eu
         if ! command -v herdr >/dev/null 2>&1; then
-          echo 'herdr not on PATH; skipping active pane window title plugin'
+          echo 'herdr not on PATH; skipping local plugins'
           exit 0
         fi
-        herdr plugin link ai/herdr/plugins/window-title
-      description: Mirror the active Herdr pane title to the outer terminal
+        for plugin in window-title pane-collapse; do
+          herdr plugin link "ai/herdr/plugins/$plugin"
+        done
+      description: Link local herdr plugins
       stdout: true
       stderr: true
     - command: ai/.bin/install-agent-commands
