@@ -13,6 +13,8 @@ steeringMode: one-at-a-time
 statusLine:
   preset: default
   separator: powerline-thin
+composer:
+  shape: box
 display:
   showTokenUsage: false
 loop:
@@ -25,6 +27,6 @@ commands:
   enableOpencodeProject: false
   enableClaudeProject: true
   enableClaudeUser: true
-setupVersion: 1
+setupVersion: 2
 codexResets:
   autoRedeem: "no"
