@@ -16,6 +16,26 @@ else
     files+=("$path")
   done < <(find "$root" -type d \( -name .git -o -name node_modules \) -prune -o -type f -name AGENTS.md -print0)
 fi
+ordered=()
+while (( ${#files[@]} > 0 )); do
+  best_index=-1
+  best_depth=0
+  best_relative=
+  for index in "${!files[@]}"; do
+    relative=${files[$index]#"$root"/}
+    slashes=${relative//[^\/]}
+    depth=${#slashes}
+    if (( best_index < 0 || depth < best_depth )) ||
+      { (( depth == best_depth )) && [[ "$relative" < "$best_relative" ]]; }; then
+      best_index=$index
+      best_depth=$depth
+      best_relative=$relative
+    fi
+  done
+  ordered+=("${files[$best_index]}")
+  unset 'files[best_index]'
+done
+files=("${ordered[@]}")
 
 if (( ${#files[@]} == 0 )); then
   exit 0
