@@ -4,7 +4,7 @@ set -u
 
 usage() {
   cat <<'EOF'
-Usage: context-editor [--mode MODE] FILE
+Usage: context-editor [--no-terminal] [--mode MODE] FILE
        context-editor --child FILE COMPLETION_FILE NVIM
 
 Open an external-editor file without covering the calling pane when possible.
@@ -23,6 +23,7 @@ Modes:
 CONTEXT_EDITOR_MODE sets the default mode (default: auto).
 CONTEXT_EDITOR_NVIM and CONTEXT_EDITOR_CODE override the nvim/code executables.
 CONTEXT_EDITOR_GHOSTTY_APP overrides the Ghostty application path.
+--no-terminal refuses foreground terminal mode when no detached editor is reachable.
 EOF
 }
 
@@ -300,6 +301,7 @@ APPLESCRIPT
   return "$status"
 }
 
+allow_terminal=1
 mode="${CONTEXT_EDITOR_MODE:-auto}"
 if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
   usage
@@ -308,6 +310,10 @@ fi
 if [[ "${1:-}" == "--child" ]]; then
   [[ $# -eq 4 ]] || die "--child requires FILE, COMPLETION_FILE, and NVIM"
   run_child "$2" "$3" "$4"
+fi
+if [[ "${1:-}" == "--no-terminal" ]]; then
+  allow_terminal=0
+  shift
 fi
 if [[ "${1:-}" == "--mode" ]]; then
   [[ $# -ge 3 ]] || die "--mode requires MODE and FILE"
@@ -321,6 +327,9 @@ self="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
 
 [[ "$mode" != "auto" ]] || mode="$(resolve_auto_mode)"
 [[ "$mode" != "ask" ]] || mode="$(choose_mode)"
+if [[ "$mode" == "terminal" && "$allow_terminal" -eq 0 ]]; then
+  die "no detached editor is reachable; refusing foreground terminal mode"
+fi
 
 nvim=''
 case "$mode" in

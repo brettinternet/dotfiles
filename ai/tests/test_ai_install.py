@@ -118,6 +118,10 @@ class AiInstallTests(unittest.TestCase):
         self.assertIn("delegate final wording", voice)
         self.assertIn("including its `writer` routing", draft)
 
+        self.assertIn('"$HOME/.bin/context-editor" --no-terminal', draft)
+        self.assertIn("Prefer the known context-aware launcher", draft)
+        self.assertIn("is a no-op such as `true`, `false`, or `:`", draft)
+
     def test_ralph_loop_does_not_request_interactive_human_input(self) -> None:
         self.run_command("ai/.bin/install-agent-commands")
 
