@@ -66,5 +66,6 @@ rows = [
 delivery = "terminal"
 
 [experimental]
+kitty_graphics = true
 # CAO launches agent workspaces from a Herdr-managed pane.
 allow_nested = true
