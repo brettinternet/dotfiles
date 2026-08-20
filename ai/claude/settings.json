@@ -10,32 +10,6 @@
     "type": "command",
     "command": "bash ~/.claude/statusline-command.sh"
   },
-  "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ~/.claude/hooks/load-agents-md.sh",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Read|Edit|Write|NotebookEdit|Glob|Grep|LSP",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ~/.claude/hooks/load-agents-md.sh",
-            "timeout": 10
-          }
-        ]
-      }
-    ]
-  },
   "outputStyle": "Proactive",
   "effortLevel": "high",
   "skipDangerousModePermissionPrompt": true,

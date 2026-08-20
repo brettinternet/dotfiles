@@ -131,8 +131,6 @@
       path: ai/AGENTS.md
     ~/.claude/statusline-command.sh:
       path: ai/claude/statusline-command.sh
-    ~/.claude/hooks/load-agents-md.sh:
-      path: ai/claude/hooks/load-agents-md.sh
     ~/.claude/skills/:
       glob: true
       relink: false
