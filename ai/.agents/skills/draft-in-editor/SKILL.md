@@ -7,6 +7,8 @@ description: Hand a generated draft to the user's editor and treat the edited fi
 
 Write the draft to a file, open it in the user's editor, and stop. When the workflow later acts on the draft, it reads that file back rather than the chat transcript. This skill controls draft handoff only and never grants permission to send, post, or commit.
 
+Apply this skill only when the destination workflow has a non-empty artifact to hand off. When there is nothing to send, post, or commit, do not create or open a draft file and do not write placeholder content merely to invoke this skill.
+
 ## Path
 
 Put the file inside the git directory so it is never staged, never committed, and never noise in `git status`.
@@ -51,5 +53,6 @@ Delete the file once the artifact is sent, posted, or committed.
 
 - **MUST** open the editor non-blocking and never wait on it inside a tool call.
 - **MUST** re-read the file immediately before acting on the draft.
+- **MUST NOT** create or open a draft file when the destination workflow has no non-empty artifact to hand off.
 - **MUST NOT** open a terminal editor from a tool call.
 - **MUST NOT** treat opening the editor as authorization to send, post, or commit.
