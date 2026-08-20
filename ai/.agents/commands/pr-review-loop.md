@@ -100,6 +100,14 @@ One consultation per PR per reviewed commit set, batching every related concern.
 
 ### 5. Post comments, approval, and replies
 
+Choose exactly one action after reviewing the current commit set:
+
+- `APPROVE`: no new finding clears the bar and no prior material concern remains unresolved.
+- `COMMENT`: one or more new findings clear the bar, regardless of prior-concern state.
+- `WAIT`: no new finding clears the bar, but a prior material concern remains unresolved.
+
+For `WAIT`, post nothing to GitHub. Report `WAIT` and the prior-concern state in the per-PR console status line, then update loop state normally.
+
 Apply the `user-voice` skill to everything posted as me, including review comments, approval bodies, top-level PR comments, and replies to existing comments or threads. This command grants the posting authority and the skill controls wording only.
 
 Every finding is exactly this, attached to the changed line it belongs to.
@@ -125,15 +133,17 @@ gh api repos/:owner/:repo/pulls/<N>/reviews \
 
 Use `gh pr view <N> --json files` for valid paths and comment only on lines present in the diff.
 
-**Approval:** when the change is sound, approve with no body. Attach no validation, praise, or status commentary.
+**Approval:** for `APPROVE`, approve with no body. Attach no validation, praise, or status commentary.
 
 ```bash
 gh pr review <N> --approve
 ```
 
-**Material concerns:** submit a `COMMENT` review with line-specific findings inline. Never use `--request-changes` or a `REQUEST_CHANGES` event.
+**Material concerns:** for `COMMENT`, submit a review containing the new line-specific findings. Never use `--request-changes` or a `REQUEST_CHANGES` event. Do not submit an empty `COMMENT` review.
 
 On a repeat pass, comment only on the diff introduced by the new commits, meaning the `commit_subjects` entries that weren't in `reviewed_commits`, not on code the author only rebased.
+
+**Wait:** for `WAIT`, submit no review event, reply, or top-level comment. The single per-PR console status line records that there are no new findings and a prior material concern remains unresolved.
 
 **Console status:** the single per-PR status line may report the overall review state, including counts or a brief status for new findings and previously raised resolved or unresolved concerns. This is private terminal output only; never turn it into drafted or posted PR-comment content.
 
@@ -155,7 +165,7 @@ Once every candidate is processed or skipped, print `[pr-review-loop] iteration 
 - **MUST NOT** post a concern already raised by any reviewer, regardless of thread state, later replies, attempted fixes, code movement, or independently rediscovering it. Track its current state in private console output only.
 - **MUST NOT** re-review or re-comment when the PR-authored commit subjects match `reviewed_commits`. A rebase or a merge from main changes SHAs without adding work.
 - **MUST NOT** post anything on a PR I already approved until the author pushes new work past that approval. No re-approval, no new comment.
-- **MUST NOT** approve a PR with an unresolved material concern. Submit a `COMMENT` review instead.
+- **MUST NOT** approve a PR with an unresolved material concern. When there are no new findings, choose `WAIT`, post nothing, and record the unresolved state only in the per-PR console status line.
 - **MUST** consult the oracle before a load-bearing architecture, design, security, or product judgment that decides an approval, a comment, or a concern requiring human input.
 - **MUST NOT** push, merge, close PRs, or request changes. You only comment and approve.
 - **MUST NOT** expand scope beyond review. No branch checkouts, no file edits.

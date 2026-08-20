@@ -1,9 +1,9 @@
 ---
-description: Draft PR review — read-only unless explicitly told to post comments
+description: Draft PR review — read-only unless explicitly told to submit the reported action
 argument-hint: <pr-number|url>
 ---
 
-Draft a review of PR $ARGUMENTS. Switch to plan mode or otherwise operate strictly read-only. Do not change code. Do not post anything to GitHub unless the user explicitly asks to proceed with posting this draft's comments.
+Draft a review of PR $ARGUMENTS. Switch to plan mode or otherwise operate strictly read-only. Do not change code. Do not post anything to GitHub unless the user explicitly asks to proceed with the action reported by the current review.
 
 ## Context
 
@@ -44,7 +44,7 @@ A finding ships only when you can state all three of these from code you actuall
 
 Missing any one of the three, drop the finding. Do not keep it as a hedge, a caveat, a heads up, or a softer question. Drop nitpicks, style preferences, refactor suggestions, speculation you did not trace in the code, and anything outside what the diff can affect.
 
-Keep at most 4 findings, highest priority first. When nothing clears the bar, say there are no potentially breaking concerns and stop.
+Keep at most 4 findings, highest priority first. When nothing clears the bar, draft no findings; still report the review state and choose `APPROVE` or `WAIT` under the output rules below.
 
 ## Oracle
 
@@ -59,10 +59,18 @@ First print in chat, for the user only and never in the draft:
 ```text
 <two sentences on what the PR does, naming the call stack or execution path for the changed behavior>
 State: <overall review state, including the current state of previously raised concerns when relevant>
-Action: <APPROVE only when no new finding clears the bar and no prior material concern remains unresolved; otherwise COMMENT>
+Action: <APPROVE, COMMENT, or WAIT>
 ```
 
+Choose exactly one action:
+
+- `APPROVE`: no new finding clears the bar and no prior material concern remains unresolved.
+- `COMMENT`: one or more new findings clear the bar, regardless of prior-concern state.
+- `WAIT`: no new finding clears the bar, but a prior material concern remains unresolved.
+
 The state may briefly distinguish new findings, previously raised unresolved concerns, and previously raised addressed concerns. Do not copy those prior concerns into the draft.
+
+For `COMMENT`, draft each new finding in this format:
 
 ```text
 <path:line>
@@ -72,30 +80,30 @@ The state may briefly distinguish new findings, previously raised unresolved con
 
 One question per finding, never stacked. No summary, prior concern, praise, restatement of the author's work, closing note, or anything that failed the finding bar.
 
-Apply the `draft-in-editor` skill with the slug `pr-review-<N>`, so the draft lands in a file the user can edit before anything is posted. Do this even when there are no findings, since the user may want to add one.
+Only for `COMMENT`, apply the `draft-in-editor` skill with the slug `pr-review-<N>`, so the draft lands in a file the user can edit before anything is posted. Do not create or open a draft file for `APPROVE` or `WAIT`. A file left by an earlier run is not a draft from the current review and must not be posted.
 
 ## Posting when explicitly requested
 
-Only when the user explicitly asks to proceed with posting this draft's comments. Read the draft file back first and post exactly what it contains, including any edit the user made:
+Only when the user explicitly asks to proceed with the action reported by the current review:
 
-- Parse each standalone `path:line` marker as routing metadata, never comment text. Try the exact changed line first, then a nearby valid changed line in the same file. If no suitable inline location exists, put the concern in the top-level review body with the marker omitted entirely.
-- Approve with no body when there are no material concerns.
-- Submit a `COMMENT` review for material concerns. Never submit `REQUEST_CHANGES`.
-- Never post a review or approval merely because this command was invoked.
+- For `APPROVE`, approve with no body.
+- For `COMMENT`, read the draft file back first and post exactly what it contains, including any edit the user made. Parse each standalone `path:line` marker as routing metadata, never comment text. Try the exact changed line first, then a nearby valid changed line in the same file. If no suitable inline location exists, put the concern in the top-level review body with the marker omitted entirely. Submit a `COMMENT` review, never `REQUEST_CHANGES`.
+- For `WAIT`, post nothing. Re-run the review after the prior concern's state changes.
 
-Use the GitHub review API through `gh api`, since `gh pr review` cannot attach comments to individual lines.
+Never post a review or approval merely because this command was invoked. Use the GitHub review API through `gh api` for `COMMENT`, since `gh pr review` cannot attach comments to individual lines.
 
 ## Voice
 
-Apply the `user-voice` skill to the draft before writing it to the file. It controls wording only and never authorizes posting. Anything the user edits into the file afterward is already their voice, so leave it alone.
+For `COMMENT`, apply the `user-voice` skill to the draft before writing it to the file. It controls wording only and never authorizes posting. Anything the user edits afterward is already their voice, so leave it alone.
 
 ## Rules
 
 - **MUST** stay read-only until the user explicitly authorizes posting.
+- **MUST NOT** create or open a draft file unless the current review action is `COMMENT`.
 - **MUST** consult the oracle before a load-bearing architecture, design, security, or product judgment, once per PR with all such judgments batched.
 - **MUST** drop any finding that cannot name a real line, a trigger, and a breakage.
 - **MUST** tie every finding to a problem introduced, newly exposed, or worsened by the changes under review.
 - **MUST NOT** report a pre-existing issue merely discovered in unchanged code or object to a sound change solely because it exceeds the linked ticket's scope.
-- **MUST** post the draft file as saved, never the version held in the transcript.
+- For `COMMENT`, **MUST** post the draft file as saved, never the version held in the transcript.
 - **MUST NOT** include a concern already raised by any reviewer, regardless of thread state, later replies, attempted fixes, code movement, or independently rediscovering it.
 - **MUST NOT** put the PR summary, prior-concern state, overall review state, or intended action in the draft file; those belong in chat before the handoff.
