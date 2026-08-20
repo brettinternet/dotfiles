@@ -29,6 +29,12 @@ type = "shell"
 command = "herdr-split-before vertical"
 description = "split vertical before current pane"
 
+[[keys.command]]
+key = "prefix+shift+z"
+type = "plugin_action"
+command = "brett.pane-collapse.toggle"
+description = "toggle focused pane collapse"
+
 [ui]
 # Order the Agent panel as an attention queue rather than by space, so whoever
 # is blocked surfaces first.
