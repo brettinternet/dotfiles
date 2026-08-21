@@ -35,6 +35,12 @@ type = "plugin_action"
 command = "brett.pane-collapse.toggle"
 description = "toggle focused pane collapse"
 
+[[keys.command]]
+key = "prefix+plus"
+type = "plugin_action"
+command = "brett.pane-equalize.equalize"
+description = "equalize panes in focused tab"
+
 [ui]
 # Order the Agent panel as an attention queue rather than by space, so whoever
 # is blocked surfaces first.

@@ -67,7 +67,7 @@ Run herdr outside a remote tmux session: herdr manages local agents; tmux preser
 
 `make ai` symlinks `ai/herdr/config.toml` to `~/.config/herdr/config.toml`, backing up an existing local file as `config.toml.dotbot-backup.<timestamp>`. Herdr writes configuration through the link, so commit intended changes. Use `herdr server reload-config` for a running server.
 
-`make ai` also installs available agent integrations and links two local plugins: `brett.window-title` mirrors the focused pane's title to the outer Ghostty tab, and `brett.pane-collapse` toggles the focused pane between its exact split ratio and a 10% sliver with `prefix+shift+z`. Check or manage integrations with `herdr integration status`, `install`, and `uninstall`.
+`make ai` also installs available agent integrations and links three local plugins: `brett.window-title` mirrors the focused pane's title to the outer Ghostty tab, `brett.pane-collapse` toggles the focused pane between its exact split ratio and a 10% sliver with `prefix+shift+z`, and `brett.pane-equalize` gives every pane in the focused tab equal area with `prefix+plus`. Check or manage integrations with `herdr integration status`, `install`, and `uninstall`.
 
 ## Bounded backlog loop
 
