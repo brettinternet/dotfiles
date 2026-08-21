@@ -1,8 +1,8 @@
 id = "brett.pane-equalize"
 name = "Equalize tab panes"
-version = "0.1.0"
+version = "0.1.1"
 min_herdr_version = "0.8.0"
-description = "Give every pane in the focused tab an equal share of its layout"
+description = "Balance pane sizes while giving taller panes additional width"
 platforms = ["macos"]
 
 [[actions]]

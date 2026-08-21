@@ -51,7 +51,7 @@ class PaneEqualizeTest(unittest.TestCase):
             result = pane_equalize.equalize()
         return result, calls
 
-    def test_weights_each_split_by_descendant_pane_count(self):
+    def test_gives_tall_pane_more_width_than_equal_area(self):
         layout = {
             "tab_id": "w1:t1",
             "root": split(
@@ -69,20 +69,33 @@ class PaneEqualizeTest(unittest.TestCase):
         result, calls = self.run_with_layout(layout)
 
         self.assertEqual(result, "equalized 3 panes")
+        self.assertEqual(calls[0], ("layout.export", {"pane_id": "w1:p1"}))
+        self.assertEqual(calls[1][0], "layout.set_split_ratio")
+        self.assertEqual(calls[1][1]["tab_id"], "w1:t1")
+        self.assertEqual(calls[1][1]["path"], [])
+        self.assertAlmostEqual(calls[1][1]["ratio"], 1 / (1 + 2**0.5))
         self.assertEqual(
-            calls,
-            [
-                ("layout.export", {"pane_id": "w1:p1"}),
-                (
-                    "layout.set_split_ratio",
-                    {"tab_id": "w1:t1", "path": [], "ratio": 1 / 3},
-                ),
-                (
-                    "layout.set_split_ratio",
-                    {"tab_id": "w1:t1", "path": [True], "ratio": 0.5},
-                ),
-            ],
+            calls[2],
+            (
+                "layout.set_split_ratio",
+                {"tab_id": "w1:t1", "path": [True], "ratio": 0.5},
+            ),
         )
+
+    def test_keeps_equal_widths_for_panes_in_the_same_row(self):
+        layout = {
+            "tab_id": "w1:t1",
+            "root": split(
+                pane("w1:p1"),
+                split(pane("w1:p2"), pane("w1:p3"), ratio=0.8),
+                ratio=0.8,
+            ),
+        }
+
+        _, calls = self.run_with_layout(layout)
+
+        self.assertAlmostEqual(calls[1][1]["ratio"], 1 / 3)
+        self.assertEqual(calls[2][1]["ratio"], 0.5)
 
     def test_equalizes_unbalanced_four_pane_tree(self):
         layout = {
