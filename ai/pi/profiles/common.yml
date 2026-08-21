@@ -17,6 +17,8 @@ composer:
   shape: box
 display:
   showTokenUsage: false
+compaction:
+  thresholdPercent: 75
 loop:
   mode: reset
 doubleEscapeAction: tree
