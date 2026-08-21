@@ -5,6 +5,11 @@ providers:
         contextWindow: 256000
       gpt-5.6-terra: *conservative-limit
       gpt-5.6-luna: *conservative-limit
+  anthropic:
+    modelOverrides:
+      claude-fable-5: *conservative-limit
+      claude-opus-5: *conservative-limit
+      claude-sonnet-5: *conservative-limit
   openrouter:
     modelOverrides:
       openai/gpt-5.6-sol: *conservative-limit
