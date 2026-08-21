@@ -321,6 +321,28 @@ trusted_hash = "sha256:trusted"
         self.assertNotIn("retired", (self.home / ".codex/config.toml").read_text())
         self.assertEqual("Handwritten\n", unmanaged.read_text())
 
+    def test_model_limits_are_managed_by_ai_install(self) -> None:
+        installer = (ROOT / "ai.yaml").read_text()
+        models = (ROOT / "ai/pi/models.yml").read_text()
+
+        self.assertIn("~/.omp/agent/models.yml:", installer)
+        self.assertIn("path: ai/pi/models.yml", installer)
+        self.assertIn("contextWindow: 256000", models)
+        self.assertIn("openai/gpt-5.6-sol:", models)
+        self.assertIn("~anthropic/claude-opus-latest:", models)
+        self.run_command(
+            "dotbot/bin/dotbot",
+            "-d",
+            str(ROOT),
+            "-c",
+            "ai.yaml",
+            "--only",
+            "link",
+        )
+        installed = self.home / ".omp/agent/models.yml"
+        self.assertTrue(installed.is_symlink())
+        self.assertEqual((ROOT / "ai/pi/models.yml").resolve(), installed.resolve())
+
     def test_profile_rendering_writes_only_home(self) -> None:
         before = self.repository_status()
         legacy_links = {
@@ -344,12 +366,16 @@ trusted_hash = "sha256:trusted"
             "reviewer: openai-codex/gpt-5.6-terra:max",
             pi_config.read_text(),
         )
+        self.assertIn("thresholdPercent: 75", pi_config.read_text())
         self.assertIn('"reviewer"', opencode_config.read_text())
         self.assertIn(
             "writer: openai-codex/gpt-5.6-terra:low", pi_config.read_text()
         )
         self.assertIn('"writer"', opencode_config.read_text())
         self.assertIn('"model": "openai/gpt-5.6-terra"', opencode_config.read_text())
+        self.assertIn('"context": 256000', opencode_config.read_text())
+        self.assertIn('"input": 128000', opencode_config.read_text())
+        self.assertIn('"output": 128000', opencode_config.read_text())
         self.assertEqual("codex\n", (self.home / ".omp/agent/.active").read_text())
         self.assertEqual("gpt\n", (self.home / ".config/opencode/.active").read_text())
         self.assertEqual(before, self.repository_status())
