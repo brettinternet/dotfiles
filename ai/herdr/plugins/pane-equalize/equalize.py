@@ -3,6 +3,7 @@ import json
 import os
 import socket
 import sys
+from math import sqrt
 from typing import Any
 
 
@@ -31,19 +32,42 @@ def request(method: str, params: dict[str, Any]) -> dict[str, Any]:
     return decoded["result"]
 
 
-def equal_ratios(
+def balanced_ratios(
     node: dict[str, Any], path: list[bool] | None = None
-) -> tuple[int, list[tuple[list[bool], float]]]:
+) -> tuple[int, int, int, list[tuple[list[bool], float]]]:
     path = path or []
     if node["type"] == "pane":
-        return 1, []
+        return 1, 1, 1, []
 
-    first_count, first_ratios = equal_ratios(node["first"], path + [False])
-    second_count, second_ratios = equal_ratios(node["second"], path + [True])
+    first_count, first_width, first_height, first_ratios = balanced_ratios(
+        node["first"], path + [False]
+    )
+    second_count, second_width, second_height, second_ratios = balanced_ratios(
+        node["second"], path + [True]
+    )
     pane_count = first_count + second_count
+
+    if node["direction"] == "right":
+        first_span = first_width
+        second_span = second_width
+        width = first_width + second_width
+        height = max(first_height, second_height)
+    else:
+        first_span = first_height
+        second_span = second_height
+        width = max(first_width, second_width)
+        height = first_height + second_height
+
+    # Blend equal-area counts with grid spans so cross-axis stacks do not
+    # squeeze neighboring tall or wide panes.
+    first_weight = sqrt(first_count * first_span)
+    second_weight = sqrt(second_count * second_span)
+    ratio = first_weight / (first_weight + second_weight)
     return (
         pane_count,
-        [(path, first_count / pane_count), *first_ratios, *second_ratios],
+        width,
+        height,
+        [(path, ratio), *first_ratios, *second_ratios],
     )
 
 
@@ -61,7 +85,7 @@ def focused_pane_id() -> str:
 def equalize() -> str:
     pane_id = focused_pane_id()
     exported = request("layout.export", {"pane_id": pane_id})["layout"]
-    pane_count, ratios = equal_ratios(exported["root"])
+    pane_count, _, _, ratios = balanced_ratios(exported["root"])
 
     for path, ratio in ratios:
         request(
