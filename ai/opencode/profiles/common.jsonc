@@ -29,6 +29,48 @@
     },
     "openrouter": {
       "models": {
+        "openai/gpt-5.6-sol": {
+          "limit": {
+            "context": 256000,
+            "input": 128000,
+            "output": 128000,
+          },
+        },
+        "openai/gpt-5.6-terra": {
+          "limit": {
+            "context": 256000,
+            "input": 128000,
+            "output": 128000,
+          },
+        },
+        "openai/gpt-5.6-luna": {
+          "limit": {
+            "context": 256000,
+            "input": 128000,
+            "output": 128000,
+          },
+        },
+        "anthropic/claude-opus-4.8": {
+          "limit": {
+            "context": 256000,
+            "input": 128000,
+            "output": 128000,
+          },
+        },
+        "~anthropic/claude-opus-latest": {
+          "limit": {
+            "context": 256000,
+            "input": 128000,
+            "output": 128000,
+          },
+        },
+        "~anthropic/claude-sonnet-latest": {
+          "limit": {
+            "context": 256000,
+            "input": 128000,
+            "output": 128000,
+          },
+        },
         "~deepseek/deepseek-v4-flash-latest": {
           "limit": {
             "context": 256000,

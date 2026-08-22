@@ -383,11 +383,25 @@ trusted_hash = "sha256:trusted"
         self.assertFalse(pi_config.is_symlink())
         self.assertFalse(opencode_config.is_symlink())
 
-    def test_openrouter_profiles_route_roles_to_value_models(self) -> None:
+    def test_openrouter_cheap_profiles_preserve_original_routes(self) -> None:
         self.run_command("ai/.bin/pi-profile", "use", "or")
         self.run_command("ai/.bin/opencode-profile", "use", "or")
 
-        pi_config = (self.home / ".omp/agent/config.yml").read_text()
+        pi_config_path = self.home / ".omp/agent/config.yml"
+        opencode_config_path = self.home / ".config/opencode/opencode.jsonc"
+        self.assertIn(
+            "default: openrouter/openai/gpt-5.6-sol:medium",
+            pi_config_path.read_text(),
+        )
+        self.assertIn(
+            '"model": "openrouter/openai/gpt-5.6-terra"',
+            opencode_config_path.read_text(),
+        )
+
+        self.run_command("ai/.bin/pi-profile", "use", "or-cheap")
+        self.run_command("ai/.bin/opencode-profile", "use", "or-cheap")
+
+        pi_config = pi_config_path.read_text()
         self.assertIn(
             "default: openrouter/deepseek/deepseek-v4-pro-0813:high",
             pi_config,
@@ -402,9 +416,7 @@ trusted_hash = "sha256:trusted"
             pi_config,
         )
 
-        opencode_text = (
-            self.home / ".config/opencode/opencode.jsonc"
-        ).read_text()
+        opencode_text = opencode_config_path.read_text()
         opencode_config = json.loads(
             "\n".join(
                 line

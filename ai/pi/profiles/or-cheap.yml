@@ -1,0 +1,13 @@
+modelRoles:
+  default: openrouter/deepseek/deepseek-v4-pro-0813:high
+  smol: openrouter/~deepseek/deepseek-v4-flash-latest:low
+  slow: openrouter/z-ai/glm-5.3:max
+  designer: openrouter/deepseek/deepseek-v4-pro-0813:high
+  vision: openrouter/deepseek/deepseek-v4-flash-vision-exp:high
+  task: openrouter/deepseek/deepseek-v4-pro-0813:max
+  commit: openrouter/~deepseek/deepseek-v4-flash-latest:low
+  plan: openrouter/z-ai/glm-5.3:high
+  advisor: openrouter/z-ai/glm-5.3:max
+  title: openrouter/~deepseek/deepseek-v4-flash-latest:low
+  reviewer: openrouter/z-ai/glm-5.3:max
+  writer: openrouter/deepseek/deepseek-v4-pro-0813:low

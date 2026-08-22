@@ -1,0 +1,36 @@
+{
+  "agent": {
+    "reviewer": {
+      "model": "openrouter/z-ai/glm-5.3",
+      "variant": "max",
+    },
+    "executor": {
+      "model": "openrouter/deepseek/deepseek-v4-pro-0813",
+      "variant": "max",
+    },
+    "explore": {
+      "model": "openrouter/~deepseek/deepseek-v4-flash-latest",
+      "variant": "low",
+    },
+    "oracle": {
+      "model": "openrouter/z-ai/glm-5.3",
+      "variant": "max",
+    },
+    "pr-watcher": {
+      "model": "openrouter/~deepseek/deepseek-v4-flash-latest",
+      "variant": "low",
+    },
+    "thermo-nuclear-code-quality-review": {
+      "model": "openrouter/z-ai/glm-5.3",
+      "variant": "high",
+    },
+    "verifier": {
+      "model": "openrouter/deepseek/deepseek-v4-pro-0813",
+      "variant": "max",
+    },
+    "writer": {
+      "model": "openrouter/deepseek/deepseek-v4-pro-0813",
+      "variant": "low",
+    },
+  },
+}
