@@ -22,3 +22,6 @@ providers:
       ~anthropic/claude-fable-latest: *conservative-limit
       moonshotai/kimi-k3: *conservative-limit
       ~deepseek/deepseek-v4-flash-latest: *conservative-limit
+      deepseek/deepseek-v4-pro-0813: *conservative-limit
+      deepseek/deepseek-v4-flash-vision-exp: *conservative-limit
+      z-ai/glm-5.3: *conservative-limit
