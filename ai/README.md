@@ -4,7 +4,7 @@ Shared config for Claude Code (`~/.claude`), oh-my-pi (`~/.omp`), Codex, Amp CLI
 
 ## OpenCode profiles
 
-OpenCode renders `~/.config/opencode/opencode.jsonc` from `opencode/profiles/common.jsonc` plus a selected overlay. `opencode-profile list` shows `gpt`, `claude`, `claude-gpt`, `gpt-cc-proxy`, and `openrouter`; `opencode-profile use <name>` regenerates the local active config. Its eight global subagents mirror the pi roster; each profile supplies their OpenCode model routing. `gpt-cc-proxy` retains Meridian-backed Anthropic routing and requires `MERIDIAN_BASE_URL`. OpenCode uses neither oh-my-openagent nor OCX.
+OpenCode renders `~/.config/opencode/opencode.jsonc` from `opencode/profiles/common.jsonc` plus a selected overlay. `opencode-profile list` shows `gpt`, `claude`, `claude-gpt`, `gpt-cc-proxy`, `or`, and `or-cheap`; `opencode-profile use <name>` regenerates the local active config. Its eight global subagents mirror the pi roster; each profile supplies their OpenCode model routing. `gpt-cc-proxy` retains Meridian-backed Anthropic routing and requires `MERIDIAN_BASE_URL`. OpenCode uses neither oh-my-openagent nor OCX.
 
 ## Orchestration strategy
 
@@ -90,7 +90,7 @@ Every iteration starts fresh and chooses one coherent implementation, review, or
 - https://artificialanalysis.ai/models/gpt-5-6-luna#intelligence
 - https://openrouter.ai/compare/openai/gpt-5.6-sol-pro/openai/gpt-5.6-sol/anthropic/claude-fable-5/anthropic/claude-opus-4.8
 
-### OpenRouter value profile
+### `or-cheap` OpenRouter profile
 
 - `DeepSeek V4 Pro 0813` handles default execution, implementation, verification, design, and writing. It is the newest Pro release in the live catalog and costs $1.188/M input and $3.564/M output, keeping the main worker competitive without frontier-model pricing.
 - `GLM 5.3` handles planning, advice, and adversarial review. The live catalog reports 59.5 intelligence, 74.8 coding, and 59.1 agentic scores at $1.40/M input and $4.40/M output.

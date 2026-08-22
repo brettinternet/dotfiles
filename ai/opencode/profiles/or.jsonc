@@ -1,35 +1,35 @@
 {
   "agent": {
     "reviewer": {
-      "model": "openrouter/z-ai/glm-5.3",
-      "variant": "max",
+      "model": "openrouter/anthropic/claude-opus-4.8",
+      "variant": "xhigh",
     },
     "executor": {
-      "model": "openrouter/deepseek/deepseek-v4-pro-0813",
-      "variant": "max",
+      "model": "openrouter/openai/gpt-5.6-terra",
+      "variant": "high",
     },
     "explore": {
-      "model": "openrouter/~deepseek/deepseek-v4-flash-latest",
+      "model": "openrouter/openai/gpt-5.6-luna",
       "variant": "low",
     },
     "oracle": {
-      "model": "openrouter/z-ai/glm-5.3",
-      "variant": "max",
+      "model": "openrouter/~anthropic/claude-opus-latest",
+      "variant": "high",
     },
     "pr-watcher": {
-      "model": "openrouter/~deepseek/deepseek-v4-flash-latest",
+      "model": "openrouter/openai/gpt-5.6-luna",
       "variant": "low",
     },
     "thermo-nuclear-code-quality-review": {
-      "model": "openrouter/z-ai/glm-5.3",
+      "model": "openrouter/~anthropic/claude-opus-latest",
       "variant": "high",
     },
     "verifier": {
-      "model": "openrouter/deepseek/deepseek-v4-pro-0813",
+      "model": "openrouter/openai/gpt-5.6-luna",
       "variant": "max",
     },
     "writer": {
-      "model": "openrouter/deepseek/deepseek-v4-pro-0813",
+      "model": "openrouter/~anthropic/claude-sonnet-latest",
       "variant": "low",
     },
   },
