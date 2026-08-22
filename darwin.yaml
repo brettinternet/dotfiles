@@ -41,6 +41,12 @@
       glob: true
       path: darwin/.config/mise/conf.d/*
       if: '[ -x "$(command -v mise)" ]'
+    ~/.dsh/profiles/dsh-tui/package.json:
+      path: darwin/.dsh/profiles/dsh-tui/package.json
+      force: true
+    ~/.dsh/profiles/dsh-tui/cordis.patch.yml:
+      path: darwin/.dsh/profiles/dsh-tui/cordis.patch.yml
+      force: true
     ~/.config/nix-darwin/:
       glob: true
       path: darwin/.config/nix-darwin/*
@@ -55,13 +61,9 @@
           mise exec gh -- gh extension install github/gh-stack --force
         fi
     - command: |
-        set -eu
-        if ! command -v mise >/dev/null 2>&1; then
-          exit 0
+        if command -v bun >/dev/null 2>&1; then
+          bun install --omit peer --cwd "$HOME/.dsh/profiles/dsh-tui"
         fi
-
-        mise install pnpm npm:@deepseek-ai/dsh npm:@deepseek-harness-tui/dsh-tui
-        mise exec -- dsh plugin --profile dsh-tui add @deepseek-harness-tui/dsh-tui@latest
-      description: Install DeepSeek Harness and converge the dsh-tui profile
+      description: Install the dsh-tui profile with Bun
       stdout: true
       stderr: true
