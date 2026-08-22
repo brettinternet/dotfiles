@@ -54,3 +54,14 @@
         if command -v mise >/dev/null 2>&1; then
           mise exec gh -- gh extension install github/gh-stack --force
         fi
+    - command: |
+        set -eu
+        if ! command -v mise >/dev/null 2>&1; then
+          exit 0
+        fi
+
+        mise install pnpm npm:@deepseek-ai/dsh npm:@deepseek-harness-tui/dsh-tui
+        mise exec -- dsh plugin --profile dsh-tui add @deepseek-harness-tui/dsh-tui@latest
+      description: Install DeepSeek Harness and converge the dsh-tui profile
+      stdout: true
+      stderr: true
