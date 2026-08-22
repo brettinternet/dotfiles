@@ -90,6 +90,13 @@ Every iteration starts fresh and chooses one coherent implementation, review, or
 - https://artificialanalysis.ai/models/gpt-5-6-luna#intelligence
 - https://openrouter.ai/compare/openai/gpt-5.6-sol-pro/openai/gpt-5.6-sol/anthropic/claude-fable-5/anthropic/claude-opus-4.8
 
+### OpenRouter value profile
+
+- `DeepSeek V4 Pro 0813` handles default execution, implementation, verification, design, and writing. It is the newest Pro release in the live catalog and costs $1.188/M input and $3.564/M output, keeping the main worker competitive without frontier-model pricing.
+- `GLM 5.3` handles planning, advice, and adversarial review. The live catalog reports 59.5 intelligence, 74.8 coding, and 59.1 agentic scores at $1.40/M input and $4.40/M output.
+- `DeepSeek V4 Flash Latest` handles exploration, PR watching, titles, and commits at $0.065/M input and $0.18/M output. Its underlying release reports a 69.1 coding score, substantially ahead of the current inexpensive Nemotron Lightning and Super routes; the vision role uses the Flash Vision experiment at a time-dependent $0.22–$0.44/M input and $0.66–$1.32/M output.
+- The cheapest DeepSeek first-party routes may retain prompts for training, so enforce the account's data-policy filters when repository privacy requires it. Sources accessed 2026-08-22: [OpenRouter catalog](https://openrouter.ai/models) and [OpenRouter's open-weight model review](https://openrouter.ai/blog/insights/the-open-weight-models-that-matter-june-2026/).
+
 ### GPT
 
 - For coding tasks, [5.6 Luna max and 5.6 Sol medium are probably best cost per task.](https://artificialanalysis.ai/?intelligence-efficiency=intelligence-vs-cost-per-task&agentic-speed=intelligence-vs-time-per-task&cost=intelligence-vs-cost-per-task) ([frontier models](https://artificialanalysis.ai/?intelligence-efficiency=intelligence-vs-cost-per-task&agentic-speed=intelligence-vs-time-per-task&models=gpt-5-5%2Cclaude-sonnet-5%2Cgpt-5-6-luna%2Cclaude-opus-4-8%2Cclaude-4-5-haiku-reasoning%2Cgpt-5-6-terra%2Cclaude-fable-5%2Cgpt-5-6-sol%2Cgpt-5-5-pro%2Cgpt-5-6-luna-xhigh%2Cgpt-5-6-terra-medium%2Cgpt-5-6-luna-high%2Cgpt-5-6-sol-xhigh%2Cgpt-5-6-sol-high%2Cgpt-5-6-sol-medium%2Cgpt-5-6-luna-medium%2Cgpt-5-6-luna-low%2Cgpt-5-6-sol-low%2Cclaude-sonnet-5-high%2Cclaude-sonnet-5-xhigh&speed=intelligence-vs-speed&intelligence=agentic-index&total-cost=intelligence-vs-total-cost))

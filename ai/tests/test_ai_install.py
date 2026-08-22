@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -381,6 +382,62 @@ trusted_hash = "sha256:trusted"
         self.assertEqual(before, self.repository_status())
         self.assertFalse(pi_config.is_symlink())
         self.assertFalse(opencode_config.is_symlink())
+
+    def test_openrouter_profiles_route_roles_to_value_models(self) -> None:
+        self.run_command("ai/.bin/pi-profile", "use", "or")
+        self.run_command("ai/.bin/opencode-profile", "use", "or")
+
+        pi_config = (self.home / ".omp/agent/config.yml").read_text()
+        self.assertIn(
+            "default: openrouter/deepseek/deepseek-v4-pro-0813:high",
+            pi_config,
+        )
+        self.assertIn("slow: openrouter/z-ai/glm-5.3:max", pi_config)
+        self.assertIn(
+            "commit: openrouter/~deepseek/deepseek-v4-flash-latest:low",
+            pi_config,
+        )
+        self.assertIn(
+            "vision: openrouter/deepseek/deepseek-v4-flash-vision-exp:high",
+            pi_config,
+        )
+
+        opencode_text = (
+            self.home / ".config/opencode/opencode.jsonc"
+        ).read_text()
+        opencode_config = json.loads(
+            "\n".join(
+                line
+                for line in opencode_text.splitlines()
+                if not line.startswith("//")
+            )
+        )
+        agents = opencode_config["agent"]
+        self.assertEqual(
+            {
+                "model": "openrouter/deepseek/deepseek-v4-pro-0813",
+                "variant": "max",
+            },
+            agents["executor"],
+        )
+        self.assertEqual(
+            {"model": "openrouter/z-ai/glm-5.3", "variant": "max"},
+            agents["reviewer"],
+        )
+        self.assertEqual(
+            {
+                "model": "openrouter/~deepseek/deepseek-v4-flash-latest",
+                "variant": "low",
+            },
+            agents["explore"],
+        )
+        self.assertEqual(
+            {
+                "model": "openrouter/deepseek/deepseek-v4-pro-0813",
+                "variant": "max",
+            },
+            agents["verifier"],
+        )
 
     def test_pi_profile_accepts_omp_rewritten_managed_config(self) -> None:
         self.run_command("ai/.bin/pi-profile", "use", "codex")
