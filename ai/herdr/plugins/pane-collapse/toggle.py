@@ -42,12 +42,11 @@ def pane_ids(node: dict[str, Any]) -> list[str]:
 
 
 def split_signature(node: dict[str, Any]) -> dict[str, Any]:
-    """Describe split structure and membership without ratios."""
+    """Describe split structure and membership without ratios or orientation."""
     if node["type"] == "pane":
         return {"type": "pane", "pane_id": node["pane_id"]}
     return {
         "type": "split",
-        "direction": node["direction"],
         "first": split_signature(node["first"]),
         "second": split_signature(node["second"]),
     }
@@ -115,10 +114,12 @@ def toggle() -> str:
             saved["tab_id"] == exported["tab_id"]
             and saved["path"] == path
             and saved["side"] == side
-            and saved["signature"] == split_signature(split)
+            and split_signature(saved["signature"]) == split_signature(split)
         )
         if not topology_matches:
-            raise RuntimeError("pane layout changed since collapse; refusing unsafe restore")
+            raise RuntimeError(
+                "pane layout changed since collapse; refusing unsafe restore"
+            )
         request(
             "layout.set_split_ratio",
             {"tab_id": exported["tab_id"], "path": path, "ratio": saved["ratio"]},

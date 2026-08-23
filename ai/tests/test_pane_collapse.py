@@ -1,10 +1,10 @@
 import importlib.util
+import json
 import os
 import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
-
 
 SCRIPT = Path(__file__).parents[1] / "herdr/plugins/pane-collapse/toggle.py"
 spec = importlib.util.spec_from_file_location("pane_collapse", SCRIPT)
@@ -96,6 +96,26 @@ class PaneCollapseTest(unittest.TestCase):
         }
 
         result, calls = self.run_with_layout(collapsed)
+
+        self.assertEqual(result, "restored w1:p1")
+        self.assertEqual(calls[-1][1]["ratio"], 0.37)
+
+    def test_restores_after_rotation_with_legacy_direction_signature(self):
+        original = {
+            "tab_id": "w1:t1",
+            "root": split(pane("w1:p1"), pane("w1:p2"), ratio=0.37),
+        }
+        self.run_with_layout(original)
+        state_path = Path(self.temporary.name) / "collapsed-panes.json"
+        state = json.loads(state_path.read_text())
+        state["w1:p1"]["signature"]["direction"] = "right"
+        state_path.write_text(json.dumps(state))
+        rotated = {
+            "tab_id": "w1:t1",
+            "root": split(pane("w1:p1"), pane("w1:p2"), ratio=0.1, direction="down"),
+        }
+
+        result, calls = self.run_with_layout(rotated)
 
         self.assertEqual(result, "restored w1:p1")
         self.assertEqual(calls[-1][1]["ratio"], 0.37)
