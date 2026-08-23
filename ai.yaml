@@ -13,6 +13,8 @@
     - ~/.omp/agents
     - ~/.config/opencode/agents
     - ~/.config/opencode/commands
+    - ~/.dsh/AGENTS.md
+    - ~/.dsh/cordis.patch.yml
 - shell:
     - command: |
         set -eu
@@ -145,6 +147,13 @@
       glob: true
       relink: false
       path: ai/.agents/skills/*
+    # DeepSeek Harness
+    ~/.dsh/AGENTS.md:
+      path: ai/AGENTS.md
+    ~/.dsh/cordis.patch.yml:
+      path: ai/dsh/cordis.patch.yml
+    ~/.dsh/.agent-presets:
+      path: ai/dsh/presets
     # Amp CLI
     ~/.config/amp/settings.json:
       path: ai/amp/settings.json

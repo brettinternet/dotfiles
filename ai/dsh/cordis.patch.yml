@@ -1,0 +1,15 @@
+# Home-level patch layer for every dsh profile (web, dsh-tui, headless):
+# applied after each profile's own bundle and patch layers. Symlinked to
+# ~/.dsh/cordis.patch.yml.
+#
+# The one override: redirect the settings document into this repository
+# (~/.dotfiles/ai/dsh/settings.yaml) so GUI-written settings are versioned and
+# shared across machines. The settings file itself must NOT be a symlink: the
+# provider commits writes by atomically renaming over the target, which would
+# replace a symlink with a regular file on the first write.
+#
+# DSH_SETTINGS_PATH overrides the location for a checkout that is not at
+# ~/.dotfiles.
+- id: settings
+  config:
+    path: !!js process.env.DSH_SETTINGS_PATH ?? ((process.env.HOME ?? '') + '/.dotfiles/ai/dsh/settings.yaml')

@@ -1,10 +1,16 @@
 # AI agent setup
 
-Shared config for Claude Code (`~/.claude`), oh-my-pi (`~/.omp`), Codex, Amp CLI (`~/.config/amp`), OpenCode (`~/.config/opencode`), and herdr (`~/.config/herdr`), installed by [`ai.yaml`](../ai.yaml). `AGENTS.md` is the global instruction file for all five agent tools. `ai/.agents/` is the canonical source for authored shared skills and command workflows. `ai/agents/` is the canonical source for subagent definitions: one file per role holding the shared description, the per-tool model/effort tiers, and the single instruction body. `install-agents` renders the Claude, pi, OpenCode, and Codex formats from it, since their frontmatter and discovery paths differ.
+Shared config for Claude Code (`~/.claude`), oh-my-pi (`~/.omp`), Codex, Amp CLI (`~/.config/amp`), OpenCode (`~/.config/opencode`), herdr (`~/.config/herdr`), and the DeepSeek Harness (`~/.dsh`), installed by [`ai.yaml`](../ai.yaml). `AGENTS.md` is the global instruction file for all six agent tools. `ai/.agents/` is the canonical source for authored shared skills and command workflows. `ai/agents/` is the canonical source for subagent definitions: one file per role holding the shared description, the per-tool model/effort tiers, and the single instruction body. `install-agents` renders the Claude, pi, OpenCode, and Codex formats from it, since their frontmatter and discovery paths differ.
 
 ## OpenCode profiles
 
 OpenCode renders `~/.config/opencode/opencode.jsonc` from `opencode/profiles/common.jsonc` plus a selected overlay. `opencode-profile list` shows `gpt`, `claude`, `claude-gpt`, `gpt-cc-proxy`, `or`, and `or-cheap`; `opencode-profile use <name>` regenerates the local active config. Its eight global subagents mirror the pi roster; each profile supplies their OpenCode model routing. `gpt-cc-proxy` retains Meridian-backed Anthropic routing and requires `MERIDIAN_BASE_URL`. OpenCode uses neither oh-my-openagent nor OCX.
+
+## DeepSeek Harness (dsh)
+
+`make ai` links `~/.dsh/AGENTS.md` (global instructions), `~/.dsh/cordis.patch.yml` (home-level patch), and `~/.dsh/.agent-presets` (`ai/dsh/presets`, holding the dsh-tui `liangshen` preset) into this repo. dsh discovers `~/.agents/skills/` natively, so the shared skills need no adapter. `make darwin` installs the dsh-tui profile with Bun (dsh's `dsh plugin` manager requires pnpm, which stays off this system); the web profile self-initializes with `dsh web`.
+
+The home-level patch redirects the settings document to `ai/dsh/settings.yaml`, so the web GUI and TUI write settings directly into the repo as git diffs. The settings file carries only `apiKeyEnv` references, never secrets. API keys resolve from the environment; OAuth grants (ChatGPT subscription via `openai-codex`, Claude subscription, GitHub Copilot, OpenRouter OAuth) live per-machine in `~/.dsh/.credentials.yaml` — sign in once per machine with `/login` in dsh-tui and never sync the grant. A commented provider template sits at the bottom of the settings document; `DSH_SETTINGS_PATH` relocates it for a checkout that is not at `~/.dotfiles`.
 
 ## Orchestration strategy
 
