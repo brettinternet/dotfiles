@@ -1,0 +1,24 @@
+# DeepSeek Harness settings. The web GUI and TUI write this file directly
+# (~/.dsh/cordis.patch.yml redirects the settings path here), so every change
+# shows up as a git diff. Never store secrets in this file: values are
+# apiKeyEnv references resolved from the process environment, ~/.dsh/.env, or
+# ~/.dsh/.credentials.yaml.
+ui-onboarding:
+  welcomeNoticeVersion: 2026-08-13.1
+agent-default-model:
+  provider: deepseek-official
+  model: deepseek-v4-pro
+  reasoningEffort: max
+
+# Extra providers live under llm-pi-ai. Keys resolve from the environment, so
+# uncommenting any of these works wherever the matching env var is exported.
+# OAuth-backed routes (subscriptions) name no key at all; sign in once per
+# machine with /login in dsh-tui and never sync the stored grant.
+#
+# llm-pi-ai:
+#   providers:
+#     openrouter:
+#       apiKeyEnv: OPENROUTER_API_KEY
+#     anthropic:
+#       apiKeyEnv: ANTHROPIC_API_KEY
+#     openai-codex: {}
