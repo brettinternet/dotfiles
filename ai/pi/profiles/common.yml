@@ -18,7 +18,7 @@ composer:
 display:
   showTokenUsage: false
 compaction:
-  thresholdPercent: 75
+  thresholdPercent: -1 # adaptive reserve-based default (~85% / 38.4k buffer at 256k; auto-scales with contextWindow)
 loop:
   mode: reset
 doubleEscapeAction: tree
