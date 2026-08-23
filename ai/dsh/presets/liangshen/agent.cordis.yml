@@ -87,6 +87,19 @@
     promoteOn: tool-call
     includeSubagents: true
 
+# ── advisor ─────────────────────────────────────────────────────────────────
+
+# A secondary reviewer agent (OMP advisor/WATCHDOG port). Watches the PRIMARY
+# session; on each completed turn it reviews the transcript delta with its own
+# read-only tools and, only when warranted, injects concise feedback before the
+# primary's next step. Acts only for top-level sessions (delegationDepth 0), so
+# it never advises subagents and cannot recurse into an advisor-of-advisor.
+- id: advisor
+  name: ./advisor.mjs
+  config:
+    tools: [read, glob, grep]
+    # model: { provider: ..., model: ..., maxTokens: ... }  # default: inherit primary
+
 # ── shell ───────────────────────────────────────────────────────────────────
 
 # `shell-env` stays in the HOST composition: `apps/cli/src/web.ts` injects it to
