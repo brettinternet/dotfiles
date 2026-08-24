@@ -18,6 +18,15 @@ switch_workspace = "prefix+shift+1..9"
 detach = ["prefix+d", "prefix+ctrl+d"]
 
 [[keys.command]]
+key = "prefix+t"
+type = "popup"
+#command = "exec \"${SHELL:-sh}\""
+command = "lazygit"
+description = "open lazygit"
+width = 140
+height = 60
+
+[[keys.command]]
 key = "prefix+shift+s"
 type = "shell"
 command = "herdr-split-before horizontal"
