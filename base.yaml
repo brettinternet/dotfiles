@@ -40,6 +40,14 @@
     ~/.tmux.conf:
       path: base/.tmux.conf
       if: '[ -x "$(command -v tmux)" ]'
+    ~/.config/lazygit/config.yml:
+      path: base/.config/lazygit/config.yml
+      force: true
+      if: '[ "$(uname)" = Linux ] && [ -x "$(command -v lazygit)" ]'
+    ~/Library/Application Support/lazygit/config.yml:
+      path: base/.config/lazygit/config.yml
+      force: true
+      if: '[ "$(uname)" = Darwin ] && [ -x "$(command -v lazygit)" ]'
     ~/.config/k9s/config.yaml:
       path: base/.config/k9s/config.yaml
       if: '[ "$(uname)" = Linux ] && [ -x "$(command -v kubectl)" ]'
