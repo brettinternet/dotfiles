@@ -1,8 +1,7 @@
-# DeepSeek Harness settings. The web GUI and TUI write this file directly
-# (~/.dsh/cordis.patch.yml redirects the settings path here), so every change
-# shows up as a git diff. Never store secrets in this file: values are
-# apiKeyEnv references resolved from the process environment, ~/.dsh/.env, or
-# ~/.dsh/.credentials.yaml.
+# Initial DeepSeek Harness settings. ai.yaml copies this file to
+# ~/.dsh/settings.yaml once; the web GUI and TUI then update that local copy.
+# Never store secrets here: values are apiKeyEnv references resolved from the
+# process environment, ~/.dsh/.env, or ~/.dsh/.credentials.yaml.
 ui-onboarding:
   welcomeNoticeVersion: 2026-08-13.1
 agent-default-model:

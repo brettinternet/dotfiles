@@ -8,9 +8,9 @@ OpenCode renders `~/.config/opencode/opencode.jsonc` from `opencode/profiles/com
 
 ## DeepSeek Harness (dsh)
 
-`make ai` links `~/.dsh/AGENTS.md` (global instructions), `~/.dsh/cordis.patch.yml` (home-level patch), and `~/.dsh/.agent-presets` (`ai/dsh/presets`, holding the dsh-tui `liangshen` preset) into this repo. dsh discovers `~/.agents/skills/` natively, so the shared skills need no adapter. `make darwin` installs the dsh-tui profile with Bun (dsh's `dsh plugin` manager requires pnpm, which stays off this system); the web profile self-initializes with `dsh web`.
+`make ai` links `~/.dsh/AGENTS.md` (global instructions), `~/.dsh/cordis.patch.yml` (home-level patch), and `~/.dsh/.agent-presets` (`ai/dsh/presets`, holding the dsh-tui `liangshen` preset) into this repo. It seeds `~/.dsh/settings.yaml` from `ai/dsh/settings.yaml` once, leaving subsequent GUI and model changes local. dsh discovers `~/.agents/skills/` natively, so the shared skills need no adapter. `make darwin` installs the dsh-tui profile with Bun (dsh's `dsh plugin` manager requires pnpm, which stays off this system); the web profile self-initializes with `dsh web`.
 
-The home-level patch redirects the settings document to `ai/dsh/settings.yaml`, so the web GUI and TUI write settings directly into the repo as git diffs. The settings file carries only `apiKeyEnv` references, never secrets. API keys resolve from the environment; OAuth grants (ChatGPT subscription via `openai-codex`, Claude subscription, GitHub Copilot, OpenRouter OAuth) live per-machine in `~/.dsh/.credentials.yaml` — sign in once per machine with `/login` in dsh-tui and never sync the grant. A commented provider template sits at the bottom of the settings document; `DSH_SETTINGS_PATH` relocates it for a checkout that is not at `~/.dotfiles`.
+The settings template carries only `apiKeyEnv` references, never secrets. API keys resolve from the environment; OAuth grants (ChatGPT subscription via `openai-codex`, Claude subscription, GitHub Copilot, OpenRouter OAuth) live per-machine in `~/.dsh/.credentials.yaml` — sign in once per machine with `/login` in dsh-tui and never sync the grant. A commented provider template sits at the bottom of the settings document.
 
 ## Orchestration strategy
 

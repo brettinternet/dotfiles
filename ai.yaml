@@ -83,6 +83,23 @@
       stderr: true
     - command: |
         set -eu
+        mkdir -p "$HOME/.dsh"
+        target="$HOME/.dsh/settings.yaml"
+        if [ -L "$target" ]; then
+          rm "$target"
+        fi
+        if [ -e "$target" ] && [ ! -f "$target" ]; then
+          printf 'DSH settings target exists but is not a regular file: %s\n' "$target" >&2
+          exit 1
+        fi
+        if [ ! -e "$target" ]; then
+          cp ai/dsh/settings.yaml "$target"
+        fi
+      description: Seed DSH settings as a local copy
+      stdout: true
+      stderr: true
+    - command: |
+        set -eu
         if ! command -v herdr >/dev/null 2>&1; then
           echo 'herdr not on PATH; skipping integrations (mise install herdr)'
           exit 0
