@@ -18,7 +18,7 @@ new_workspace = "prefix+shift+c"
 switch_workspace = "prefix+shift+1..9"
 previous_workspace = "prefix+["
 next_workspace = "prefix+]"
-goto = ["prefix+g", "prefix+shift+f"]
+goto = "prefix+g"
 detach = ["prefix+d", "prefix+ctrl+d"]
 
 [[keys.command]]
@@ -91,6 +91,12 @@ command = "brett.command-palette.open"
 description = "open command palette"
 
 [[keys.command]]
+key = "prefix+shift+f"
+type = "plugin_action"
+command = "brett.command-palette.open-workspace-picker"
+description = "go to workspace with preview"
+
+[[keys.command]]
 key = "prefix+ctrl+h"
 type = "plugin_action"
 command = "brett.seamless-navigation.navigate-left"
@@ -115,44 +121,44 @@ command = "brett.seamless-navigation.navigate-right"
 description = "navigate right"
 
 [[keys.command]]
-key = "prefix+alt+h"
+key = "alt+shift+h"
 type = "plugin_action"
 command = "brett.seamless-navigation.resize-left"
 description = "resize left"
 
 [[keys.command]]
-key = "prefix+alt+j"
+key = "alt+shift+j"
 type = "plugin_action"
 command = "brett.seamless-navigation.resize-down"
 description = "resize down"
 
 [[keys.command]]
-key = "prefix+alt+k"
+key = "alt+shift+k"
 type = "plugin_action"
 command = "brett.seamless-navigation.resize-up"
 description = "resize up"
 
 [[keys.command]]
-key = "prefix+alt+l"
+key = "alt+shift+l"
 type = "plugin_action"
 command = "brett.seamless-navigation.resize-right"
 description = "resize right"
 
 [[keys.command]]
-key = "prefix+shift+o"
+key = "prefix+o"
 type = "popup"
 command = "herdr-open-dev-dir"
 description = "open development directory"
-width = "80%"
-height = "80%"
+width = 60
+height = 40
 
 [[keys.command]]
-key = "prefix+shift+a"
+key = "prefix+f"
 type = "popup"
 command = "herdr-insert-file-path"
 description = "insert file path at cursor"
-width = "80%"
-height = "80%"
+width = 60
+height = 40
 
 [ui]
 # Order the Agent panel as an attention queue rather than by space, so whoever
