@@ -44,9 +44,11 @@
 
     - command: |
         if command -v claude >/dev/null 2>&1; then
-          claude mcp remove time --scope user >/dev/null 2>&1 || true
+          for name in time chrome-devtools git; do
+            claude mcp remove "$name" --scope user >/dev/null 2>&1 || true
+          done
         fi
-      description: Remove retired time MCP server
+      description: Remove retired global MCP servers
       stdout: true
       stderr: true
 
@@ -59,8 +61,9 @@
           dir="$HOME/.omp/profiles/$name/agent"
           mkdir -p "$dir"
           ln -sfn "$src" "$dir/config.yml"
+          ln -sfn "$DOTFILES/ai/WATCHDOG.md" "$dir/WATCHDOG.md"
         done
-      description: Symlink pi profiles into ~/.omp/profiles/*/agent/config.yml
+      description: Symlink pi profiles and watchdog into ~/.omp/profiles/*/agent
       stdout: true
       stderr: true
 
