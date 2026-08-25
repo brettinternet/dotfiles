@@ -1,3 +1,4 @@
+import copy
 import importlib.util
 import os
 import re
@@ -183,16 +184,51 @@ class WorkspacePickerTest(unittest.TestCase):
         self.assertIn("─" * 40, plain_lines)
         self.assertTrue(all(len(line) <= 40 for line in plain_lines))
 
+    def test_cycles_preview_across_workspace_panes(self):
+        state = copy.deepcopy(self.state)
+        state["workspaces"][1]["pane_count"] = 2
+        state["panes"].append(
+            {
+                "workspace_id": "w1",
+                "tab_id": "w1:t1",
+                "pane_id": "w1:p2",
+                "agent": "claude",
+                "agent_status": "idle",
+                "terminal_title_stripped": "Review changes",
+                "focused": False,
+            }
+        )
+        screen = subprocess.CompletedProcess([], 0, stdout="pane output\n")
+        with tempfile.TemporaryDirectory() as temporary:
+            with (
+                mock.patch.dict(os.environ, {"HERDR_PLUGIN_STATE_DIR": temporary}),
+                mock.patch.object(workspace_picker, "herdr_command", return_value=screen),
+            ):
+                first = ANSI_ESCAPE.sub("", workspace_picker.workspace_preview(state, "w1"))
+                workspace_picker.cycle_preview_pane("w1", 1)
+                second = ANSI_ESCAPE.sub("", workspace_picker.workspace_preview(state, "w1"))
+                workspace_picker.cycle_preview_pane("w1", 1)
+                wrapped = ANSI_ESCAPE.sub("", workspace_picker.workspace_preview(state, "w1"))
+
+        self.assertIn("Pane 1/2  w1:p1", first)
+        self.assertIn("Pane 2/2  w1:p2", second)
+        self.assertIn("Pane 1/2  w1:p1", wrapped)
+
     def test_selection_focuses_workspace(self):
         selection = subprocess.CompletedProcess([], 0, stdout="w2\tsecond\t1 tabs\t1 panes\tidle\n")
         with (
             mock.patch.object(workspace_picker, "snapshot", return_value=self.state),
-            mock.patch.object(workspace_picker.subprocess, "run", return_value=selection),
+            mock.patch.object(workspace_picker.subprocess, "run", return_value=selection) as run,
             mock.patch.object(workspace_picker, "herdr_command") as herdr,
         ):
             workspace_picker.pick_workspace()
 
         herdr.assert_called_once_with("workspace", "focus", "w2")
+        binding = next(argument for argument in run.call_args.args[0] if argument.startswith("--bind="))
+        self.assertIn("ctrl-j:down,ctrl-k:up,ctrl-h:backward-delete-char", binding)
+        self.assertIn("alt-up:execute-silent", binding)
+        self.assertIn("alt-down:execute-silent", binding)
+        self.assertIn("+refresh-preview", binding)
 
 class CommandPaletteTest(unittest.TestCase):
     def test_invokes_selected_action_with_cli_argument_order(self):
