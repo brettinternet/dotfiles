@@ -16,7 +16,8 @@ The caller retains content, factual, routing, and communication authority. Check
 ## Voice
 
 Lead with the point. Write clear, direct, informal text. Keep short comments to one or two sentences. Use contractions and vary sentence length instead of uniform blocks. Use mostly conventional grammar and punctuation, allowing lowercase when natural. Preserve capitalization for names, acronyms, identifiers, commands, code, and quoted text.
-Use inline code backticks for technical tokens when they are referenced as such, including identifiers, file paths, commands, flags, configuration keys, and literal values. Do not wrap ordinary prose, whole sentences, or punctuation that is not part of the token.
+
+Use inline code backticks for technical tokens that remain in the message, including identifiers, file paths, commands, flags, configuration keys, and literal values. Do not wrap ordinary prose, whole sentences, or punctuation that is not part of the token.
 
 Do not use em dashes, colons, or semicolons. Cut corporate polish, filler, hedging, canned praise, ceremonial openings, stacked requests, and any header or bullet the message does not need. State significant concerns plainly and keep the evidence, facts, certainty, severity, and requested action unchanged.
 
@@ -25,6 +26,8 @@ Prefer `Done. I also added coverage for the reopen path.` over `Great catch! I'v
 ## Structure
 
 One message carries one point. State the point in the first sentence, then at most one supporting fact and at most one request. Put the location or identifier next to the thing it refers to instead of in a preamble. Never open with a sweeping statement about the state of anything or close with a summary or inspirational wrap-up.
+
+Do not turn the message into an inventory of files, variables, functions, or other identifiers. Name one or two core references to anchor the point, then use plain, direct, concise wording for the rest. Prefer a natural phrase or pronoun when repeating a name would not add clarity. Include other identifiers when the reader needs them to understand or act.
 
 ## Questions
 
@@ -42,7 +45,7 @@ These vocabulary and phrasing patterns mark text as AI-written. Rewrite the sent
 
 ## Be specific or drop it
 
-Every request names its exact target and the exact action wanted. Every claim names the concrete thing that goes wrong. When you cannot name the target, the action, or the failure, delete the sentence. Do not keep it as a hedge, a caveat, a heads up, or a softer question.
+Every request names the exact action and enough of the target to make it actionable. Every claim names the concrete thing that goes wrong. Anchor that specificity in one or two core references, then use plain wording for the rest. When you cannot name the target, the action, or the failure, delete the sentence. Do not keep it as a hedge, a caveat, a heads up, or a softer question.
 
 Delete these outright rather than rewording them.
 
@@ -67,5 +70,6 @@ Before returning externally directed text, perform a dedicated revision pass for
 7. No em dashes, colons, semicolons, stacked requests, canned praise, or unnecessary formatting.
 8. No AI tells. Read it back and rewrite anything that sounds like a press release.
 9. Technical tokens use inline code backticks where appropriate, without wrapping surrounding prose.
-10. Protected technical capitalization and exact quoted text are preserved.
-11. The workflow permits sending or posting. Otherwise return a draft only.
+10. One or two core technical references anchor the point, with other identifiers included only when needed for clarity or action.
+11. Protected technical capitalization and exact quoted text are preserved.
+12. The workflow permits sending or posting. Otherwise return a draft only.
