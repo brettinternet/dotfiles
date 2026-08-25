@@ -2,10 +2,83 @@
 
 import json
 import os
+import re
 import shlex
 import subprocess
 import sys
+import unicodedata
 from pathlib import Path
+
+RESET = "\033[0m"
+BOLD = "\033[1m"
+DIM = "\033[2m"
+CYAN = "\033[36m"
+GREEN = "\033[32m"
+YELLOW = "\033[33m"
+MAGENTA = "\033[35m"
+RED = "\033[31m"
+GRAY = "\033[90m"
+ANSI_ESCAPE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
+
+STATUS_STYLES = {
+    "working": (YELLOW, "●"),
+    "blocked": (RED + BOLD, "◆"),
+    "done": (CYAN, "✓"),
+    "idle": (GREEN, "○"),
+    "unknown": (GRAY, "?"),
+}
+
+
+def styled(text: object, style: str) -> str:
+    return f"{style}{clean(text)}{RESET}"
+
+
+def status_label(status: object) -> str:
+    value = clean(status) or "unknown"
+    style, symbol = STATUS_STYLES.get(value, (MAGENTA, "•"))
+    return f"{style}{symbol} {value}{RESET}"
+
+
+def count_label(count: int, noun: str) -> str:
+    return f"{count} {noun if count == 1 else noun + 's'}"
+
+def preview_columns() -> int:
+    try:
+        return max(20, int(os.environ.get("FZF_PREVIEW_COLUMNS", "80")) - 1)
+    except ValueError:
+        return 79
+
+
+def character_width(character: str) -> int:
+    if unicodedata.combining(character):
+        return 0
+    if unicodedata.category(character).startswith("C"):
+        return 0
+    return 2 if unicodedata.east_asian_width(character) in {"W", "F"} else 1
+
+
+def truncate_ansi_line(line: str, width: int) -> str:
+    output = []
+    display_width = 0
+    index = 0
+    while index < len(line):
+        escape = ANSI_ESCAPE.match(line, index)
+        if escape is not None:
+            output.append(escape.group())
+            index = escape.end()
+            continue
+        character = line[index]
+        index += 1
+        next_width = character_width(character)
+        if display_width + next_width > width:
+            break
+        output.append(character)
+        display_width += next_width
+    return "".join(output).rstrip("\r") + RESET
+
+
+def fit_ansi_screen(screen: str, width: int) -> list[str]:
+    return [truncate_ansi_line(line, width) for line in screen.splitlines()]
 
 
 def herdr_command(*arguments: str, text: str | None = None) -> subprocess.CompletedProcess[str]:
@@ -34,10 +107,10 @@ def workspace_rows(state: dict) -> str:
             "\t".join(
                 [
                     workspace["workspace_id"],
-                    clean(workspace.get("label") or workspace["workspace_id"]),
-                    f"{workspace.get('tab_count', 0)} tabs",
-                    f"{workspace.get('pane_count', 0)} panes",
-                    clean(workspace.get("agent_status")),
+                    styled(workspace.get("label") or workspace["workspace_id"], BOLD),
+                    count_label(workspace.get("tab_count", 0), "tab"),
+                    count_label(workspace.get("pane_count", 0), "pane"),
+                    status_label(workspace.get("agent_status")),
                 ]
             )
         )
@@ -50,10 +123,18 @@ def workspace_preview(state: dict, workspace_id: str) -> str:
         None,
     )
     if workspace is None:
-        return "Workspace no longer exists"
+        return styled("Workspace no longer exists", RED)
+    columns = preview_columns()
 
+    tab_count = workspace.get("tab_count", 0)
+    pane_count = workspace.get("pane_count", 0)
     lines = [
-        f"{workspace.get('label') or workspace_id}  [{workspace.get('agent_status', '')}]",
+        f"{styled(workspace.get('label') or workspace_id, BOLD + CYAN)}  "
+        f"{status_label(workspace.get('agent_status'))}",
+        styled(
+            f"{count_label(tab_count, 'tab')} · {count_label(pane_count, 'pane')}",
+            DIM,
+        ),
         "",
     ]
     tabs = sorted(
@@ -61,28 +142,48 @@ def workspace_preview(state: dict, workspace_id: str) -> str:
         key=lambda item: item["number"],
     )
     panes = [item for item in state.get("panes", []) if item["workspace_id"] == workspace_id]
-    for tab in tabs:
-        marker = "*" if tab["tab_id"] == workspace.get("active_tab_id") else " "
+    for tab_index, tab in enumerate(tabs):
+        tab_last = tab_index == len(tabs) - 1
+        tab_branch = "└─" if tab_last else "├─"
+        active = tab["tab_id"] == workspace.get("active_tab_id")
+        tab_marker = styled("▶", CYAN) if active else styled("•", GRAY)
+        tab_title = f"Tab {tab['number']}"
         lines.append(
-            f"{marker} Tab {tab['number']}: {tab.get('label') or tab['tab_id']}"
-            f"  [{tab.get('agent_status', '')}]"
+            f"{styled(tab_branch, GRAY)} {tab_marker} "
+            f"{styled(tab_title, BOLD if active else '')}  "
+            f"{clean(tab.get('label') or tab['tab_id'])}  "
+            f"{status_label(tab.get('agent_status'))}"
         )
-        for pane in sorted(
+        tab_panes = sorted(
             (item for item in panes if item["tab_id"] == tab["tab_id"]),
             key=lambda item: item["pane_id"],
-        ):
+        )
+        trunk = "   " if tab_last else "│  "
+        for pane_index, pane in enumerate(tab_panes):
+            pane_branch = "└─" if pane_index == len(tab_panes) - 1 else "├─"
             agent = clean(pane.get("agent") or "shell")
-            status = clean(pane.get("agent_status"))
-            title = clean(pane.get("terminal_title_stripped"))
-            lines.append(f"    {pane['pane_id']}  {agent} {status}  {title}")
-        lines.append("")
+            title = clean(pane.get("terminal_title_stripped")) or clean(pane.get("cwd"))
+            lines.append(
+                f"{styled(trunk + pane_branch, GRAY)} "
+                f"{styled(pane['pane_id'], DIM)}  {styled(agent, MAGENTA)}  "
+                f"{status_label(pane.get('agent_status'))}  {title}"
+            )
 
     active_panes = [item for item in panes if item["tab_id"] == workspace.get("active_tab_id")]
     representative = next((item for item in active_panes if item.get("focused")), None)
     if representative is None and active_panes:
         representative = active_panes[0]
     if representative is not None:
-        lines.extend(["─" * 60, clean(representative.get("terminal_title_stripped")), ""])
+        title = clean(representative.get("terminal_title_stripped"))
+        lines.extend(
+            [
+                "",
+                styled("─" * columns, GRAY),
+                f"{styled('Pane preview', BOLD + CYAN)}  "
+                f"{styled(representative['pane_id'], DIM)}  {title}",
+                "",
+            ]
+        )
         try:
             screen = herdr_command(
                 "pane",
@@ -92,12 +193,14 @@ def workspace_preview(state: dict, workspace_id: str) -> str:
                 "visible",
                 "--lines",
                 "30",
+                "--format",
+                "ansi",
             ).stdout.rstrip()
         except subprocess.CalledProcessError:
-            screen = "Pane preview unavailable"
-        lines.append(screen)
+            screen = styled("Pane preview unavailable", RED)
+        lines.extend(fit_ansi_screen(screen, columns))
 
-    return "\n".join(lines).rstrip()
+    return "\n".join(truncate_ansi_line(line, columns) for line in lines).rstrip()
 
 
 def pick_workspace() -> None:
@@ -111,11 +214,18 @@ def pick_workspace() -> None:
     selected = subprocess.run(
         [
             "fzf",
+            "--ansi",
             "--delimiter=\t",
             "--with-nth=2..",
-            "--prompt=Go to workspace> ",
+            "--layout=reverse",
+            "--info=inline-right",
+            "--pointer=▸",
+            "--prompt=Go to workspace › ",
+            "--color=fg:-1,bg:-1,hl:cyan,fg+:white,bg+:-1,hl+:cyan,pointer:magenta,prompt:cyan,border:blue,label:blue,preview-border:blue,preview-label:blue,info:yellow",
             f"--preview={preview}",
-            "--preview-window=right,65%,wrap",
+            "--preview-label= Workspace preview ",
+            "--preview-window=right,70%,nowrap,border-left",
+            "--preview-wrap-sign=↳ ",
         ],
         input=f"{rows}\n",
         capture_output=True,
