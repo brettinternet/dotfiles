@@ -50,12 +50,6 @@ elif [ -f /opt/homebrew/bin/virtualenvwrapper_lazy.sh ]; then
   . /opt/homebrew/bin/virtualenvwrapper_lazy.sh
 fi
 
-# https://guides.rubygems.org/faqs/#user-install
-if command -v ruby >/dev/null 2>&1 && command -v gem >/dev/null 2>&1; then
-  profile_gem_user_bin="$(ruby -r rubygems -e 'puts Gem.user_dir')/bin"
-  export PATH="$profile_gem_user_bin:$PATH"
-fi
-
 # global NPM packages: https://docs.npmjs.com/resolving-eacces-permissions-errors-when-installing-packages-globally
 # Set custom gopath because I prefer it to be a hidden folder
 export GOPATH="$HOME/.go"
@@ -79,19 +73,10 @@ profile_dircolors="$HOME/.dircolors"
 if [ -f "$profile_dircolors" ] && command -v dircolors >/dev/null 2>&1; then
   eval "$(dircolors "$profile_dircolors")"
   export LS_COLORS="${LS_COLORS:+$LS_COLORS:}ow=01;31:tw=01;33"
-elif [ -x "$(command -v lsd)" ]; then
+elif command -v eza >/dev/null 2>&1; then
   export LS_COLORS="${LS_COLORS:+$LS_COLORS:}ow=01;31:tw=01;33"
 elif [ "$(uname)" = "Darwin" ]; then
   export LSCOLORS="exfxcxdxbxegedabagxxxx"
-fi
-
-# Common utility replacements via aliases
-if [ -x "$(command -v lsd)" ]; then
-  alias ls='lsd'
-elif [ "$(uname)" = "Darwin" ]; then
-  alias ls='ls -G'
-else
-  alias ls='ls --color=auto'
 fi
 
 if [ -x "$(command -v bat)" ]; then
@@ -108,5 +93,5 @@ if [ -d "$profile_bun_bin" ]; then
   export PATH="$profile_bun_bin:$PATH"
 fi
 
-unset profile_workspace_only_env profile_rust_env_file profile_gem_user_bin \
-  profile_ten_minutes profile_dircolors profile_bun_bin
+unset profile_workspace_only_env profile_rust_env_file profile_ten_minutes \
+  profile_dircolors profile_bun_bin

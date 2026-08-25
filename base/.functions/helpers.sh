@@ -57,18 +57,13 @@ function up {
   fi
 }
 
-# fzy (see .functions for more)
-alias ff="find . -type f | fzf"
-alias fh="history | fzf"
-
 # https://wiki.archlinux.org/index.php/Sudo#Passing_aliases
 alias sudo="sudo "
 
 # Directories
 alias dotfiles='cd ~/.dotfiles'
 
-# ls
-# note: alias ls is in .profile
+# ls is selected after Zinit installs the platform-appropriate eza binary.
 alias ll='ls -lhF'
 alias lla='ls -lhAF'
 alias la='ls -AF'
@@ -88,12 +83,10 @@ alias du='du -h -d 2'
 alias grep='grep --color=auto'
 
 # Common shell functions
-alias less='less -r'
+alias less='less -R'
 alias tf='tail -f'
 alias l='less'
 alias lh='ls -alt | head' # see the last modified files
-alias screen='TERM=screen screen'
-alias ssh='TERM=xterm-256color ssh'
 
 # Editors
 alias e='emacs'

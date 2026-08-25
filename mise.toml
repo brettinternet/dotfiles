@@ -2,7 +2,6 @@
 
 [tools]
 prettier = "latest"
-direnv = "latest"
 gitleaks = "latest"
 lefthook = "latest"
 shellcheck = "latest"

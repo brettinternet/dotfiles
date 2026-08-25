@@ -1,8 +1,5 @@
 #!/bin/zsh
 
-alias python='python3'
-alias pip='pip3'
-
 # GCloud SDK
 gcloud_sdk_path="/opt/google-cloud-sdk"
 if [ -f "$gcloud_sdk_path/path.zsh.inc" ]; then

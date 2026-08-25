@@ -7,10 +7,9 @@ die() {
   exit 1
 }
 
-[[ $# -eq 1 ]] || die "expected Ghostty scrollback file"
-[[ -e "$1" ]] || die "file does not exist: $1"
+[[ $# -le 1 ]] || die "expected at most one terminal scrollback file"
 
-scrollback_file=$1
+scrollback_file=${1:-}
 captured_file=''
 
 cleanup() {
@@ -18,12 +17,26 @@ cleanup() {
 }
 trap cleanup EXIT
 
+capture_file() {
+  captured_file="$(mktemp "${TMPDIR:-/tmp}/context-scrollback.XXXXXX")" ||
+    die "could not create temporary file"
+  scrollback_file=$captured_file
+}
+
 if [[ "${HERDR_ENV:-}" == "1" && -n "${HERDR_PANE_ID:-}" ]]; then
   command -v herdr >/dev/null 2>&1 || die "Herdr CLI not found"
-  captured_file="$(mktemp "${TMPDIR:-/tmp}/context-scrollback.XXXXXX")" || die "could not create temporary file"
-  herdr pane read "$HERDR_PANE_ID" --source recent-unwrapped --format text --lines 1000000 >"$captured_file" ||
+  capture_file
+  herdr pane read "$HERDR_PANE_ID" --source recent-unwrapped --format text --lines 1000000 >"$scrollback_file" ||
     die "could not read Herdr pane $HERDR_PANE_ID"
-  scrollback_file=$captured_file
+elif [[ -n "${TMUX:-}" && -n "${TMUX_PANE:-}" ]]; then
+  command -v tmux >/dev/null 2>&1 || die "tmux CLI not found"
+  capture_file
+  tmux capture-pane -p -J -S - -t "$TMUX_PANE" >"$scrollback_file" ||
+    die "could not read tmux pane $TMUX_PANE"
+elif [[ -z "$scrollback_file" ]]; then
+  die "no scrollback provider; use Herdr, tmux, or pass a terminal-exported file"
+elif [[ ! -e "$scrollback_file" ]]; then
+  die "file does not exist: $scrollback_file"
 fi
 
 "${EDITOR:-vi}" "$scrollback_file"
