@@ -14,7 +14,7 @@ Options:
   -f      Simple view, format to 1, 2, 3, or 4
   -r      Weather report
   -d      Data-rich view
-  -m      Map view (unsupported by Alacritty)
+  -m      Map view
 
 EOF
 }
