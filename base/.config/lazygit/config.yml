@@ -1,2 +1,10 @@
 gui:
   showBottomLine: false
+  showCommandLog: false
+  filterMode: fuzzy
+  showListFooter: false
+  sidePanels:
+    - [files, worktrees, submodules]
+    - [branches, remotes, tags]
+    - [commits, reflog]
+    - [stash]
