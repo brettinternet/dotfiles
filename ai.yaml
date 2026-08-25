@@ -123,7 +123,7 @@
           echo 'herdr not on PATH; skipping local plugins'
           exit 0
         fi
-        for plugin in window-title pane-collapse pane-equalize pane-rotate; do
+        for plugin in window-title pane-collapse pane-equalize pane-rotate last-workspace seamless-navigation command-palette; do
           herdr plugin link "ai/herdr/plugins/$plugin"
         done
       description: Link local herdr plugins

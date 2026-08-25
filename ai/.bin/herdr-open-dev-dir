@@ -1,0 +1,27 @@
+#!/bin/sh
+set -eu
+
+export PATH="$HOME/.local/share/mise/shims:$HOME/.local/bin:$PATH"
+herdr_bin=${HERDR_BIN_PATH:-herdr}
+
+selected=$(
+  {
+    [ ! -d "$HOME/.dotfiles" ] || printf '%s\n' "$HOME/.dotfiles"
+    [ ! -d "$HOME/dev" ] || fd --hidden --type d --max-depth 4 '^\.git$' "$HOME/dev" --exec dirname
+  } | sort -u | fzf --prompt='Open workspace> '
+) || exit 0
+[ -n "$selected" ] || exit 0
+
+workspace_id=$(
+  "$herdr_bin" api snapshot | jq -r --arg cwd "$selected" '
+    [.result.snapshot.panes[] | select(.cwd == $cwd or .foreground_cwd == $cwd) | .workspace_id]
+    | first // empty
+  '
+)
+
+if [ -n "$workspace_id" ]; then
+  exec "$herdr_bin" workspace focus "$workspace_id"
+fi
+
+label=$(basename "$selected")
+exec "$herdr_bin" workspace create --cwd "$selected" --label "$label" --focus
