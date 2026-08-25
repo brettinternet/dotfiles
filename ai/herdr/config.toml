@@ -97,6 +97,12 @@ command = "brett.command-palette.open-workspace-picker"
 description = "go to workspace with preview"
 
 [[keys.command]]
+key = "prefix+ctrl+o"
+type = "plugin_action"
+command = "brett.command-palette.open-workspace-overview"
+description = "open workspace overview"
+
+[[keys.command]]
 key = "prefix+ctrl+h"
 type = "plugin_action"
 command = "brett.seamless-navigation.navigate-left"
