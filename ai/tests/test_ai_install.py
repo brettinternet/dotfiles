@@ -343,6 +343,9 @@ trusted_hash = "sha256:trusted"
         installed = self.home / ".omp/agent/models.yml"
         self.assertTrue(installed.is_symlink())
         self.assertEqual((ROOT / "ai/pi/models.yml").resolve(), installed.resolve())
+        watchdog = self.home / ".omp/agent/WATCHDOG.md"
+        self.assertTrue(watchdog.is_symlink())
+        self.assertEqual((ROOT / "ai/WATCHDOG.md").resolve(), watchdog.resolve())
 
     def test_profile_rendering_writes_only_home(self) -> None:
         before = self.repository_status()
