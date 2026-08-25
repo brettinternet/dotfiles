@@ -226,35 +226,24 @@ unset -f mise_release_os mise_release_arch
 
 eval "$(mise activate zsh)"
 
-eza_release_target() {
-  case "$(uname -m)" in
-    x86_64|amd64) echo x86_64-unknown-linux-gnu ;;
-    arm64|aarch64) echo aarch64-unknown-linux-gnu ;;
-    armv7l|armv7) echo arm-unknown-linux-gnueabihf ;;
-  esac
-}
+if [[ "$OSTYPE" == linux* ]]; then
+  eza_release_target() {
+    case "$(uname -m)" in
+      x86_64|amd64) echo x86_64-unknown-linux-gnu ;;
+      arm64|aarch64) echo aarch64-unknown-linux-gnu ;;
+      armv7l|armv7) echo arm-unknown-linux-gnueabihf ;;
+    esac
+  }
 
-case "$OSTYPE" in
-  darwin*)
-    # eza publishes Linux binaries only. Build it on macOS when Cargo is already
-    # available; otherwise keep shell startup clean and use the ls -G fallback.
-    if (( ${+commands[cargo]} )); then
-      zinit ice as"program" pick"target/release/eza" \
-        atclone'cargo build --release --locked' atpull'%atclone'
-      zinit light eza-community/eza
-    fi
-    ;;
-  linux*)
-    EZA_RELEASE_TARGET="$(eza_release_target)"
-    if [[ -n "$EZA_RELEASE_TARGET" ]]; then
-      zinit ice as"program" from"gh-r" \
-        bpick"eza_$EZA_RELEASE_TARGET.tar.gz" pick"eza"
-      zinit light eza-community/eza
-    fi
-    unset EZA_RELEASE_TARGET
-    ;;
-esac
-unset -f eza_release_target
+  EZA_RELEASE_TARGET="$(eza_release_target)"
+  if [[ -n "$EZA_RELEASE_TARGET" ]]; then
+    zinit ice as"program" from"gh-r" \
+      bpick"eza_$EZA_RELEASE_TARGET.tar.gz" pick"eza"
+    zinit light eza-community/eza
+  fi
+  unset EZA_RELEASE_TARGET
+  unset -f eza_release_target
+fi
 
 if (( ${+commands[eza]} )); then
   alias ls='eza --group-directories-first'
