@@ -1,3 +1,5 @@
+quitOnTopLevelReturn: true
+
 gui:
   showBottomLine: false
   showCommandLog: false
