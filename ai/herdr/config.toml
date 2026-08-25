@@ -91,7 +91,7 @@ command = "brett.command-palette.open"
 description = "open command palette"
 
 [[keys.command]]
-key = "prefix+shift+f"
+key = "prefix+shift+g"
 type = "plugin_action"
 command = "brett.command-palette.open-workspace-picker"
 description = "go to workspace with preview"
