@@ -4,6 +4,7 @@ import json
 import os
 import re
 import shlex
+import socket
 import subprocess
 import sys
 import unicodedata
@@ -19,6 +20,30 @@ MAGENTA = "\033[35m"
 RED = "\033[31m"
 GRAY = "\033[90m"
 ANSI_ESCAPE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
+
+
+def herdr_request(method: str, params: dict) -> dict:
+    socket_path = os.environ.get("HERDR_SOCKET_PATH")
+    if not socket_path:
+        raise RuntimeError("HERDR_SOCKET_PATH is not set")
+    payload = json.dumps({"id": "workspace-picker", "method": method, "params": params})
+    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
+        client.connect(socket_path)
+        client.sendall(payload.encode() + b"\n")
+        response = b""
+        while b"\n" not in response:
+            chunk = client.recv(65536)
+            if not chunk:
+                break
+            response += chunk
+    if not response:
+        raise RuntimeError(f"Herdr returned no response for {method}")
+    decoded = json.loads(response.splitlines()[0])
+    if "error" in decoded:
+        error = decoded["error"]
+        raise RuntimeError(error.get("message") or error.get("code") or str(error))
+    return decoded["result"]
+
 
 STATUS_STYLES = {
     "working": (YELLOW, "●"),
@@ -108,6 +133,14 @@ def preview_index_path(workspace_id: str) -> Path | None:
     directory.mkdir(parents=True, exist_ok=True)
     return directory / f"workspace-preview-{safe_id}.index"
 
+def current_preview_path() -> Path | None:
+    state_dir = os.environ.get("HERDR_PLUGIN_STATE_DIR")
+    if not state_dir:
+        return None
+    directory = Path(state_dir)
+    directory.mkdir(parents=True, exist_ok=True)
+    return directory / "workspace-preview-current"
+
 
 def selected_preview_index(workspace_id: str, pane_count: int, default: int) -> int:
     if pane_count == 0:
@@ -133,13 +166,57 @@ def cycle_preview_pane(workspace_id: str, delta: int) -> None:
         selected = 0
     path.write_text(f"{selected + delta}\n")
 
+def record_current_preview_workspace(workspace_id: str) -> None:
+    path = current_preview_path()
+    if path is not None:
+        path.write_text(f"{workspace_id}\n")
+
+
+def cycle_current_preview_pane(delta: int) -> None:
+    path = current_preview_path()
+    if path is None:
+        return
+    try:
+        workspace_id = path.read_text().strip()
+    except FileNotFoundError:
+        return
+    if workspace_id:
+        cycle_preview_pane(workspace_id, delta)
+
 def reset_preview_indexes() -> None:
     state_dir = os.environ.get("HERDR_PLUGIN_STATE_DIR")
     if not state_dir:
         return
     for path in Path(state_dir).glob("workspace-preview-*.index"):
         path.unlink(missing_ok=True)
+    path = current_preview_path()
+    if path is not None:
+        path.unlink(missing_ok=True)
 
+
+def ordered_workspace_panes(state: dict, workspace_id: str) -> list[dict]:
+    tabs = sorted(
+        (item for item in state.get("tabs", []) if item["workspace_id"] == workspace_id),
+        key=lambda item: item["number"],
+    )
+    panes = [item for item in state.get("panes", []) if item["workspace_id"] == workspace_id]
+    return [
+        pane
+        for tab in tabs
+        for pane in sorted(
+            (item for item in panes if item["tab_id"] == tab["tab_id"]),
+            key=lambda item: item["pane_id"],
+        )
+    ]
+
+def focus_workspace_selection(state: dict, workspace_id: str) -> None:
+    herdr_command("workspace", "focus", workspace_id)
+    panes = ordered_workspace_panes(state, workspace_id)
+    if not panes:
+        return
+    default_pane = next((index for index, pane in enumerate(panes) if pane.get("focused")), 0)
+    pane_index = selected_preview_index(workspace_id, len(panes), default_pane)
+    herdr_request("pane.focus", {"pane_id": panes[pane_index]["pane_id"]})
 
 def workspace_rows(state: dict) -> str:
     rows = []
@@ -183,14 +260,7 @@ def workspace_preview(state: dict, workspace_id: str) -> str:
         key=lambda item: item["number"],
     )
     panes = [item for item in state.get("panes", []) if item["workspace_id"] == workspace_id]
-    ordered_panes = [
-        pane
-        for tab in tabs
-        for pane in sorted(
-            (item for item in panes if item["tab_id"] == tab["tab_id"]),
-            key=lambda item: item["pane_id"],
-        )
-    ]
+    ordered_panes = ordered_workspace_panes(state, workspace_id)
     default_pane = next(
         (
             index
@@ -279,25 +349,47 @@ def pick_workspace() -> None:
     preview = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} preview {{1}}"
     cycle_up = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} cycle {{1}} -1"
     cycle_down = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} cycle {{1}} 1"
-    bindings = (
-        "ctrl-j:down,ctrl-k:up,ctrl-h:backward-delete-char,"
-        f"alt-up:execute-silent({cycle_up})+refresh-preview,"
-        f"alt-down:execute-silent({cycle_down})+refresh-preview"
+    cycle_current_up = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} cycle-current -1"
+    cycle_current_down = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} cycle-current 1"
+    pane_prompt = "Pane › "
+    workspace_prompt = "Go to workspace › "
+    pane_label = " Pane switcher · Ctrl-N/P cycle · Ctrl-B back "
+    workspace_label = " Workspace preview "
+    pane_next = f"execute-silent({cycle_current_down})"
+    pane_previous = f"execute-silent({cycle_current_up})"
+    ctrl_next = (
+        "transform:if [ \"$FZF_PROMPT\" = "
+        f"{shlex.quote(pane_prompt)} ]; then printf '%s\\053%s\\n' "
+        f"{shlex.quote(pane_next)} refresh-preview; else printf '%s\\n' down; fi"
     )
+    ctrl_previous = (
+        "transform:if [ \"$FZF_PROMPT\" = "
+        f"{shlex.quote(pane_prompt)} ]; then printf '%s\\053%s\\n' "
+        f"{shlex.quote(pane_previous)} refresh-preview; else printf '%s\\n' up; fi"
+    )
+    bindings = [
+        "ctrl-j:down,ctrl-k:up,ctrl-h:backward-delete-char",
+        f"ctrl-f:change-prompt({pane_prompt})+disable-search+change-preview-label({pane_label})",
+        f"ctrl-b:change-prompt({workspace_prompt})+enable-search+change-preview-label({workspace_label})",
+        f"ctrl-n:{ctrl_next}",
+        f"ctrl-p:{ctrl_previous}",
+        f"alt-up:execute-silent({cycle_up})+refresh-preview",
+        f"alt-down:execute-silent({cycle_down})+refresh-preview",
+    ]
     selected = subprocess.run(
         [
             "fzf",
             "--ansi",
-            f"--bind={bindings}",
+            *[f"--bind={binding}" for binding in bindings],
             "--delimiter=\t",
             "--with-nth=2..",
             "--layout=reverse",
             "--info=inline-right",
             "--pointer=▸",
-            "--prompt=Go to workspace › ",
+            f"--prompt={workspace_prompt}",
             "--color=fg:-1,bg:-1,hl:cyan,fg+:white,bg+:-1,hl+:cyan,pointer:magenta,prompt:cyan,border:blue,label:blue,preview-border:blue,preview-label:blue,info:yellow",
             f"--preview={preview}",
-            "--preview-label= Workspace preview ",
+            f"--preview-label={workspace_label}",
             "--preview-window=right,70%,nowrap,border-left",
         ],
         input=f"{rows}\n",
@@ -309,18 +401,24 @@ def pick_workspace() -> None:
         return
 
     workspace_id = selected.stdout.split("\t", 1)[0]
-    herdr_command("workspace", "focus", workspace_id)
+    focus_workspace_selection(state, workspace_id)
 
 
 def main() -> None:
     if len(sys.argv) == 3 and sys.argv[1] == "preview":
+        record_current_preview_workspace(sys.argv[2])
         print(workspace_preview(snapshot(), sys.argv[2]))
         return
     if len(sys.argv) == 4 and sys.argv[1] == "cycle":
         cycle_preview_pane(sys.argv[2], int(sys.argv[3]))
         return
+    if len(sys.argv) == 3 and sys.argv[1] == "cycle-current":
+        cycle_current_preview_pane(int(sys.argv[2]))
+        return
     if len(sys.argv) != 1:
-        raise SystemExit("usage: workspace-picker.py [preview WORKSPACE_ID | cycle WORKSPACE_ID DELTA]")
+        raise SystemExit(
+            "usage: workspace-picker.py [preview WORKSPACE_ID | cycle WORKSPACE_ID DELTA | cycle-current DELTA]"
+        )
     pick_workspace()
 
 

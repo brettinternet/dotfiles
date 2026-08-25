@@ -202,17 +202,22 @@ class WorkspacePickerTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             with (
                 mock.patch.dict(os.environ, {"HERDR_PLUGIN_STATE_DIR": temporary}),
-                mock.patch.object(workspace_picker, "herdr_command", return_value=screen),
+                mock.patch.object(workspace_picker, "herdr_command", return_value=screen) as herdr,
+                mock.patch.object(workspace_picker, "herdr_request") as request,
             ):
+                workspace_picker.record_current_preview_workspace("w1")
                 first = ANSI_ESCAPE.sub("", workspace_picker.workspace_preview(state, "w1"))
-                workspace_picker.cycle_preview_pane("w1", 1)
+                workspace_picker.cycle_current_preview_pane(1)
                 second = ANSI_ESCAPE.sub("", workspace_picker.workspace_preview(state, "w1"))
-                workspace_picker.cycle_preview_pane("w1", 1)
+                workspace_picker.focus_workspace_selection(state, "w1")
+                workspace_picker.cycle_current_preview_pane(1)
                 wrapped = ANSI_ESCAPE.sub("", workspace_picker.workspace_preview(state, "w1"))
 
         self.assertIn("Pane 1/2  w1:p1", first)
         self.assertIn("Pane 2/2  w1:p2", second)
         self.assertIn("Pane 1/2  w1:p1", wrapped)
+        herdr.assert_any_call("workspace", "focus", "w1")
+        request.assert_called_once_with("pane.focus", {"pane_id": "w1:p2"})
 
     def test_selection_focuses_workspace(self):
         selection = subprocess.CompletedProcess([], 0, stdout="w2\tsecond\t1 tabs\t1 panes\tidle\n")
@@ -222,12 +227,25 @@ class WorkspacePickerTest(unittest.TestCase):
             mock.patch.object(workspace_picker, "herdr_command") as herdr,
         ):
             workspace_picker.pick_workspace()
-
         herdr.assert_called_once_with("workspace", "focus", "w2")
-        binding = next(argument for argument in run.call_args.args[0] if argument.startswith("--bind="))
+
+        binding_args = [argument for argument in run.call_args.args[0] if argument.startswith("--bind=")]
+        binding = ",".join(argument.removeprefix("--bind=") for argument in binding_args)
+        transform_bindings = [argument for argument in binding_args if ":transform:" in argument]
+        self.assertEqual(2, len(transform_bindings))
+        self.assertTrue(all(",ctrl-" not in argument for argument in transform_bindings))
         self.assertIn("ctrl-j:down,ctrl-k:up,ctrl-h:backward-delete-char", binding)
         self.assertIn("alt-up:execute-silent", binding)
         self.assertIn("alt-down:execute-silent", binding)
+        self.assertIn("ctrl-f:change-prompt(Pane › )+disable-search", binding)
+        self.assertIn("ctrl-b:change-prompt(Go to workspace › )+enable-search", binding)
+        self.assertIn("ctrl-n:transform:", binding)
+        self.assertIn("ctrl-p:transform:", binding)
+        self.assertIn("$FZF_PROMPT", binding)
+        self.assertIn("cycle-current 1", binding)
+        self.assertIn("cycle-current -1", binding)
+        self.assertIn("cycle {1} 1", binding)
+        self.assertIn("cycle {1} -1", binding)
         self.assertIn("+refresh-preview", binding)
 
 class CommandPaletteTest(unittest.TestCase):
