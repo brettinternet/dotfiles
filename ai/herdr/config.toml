@@ -108,3 +108,5 @@ delivery = "terminal"
 kitty_graphics = true
 # CAO launches agent workspaces from a Herdr-managed pane.
 allow_nested = true
+
+# Herdr 0.8.2 can leave new split PTYs at the pre-split width; zoom/unzoom fixes it.
