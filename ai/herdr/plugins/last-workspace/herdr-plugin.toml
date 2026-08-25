@@ -1,0 +1,19 @@
+id = "brett.last-workspace"
+name = "Last workspace"
+version = "0.1.0"
+min_herdr_version = "0.8.0"
+description = "Toggle between the current and previously focused workspace"
+platforms = ["macos"]
+
+[[startup]]
+command = ["python3", "workspace.py", "record"]
+
+[[actions]]
+id = "toggle"
+title = "Toggle last workspace"
+contexts = ["workspace"]
+command = ["python3", "workspace.py", "toggle"]
+
+[[events]]
+on = "workspace.focused"
+command = ["python3", "workspace.py", "record"]

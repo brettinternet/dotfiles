@@ -1,0 +1,54 @@
+id = "brett.seamless-navigation"
+name = "Pane-aware navigation"
+version = "0.1.0"
+min_herdr_version = "0.8.0"
+description = "Navigate and resize Herdr panes while forwarding directional keys to Vim and tmux"
+platforms = ["macos"]
+
+[[actions]]
+id = "navigate-left"
+title = "Navigate left"
+contexts = ["pane"]
+command = ["sh", "dispatch.sh", "navigate", "left", "ctrl+h"]
+
+[[actions]]
+id = "navigate-down"
+title = "Navigate down"
+contexts = ["pane"]
+command = ["sh", "dispatch.sh", "navigate", "down", "ctrl+j"]
+
+[[actions]]
+id = "navigate-up"
+title = "Navigate up"
+contexts = ["pane"]
+command = ["sh", "dispatch.sh", "navigate", "up", "ctrl+k"]
+
+[[actions]]
+id = "navigate-right"
+title = "Navigate right"
+contexts = ["pane"]
+command = ["sh", "dispatch.sh", "navigate", "right", "ctrl+l"]
+
+[[actions]]
+id = "resize-left"
+title = "Resize left"
+contexts = ["pane"]
+command = ["sh", "dispatch.sh", "resize", "left", "alt+shift+h"]
+
+[[actions]]
+id = "resize-down"
+title = "Resize down"
+contexts = ["pane"]
+command = ["sh", "dispatch.sh", "resize", "down", "alt+shift+j"]
+
+[[actions]]
+id = "resize-up"
+title = "Resize up"
+contexts = ["pane"]
+command = ["sh", "dispatch.sh", "resize", "up", "alt+shift+k"]
+
+[[actions]]
+id = "resize-right"
+title = "Resize right"
+contexts = ["pane"]
+command = ["sh", "dispatch.sh", "resize", "right", "alt+shift+l"]

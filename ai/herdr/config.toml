@@ -13,8 +13,12 @@ close_pane = "prefix+shift+x"                   # what I'm used to from tmux
 close_tab = "prefix+shift+d"                    # overwrites close workspace
 previous_agent = "prefix+p"
 next_agent = "prefix+n"
+focus_agent = "prefix+alt+1..9"
 new_workspace = "prefix+shift+c"
 switch_workspace = "prefix+shift+1..9"
+previous_workspace = "prefix+["
+next_workspace = "prefix+]"
+goto = ["prefix+g", "prefix+shift+f"]
 detach = ["prefix+d", "prefix+ctrl+d"]
 
 [[keys.command]]
@@ -74,6 +78,82 @@ type = "plugin_action"
 command = "brett.pane-rotate.down"
 description = "rotate focused pane with direct lower neighbor"
 
+[[keys.command]]
+key = "prefix+shift+l"
+type = "plugin_action"
+command = "brett.last-workspace.toggle"
+description = "toggle last workspace"
+
+[[keys.command]]
+key = "prefix+space"
+type = "plugin_action"
+command = "brett.command-palette.open"
+description = "open command palette"
+
+[[keys.command]]
+key = "prefix+ctrl+h"
+type = "plugin_action"
+command = "brett.seamless-navigation.navigate-left"
+description = "navigate left"
+
+[[keys.command]]
+key = "prefix+ctrl+j"
+type = "plugin_action"
+command = "brett.seamless-navigation.navigate-down"
+description = "navigate down"
+
+[[keys.command]]
+key = "prefix+ctrl+k"
+type = "plugin_action"
+command = "brett.seamless-navigation.navigate-up"
+description = "navigate up"
+
+[[keys.command]]
+key = "prefix+ctrl+l"
+type = "plugin_action"
+command = "brett.seamless-navigation.navigate-right"
+description = "navigate right"
+
+[[keys.command]]
+key = "prefix+alt+h"
+type = "plugin_action"
+command = "brett.seamless-navigation.resize-left"
+description = "resize left"
+
+[[keys.command]]
+key = "prefix+alt+j"
+type = "plugin_action"
+command = "brett.seamless-navigation.resize-down"
+description = "resize down"
+
+[[keys.command]]
+key = "prefix+alt+k"
+type = "plugin_action"
+command = "brett.seamless-navigation.resize-up"
+description = "resize up"
+
+[[keys.command]]
+key = "prefix+alt+l"
+type = "plugin_action"
+command = "brett.seamless-navigation.resize-right"
+description = "resize right"
+
+[[keys.command]]
+key = "prefix+shift+o"
+type = "popup"
+command = "herdr-open-dev-dir"
+description = "open development directory"
+width = "80%"
+height = "80%"
+
+[[keys.command]]
+key = "prefix+shift+a"
+type = "popup"
+command = "herdr-insert-file-path"
+description = "insert file path at cursor"
+width = "80%"
+height = "80%"
+
 [ui]
 # Order the Agent panel as an attention queue rather than by space, so whoever
 # is blocked surfaces first.
@@ -87,15 +167,34 @@ sidebar_collapsed_mode = "hidden"
 rows = [
   [
     "state_icon",
-    "workspace",
+    { token = "workspace", bold = true },
     "tab",
   ],
   [
-    "terminal_title_stripped",
+    { token = "agent", fg = "#7dcfff" },
+    "state_text",
+  ],
+]
+
+[ui.sidebar.agents.rows_by_agent]
+claude = [
+  [
+    "state_icon",
+    { token = "workspace", bold = true },
+    "tab",
   ],
   [
-    "agent",
-    "state_text",
+    { token = "terminal_title_stripped", fg = "#c0caf5" },
+  ],
+]
+opencode = [
+  [
+    "state_icon",
+    { token = "workspace", bold = true },
+    "tab",
+  ],
+  [
+    { token = "terminal_title_stripped", fg = "#c0caf5" },
   ],
 ]
 

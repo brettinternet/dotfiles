@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+
+export PATH="$HOME/.local/share/mise/shims:$HOME/.local/bin:$PATH"
+root=${HERDR_ACTIVE_PANE_CWD:-$PWD}
+pane_id=${HERDR_ACTIVE_PANE_ID:?must run from a Herdr custom keybinding}
+
+selected=$(cd "$root" && fd --hidden --type f --exclude .git | fzf --prompt='Insert file> ') || exit 0
+[ -n "$selected" ] || exit 0
+exec "${HERDR_BIN_PATH:-herdr}" pane send-text "$pane_id" "@$selected"
