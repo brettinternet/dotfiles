@@ -236,11 +236,13 @@ eza_release_target() {
 
 case "$OSTYPE" in
   darwin*)
-    # eza publishes Linux binaries only. Zinit owns the eza checkout and binary;
-    # its Zinit-managed mise bootstrap supplies Rust only for the macOS build.
-    zinit ice as"program" pick"target/release/eza" \
-      atclone'mise exec rust@latest -- cargo build --release --locked' atpull'%atclone'
-    zinit light eza-community/eza
+    # eza publishes Linux binaries only. Build it on macOS when Cargo is already
+    # available; otherwise keep shell startup clean and use the ls -G fallback.
+    if (( ${+commands[cargo]} )); then
+      zinit ice as"program" pick"target/release/eza" \
+        atclone'cargo build --release --locked' atpull'%atclone'
+      zinit light eza-community/eza
+    fi
     ;;
   linux*)
     EZA_RELEASE_TARGET="$(eza_release_target)"
