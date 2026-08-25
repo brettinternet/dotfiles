@@ -158,8 +158,13 @@ class WorkspacePickerTest(unittest.TestCase):
             ANSI_ESCAPE.sub("", row)
             for row in workspace_picker.workspace_rows(self.state).splitlines()
         ]
-        self.assertTrue(rows[0].startswith("w1\tfirst\t1 tab\t1 pane\t● working"))
-        self.assertTrue(rows[1].startswith("w2\tsecond"))
+        self.assertTrue(rows[0].startswith("w1\tw1\tfirst\t1 tab\t1 pane\t● working"))
+        self.assertTrue(rows[1].startswith("w2\tw2\tsecond"))
+
+    def test_pane_rows_include_searchable_metadata(self):
+        rows = ANSI_ESCAPE.sub("", workspace_picker.pane_rows(self.state, "w1"))
+
+        self.assertEqual("w1:p1\tw1\tTab 1\tw1:p1\tomp\t● working\tFix tests", rows)
 
     def test_preview_shows_tabs_panes_and_active_screen(self):
         screen = subprocess.CompletedProcess([], 0, stdout="active pane output\n")
@@ -205,22 +210,23 @@ class WorkspacePickerTest(unittest.TestCase):
                 mock.patch.object(workspace_picker, "herdr_command", return_value=screen) as herdr,
                 mock.patch.object(workspace_picker, "herdr_request") as request,
             ):
-                workspace_picker.record_current_preview_workspace("w1")
                 first = ANSI_ESCAPE.sub("", workspace_picker.workspace_preview(state, "w1"))
-                workspace_picker.cycle_current_preview_pane(1)
+                workspace_picker.cycle_preview_pane("w1", 1)
                 second = ANSI_ESCAPE.sub("", workspace_picker.workspace_preview(state, "w1"))
-                workspace_picker.focus_workspace_selection(state, "w1")
-                workspace_picker.cycle_current_preview_pane(1)
+                workspace_picker.focus_selection(state, "w1:p2", "w1")
+                workspace_picker.cycle_preview_pane("w1", 1)
                 wrapped = ANSI_ESCAPE.sub("", workspace_picker.workspace_preview(state, "w1"))
+                searched = ANSI_ESCAPE.sub("", workspace_picker.workspace_preview(state, "w1", "w1:p2"))
 
         self.assertIn("Pane 1/2  w1:p1", first)
         self.assertIn("Pane 2/2  w1:p2", second)
         self.assertIn("Pane 1/2  w1:p1", wrapped)
+        self.assertIn("Pane 2/2  w1:p2", searched)
         herdr.assert_any_call("workspace", "focus", "w1")
         request.assert_called_once_with("pane.focus", {"pane_id": "w1:p2"})
 
     def test_selection_focuses_workspace(self):
-        selection = subprocess.CompletedProcess([], 0, stdout="w2\tsecond\t1 tabs\t1 panes\tidle\n")
+        selection = subprocess.CompletedProcess([], 0, stdout="w2\tw2\tsecond\t1 tab\t1 pane\tidle\n")
         with (
             mock.patch.object(workspace_picker, "snapshot", return_value=self.state),
             mock.patch.object(workspace_picker.subprocess, "run", return_value=selection) as run,
@@ -231,22 +237,21 @@ class WorkspacePickerTest(unittest.TestCase):
 
         binding_args = [argument for argument in run.call_args.args[0] if argument.startswith("--bind=")]
         binding = ",".join(argument.removeprefix("--bind=") for argument in binding_args)
-        transform_bindings = [argument for argument in binding_args if ":transform:" in argument]
-        self.assertEqual(2, len(transform_bindings))
-        self.assertTrue(all(",ctrl-" not in argument for argument in transform_bindings))
-        self.assertIn("ctrl-j:down,ctrl-k:up,ctrl-h:backward-delete-char", binding)
+        self.assertIn("ctrl-j:down,ctrl-k:up,ctrl-n:down,ctrl-p:up", binding)
         self.assertIn("alt-up:execute-silent", binding)
         self.assertIn("alt-down:execute-silent", binding)
-        self.assertIn("ctrl-f:change-prompt(Pane › )+disable-search", binding)
-        self.assertIn("ctrl-b:change-prompt(Go to workspace › )+enable-search", binding)
-        self.assertIn("ctrl-n:transform:", binding)
-        self.assertIn("ctrl-p:transform:", binding)
-        self.assertIn("$FZF_PROMPT", binding)
-        self.assertIn("cycle-current 1", binding)
-        self.assertIn("cycle-current -1", binding)
-        self.assertIn("cycle {1} 1", binding)
-        self.assertIn("cycle {1} -1", binding)
-        self.assertIn("+refresh-preview", binding)
+        self.assertIn("ctrl-f:reload-sync(", binding)
+        self.assertIn("rows-panes {2}", binding)
+        self.assertIn("change-prompt(Search panes › )+enable-search+clear-query", binding)
+        self.assertIn("ctrl-b:reload-sync(", binding)
+        self.assertIn("rows-workspaces", binding)
+        self.assertIn("change-prompt(Go to workspace › )+enable-search+clear-query", binding)
+        self.assertNotIn("disable-search", binding)
+        self.assertIn("cycle {2} 1", binding)
+        self.assertIn("cycle {2} -1", binding)
+        self.assertIn("--with-nth=3..", run.call_args.args[0])
+        self.assertIn("--id-nth=2", run.call_args.args[0])
+        self.assertIn("--track", run.call_args.args[0])
 
 class CommandPaletteTest(unittest.TestCase):
     def test_invokes_selected_action_with_cli_argument_order(self):
