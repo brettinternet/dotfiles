@@ -133,13 +133,6 @@ def preview_index_path(workspace_id: str) -> Path | None:
     directory.mkdir(parents=True, exist_ok=True)
     return directory / f"workspace-preview-{safe_id}.index"
 
-def current_preview_path() -> Path | None:
-    state_dir = os.environ.get("HERDR_PLUGIN_STATE_DIR")
-    if not state_dir:
-        return None
-    directory = Path(state_dir)
-    directory.mkdir(parents=True, exist_ok=True)
-    return directory / "workspace-preview-current"
 
 
 def selected_preview_index(workspace_id: str, pane_count: int, default: int) -> int:
@@ -166,31 +159,12 @@ def cycle_preview_pane(workspace_id: str, delta: int) -> None:
         selected = 0
     path.write_text(f"{selected + delta}\n")
 
-def record_current_preview_workspace(workspace_id: str) -> None:
-    path = current_preview_path()
-    if path is not None:
-        path.write_text(f"{workspace_id}\n")
-
-
-def cycle_current_preview_pane(delta: int) -> None:
-    path = current_preview_path()
-    if path is None:
-        return
-    try:
-        workspace_id = path.read_text().strip()
-    except FileNotFoundError:
-        return
-    if workspace_id:
-        cycle_preview_pane(workspace_id, delta)
 
 def reset_preview_indexes() -> None:
     state_dir = os.environ.get("HERDR_PLUGIN_STATE_DIR")
     if not state_dir:
         return
     for path in Path(state_dir).glob("workspace-preview-*.index"):
-        path.unlink(missing_ok=True)
-    path = current_preview_path()
-    if path is not None:
         path.unlink(missing_ok=True)
 
 
@@ -209,23 +183,27 @@ def ordered_workspace_panes(state: dict, workspace_id: str) -> list[dict]:
         )
     ]
 
-def focus_workspace_selection(state: dict, workspace_id: str) -> None:
+def focus_selection(state: dict, target_id: str, workspace_id: str) -> None:
     herdr_command("workspace", "focus", workspace_id)
     panes = ordered_workspace_panes(state, workspace_id)
     if not panes:
         return
-    default_pane = next((index for index, pane in enumerate(panes) if pane.get("focused")), 0)
-    pane_index = selected_preview_index(workspace_id, len(panes), default_pane)
-    herdr_request("pane.focus", {"pane_id": panes[pane_index]["pane_id"]})
+    target = next((pane for pane in panes if pane["pane_id"] == target_id), None)
+    if target is None:
+        default_pane = next((index for index, pane in enumerate(panes) if pane.get("focused")), 0)
+        target = panes[selected_preview_index(workspace_id, len(panes), default_pane)]
+    herdr_request("pane.focus", {"pane_id": target["pane_id"]})
 
 def workspace_rows(state: dict) -> str:
     rows = []
     for workspace in sorted(state.get("workspaces", []), key=lambda item: item["number"]):
+        workspace_id = workspace["workspace_id"]
         rows.append(
             "\t".join(
                 [
-                    workspace["workspace_id"],
-                    styled(workspace.get("label") or workspace["workspace_id"], BOLD),
+                    workspace_id,
+                    workspace_id,
+                    styled(workspace.get("label") or workspace_id, BOLD),
                     count_label(workspace.get("tab_count", 0), "tab"),
                     count_label(workspace.get("pane_count", 0), "pane"),
                     status_label(workspace.get("agent_status")),
@@ -235,7 +213,28 @@ def workspace_rows(state: dict) -> str:
     return "\n".join(rows)
 
 
-def workspace_preview(state: dict, workspace_id: str) -> str:
+def pane_rows(state: dict, workspace_id: str) -> str:
+    tabs = {tab["tab_id"]: tab for tab in state.get("tabs", [])}
+    rows = []
+    for pane in ordered_workspace_panes(state, workspace_id):
+        tab = tabs.get(pane["tab_id"], {})
+        rows.append(
+            "\t".join(
+                [
+                    pane["pane_id"],
+                    workspace_id,
+                    styled(f"Tab {tab.get('number', '?')}", CYAN),
+                    styled(pane["pane_id"], BOLD),
+                    styled(clean(pane.get("agent") or "shell"), MAGENTA),
+                    status_label(pane.get("agent_status")),
+                    clean(pane.get("terminal_title_stripped")) or clean(pane.get("cwd")),
+                ]
+            )
+        )
+    return "\n".join(rows)
+
+
+def workspace_preview(state: dict, workspace_id: str, target_id: str | None = None) -> str:
     workspace = next(
         (item for item in state.get("workspaces", []) if item["workspace_id"] == workspace_id),
         None,
@@ -276,7 +275,10 @@ def workspace_preview(state: dict, workspace_id: str) -> str:
             0,
         ),
     )
-    pane_index = selected_preview_index(workspace_id, len(ordered_panes), default_pane)
+    pane_index = next(
+        (index for index, pane in enumerate(ordered_panes) if pane["pane_id"] == target_id),
+        selected_preview_index(workspace_id, len(ordered_panes), default_pane),
+    )
     representative = ordered_panes[pane_index] if ordered_panes else None
     for tab_index, tab in enumerate(tabs):
         tab_last = tab_index == len(tabs) - 1
@@ -346,33 +348,20 @@ def pick_workspace() -> None:
         return
 
     script = Path(__file__).resolve()
-    preview = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} preview {{1}}"
-    cycle_up = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} cycle {{1}} -1"
-    cycle_down = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} cycle {{1}} 1"
-    cycle_current_up = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} cycle-current -1"
-    cycle_current_down = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))} cycle-current 1"
-    pane_prompt = "Pane › "
+    command = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))}"
+    preview = f"{command} preview {{1}} {{2}}"
+    pane_rows_command = f"{command} rows-panes {{2}}"
+    workspace_rows_command = f"{command} rows-workspaces"
+    cycle_up = f"{command} cycle {{2}} -1"
+    cycle_down = f"{command} cycle {{2}} 1"
+    pane_prompt = "Search panes › "
     workspace_prompt = "Go to workspace › "
-    pane_label = " Pane switcher · Ctrl-N/P cycle · Ctrl-B back "
-    workspace_label = " Workspace preview "
-    pane_next = f"execute-silent({cycle_current_down})"
-    pane_previous = f"execute-silent({cycle_current_up})"
-    ctrl_next = (
-        "transform:if [ \"$FZF_PROMPT\" = "
-        f"{shlex.quote(pane_prompt)} ]; then printf '%s\\053%s\\n' "
-        f"{shlex.quote(pane_next)} refresh-preview; else printf '%s\\n' down; fi"
-    )
-    ctrl_previous = (
-        "transform:if [ \"$FZF_PROMPT\" = "
-        f"{shlex.quote(pane_prompt)} ]; then printf '%s\\053%s\\n' "
-        f"{shlex.quote(pane_previous)} refresh-preview; else printf '%s\\n' up; fi"
-    )
+    pane_label = " Pane search · Ctrl-B back "
+    workspace_label = " Workspace preview · Ctrl-F search panes "
     bindings = [
-        "ctrl-j:down,ctrl-k:up,ctrl-h:backward-delete-char",
-        f"ctrl-f:change-prompt({pane_prompt})+disable-search+change-preview-label({pane_label})",
-        f"ctrl-b:change-prompt({workspace_prompt})+enable-search+change-preview-label({workspace_label})",
-        f"ctrl-n:{ctrl_next}",
-        f"ctrl-p:{ctrl_previous}",
+        "ctrl-j:down,ctrl-k:up,ctrl-n:down,ctrl-p:up,ctrl-h:backward-delete-char",
+        f"ctrl-f:reload-sync({pane_rows_command})+change-prompt({pane_prompt})+enable-search+clear-query+change-preview-label({pane_label})",
+        f"ctrl-b:reload-sync({workspace_rows_command})+change-prompt({workspace_prompt})+enable-search+clear-query+change-preview-label({workspace_label})",
         f"alt-up:execute-silent({cycle_up})+refresh-preview",
         f"alt-down:execute-silent({cycle_down})+refresh-preview",
     ]
@@ -382,7 +371,9 @@ def pick_workspace() -> None:
             "--ansi",
             *[f"--bind={binding}" for binding in bindings],
             "--delimiter=\t",
-            "--with-nth=2..",
+            "--with-nth=3..",
+            "--id-nth=2",
+            "--track",
             "--layout=reverse",
             "--info=inline-right",
             "--pointer=▸",
@@ -400,24 +391,26 @@ def pick_workspace() -> None:
     if selected.returncode != 0 or not selected.stdout.strip():
         return
 
-    workspace_id = selected.stdout.split("\t", 1)[0]
-    focus_workspace_selection(state, workspace_id)
+    target_id, workspace_id = selected.stdout.split("\t", 2)[:2]
+    focus_selection(state, target_id, workspace_id)
 
 
 def main() -> None:
-    if len(sys.argv) == 3 and sys.argv[1] == "preview":
-        record_current_preview_workspace(sys.argv[2])
-        print(workspace_preview(snapshot(), sys.argv[2]))
+    if len(sys.argv) == 4 and sys.argv[1] == "preview":
+        print(workspace_preview(snapshot(), sys.argv[3], sys.argv[2]))
+        return
+    if len(sys.argv) == 3 and sys.argv[1] == "rows-panes":
+        print(pane_rows(snapshot(), sys.argv[2]))
+        return
+    if len(sys.argv) == 2 and sys.argv[1] == "rows-workspaces":
+        print(workspace_rows(snapshot()))
         return
     if len(sys.argv) == 4 and sys.argv[1] == "cycle":
         cycle_preview_pane(sys.argv[2], int(sys.argv[3]))
         return
-    if len(sys.argv) == 3 and sys.argv[1] == "cycle-current":
-        cycle_current_preview_pane(int(sys.argv[2]))
-        return
     if len(sys.argv) != 1:
         raise SystemExit(
-            "usage: workspace-picker.py [preview WORKSPACE_ID | cycle WORKSPACE_ID DELTA | cycle-current DELTA]"
+            "usage: workspace-picker.py [preview TARGET_ID WORKSPACE_ID | rows-panes WORKSPACE_ID | rows-workspaces | cycle WORKSPACE_ID DELTA]"
         )
     pick_workspace()
 
