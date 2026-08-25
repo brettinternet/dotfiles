@@ -18,7 +18,7 @@ new_workspace = "prefix+shift+c"
 switch_workspace = "prefix+shift+1..9"
 previous_workspace = "prefix+["
 next_workspace = "prefix+]"
-goto = "prefix+g"
+#goto = "prefix+g"
 detach = ["prefix+d", "prefix+ctrl+d"]
 
 [[keys.command]]
@@ -91,7 +91,7 @@ command = "brett.command-palette.open"
 description = "open command palette"
 
 [[keys.command]]
-key = "prefix+shift+g"
+key = "prefix+o"
 type = "plugin_action"
 command = "brett.command-palette.open-workspace-picker"
 description = "go to workspace with preview"
@@ -145,12 +145,12 @@ command = "brett.seamless-navigation.resize-right"
 description = "resize right"
 
 [[keys.command]]
-key = "prefix+o"
+key = "prefix+shift+o"
 type = "popup"
 command = "herdr-open-dev-dir"
 description = "open development directory"
 width = 60
-height = 40
+height = 15
 
 [[keys.command]]
 key = "prefix+f"
@@ -158,7 +158,7 @@ type = "popup"
 command = "herdr-insert-file-path"
 description = "insert file path at cursor"
 width = 60
-height = 40
+height = 25
 
 [ui]
 # Order the Agent panel as an attention queue rather than by space, so whoever
