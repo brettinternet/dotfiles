@@ -12,4 +12,4 @@ selected=$(
 
 plugin_id=$(printf '%s\n' "$selected" | cut -f2)
 action_id=$(printf '%s\n' "$selected" | cut -f3)
-exec "$herdr_bin" plugin action invoke --plugin "$plugin_id" "$action_id"
+exec "$herdr_bin" plugin action invoke "$action_id" --plugin "$plugin_id"

@@ -11,10 +11,24 @@ title = "Open command palette"
 contexts = ["workspace"]
 command = ["sh", "open.sh"]
 
+[[actions]]
+id = "open-workspace-picker"
+title = "Go to workspace with preview"
+contexts = ["workspace"]
+command = ["sh", "open-workspace-picker.sh"]
+
 [[panes]]
 id = "palette"
 title = "Command palette"
 placement = "popup"
-width = "80%"
-height = "60%"
+width = 40
+height = 20
 command = ["sh", "palette.sh"]
+
+[[panes]]
+id = "workspace-picker"
+title = "Go to workspace"
+placement = "popup"
+width = "90%"
+height = "80%"
+command = ["python3", "workspace-picker.py"]
