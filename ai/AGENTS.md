@@ -18,7 +18,7 @@ Before introducing a new pattern, search for an existing implementation and reus
 
 - Use `gh` for all GitHub operations, including `gh api`/`gh api graphql` when no subcommand covers it; never curl the API or open browser URLs.
 - Use `mise exec <tool> -- <cmd>` when a tool is installed via mise and may not be in PATH.
-- Use `chrome-devtools` tool to verify browser changes when working with web UI.
+- Verify web UI changes in an actual browser using the agent's available browser tooling.
 - Prefer fast local CLIs for code navigation: use `rg`/ripgrep for content search, `fd` for file discovery, and `ast-grep` for structural code search/refactors before falling back to fragile regex edits.
 - Use `bun` and `bunx` instead of `npm` or `npx`.
 - NEVER use `rm`; use `trash` to delete files so removals are recoverable.
