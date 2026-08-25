@@ -110,3 +110,4 @@ kitty_graphics = true
 allow_nested = true
 
 # Herdr 0.8.2 can leave new split PTYs at the pre-split width; zoom/unzoom fixes it.
+# Watch https://github.com/herdrdev/herdr/issues/1709; related resize fix: https://github.com/herdrdev/herdr/issues/471
