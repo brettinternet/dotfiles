@@ -28,6 +28,19 @@ return {
     },
   },
 
+  {
+    "m4xshen/hardtime.nvim",
+    lazy = false,
+    dependencies = { "MunifTanjim/nui.nvim" },
+    opts = {
+      enabled = true,
+      hint = true,
+      notification = true,
+      restriction_mode = "hint",
+      disable_mouse = false,
+    },
+  },
+
   -- AstroNvim v6 uses snacks.nvim for the dashboard, picker and notifier.
   {
     "folke/snacks.nvim",
