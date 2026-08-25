@@ -31,7 +31,6 @@
     fd
     git
     go-task
-    lsd
     mas
     neovim
     qrencode

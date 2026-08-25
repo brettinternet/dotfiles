@@ -1,4 +1,5 @@
 export SHELL="${commands[zsh]:-/bin/zsh}"
+typeset -U path PATH fpath
 
 source "$HOME/.profile"
 
@@ -16,13 +17,14 @@ unset BREW_ZSH_FUNCTIONS
 
 HISTFILE=~/.histfile
 HISTSIZE=50000
-SAVEHIST=10000
+SAVEHIST=50000
 ZSH_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
 command mkdir -p "$ZSH_CACHE_DIR"
 
 setopt interactive_comments
-setopt append_history hist_ignore_dups hist_ignore_space hist_expire_dups_first
-setopt inc_append_history # OR share_history
+setopt append_history extended_history hist_expire_dups_first hist_find_no_dups
+setopt hist_ignore_dups hist_ignore_space hist_reduce_blanks hist_verify
+setopt inc_append_history
 setopt pushd_ignore_dups
 setopt auto_cd beep notify nomatch
 setopt extended_glob glob_dots list_packed
@@ -78,12 +80,6 @@ if (( ${+terminfo[smkx]} && ${+terminfo[rmkx]} )); then
 	add-zle-hook-widget -Uz zle-line-finish zle_application_mode_stop
 fi
 
-autoload -Uz up-line-or-beginning-search down-line-or-beginning-search
-zle -N up-line-or-beginning-search
-zle -N down-line-or-beginning-search
-
-[[ -n "${key[Up]}"   ]] && bindkey -- "${key[Up]}"   up-line-or-beginning-search
-[[ -n "${key[Down]}" ]] && bindkey -- "${key[Down]}" down-line-or-beginning-search
 
 key[Control-Left]="${terminfo[kLFT5]}"
 key[Control-Right]="${terminfo[kRIT5]}"
@@ -114,6 +110,14 @@ autoload -Uz edit-command-line
 zle -N edit-command-line
 bindkey '^G' edit-command-line
 
+context-scrollback-widget() {
+  zle -I
+  context-scrollback
+  zle reset-prompt
+}
+zle -N context-scrollback-widget
+bindkey '^[S' context-scrollback-widget # Alt+Shift+S
+
 autoload -Uz select-word-style
 select-word-style shell
 
@@ -122,20 +126,6 @@ select-word-style shell
 
 autoload -Uz add-zsh-hook
 
-# Source: https://wiki.archlinux.org/index.php/Zsh#On-demand_rehash
-ZSHCACHE_TIME="$(date +%s%N)"
-rehash_precmd() {
-    local REHASH_FILE="$HOME/.cache/zsh/rehash"
-    if [[ -a "$REHASH_FILE" ]]; then
-        local CACHE_TIME="$(date -r $REHASH_FILE +%s%N)"
-        if (( ZSHCACHE_TIME < CACHE_TIME )); then
-            rehash
-            ZSHCACHE_TIME="$CACHE_TIME"
-        fi
-    fi
-}
-
-add-zsh-hook -Uz precmd rehash_precmd
 
 
 # -- Zinit ----------------------------------------
@@ -147,24 +137,36 @@ add-zsh-hook -Uz precmd rehash_precmd
 }
 source "$HOME/.zinit/bin/zinit.zsh"
 autoload -Uz _zinit
-(( ${+_comps} )) && _comps[zinit]=_zinit
 
 
 # -- Local plugins ----------------------------------------
-zinit ice atinit'local i; for i in *.(sh|zsh)(N); do source "$i"; done'
-zinit light ~/.functions
+for DOTFILES_ZSH_FUNCTION_FILE in "$HOME/.functions/"*.(sh|zsh)(N); do
+  source "$DOTFILES_ZSH_FUNCTION_FILE"
+done
+unset DOTFILES_ZSH_FUNCTION_FILE
 
 # -- Plugins via zinit ----------------------------------------
 # Helpful plugin list: https://github.com/zdharma/Zsh-100-Commits-Club
 
-# Fast-syntax-highlighting & autosuggestions
+# Completion functions must be on fpath before the single compinit call below.
+zinit ice light-mode atpull'zinit creinstall -q .'
+zinit light zsh-users/zsh-completions
+fpath+=( "${ZINIT[PLUGINS_DIR]}/zsh-users---zsh-completions/src" )
+
 zinit wait lucid light-mode for \
   atload"_zsh_autosuggest_start" \
     zsh-users/zsh-autosuggestions \
-  atload"zicompinit; zicdreplay" \
-    blockf atpull'zinit creinstall -q .' \
-    zsh-users/zsh-completions \
   zsh-users/zsh-syntax-highlighting
+
+autoload -Uz compinit
+ZSH_COMPDUMP="$ZSH_CACHE_DIR/zcompdump-$ZSH_VERSION"
+if [[ -n $ZSH_COMPDUMP(#qN.mh-24) ]]; then
+  compinit -C -d "$ZSH_COMPDUMP"
+else
+  compinit -d "$ZSH_COMPDUMP"
+  zcompile "$ZSH_COMPDUMP"
+fi
+compdef _zinit zinit
 
 
 # -- Programs ----------------------------------------
@@ -177,7 +179,6 @@ zinit light tmux-plugins/tpm
 # https://github.com/direnv/direnv/issues/68
 zinit from"gh-r" as"program" mv"direnv* -> direnv" \
   atclone'./direnv hook zsh > zhook.zsh' atpull'%atclone' \
-  atload'export DIRENV_LOG_FORMAT=""' \
   pick"direnv" src="zhook.zsh" for \
     direnv/direnv
 
@@ -221,8 +222,51 @@ zinit as="command" lucid from="gh-r" for \
     atclone='[[ -x ./mise/bin/mise ]] && command mv -f ./mise/bin/mise ./mise-bin && command rm -rf ./mise && command mv -f ./mise-bin ./mise; chmod +x ./mise && ./mise completion zsh > _mise' \
     atpull="%atclone" \
     jdx/mise
+unset -f mise_release_os mise_release_arch
 
 eval "$(mise activate zsh)"
+
+eza_release_target() {
+  case "$(uname -m)" in
+    x86_64|amd64) echo x86_64-unknown-linux-gnu ;;
+    arm64|aarch64) echo aarch64-unknown-linux-gnu ;;
+    armv7l|armv7) echo arm-unknown-linux-gnueabihf ;;
+  esac
+}
+
+case "$OSTYPE" in
+  darwin*)
+    # eza publishes Linux binaries only. Zinit owns the eza checkout and binary;
+    # its Zinit-managed mise bootstrap supplies Rust only for the macOS build.
+    zinit ice as"program" pick"target/release/eza" \
+      atclone'mise exec rust@latest -- cargo build --release --locked' atpull'%atclone'
+    zinit light eza-community/eza
+    ;;
+  linux*)
+    EZA_RELEASE_TARGET="$(eza_release_target)"
+    if [[ -n "$EZA_RELEASE_TARGET" ]]; then
+      zinit ice as"program" from"gh-r" \
+        bpick"eza_$EZA_RELEASE_TARGET.tar.gz" pick"eza"
+      zinit light eza-community/eza
+    fi
+    unset EZA_RELEASE_TARGET
+    ;;
+esac
+unset -f eza_release_target
+
+if (( ${+commands[eza]} )); then
+  alias ls='eza --group-directories-first'
+elif [[ "$OSTYPE" == darwin* ]]; then
+  alias ls='ls -G'
+else
+  alias ls='ls --color=auto'
+fi
+
+
+if (( ${+commands[fzf]} )) && [[ -t 0 && -t 1 ]]; then
+  # Atuin owns Ctrl-R; use fzf's Ctrl-T, Alt-C, and fuzzy completion only.
+  FZF_CTRL_R_COMMAND='' source <(fzf --zsh)
+fi
 
 # -- Prompt
 
@@ -230,17 +274,20 @@ eval "$(mise activate zsh)"
 
 function load_prompt {
   prompt_hostname() {
-    ansi 008 "[${$(uname -n)%.local}]"
+    ansi 008 "[${HOST%.local}]"
   }
 
   prompt_virtualenv() {
+    local venv
     venv=$(geometry_virtualenv)
-    if [ -n "$venv" ]; then
+    if [[ -n "$venv" ]]; then
       echo -n "($venv)"
     fi
   }
 
   GEOMETRY_PATH_COLOR=04
+  GEOMETRY_HOST_COLORS=({1..9})
+  (( ${terminfo[colors]:-0} >= 256 )) && GEOMETRY_HOST_COLORS+=({17..230})
   GEOMETRY_STATUS_COLOR="$(geometry::hostcolor)"
 
   # Herdr panes can retain SSH variables from when a persistent session was created.
