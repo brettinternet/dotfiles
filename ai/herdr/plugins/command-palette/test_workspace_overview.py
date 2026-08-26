@@ -53,6 +53,31 @@ class WorkspaceOverviewTest(unittest.TestCase):
         self.assertIn("Enter focus", screen)
         self.assertEqual(screen.count("\n"), 23)
 
+    def test_selected_card_uses_thick_dark_blue_border(self) -> None:
+        card = workspace_overview.Card(
+            pane_id="w1:p1",
+            workspace_id="w1",
+            workspace_number=1,
+            workspace_label="dotfiles",
+            tab_number=1,
+            tab_label="",
+            agent="omp",
+            status="working",
+            cwd="/repo",
+            title="",
+            revision=1,
+        )
+
+        selected = workspace_overview.render_card(card, "preview", 40, 8, True)
+        unselected = workspace_overview.render_card(card, "preview", 40, 8, False)
+
+        selected_prefix = workspace_overview.BOLD + workspace_overview.BLUE + "┏"
+        self.assertTrue(selected[0].startswith(selected_prefix))
+        self.assertIn("┃", selected[1])
+        self.assertIn("┗", selected[-1])
+        self.assertIn("┌", unselected[0])
+        self.assertNotIn("┏", unselected[0])
+
 
 if __name__ == "__main__":
     unittest.main()
