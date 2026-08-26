@@ -57,7 +57,10 @@ Resolve my handle once per run with `gh api user --jq .login`. The loop reviews 
 
 **Re-review only on genuinely new commits, never on a rebase or a merge from main.** A head SHA change alone is not new work, since a rebase or a `Merge branch 'main'` rewrites SHAs without adding any of the author's work.
 
-When the **pr-watcher** subagent is available, delegate this check by handing it each candidate PR number plus its `reviewed_commits` baseline, dispatching the batch in parallel, and using its verdict. Otherwise build the list inline:
+When the **pr-watcher** subagent is available, delegate this check as a one-shot
+snapshot by handing it each candidate PR number plus its `reviewed_commits`
+baseline, dispatching the batch in parallel, and using its verdict. Otherwise
+build the list inline:
 
 ```bash
 gh pr view <N> --json commits --jq '.commits[] | {subject: (.messageHeadline), parents: (.parents|length)}'
@@ -123,7 +126,17 @@ Choose exactly one action after reviewing the current commit set:
 
 For `WAIT`, post nothing to GitHub. Report `WAIT` and the prior-concern state in the per-PR console status line, then update loop state normally.
 
-Apply the `user-voice` skill to everything posted as me, including review comments, approval bodies, top-level PR comments, and replies to existing comments or threads. This command grants the posting authority and the skill controls wording only.
+Apply the `user-voice` skill to everything posted as me, including review
+comments, approval bodies, top-level PR comments, and replies to existing
+comments or threads. Delegate the wording for every GitHub message to the
+**writer** agent when available, passing the verified facts, chosen review
+action, and exact format constraints and requiring it to apply `user-voice`.
+Use the writer's returned wording without rewriting it, then re-run the
+`user-voice` final check immediately before posting autonomously. This is not
+`draft-in-editor`: do not open an editor or wait for user review. If the writer
+is unavailable, write and post directly under the same `user-voice`
+requirements. This command grants posting authority; the skill and writer
+control wording only.
 
 Every finding is exactly this, attached to the changed line it belongs to.
 
@@ -170,17 +183,19 @@ Update the current repo's sub-object in `/tmp/pr-review-loop-state.json` after e
 
 Once every candidate is processed or skipped, print
 `[pr-review-loop] iteration N done — reviewed X, skipped Y, sleeping 15m`, wait
-15 minutes, and start the next iteration at step 1. When the **pr-watcher**
-subagent is available you may dispatch it in the background against the
-candidates with their `reviewed_commits` baselines, but do not start the next
-iteration until 15 minutes have passed even when it reports relevant activity.
-Stop instead when the run-wide idle timer reaches 8 hours.
+15 minutes, and start the next iteration at step 1. Stop instead when the
+run-wide idle timer reaches 8 hours.
 
 ## Rules
 
 - **MUST** loop continuously until the user interrupts or 8 hours pass without
   relevant activity as defined under Loop state.
-- **MUST** apply the `user-voice` skill to everything posted to GitHub, re-running its final check immediately before posting.
+- **MUST** delegate the wording for every GitHub message to the **writer** agent
+  when available, require it to apply `user-voice`, use its returned wording
+  without rewriting, and re-run the `user-voice` final check immediately before
+  posting autonomously. **MUST NOT** invoke `draft-in-editor` or wait for user
+  review. If the writer is unavailable, write and post directly under the same
+  `user-voice` requirements.
 - **MUST** drop any finding that cannot name a real line, a trigger, and a breakage. No nitpicks, style nags, `consider X` suggestions, or vague heads ups.
 - **MUST** tie every finding to a problem introduced, newly exposed, or worsened by the authored changes in the current review scope.
 - **MUST NOT** report a pre-existing issue merely discovered in unchanged code or object to a sound change solely because it exceeds the linked ticket's scope.
