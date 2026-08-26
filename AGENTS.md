@@ -8,7 +8,7 @@ Make sure the checks passes after each change. Keep working until all checks pas
 
 ## Setup
 
-Project setup uses go-task @Taskfile.dist.yaml to set up and develop the project.
+Project setup uses go-task @Taskfile.dist.yaml to set up and develop the project. Task is local-development tooling only; portable install and update workflows belong in the Makefile.
 
 ```sh
 task init # Sets up dependencies, direnv and git hooks

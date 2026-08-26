@@ -90,28 +90,21 @@
           esac
         fi
       description: Remove retired agent editor link
-    # Allow direnv access to ~/.envrc
-    - ['[ -f "$HOME/.zinit/plugins/direnv---direnv/direnv" ] && direnv allow "$HOME" || true']
-    - ['[ -f "$HOME/.zinit/plugins/mise/mise" ] && chmod u+x "$HOME/.zinit/plugins/mise/mise" || true']
-    # `command -v zsh && zsh ...` would exit 1 on machines without zsh, failing
-    # the whole install; an explicit conditional distinguishes "zsh absent"
-    # (fine) from "zinit self-update broke" (a real failure worth surfacing).
+    # Initializing Zsh installs missing Zinit plugins without updating existing
+    # checkouts. Version updates are explicit through `make update-zinit`.
     - command: |
         set -eu
 
-        if ! command -v zsh >/dev/null 2>&1; then
-          exit 0
+        if command -v zsh >/dev/null 2>&1; then
+          zsh -ic ':'
         fi
-
-        zsh -ic "zinit self-update"
-      description: Update zinit
-    - [
-        'mise_bin="$(command -v mise 2>/dev/null || true)"; [ -f "$mise_bin" ] && [ -x "$mise_bin" ] && mise self-update --yes --quiet || true',
-      ]
-    - ['mise_bin="$(command -v mise 2>/dev/null || true)"; [ -f "$mise_bin" ] && [ -x "$mise_bin" ] && mise up --yes --quiet || true']
+      description: Install missing Zinit plugins
+    # Allow direnv access to ~/.envrc
+    - ['[ -f "$HOME/.zinit/plugins/direnv---direnv/direnv" ] && direnv allow "$HOME" || true']
+    - ['[ -f "$HOME/.zinit/plugins/mise/mise" ] && chmod u+x "$HOME/.zinit/plugins/mise/mise" || true']
     # Install plugins at the versions committed in lazy-lock.json. Deliberately
     # NOT `Lazy! sync`, which silently updates every plugin and rewrites the
-    # lockfile during an unrelated dotfile install. Update with `:Lazy update`.
+    # lockfile during an unrelated dotfile install. Update with `make update-nvim`.
     - command: |
         set -eu
 
@@ -125,7 +118,6 @@
           +qa
       description: Install Neovim plugins from lazy-lock.json
       stderr: true
-    - ["command -v doom >/dev/null 2>&1 && doom upgrade || true"]
     - command: |
         set -eu
 
@@ -163,7 +155,6 @@
           fi
 
           if [ -d "$plugin_dir" ]; then
-            git -C "$plugin_dir" pull --ff-only --recurse-submodules
             git -C "$plugin_dir" submodule update --init --recursive
           else
             GIT_TERMINAL_PROMPT=0 git clone --single-branch --recursive "$plugin_url" "$plugin_dir"
