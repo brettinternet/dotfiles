@@ -30,6 +30,12 @@ next_workspace = "prefix+]"
 detach = ["prefix+d", "prefix+ctrl+d"]
 
 [[keys.command]]
+key = "prefix+shift+,"
+type = "plugin_action"
+command = "brett.window-title.set-tab-title-from-pane"
+description = "set tab title from focused pane title"
+
+[[keys.command]]
 key = "prefix+t"
 type = "popup"
 #command = "exec \"${SHELL:-sh}\""
