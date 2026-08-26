@@ -383,7 +383,7 @@ trusted_hash = "sha256:trusted"
             "reviewer: openai-codex/gpt-5.6-terra:max",
             pi_config.read_text(),
         )
-        self.assertIn("thresholdPercent: 75", pi_config.read_text())
+        self.assertIn("thresholdPercent: -1", pi_config.read_text())
         self.assertIn('"reviewer"', opencode_config.read_text())
         self.assertIn(
             "writer: openai-codex/gpt-5.6-terra:low", pi_config.read_text()
