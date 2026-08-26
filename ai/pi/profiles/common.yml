@@ -9,6 +9,8 @@ advisor:
 theme:
   dark: dark-terminal
 symbolPreset: nerd
+tui:
+  titleState: false
 steeringMode: one-at-a-time
 statusLine:
   preset: default
