@@ -22,7 +22,7 @@ background-blur = false
 
 # Quick terminal
 quick-terminal-position = left
-quick-terminal-size = 60%,500px
+quick-terminal-size = 40%,800px
 quick-terminal-screen = mouse
 quick-terminal-autohide = false
 quick-terminal-space-behavior = remain
