@@ -18,6 +18,7 @@ RESET = "\033[0m"
 BOLD = "\033[1m"
 DIM = "\033[2m"
 CYAN = "\033[36m"
+BLUE = "\033[34m"
 GREEN = "\033[32m"
 YELLOW = "\033[33m"
 MAGENTA = "\033[35m"
@@ -168,8 +169,12 @@ def status_style(status: str) -> tuple[str, str]:
 def render_card(card: Card, preview: str, width: int, height: int, selected: bool) -> list[str]:
     inner_width = max(0, width - 2)
     border_style, symbol = status_style(card.status)
+    top_left, horizontal, top_right = "┌", "─", "┐"
+    vertical, bottom_left, bottom_right = "│", "└", "┘"
     if selected:
-        border_style = BOLD + CYAN
+        border_style = BOLD + BLUE
+        top_left, horizontal, top_right = "┏", "━", "┓"
+        vertical, bottom_left, bottom_right = "┃", "┗", "┛"
     tab_name = f"Tab {card.tab_number}"
     if card.tab_label:
         tab_name += f" {card.tab_label}"
@@ -178,21 +183,29 @@ def render_card(card: Card, preview: str, width: int, height: int, selected: boo
         inner_width,
     ).rstrip()
     top_fill = max(0, inner_width - display_width(title))
-    lines = [f"{border_style}┌{title}{'─' * top_fill}┐{RESET}"]
+    lines = [f"{border_style}{top_left}{title}{horizontal * top_fill}{top_right}{RESET}"]
     if height > 2:
         metadata = f"{symbol} {card.agent} · {card.status}"
         location = card.title or card.cwd
         if location:
             metadata += f" · {location}"
-        lines.append(f"{border_style}│{RESET}{fit_text(metadata, inner_width)}{border_style}│{RESET}")
+        lines.append(
+            f"{border_style}{vertical}{RESET}{fit_text(metadata, inner_width)}"
+            f"{border_style}{vertical}{RESET}"
+        )
     content_height = max(0, height - 3)
     preview_lines = [line for line in preview.splitlines() if line.strip()]
     preview_lines = preview_lines[-content_height:]
     preview_lines = [""] * (content_height - len(preview_lines)) + preview_lines
     for line in preview_lines:
-        lines.append(f"{border_style}│{RESET}{fit_text(line, inner_width)}{border_style}│{RESET}")
+        lines.append(
+            f"{border_style}{vertical}{RESET}{fit_text(line, inner_width)}"
+            f"{border_style}{vertical}{RESET}"
+        )
     if height > 1:
-        lines.append(f"{border_style}└{'─' * inner_width}┘{RESET}")
+        lines.append(
+            f"{border_style}{bottom_left}{horizontal * inner_width}{bottom_right}{RESET}"
+        )
     return lines[:height]
 
 
