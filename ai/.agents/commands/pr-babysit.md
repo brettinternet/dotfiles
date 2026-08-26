@@ -26,9 +26,15 @@ with the optional reviewer. In batch mode, the authenticated GitHub account
 returned by `gh api user --jq .login` is the author filter; do not infer an
 author from the current branch or from PR titles.
 
-You are driving this autonomously. Do not stop at the first status check —
-loop until the exit condition below is met or you hit a genuine blocker that
-needs a human.
+You are driving this autonomously. Do not stop at the first status check. For
+each PR, loop until the exit condition below is met, you hit a genuine blocker
+that needs a human, or that PR has had 8 hours without relevant activity.
+Start its idle timer when this command starts (or when its batch worker is
+dispatched) and reset it only when the head commit, review/comment/thread state,
+or CI state changes. An unchanged poll does not reset the timer. Track this
+timer independently for each PR in batch mode.
+No watcher or wait may run past the idle deadline; schedule a wake-up for the
+deadline when it is sooner than the normal polling interval.
 
 This command is repo-agnostic: discover the project's owner/repo, default
 branch, validation gate, and test commands from the repo itself (git remote,
@@ -207,10 +213,11 @@ between workers.
   analysis, "enforce no warnings", generated-artifact freshness, migration
   safety, security scan, etc.): open the failing job, reproduce locally, fix at
   the source, re-validate, commit, push, and re-poll.
-- Wait for checks with `gh pr checks <n> --watch` when available; otherwise
-  poll on an interval using whatever wait mechanism the harness allows (a
-  scheduled wake-up, a monitored timer, or `sleep` where permitted). Don't
-  busy-spin.
+- Wait for checks with `gh pr checks <n> --watch` when available. Otherwise,
+  while CI is actively changing, poll no more often than every 5 minutes using
+  whatever wait mechanism the harness allows (a scheduled wake-up, a monitored
+  timer, or `sleep 300` where permitted). Don't busy-spin. A CI state transition
+  resets the PR's idle timer; repeatedly observing the same state does not.
 - Resolve conflicts by rebasing the repository's discovered default branch; do
   not assume `main` or `master`.
 
@@ -316,13 +323,14 @@ After the reviewer is requested, keep working their feedback until they **approv
    dispatching the **pr-watcher** subagent in the background with the PR number
    and a baseline (the review/comment IDs and head SHA you've already
    processed); it reports back only the delta: new reviews, new threads, new
-   commits, and CI changes. Where subagents aren't available, wait a few
-   minutes between checks using whatever wait mechanism the harness allows (a
-   scheduled wake-up, a monitored timer, or `sleep 180` where permitted). Print
+   commits, and CI changes. Where subagents aren't available, wait 15 minutes
+   between checks using whatever wait mechanism the harness allows (a
+   scheduled wake-up, a monitored timer, or `sleep 900` where permitted). Print
    a one-line heartbeat each pass
    (`[babysit] waiting on <reviewer> review — <timestamp>`), and don't spam the API.
    Each pass, re-read `reviewDecision` and the unresolved threads with the same
-   queries and pagination rules as step 1b.1.
+   queries and pagination rules as step 1b.1. New commits, reviews, comments, or
+   thread changes reset the PR's idle timer; unchanged polling does not.
 
 2. Process new or unresolved feedback with the same CI + PR feedback loop and
    guardrails from step 1.
@@ -339,7 +347,9 @@ After the reviewer is requested, keep working their feedback until they **approv
 You are done for a PR when: all current PR feedback is cleared and all gating
 CI is green (note any async suites still running). If a reviewer was provided,
 they must be requested and must have approved. If no reviewer was provided, the
-PR is done after the current-feedback step.
+PR is done after the current-feedback step. If the PR instead reaches 8 hours
+without relevant activity, stop its loop and report an idle timeout with the
+last observed review and CI state; do not present it as ready to merge.
 
 In single-PR mode, report the final `reviewDecision`/`mergeStateStatus` and
 state plainly what still blocks merge, if anything. In batch mode, the parent
