@@ -200,6 +200,10 @@ type = "plugin_action"
 command = "drovr.move-tab"
 description = "move tab to workspace"
 
+[worktrees]
+# Worktrees opened through Herdr are grouped beneath their source workspace.
+directory = "~/.herdr/worktrees"
+
 [ui]
 # Order the Agent panel as an attention queue rather than by space, so whoever
 # is blocked surfaces first.
@@ -208,6 +212,19 @@ prompt_new_tab_name = false
 hide_tab_bar_when_single_tab = true
 show_agent_labels_on_pane_borders = true
 sidebar_collapsed_mode = "hidden"
+
+[ui.sidebar.spaces]
+rows = [
+  [
+    "state_icon",
+    { token = "workspace", bold = true },
+  ],
+  [
+    "branch",
+    "git_status",
+    "state_text",
+  ],
+]
 
 [ui.sidebar.agents]
 rows = [
@@ -219,25 +236,7 @@ rows = [
   [
     { token = "agent", fg = "#7dcfff" },
     "state_text",
-  ],
-]
-
-[ui.sidebar.agents.rows_by_agent]
-claude = [
-  [
-    "state_icon",
-    { token = "workspace", bold = true },
-    "tab",
-  ],
-  [
-    { token = "terminal_title_stripped", fg = "#c0caf5" },
-  ],
-]
-opencode = [
-  [
-    "state_icon",
-    { token = "workspace", bold = true },
-    "tab",
+    "pane",
   ],
   [
     { token = "terminal_title_stripped", fg = "#c0caf5" },
