@@ -31,6 +31,14 @@ width = 140
 height = 60
 
 [[keys.command]]
+key = "prefix+u"
+type = "popup"
+command = "mise exec gdu -- gdu"
+description = "open gdu"
+width = 140
+height = 60
+
+[[keys.command]]
 key = "prefix+shift+s"
 type = "shell"
 command = "herdr-split-before horizontal"

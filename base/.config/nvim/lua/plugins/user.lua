@@ -16,6 +16,18 @@ return {
   { "jay-babu/mason-nvim-dap.nvim", enabled = false },
 
   {
+    "AstroNvim/astrocore",
+    opts = function(_, opts)
+      opts.mappings.n["<Leader>tu"] = vim.fn.executable "mise" == 1
+          and {
+            function() require("astrocore").toggle_term_cmd { cmd = "mise exec gdu -- gdu", direction = "float" } end,
+            desc = "ToggleTerm gdu",
+          }
+        or false
+    end,
+  },
+
+  {
     "nvim-neo-tree/neo-tree.nvim",
     opts = {
       filesystem = {

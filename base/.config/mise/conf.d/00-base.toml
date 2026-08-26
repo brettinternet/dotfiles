@@ -10,6 +10,7 @@ sops = "latest"
 lazygit = "latest"
 slsa-verifier = "latest"
 cosign = "latest"
+gdu = "latest"
 
 # search
 fd = "latest"
