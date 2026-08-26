@@ -222,6 +222,10 @@ unset -f mise_release_os mise_release_arch
 
 eval "$(mise activate zsh)"
 
+if (( ${+commands[zoxide]} )); then
+  eval "$(zoxide init zsh)"
+fi
+
 if [[ "$OSTYPE" == linux* ]]; then
   eza_release_target() {
     case "$(uname -m)" in

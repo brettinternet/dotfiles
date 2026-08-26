@@ -16,6 +16,7 @@ gdu = "latest"
 fd = "latest"
 fzf = "latest"
 rg = "latest"
+zoxide = "latest"
 yq = "latest"
 
 # lsp
