@@ -48,6 +48,7 @@ return {
       enabled = true,
       hint = true,
       notification = true,
+      timeout = 5000,
       restriction_mode = "hint",
       disable_mouse = false,
     },
