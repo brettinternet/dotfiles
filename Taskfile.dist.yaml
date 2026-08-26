@@ -49,6 +49,7 @@ tasks:
     desc: Run checks on tracked files
     cmds:
       - git diff --check
+      - python3 themes/kaile.py --check
       - task: check-files
         vars:
           FILES_CMD: git ls-files -z
@@ -57,9 +58,14 @@ tasks:
     desc: Run checks on staged files
     cmds:
       - git diff --cached --check
+      - python3 themes/kaile.py --check
       - task: check-files
         vars:
           FILES_CMD: git diff --cached --name-only --diff-filter=ACMR -z
+
+  kaile-generate:
+    desc: Regenerate Kaile consumer themes
+    cmd: python3 themes/kaile.py --write
 
   check-files:
     internal: true

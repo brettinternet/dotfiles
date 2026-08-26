@@ -1,0 +1,87 @@
+{
+  "name": "Kaile",
+  "semantic": {
+    "background": "#121212",
+    "foreground": "#d0d0d0",
+    "textActive": "#f2f2f2",
+    "textMuted": "#858585",
+    "textOnAccent": "#121212",
+    "textOnBlue": "#202020",
+    "surfaceRaised": "#181818",
+    "surfaceActive": "#202020",
+    "surfaceHighlight": "#242424",
+    "surfaceSelection": "#2a2a2a",
+    "surfaceBorder": "#393939",
+    "accent": "#00ff00",
+    "red": "#ff0000",
+    "green": "#00ff00",
+    "yellow": "#ffff00",
+    "blue": "#33b5ff",
+    "magenta": "#ff5faf",
+    "cyan": "#00ffcc",
+    "overlayBlack": "#000000",
+    "overlayWhite": "#ffffff"
+  },
+  "ansi": {
+    "0": "#2a2a2a",
+    "1": "#ff0000",
+    "2": "#00ff00",
+    "3": "#ffff00",
+    "4": "#008ed6",
+    "5": "#ff5faf",
+    "6": "#00ffcc",
+    "7": "#d0d0d0",
+    "8": "#858585",
+    "9": "#ff0000",
+    "10": "#00ff00",
+    "11": "#ffff00",
+    "12": "#33b5ff",
+    "13": "#ff5faf",
+    "14": "#00ffcc",
+    "15": "#f2f2f2"
+  },
+  "contrastPairs": [
+    {
+      "name": "primary text",
+      "foreground": "semantic.foreground",
+      "background": "semantic.background",
+      "minimum": 4.5
+    },
+    {
+      "name": "muted text",
+      "foreground": "semantic.textMuted",
+      "background": "semantic.background",
+      "minimum": 4.5
+    },
+    {
+      "name": "raised surface text",
+      "foreground": "semantic.foreground",
+      "background": "semantic.surfaceRaised",
+      "minimum": 4.5
+    },
+    {
+      "name": "active surface text",
+      "foreground": "semantic.foreground",
+      "background": "semantic.surfaceActive",
+      "minimum": 4.5
+    },
+    {
+      "name": "selection text",
+      "foreground": "semantic.foreground",
+      "background": "semantic.surfaceSelection",
+      "minimum": 4.5
+    },
+    {
+      "name": "accent text",
+      "foreground": "semantic.textOnAccent",
+      "background": "semantic.accent",
+      "minimum": 4.5
+    },
+    {
+      "name": "blue accent text",
+      "foreground": "semantic.textOnBlue",
+      "background": "ansi.4",
+      "minimum": 4.5
+    }
+  ]
+}
