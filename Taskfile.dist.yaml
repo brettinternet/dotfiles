@@ -172,13 +172,11 @@ tasks:
         '
 
   update:
-    desc: Update dependencies
+    desc: Update dependencies through the portable Make workflow
     cmds:
-      - mise update -q
-      - task: update-dotbot
+      - make update
 
   update-dotbot:
     desc: Update the pinned Dotbot revision
     cmds:
-      - git submodule update --remote dotbot
-      - git -C dotbot submodule update --init --recursive
+      - make update-dotbot
