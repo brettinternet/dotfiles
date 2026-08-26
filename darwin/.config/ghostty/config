@@ -57,7 +57,7 @@ copy-on-select = false
 clipboard-trim-trailing-spaces = true
 bell-features = border
 window-inherit-working-directory = false
-shell-integration-features = ssh-env,ssh-terminfo
+shell-integration-features = no-cursor,ssh-env,ssh-terminfo
 
 # Keyboard
 keybind = alt+backspace=text:\x1b\x7f
