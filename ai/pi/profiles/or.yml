@@ -1,3 +1,8 @@
+# Explicit Perplexity search falls back to OPENROUTER_API_KEY when no direct
+# Perplexity credential is available.
+providers:
+  webSearchOrder:
+    - perplexity
 modelRoles:
   default: openrouter/openai/gpt-5.6-sol:medium
   smol: openrouter/openai/gpt-5.6-luna:low

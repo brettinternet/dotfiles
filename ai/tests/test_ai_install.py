@@ -347,6 +347,19 @@ trusted_hash = "sha256:trusted"
         self.assertTrue(watchdog.is_symlink())
         self.assertEqual((ROOT / "ai/WATCHDOG.md").resolve(), watchdog.resolve())
 
+    def test_pi_profiles_select_their_available_search_provider(self) -> None:
+        config = self.home / ".omp/agent/config.yml"
+
+        self.run_command("ai/.bin/pi-profile", "use", "codex")
+        self.assertIn(
+            "providers:\n  webSearchOrder:\n  - codex\n", config.read_text()
+        )
+
+        self.run_command("ai/.bin/pi-profile", "use", "or")
+        self.assertIn(
+            "providers:\n  webSearchOrder:\n  - perplexity\n", config.read_text()
+        )
+
     def test_profile_rendering_writes_only_home(self) -> None:
         before = self.repository_status()
         legacy_links = {
