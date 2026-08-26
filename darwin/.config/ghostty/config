@@ -27,6 +27,10 @@ cursor-text = #121212
 selection-background = #2a2a2a
 selection-foreground = #f2f2f2
 
+cursor-style = block
+cursor-style-blink = true
+cursor-click-to-move = true
+
 # Window
 window-padding-x = 12
 window-padding-y = 8
@@ -53,6 +57,7 @@ copy-on-select = false
 clipboard-trim-trailing-spaces = true
 bell-features = border
 window-inherit-working-directory = false
+shell-integration-features = ssh-env,ssh-terminfo
 
 # Keyboard
 keybind = alt+backspace=text:\x1b\x7f
