@@ -252,6 +252,8 @@ class WorkspacePickerTest(unittest.TestCase):
         self.assertIn("--with-nth=3..", run.call_args.args[0])
         self.assertIn("--id-nth=2", run.call_args.args[0])
         self.assertIn("--track", run.call_args.args[0])
+        self.assertIn("--no-scrollbar", run.call_args.args[0])
+        self.assertIn("--pointer=▶", run.call_args.args[0])
 
 class CommandPaletteTest(unittest.TestCase):
     def test_invokes_selected_action_with_cli_argument_order(self):
