@@ -188,6 +188,18 @@ description = "insert file path at cursor"
 width = 60
 height = 25
 
+[[keys.command]]
+key = "prefix+m"
+type = "plugin_action"
+command = "drovr.move-pane"
+description = "move pane to tab"
+
+[[keys.command]]
+key = "prefix+shift+m"
+type = "plugin_action"
+command = "drovr.move-tab"
+description = "move tab to workspace"
+
 [ui]
 # Order the Agent panel as an attention queue rather than by space, so whoever
 # is blocked surfaces first.
