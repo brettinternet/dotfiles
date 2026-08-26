@@ -49,8 +49,14 @@ active PR is silently omitted.
 
 Apply the `user-voice` skill to everything posted to GitHub: review-thread and
 inline-comment replies, top-level PR comments, reviewer-request summaries, and
-review bodies. This command grants the posting authority and the skill controls
-wording only.
+review bodies. Delegate the wording for every GitHub message to the **writer**
+agent when available, passing the verified facts, intended action, and format
+constraints and requiring it to apply `user-voice`. Use the writer's returned
+wording without rewriting it, then re-run the `user-voice` final check
+immediately before posting autonomously. This is not `draft-in-editor`: do not
+open an editor or wait for user review. If the writer is unavailable, write and
+post directly under the same `user-voice` requirements. This command grants
+posting authority; the skill and writer control wording only.
 
 Keep completed-fix, stale-finding, and disagreement replies declarative. A new
 finding directed at the PR author is one sentence naming the trigger and the
@@ -162,10 +168,12 @@ Each worker must:
   and its head still has the baseline SHA before editing. If any value changed,
   stop cleanly and report the new state to the parent; do not overwrite newer
   work.
-- Never create another babysit worker or another worktree. The worker may
-  dispatch at most one `pr-watcher` for its PR when available; that watcher
-  cannot fan out or mutate code. The worker owns the feedback loop, validation,
-  commits, and push.
+- Never create another babysit worker or another worktree. The worker may keep
+  at most one active `pr-watcher` for its PR when available. Every watcher must
+  receive the current baseline and absolute PR idle deadline, then exit after
+  one report. The worker may re-dispatch after that exit with the updated
+  baseline and deadline; the watcher cannot fan out or mutate code. The worker
+  owns the feedback loop, validation, commits, and push.
 - Push commits explicitly to the PR head repository and branch:
   `git push <source-push-url> HEAD:refs/heads/<headRefName>`. Never push a
   detached/temporary branch, use the base repository URL for a fork PR, or
@@ -179,10 +187,10 @@ Each worker must:
   when it contains uncommitted changes or a blocker.
 
 Launch all independent workers in one fan-out batch. Keep at most one worker
-and one watcher per PR. Wait for every worker result, continue independent PRs
-when one blocks, and do not declare batch completion until every PR is
-terminal or has a clearly reported human blocker. If a worker fails without a
-terminal report, dispatch one corrective worker in the same worktree only
+and one active watcher per PR. Wait for every worker result, continue
+independent PRs when one blocks, and do not declare batch completion until
+every PR is terminal or has a clearly reported human blocker. If a worker fails
+without a terminal report, dispatch one corrective worker in the same worktree only
 after the original worker has exited; the corrective worker must not fan out or
 dispatch a watcher.
 After a clean terminal result, run `git worktree remove <path>` for that
@@ -199,12 +207,16 @@ between workers.
 
 ### 1a. CI
 
-- Delegate watching to the **pr-watcher** subagent when available: dispatch it in
-  the background with the PR number and the last head SHA you processed, and let
-  it report check results, failure log excerpts, and new feedback while you keep
-  working. Fall back to the inline `gh` flow below when subagents aren't
-  available.
-- Keep at most one watcher active for the selected PR and reuse it across the CI and reviewer-feedback phases; do not launch a new watcher for each poll, check, or thread.
+- Delegate watching to the **pr-watcher** subagent when available. Dispatch it
+  in `active-ci` wait mode with the PR number, current head/review/comment
+  baseline, and absolute PR idle deadline. It reports the first CI or feedback
+  delta and then exits while you keep working. Fall back to the inline `gh` flow
+  below when subagents aren't available.
+- Keep at most one watcher active for the selected PR. After each report, update
+  the baseline; if the report contains relevant activity, reset the PR idle
+  timer and compute its new deadline. Re-dispatch with that baseline and
+  deadline only when more waiting is required. Never reuse a watcher across
+  reports or phases.
 - `gh pr checks <n>` — inspect every check.
 - Ignore async/UI-only suites that aren't gating and aren't affected by this
   change (e.g. E2E/browser shards on a backend-only PR) **unless one fails** —
@@ -320,13 +332,15 @@ status, and that `@<reviewer>` is requested. Apply the `user-voice` skill.
 After the reviewer is requested, keep working their feedback until they **approve**.
 
 1. Poll the review state on an interval — humans aren't instant. Prefer
-   dispatching the **pr-watcher** subagent in the background with the PR number
-   and a baseline (the review/comment IDs and head SHA you've already
-   processed); it reports back only the delta: new reviews, new threads, new
-   commits, and CI changes. Where subagents aren't available, wait 15 minutes
-   between checks using whatever wait mechanism the harness allows (a
-   scheduled wake-up, a monitored timer, or `sleep 900` where permitted). Print
-   a one-line heartbeat each pass
+   dispatching the **pr-watcher** subagent in `review-feedback` wait mode with
+   the PR number, current review/comment IDs and head SHA baseline, and absolute
+   PR idle deadline. It waits at the 15-minute review cadence, reports the first
+   review, thread, commit, or CI delta, and exits. Process its report, update the
+   baseline, reset the idle timer only for relevant activity, and re-dispatch
+   with the current deadline only if more waiting is required. Where subagents
+   aren't available, wait 15 minutes between checks using whatever wait
+   mechanism the harness allows (a scheduled wake-up, a monitored timer, or
+   `sleep 900` where permitted). Print a one-line heartbeat each pass
    (`[babysit] waiting on <reviewer> review — <timestamp>`), and don't spam the API.
    Each pass, re-read `reviewDecision` and the unresolved threads with the same
    queries and pagination rules as step 1b.1. New commits, reviews, comments, or
