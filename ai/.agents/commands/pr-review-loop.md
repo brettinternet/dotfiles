@@ -3,7 +3,9 @@ description: Continuously loop, reviewing PRs by an author, optionally scoped to
 argument-hint: <github-author> [linear-project] [gh-search-qualifiers...]
 ---
 
-You are running a **continuous review loop**. You do not stop after one pass. The only exit is the user interrupting you.
+You are running a **continuous review loop**. You do not stop after one pass.
+Exit only when the user interrupts you or the loop reaches the 8-hour inactivity
+timeout defined below.
 
 ## Arguments
 
@@ -24,9 +26,22 @@ Keep `/tmp/pr-review-loop-state.json` so you never re-review unchanged PRs and t
 
 `reviewed_commits` holds the PR-authored commit subjects at the time of the last review, excluding merge and main-sync noise. It is how you tell a real new commit from a rebase. Read only the current repo's sub-object each iteration, update that sub-object after each review, and never drop another repo's entries.
 
+Keep a run-wide idle timer in memory. Start it when the command starts and reset
+it only when a candidate PR is newly discovered or a candidate's authored
+commit, review, comment, or thread state changes. An unchanged scan, a rebase or
+main-sync alone, and this command's own review action do not reset it. When it
+reaches 8 hours, print the last iteration status and stop cleanly. The JSON state
+remains available so a later run does not re-review unchanged work.
+No watcher or wait may run past the idle deadline; schedule a wake-up for the
+deadline when it is sooner than the normal polling interval.
+
 ## The loop
 
-Run this cycle forever. Print `[pr-review-loop] iteration N — <timestamp>` at the top of each iteration so the user can see it's alive, work steps 1 through 7, then wait 5 minutes using whatever wait mechanism the harness allows (a scheduled wake-up, a monitored timer, or `sleep 300` where permitted).
+Run this cycle until the idle timeout. Print
+`[pr-review-loop] iteration N — <timestamp>` at the top of each iteration so the
+user can see it's alive, work steps 1 through 7, then wait 15 minutes using
+whatever wait mechanism the harness allows (a scheduled wake-up, a monitored
+timer, or `sleep 900` where permitted).
 
 ### 1. Discover PRs
 
@@ -153,11 +168,18 @@ Update the current repo's sub-object in `/tmp/pr-review-loop-state.json` after e
 
 ### 7. Sleep and repeat
 
-Once every candidate is processed or skipped, print `[pr-review-loop] iteration N done — reviewed X, skipped Y, sleeping 5m`, wait 5 minutes, and start the next iteration at step 1. When the **pr-watcher** subagent is available you may instead dispatch it in the background against the candidates with their `reviewed_commits` baselines and start the next iteration when it reports real new work, never tighter than the 5-minute cadence.
+Once every candidate is processed or skipped, print
+`[pr-review-loop] iteration N done — reviewed X, skipped Y, sleeping 15m`, wait
+15 minutes, and start the next iteration at step 1. When the **pr-watcher**
+subagent is available you may dispatch it in the background against the
+candidates with their `reviewed_commits` baselines, but do not start the next
+iteration until 15 minutes have passed even when it reports relevant activity.
+Stop instead when the run-wide idle timer reaches 8 hours.
 
 ## Rules
 
-- **MUST** loop continuously. The only exit is the user interrupting.
+- **MUST** loop continuously until the user interrupts or 8 hours pass without
+  relevant activity as defined under Loop state.
 - **MUST** apply the `user-voice` skill to everything posted to GitHub, re-running its final check immediately before posting.
 - **MUST** drop any finding that cannot name a real line, a trigger, and a breakage. No nitpicks, style nags, `consider X` suggestions, or vague heads ups.
 - **MUST** tie every finding to a problem introduced, newly exposed, or worsened by the authored changes in the current review scope.
