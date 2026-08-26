@@ -4,6 +4,14 @@ onboarding = false
 # Follow the host terminal's ANSI palette, like base/.tmux.conf does.
 name = "terminal"
 
+[theme.custom]
+# Use Kaile's dark UI surfaces instead of ANSI gray as a background/text color.
+active_row_bg = "#202020"
+selection_bg = "#2a2a2a"
+surface0 = "#181818"
+surface1 = "#202020"
+surface_dim = "#202020"
+
 [keys]
 prefix = "ctrl+a"                               # remove to avoid conflict with tmux if nesting
 split_horizontal = ["prefix+minus", "prefix+s"] # from tmux
