@@ -2,7 +2,6 @@
 
 # Applications
 alias c="code ."
-alias z="zed ."
 
 # Navigation
 DEV_DIR="$HOME/dev"
