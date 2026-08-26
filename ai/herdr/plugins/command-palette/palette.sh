@@ -6,7 +6,7 @@ herdr_bin=${HERDR_BIN_PATH:-herdr}
 
 selected=$(
   "$herdr_bin" plugin action list |
-    jq -r '.result.actions[] | select(.plugin_id != "brett.command-palette") | [.title, .plugin_id, .action_id] | @tsv' |
+    jq -r '.result.actions[] | select(.plugin_id != "brett.command-palette" or .action_id != "open") | [.title, .plugin_id, .action_id] | @tsv' |
     fzf --delimiter='\t' --with-nth=1 --prompt='Herdr command> '
 ) || exit 0
 

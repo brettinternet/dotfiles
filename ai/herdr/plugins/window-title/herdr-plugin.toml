@@ -5,6 +5,12 @@ min_herdr_version = "0.8.0"
 description = "Mirror the focused pane title to the outer terminal"
 platforms = ["macos"]
 
+[[actions]]
+id = "set-tab-title-from-pane"
+title = "Set tab title from pane title"
+contexts = ["workspace"]
+command = ["sh", "set-tab-title-from-pane.sh"]
+
 [[startup]]
 command = ["sh", "sync-title.sh"]
 
