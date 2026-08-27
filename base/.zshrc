@@ -137,6 +137,9 @@ autoload -Uz add-zsh-hook
 }
 source "$HOME/.zinit/bin/zinit.zsh"
 autoload -Uz _zinit
+ZINIT_RELEASE_HELPERS="${${(%):-%N}:A:h}/.zsh/zinit-release.zsh"
+source "$ZINIT_RELEASE_HELPERS"
+unset ZINIT_RELEASE_HELPERS
 
 
 # -- Local plugins ----------------------------------------
@@ -173,9 +176,8 @@ compdef _zinit zinit
 
 # https://zdharma-continuum.github.io/zinit/wiki/Direnv-explanation/
 # https://github.com/direnv/direnv/issues/68
-zinit from"gh-r" as"program" mv"direnv* -> direnv" \
-  atclone'chmod u+x ./direnv && ./direnv hook zsh > zhook.zsh' atpull'%atclone' \
-  pick"direnv" src="zhook.zsh" for \
+zinit from"gh-r" as"program" \
+  atload='zinit_activate_release_command direnv ./direnv "./direnv.*" && zinit_eval_init direnv "$REPLY" hook zsh' for \
     direnv/direnv
 
 
@@ -185,16 +187,17 @@ if [ -x "$(command -v emacs)" ]; then
   zinit light doomemacs/doomemacs
 fi
 
-zinit ice as"command" from"gh-r" bpick"atuin-*.tar.gz" mv"atuin*/atuin -> atuin" \
-    atclone"./atuin gen-completions --shell zsh > _atuin" \
-    atpull"%atclone" \
-    atload'[[ -x ./atuin ]] && eval "$(./atuin init zsh)"'
+zinit ice as"command" from"gh-r" bpick"atuin-*.tar.gz" \
+    atclone='zinit_activate_release_command atuin ./atuin "./atuin*/atuin" && zinit_generate_file _atuin "$REPLY" gen-completions --shell zsh' \
+    atpull="%atclone" \
+    atload='zinit_activate_release_command atuin ./atuin "./atuin*/atuin" && zinit_eval_init atuin "$REPLY" init zsh'
 
 zinit light atuinsh/atuin
 
 zinit as="command" lucid from="gh-r" for \
     id-as="usage" \
-    atpull="%atclone" \
+    pick="usage" \
+    atload='zinit_activate_release_command usage ./usage' \
     jdx/usage
 
 mise_release_os() {
@@ -214,13 +217,12 @@ mise_release_arch() {
 zinit as="command" lucid from="gh-r" for \
     id-as="mise" \
     bpick"mise-v*-$(mise_release_os)-$(mise_release_arch).tar.gz" \
-    pick"mise" \
-    atclone='[[ -x ./mise/bin/mise ]] && command mv -f ./mise/bin/mise ./mise-bin && command rm -rf ./mise && command mv -f ./mise-bin ./mise; chmod +x ./mise && ./mise completion zsh > _mise' \
+    atclone='zinit_activate_release_command mise ./mise "./mise/bin/mise" && zinit_generate_file _mise "$REPLY" completion zsh' \
     atpull="%atclone" \
+    atload='zinit_activate_release_command mise ./mise "./mise/bin/mise" && zinit_eval_init mise "$REPLY" activate zsh' \
     jdx/mise
 unset -f mise_release_os mise_release_arch
 
-eval "$(mise activate zsh)"
 
 if (( ${+commands[zoxide]} )); then
   eval "$(zoxide init zsh)"
@@ -238,7 +240,8 @@ if [[ "$OSTYPE" == linux* ]]; then
   EZA_RELEASE_TARGET="$(eza_release_target)"
   if [[ -n "$EZA_RELEASE_TARGET" ]]; then
     zinit ice as"program" from"gh-r" \
-      bpick"eza_$EZA_RELEASE_TARGET.tar.gz" pick"eza"
+      bpick"eza_$EZA_RELEASE_TARGET.tar.gz" pick"eza" \
+      atload='zinit_activate_release_command eza ./eza'
     zinit light eza-community/eza
   fi
   unset EZA_RELEASE_TARGET
