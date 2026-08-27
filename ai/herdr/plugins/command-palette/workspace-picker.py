@@ -356,12 +356,14 @@ def pick_workspace() -> None:
     cycle_down = f"{command} cycle {{2}} 1"
     pane_prompt = "Search panes › "
     workspace_prompt = "Go to workspace › "
-    pane_label = " Pane search · Ctrl-B back "
-    workspace_label = " Workspace preview · Ctrl-F search panes "
+    pane_label = " Pane search · Ctrl-B/H back "
+    workspace_label = " Workspace preview · Ctrl-F/L search panes "
+    pane_mode = f"reload-sync({pane_rows_command})+change-prompt({pane_prompt})+enable-search+clear-query+change-preview-label({pane_label})"
+    workspace_mode = f"reload-sync({workspace_rows_command})+change-prompt({workspace_prompt})+enable-search+clear-query+change-preview-label({workspace_label})"
     bindings = [
-        "ctrl-j:down,ctrl-k:up,ctrl-n:down,ctrl-p:up,ctrl-h:backward-delete-char",
-        f"ctrl-f:reload-sync({pane_rows_command})+change-prompt({pane_prompt})+enable-search+clear-query+change-preview-label({pane_label})",
-        f"ctrl-b:reload-sync({workspace_rows_command})+change-prompt({workspace_prompt})+enable-search+clear-query+change-preview-label({workspace_label})",
+        "ctrl-j:down,ctrl-k:up,ctrl-n:down,ctrl-p:up",
+        f"ctrl-f:{pane_mode},ctrl-l:{pane_mode}",
+        f"ctrl-b:{workspace_mode},ctrl-h:{workspace_mode}",
         f"alt-up:execute-silent({cycle_up})+refresh-preview",
         f"alt-down:execute-silent({cycle_down})+refresh-preview",
     ]
