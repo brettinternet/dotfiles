@@ -119,30 +119,50 @@
             '# END dotfiles GitHub SSH over port 443' \
             ''
           awk '
+            BEGIN {
+              expected[1] = "Host github.com"
+              expected[2] = "  HostName ssh.github.com"
+              expected[3] = "  Port 443"
+              expected[4] = "  User git"
+              expected[5] = "  HostKeyAlias github.com"
+              expected[6] = "  ConnectTimeout 10"
+              expected[7] = "  ServerAliveInterval 15"
+              expected[8] = "  ServerAliveCountMax 2"
+              expected[9] = "# END dotfiles GitHub SSH over port 443"
+            }
             skip_separator {
               skip_separator = 0
               if ($0 == "") {
                 next
               }
             }
-            $0 == "# BEGIN dotfiles GitHub SSH over port 443" && !managed {
-              managed = 1
-              buffered = ""
+            $0 == "# BEGIN dotfiles GitHub SSH over port 443" && !candidate {
+              candidate = 1
+              exact = 1
+              position = 0
+              buffered = $0 ORS
               next
             }
-            managed {
-              if ($0 == "# END dotfiles GitHub SSH over port 443") {
-                managed = 0
-                buffered = ""
-                skip_separator = 1
-                next
-              }
+            candidate {
+              position++
               buffered = buffered $0 ORS
+              if ($0 != expected[position]) {
+                exact = 0
+              }
+              if ($0 == "# END dotfiles GitHub SSH over port 443") {
+                if (exact && position == 9) {
+                  skip_separator = 1
+                } else {
+                  printf "%s", buffered
+                }
+                candidate = 0
+                buffered = ""
+              }
               next
             }
             { print }
             END {
-              if (managed) {
+              if (candidate) {
                 printf "%s", buffered
               }
             }
