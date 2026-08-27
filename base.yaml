@@ -101,7 +101,6 @@
 
         umask 077
         mkdir -p "$ssh_dir"
-        touch "$ssh_config"
         ssh_config_target="$ssh_config"
         symlink_depth=0
         while [ -L "$ssh_config_target" ]; do
@@ -133,7 +132,8 @@
             '  ServerAliveCountMax 2' \
             '# END dotfiles GitHub SSH over port 443' \
             ''
-          awk '
+          if [ -e "$ssh_config_target" ]; then
+            awk '
             BEGIN {
               expected[1] = "Host github.com"
               expected[2] = "  HostName ssh.github.com"
@@ -181,7 +181,8 @@
                 printf "%s", buffered
               }
             }
-          ' "$ssh_config"
+            ' "$ssh_config_target"
+          fi
         } > "$temporary"
         chmod 600 "$temporary"
         mv "$temporary" "$ssh_config_target"
