@@ -279,6 +279,11 @@ function load_prompt {
     fi
   }
 
+  # Geometry's job precheck runs in a subshell, which cannot see the parent job table.
+  geometry_jobs() {
+    ansi "${GEOMETRY_JOBS_COLOR:-blue}" "%(1j.${GEOMETRY_JOBS_SYMBOL:-⚙} %j.)"
+  }
+
   GEOMETRY_PATH_COLOR=04
   GEOMETRY_HOST_COLORS=({1..9})
   (( ${terminfo[colors]:-0} >= 256 )) && GEOMETRY_HOST_COLORS+=({17..230})
@@ -287,14 +292,14 @@ function load_prompt {
   # Herdr panes can retain SSH variables from when a persistent session was created.
   # They do not describe the client currently attached to that session.
   if [[ -z "$HERDR_ENV" && ( -n "$SSH_CLIENT" || -n "$SSH_TTY" ) ]]; then
-    GEOMETRY_PROMPT=(geometry_echo prompt_hostname prompt_virtualenv geometry_status geometry_path)
+    GEOMETRY_PROMPT=(geometry_echo prompt_hostname prompt_virtualenv geometry_jobs geometry_status geometry_path)
   else
-    GEOMETRY_PROMPT=(geometry_echo prompt_virtualenv geometry_status geometry_path)
+    GEOMETRY_PROMPT=(geometry_echo prompt_virtualenv geometry_jobs geometry_status geometry_path)
   fi
 }
 
 zinit ice silent atload"load_prompt"
-# https://github.com/geometry-zsh/geometry/blob/a8033e0e9a987c1a6ee1813b7cad7f28cfd3c869/options.md
+# https://github.com/geometry-zsh/geometry/blob/0f82c567db277024f340b5854a646094d194a31f/options.md
 zinit load geometry-zsh/geometry
 
 
