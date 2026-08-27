@@ -29,6 +29,8 @@ One message carries one point. State the point in the first sentence, then at mo
 
 Do not turn the message into an inventory of files, variables, functions, or other identifiers. Name one or two core references to anchor the point, then use plain, direct, concise wording for the rest. Prefer a natural phrase or pronoun when repeating a name would not add clarity. Include other identifiers when the reader needs them to understand or act.
 
+Do not reference commit hashes. Use relative language that fits the sequence, such as `my last commit`, `the next commit`, or `I will do that`.
+
 ## Questions
 
 Do not use `Could` to frame a question. It reads as an indirect request that the recipient ought to act. Choose the question form that matches the actual unknown. Use `Should` for intended behavior, `Why` for rationale, `What` for an expected result or constraint, and `How` for mechanism. Other direct, earnest questions are appropriate when they fit. Never mechanically rewrite every question with `Should`. If an action is required rather than genuinely in question, state the requested action directly.
@@ -72,4 +74,5 @@ Before returning externally directed text, perform a dedicated revision pass for
 9. Technical tokens use inline code backticks where appropriate, without wrapping surrounding prose.
 10. One or two core technical references anchor the point, with other identifiers included only when needed for clarity or action.
 11. Protected technical capitalization and exact quoted text are preserved.
-12. The workflow permits sending or posting. Otherwise return a draft only.
+12. Commit references use relative language and never include hashes.
+13. The workflow permits sending or posting. Otherwise return a draft only.
