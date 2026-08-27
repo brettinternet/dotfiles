@@ -183,6 +183,31 @@ def ordered_workspace_panes(state: dict, workspace_id: str) -> list[dict]:
         )
     ]
 
+def default_workspace_pane_index(
+    state: dict, workspace_id: str, panes: list[dict]
+) -> int:
+    workspace = next(
+        (item for item in state.get("workspaces", []) if item["workspace_id"] == workspace_id),
+        {},
+    )
+    active_tab_id = workspace.get("active_tab_id")
+    return next(
+        (
+            index
+            for index, pane in enumerate(panes)
+            if pane.get("focused") and pane["tab_id"] == active_tab_id
+        ),
+        next(
+            (
+                index
+                for index, pane in enumerate(panes)
+                if pane["tab_id"] == active_tab_id
+            ),
+            0,
+        ),
+    )
+
+
 def focus_selection(state: dict, target_id: str, workspace_id: str) -> None:
     herdr_command("workspace", "focus", workspace_id)
     panes = ordered_workspace_panes(state, workspace_id)
@@ -225,6 +250,13 @@ def pane_rows(state: dict, workspace_id: str, after_pane_id: str | None = None) 
             index for index, pane in enumerate(panes) if pane["tab_id"] == next_tab_id
         )
         panes = panes[next_tab:] + panes[:next_tab]
+    elif panes:
+        current_pane = selected_preview_index(
+            workspace_id,
+            len(panes),
+            default_workspace_pane_index(state, workspace_id, panes),
+        )
+        panes = panes[current_pane:] + panes[:current_pane]
 
     rows = []
     for pane in panes:
@@ -271,21 +303,7 @@ def workspace_preview(state: dict, workspace_id: str, target_id: str | None = No
     )
     panes = [item for item in state.get("panes", []) if item["workspace_id"] == workspace_id]
     ordered_panes = ordered_workspace_panes(state, workspace_id)
-    default_pane = next(
-        (
-            index
-            for index, pane in enumerate(ordered_panes)
-            if pane.get("focused") and pane["tab_id"] == workspace.get("active_tab_id")
-        ),
-        next(
-            (
-                index
-                for index, pane in enumerate(ordered_panes)
-                if pane["tab_id"] == workspace.get("active_tab_id")
-            ),
-            0,
-        ),
-    )
+    default_pane = default_workspace_pane_index(state, workspace_id, ordered_panes)
     pane_index = next(
         (index for index, pane in enumerate(ordered_panes) if pane["pane_id"] == target_id),
         selected_preview_index(workspace_id, len(ordered_panes), default_pane),

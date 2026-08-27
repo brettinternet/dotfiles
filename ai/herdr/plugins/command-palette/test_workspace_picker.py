@@ -14,6 +14,36 @@ SPEC.loader.exec_module(workspace_picker)
 
 
 class WorkspacePickerTest(unittest.TestCase):
+    def test_entering_pane_mode_starts_at_current_preview_pane(self) -> None:
+        state = {
+            "workspaces": [{"workspace_id": "w1", "active_tab_id": "t2"}],
+            "tabs": [
+                {"workspace_id": "w1", "tab_id": "t1", "number": 1},
+                {"workspace_id": "w1", "tab_id": "t2", "number": 2},
+            ],
+            "panes": [
+                {"workspace_id": "w1", "tab_id": "t1", "pane_id": "p1a"},
+                {"workspace_id": "w1", "tab_id": "t2", "pane_id": "p2a"},
+                {
+                    "workspace_id": "w1",
+                    "tab_id": "t2",
+                    "pane_id": "p2b",
+                    "focused": True,
+                },
+            ],
+        }
+
+        with mock.patch.object(
+            workspace_picker,
+            "selected_preview_index",
+            side_effect=lambda workspace_id, pane_count, default: default,
+        ):
+            first_pane = workspace_picker.pane_rows(state, "w1", "w1").split(
+                "\t", 1
+            )[0]
+
+        self.assertEqual(first_pane, "p2b")
+
     def test_pane_rows_advance_to_next_tabs_first_pane_and_wrap(self) -> None:
         state = {
             "tabs": [
