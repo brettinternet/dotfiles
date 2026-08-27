@@ -93,6 +93,65 @@
           esac
         fi
       description: Remove retired agent editor link
+    - command: |
+        set -eu
+
+        ssh_dir="$HOME/.ssh"
+        ssh_config="$ssh_dir/config"
+
+        umask 077
+        mkdir -p "$ssh_dir"
+        touch "$ssh_config"
+
+        temporary="$(mktemp "$ssh_config.XXXXXX")"
+        trap 'unlink "$temporary" 2>/dev/null || true' EXIT HUP INT TERM
+        {
+          printf '%s\n' \
+            '# BEGIN dotfiles GitHub SSH over port 443' \
+            'Host github.com' \
+            '  HostName ssh.github.com' \
+            '  Port 443' \
+            '  User git' \
+            '  HostKeyAlias github.com' \
+            '  ConnectTimeout 10' \
+            '  ServerAliveInterval 15' \
+            '  ServerAliveCountMax 2' \
+            '# END dotfiles GitHub SSH over port 443' \
+            ''
+          awk '
+            skip_separator {
+              skip_separator = 0
+              if ($0 == "") {
+                next
+              }
+            }
+            $0 == "# BEGIN dotfiles GitHub SSH over port 443" && !managed {
+              managed = 1
+              buffered = ""
+              next
+            }
+            managed {
+              if ($0 == "# END dotfiles GitHub SSH over port 443") {
+                managed = 0
+                buffered = ""
+                skip_separator = 1
+                next
+              }
+              buffered = buffered $0 ORS
+              next
+            }
+            { print }
+            END {
+              if (managed) {
+                printf "%s", buffered
+              }
+            }
+          ' "$ssh_config"
+        } > "$temporary"
+        chmod 600 "$temporary"
+        mv "$temporary" "$ssh_config"
+        trap - EXIT HUP INT TERM
+      description: Route GitHub SSH through port 443
     # Initializing Zsh installs missing Zinit plugins without updating existing
     # checkouts. Version updates are explicit through `make update-zinit`.
     - command: |
