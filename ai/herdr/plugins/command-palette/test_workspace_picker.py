@@ -14,6 +14,30 @@ SPEC.loader.exec_module(workspace_picker)
 
 
 class WorkspacePickerTest(unittest.TestCase):
+    def test_pane_rows_advance_to_next_tabs_first_pane_and_wrap(self) -> None:
+        state = {
+            "tabs": [
+                {"workspace_id": "w1", "tab_id": "t2", "number": 2},
+                {"workspace_id": "w1", "tab_id": "t1", "number": 1},
+                {"workspace_id": "w1", "tab_id": "t3", "number": 3},
+            ],
+            "panes": [
+                {"workspace_id": "w1", "tab_id": "t2", "pane_id": "p2b"},
+                {"workspace_id": "w1", "tab_id": "t1", "pane_id": "p1b"},
+                {"workspace_id": "w1", "tab_id": "t3", "pane_id": "p3a"},
+                {"workspace_id": "w1", "tab_id": "t2", "pane_id": "p2a"},
+                {"workspace_id": "w1", "tab_id": "t1", "pane_id": "p1a"},
+            ],
+        }
+
+        def first_pane(after: str) -> str:
+            return workspace_picker.pane_rows(state, "w1", after).split("\t", 1)[0]
+
+        self.assertEqual(first_pane("w1"), "p1a")
+        self.assertEqual(first_pane("p1b"), "p2a")
+        self.assertEqual(first_pane("p2a"), "p3a")
+        self.assertEqual(first_pane("p3a"), "p1a")
+
     def test_workspace_and_pane_modes_have_vim_navigation_aliases(self) -> None:
         state = {
             "workspaces": [
@@ -47,6 +71,7 @@ class WorkspacePickerTest(unittest.TestCase):
             )
         }
         self.assertEqual(bindings["ctrl-l"], bindings["ctrl-f"])
+        self.assertIn("+first", bindings["ctrl-f"])
         self.assertEqual(bindings["ctrl-h"], bindings["ctrl-b"])
         self.assertNotEqual(bindings["ctrl-h"], "backward-delete-char")
 

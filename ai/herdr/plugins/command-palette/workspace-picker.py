@@ -213,10 +213,21 @@ def workspace_rows(state: dict) -> str:
     return "\n".join(rows)
 
 
-def pane_rows(state: dict, workspace_id: str) -> str:
+def pane_rows(state: dict, workspace_id: str, after_pane_id: str | None = None) -> str:
     tabs = {tab["tab_id"]: tab for tab in state.get("tabs", [])}
+    panes = ordered_workspace_panes(state, workspace_id)
+    current = next((pane for pane in panes if pane["pane_id"] == after_pane_id), None)
+    if current is not None:
+        tab_ids = list(dict.fromkeys(pane["tab_id"] for pane in panes))
+        current_tab = tab_ids.index(current["tab_id"])
+        next_tab_id = tab_ids[(current_tab + 1) % len(tab_ids)]
+        next_tab = next(
+            index for index, pane in enumerate(panes) if pane["tab_id"] == next_tab_id
+        )
+        panes = panes[next_tab:] + panes[:next_tab]
+
     rows = []
-    for pane in ordered_workspace_panes(state, workspace_id):
+    for pane in panes:
         tab = tabs.get(pane["tab_id"], {})
         rows.append(
             "\t".join(
@@ -350,7 +361,7 @@ def pick_workspace() -> None:
     script = Path(__file__).resolve()
     command = f"{shlex.quote(sys.executable)} {shlex.quote(str(script))}"
     preview = f"{command} preview {{1}} {{2}}"
-    pane_rows_command = f"{command} rows-panes {{2}}"
+    pane_rows_command = f"{command} rows-panes {{2}} {{1}}"
     workspace_rows_command = f"{command} rows-workspaces"
     cycle_up = f"{command} cycle {{2}} -1"
     cycle_down = f"{command} cycle {{2}} 1"
@@ -358,7 +369,7 @@ def pick_workspace() -> None:
     workspace_prompt = "Go to workspace › "
     pane_label = " Pane search · Ctrl-B/H back "
     workspace_label = " Workspace preview · Ctrl-F/L search panes "
-    pane_mode = f"reload-sync({pane_rows_command})+change-prompt({pane_prompt})+enable-search+clear-query+change-preview-label({pane_label})"
+    pane_mode = f"reload-sync({pane_rows_command})+first+change-prompt({pane_prompt})+enable-search+clear-query+change-preview-label({pane_label})"
     workspace_mode = f"reload-sync({workspace_rows_command})+change-prompt({workspace_prompt})+enable-search+clear-query+change-preview-label({workspace_label})"
     bindings = [
         "ctrl-j:down,ctrl-k:up,ctrl-n:down,ctrl-p:up",
@@ -402,8 +413,8 @@ def main() -> None:
     if len(sys.argv) == 4 and sys.argv[1] == "preview":
         print(workspace_preview(snapshot(), sys.argv[3], sys.argv[2]))
         return
-    if len(sys.argv) == 3 and sys.argv[1] == "rows-panes":
-        print(pane_rows(snapshot(), sys.argv[2]))
+    if len(sys.argv) == 4 and sys.argv[1] == "rows-panes":
+        print(pane_rows(snapshot(), sys.argv[2], sys.argv[3]))
         return
     if len(sys.argv) == 2 and sys.argv[1] == "rows-workspaces":
         print(workspace_rows(snapshot()))
@@ -413,7 +424,7 @@ def main() -> None:
         return
     if len(sys.argv) != 1:
         raise SystemExit(
-            "usage: workspace-picker.py [preview TARGET_ID WORKSPACE_ID | rows-panes WORKSPACE_ID | rows-workspaces | cycle WORKSPACE_ID DELTA]"
+            "usage: workspace-picker.py [preview TARGET_ID WORKSPACE_ID | rows-panes WORKSPACE_ID AFTER_PANE_ID | rows-workspaces | cycle WORKSPACE_ID DELTA]"
         )
     pick_workspace()
 
