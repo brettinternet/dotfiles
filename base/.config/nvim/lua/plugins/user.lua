@@ -28,6 +28,26 @@ return {
   },
 
   {
+    "mrjones2014/smart-splits.nvim",
+    opts = function(_, opts)
+      local herdr_pane = vim.env.HERDR_PANE_ID
+      if herdr_pane then
+        opts.at_edge = function(ctx)
+          vim.system {
+            vim.env.HERDR_BIN_PATH or "herdr",
+            "pane",
+            "focus",
+            "--direction",
+            ctx.direction,
+            "--pane",
+            herdr_pane,
+          }
+        end
+      end
+    end,
+  },
+
+  {
     "nvim-neo-tree/neo-tree.nvim",
     opts = {
       filesystem = {

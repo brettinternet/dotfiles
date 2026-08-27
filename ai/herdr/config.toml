@@ -128,28 +128,52 @@ command = "brett.command-palette.open-workspace-overview"
 description = "open workspace overview"
 
 [[keys.command]]
-key = ["prefix+ctrl+h", "ctrl+alt+h"]
+key = "prefix+ctrl+h"
 type = "plugin_action"
 command = "brett.seamless-navigation.navigate-left"
 description = "navigate left"
 
 [[keys.command]]
-key = ["prefix+ctrl+j", "ctrl+alt+j"]
+key = "prefix+ctrl+j"
 type = "plugin_action"
 command = "brett.seamless-navigation.navigate-down"
 description = "navigate down"
 
 [[keys.command]]
-key = ["prefix+ctrl+k", "ctrl+alt+k"]
+key = "prefix+ctrl+k"
 type = "plugin_action"
 command = "brett.seamless-navigation.navigate-up"
 description = "navigate up"
 
 [[keys.command]]
-key = ["prefix+ctrl+l", "ctrl+alt+l"]
+key = "prefix+ctrl+l"
 type = "plugin_action"
 command = "brett.seamless-navigation.navigate-right"
 description = "navigate right"
+
+[[keys.command]]
+key = "ctrl+alt+h"
+type = "plugin_action"
+command = "brett.seamless-navigation.focus-left"
+description = "focus Herdr pane left"
+
+[[keys.command]]
+key = "ctrl+alt+j"
+type = "plugin_action"
+command = "brett.seamless-navigation.focus-down"
+description = "focus Herdr pane down"
+
+[[keys.command]]
+key = "ctrl+alt+k"
+type = "plugin_action"
+command = "brett.seamless-navigation.focus-up"
+description = "focus Herdr pane up"
+
+[[keys.command]]
+key = "ctrl+alt+l"
+type = "plugin_action"
+command = "brett.seamless-navigation.focus-right"
+description = "focus Herdr pane right"
 
 [[keys.command]]
 key = "alt+shift+h"
