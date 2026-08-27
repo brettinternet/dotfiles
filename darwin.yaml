@@ -67,3 +67,8 @@
       description: Install the dsh-tui profile with Bun
       stdout: true
       stderr: true
+    - command: >-
+        hidutil property --set
+        '{"UserKeyMapping":[{"HIDKeyboardModifierMappingSrc":0x700000039,"HIDKeyboardModifierMappingDst":0x700000029}]}'
+      description: Remap Caps Lock to Escape
+      stdout: true

@@ -17,3 +17,7 @@ tasks:
     cmd: "{{.BREW_SH}}"
     preconditions:
       - { msg: "Missing Brewfile", sh: "test -f {{.BREWFILE}}" }
+
+  undo-escape:
+    desc: Undo the capslock -> escape remap
+    cmd: hidutil property --set '{"UserKeyMapping":[]}'
