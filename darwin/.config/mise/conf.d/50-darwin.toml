@@ -15,6 +15,7 @@ k9s = "latest"
 gh = { version = "latest", postinstall = "gh extension install github/gh-stack --force" }
 biome = "latest"
 "vfox:jdx/vfox-eza" = "latest"
+"gem:vimgolf" = "latest"
 
 # ai
 "npm:@anthropic-ai/claude-code" = { version = "latest", minimum_release_age = "0" }
