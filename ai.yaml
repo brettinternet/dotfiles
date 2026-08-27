@@ -164,6 +164,8 @@
     # Oh My Pi
     ~/.omp/agent/models.yml:
       path: ai/pi/models.yml
+    ~/.omp/agent/keybindings.yml:
+      path: ai/pi/keybindings.yml
     ~/.omp/agent/WATCHDOG.md:
       path: ai/WATCHDOG.md
     # Codex

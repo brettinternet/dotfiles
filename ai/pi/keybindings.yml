@@ -1,0 +1,7 @@
+tui.select.up:
+  - Up
+  - Ctrl+P
+tui.select.down:
+  - Down
+  - Ctrl+N
+app.model.cycleForward: []
