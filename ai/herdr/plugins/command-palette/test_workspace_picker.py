@@ -104,6 +104,7 @@ class WorkspacePickerTest(unittest.TestCase):
         self.assertIn("+first", bindings["ctrl-f"])
         self.assertEqual(bindings["ctrl-h"], bindings["ctrl-b"])
         self.assertNotEqual(bindings["ctrl-h"], "backward-delete-char")
+        self.assertIn("--cycle", arguments)
 
 
 if __name__ == "__main__":
