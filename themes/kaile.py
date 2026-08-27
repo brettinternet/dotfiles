@@ -234,7 +234,7 @@ def validate_manual_consumers(palette: dict) -> list[str]:
         if value[:7].lower() not in allowed:
             errors.append(f"{vscode_path.relative_to(ROOT)} uses unknown color {value}")
 
-    herdr_path = ROOT / "ai/herdr/config.toml"
+    herdr_path = ROOT / "base/.config/herdr/config.toml"
     herdr = tomllib.loads(herdr_path.read_text())["theme"]["custom"]
     expected = {
         "active_row_bg": semantic["surfaceActive"],

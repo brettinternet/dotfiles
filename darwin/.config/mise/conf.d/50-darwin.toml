@@ -9,9 +9,7 @@
 # dev
 go = "latest"
 rust = "latest"
-python = "latest"
 uv = "latest"
-node = "latest"
 bun = "latest"
 k9s = "latest"
 gh = { version = "latest", postinstall = "gh extension install github/gh-stack --force" }
@@ -27,7 +25,6 @@ codex = "latest"
 "npm:@deepseek-ai/dsh" = "0.1.1-rc.2"
 amp = { version = "latest", depends = ["bun"], minimum_release_age = "0", postinstall = 'cd "$MISE_TOOL_INSTALL_PATH" && "${MISE_DATA_DIR:-$HOME/.local/share/mise}/installs/bun/latest/bin/bun" pm trust @ampcode/cli' }
 ast-grep = "latest"
-herdr = { version = "latest", minimum_release_age = "0" }
 
 # lsp
 # lua-language-server, marksman, ruff and taplo live in the base fragment so the

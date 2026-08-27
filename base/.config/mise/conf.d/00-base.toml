@@ -12,6 +12,9 @@ delta = "latest"
 slsa-verifier = "latest"
 cosign = "latest"
 gdu = "latest"
+herdr = { version = "latest", minimum_release_age = "0" }
+python = "latest"
+node = "latest"
 
 # search
 fd = "latest"
@@ -19,12 +22,12 @@ fzf = "latest"
 rg = "latest"
 zoxide = "latest"
 yq = "latest"
+jq = "latest"
 
 # lsp
-# Only self-contained binaries belong here so every machine (including the
-# Arch/Debian servers) gets language support for the things actually edited
-# there: Neovim's own Lua config, Markdown, Python and TOML. Servers that need
-# a language runtime (Node, Go, Erlang/Elixir) stay in the darwin fragment.
+# These servers cover the languages edited on every machine, including the
+# Arch/Debian servers. Python and Node are base runtimes because the shared
+# Herdr plugins use them.
 lua-language-server = "latest"
 marksman = "latest"
 ruff = "latest"

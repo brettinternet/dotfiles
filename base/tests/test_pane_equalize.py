@@ -5,7 +5,7 @@ from pathlib import Path
 from unittest import mock
 
 
-SCRIPT = Path(__file__).parents[1] / "herdr/plugins/pane-equalize/equalize.py"
+SCRIPT = Path(__file__).parents[1] / ".config/herdr/plugins/pane-equalize/equalize.py"
 spec = importlib.util.spec_from_file_location("pane_equalize", SCRIPT)
 pane_equalize = importlib.util.module_from_spec(spec)
 assert spec.loader is not None

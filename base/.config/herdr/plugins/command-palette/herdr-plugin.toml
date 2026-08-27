@@ -3,7 +3,7 @@ name = "Command palette"
 version = "0.1.0"
 min_herdr_version = "0.8.0"
 description = "Search and invoke installed Herdr plugin actions"
-platforms = ["macos"]
+platforms = ["linux", "macos"]
 
 [[actions]]
 id = "open"

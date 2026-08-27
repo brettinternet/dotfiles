@@ -55,8 +55,8 @@ fi
 export GOPATH="$HOME/.go"
 export PATH="$HOME/.npm-global/bin:$HOME/.local/bin:$GOPATH/bin:$HOME/.cargo/bin:$PATH:$HOME/.config/emacs/bin"
 
-# Don't timeout in terminal multiplexer
-if [ "${TERM#screen}" = "$TERM" ] && [ -z "$TMUX" ] && [ -z "$DISPLAY" ] && [ "$(uname)" != "Darwin" ]; then
+# Don't timeout in terminal multiplexers
+if [ "${TERM#screen}" = "$TERM" ] && [ -z "$TMUX" ] && [ -z "${HERDR_ENV:-}" ] && [ -z "$DISPLAY" ] && [ "$(uname)" != "Darwin" ]; then
   # Automatically logout inactive consoles after 10 min: https://wiki.archlinux.org/index.php/Security#Automatic_logout
   # Applies to SSH sessions as well, but unintended for terminal emulation where $DISPLAY is set
   profile_ten_minutes="$((60 * 10))"
