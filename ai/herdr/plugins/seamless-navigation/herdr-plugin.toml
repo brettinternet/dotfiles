@@ -30,6 +30,30 @@ contexts = ["pane"]
 command = ["sh", "dispatch.sh", "navigate", "right", "ctrl+l"]
 
 [[actions]]
+id = "focus-left"
+title = "Focus Herdr pane left"
+contexts = ["pane"]
+command = ["sh", "dispatch.sh", "focus", "left", "ctrl+alt+h"]
+
+[[actions]]
+id = "focus-down"
+title = "Focus Herdr pane down"
+contexts = ["pane"]
+command = ["sh", "dispatch.sh", "focus", "down", "ctrl+alt+j"]
+
+[[actions]]
+id = "focus-up"
+title = "Focus Herdr pane up"
+contexts = ["pane"]
+command = ["sh", "dispatch.sh", "focus", "up", "ctrl+alt+k"]
+
+[[actions]]
+id = "focus-right"
+title = "Focus Herdr pane right"
+contexts = ["pane"]
+command = ["sh", "dispatch.sh", "focus", "right", "ctrl+alt+l"]
+
+[[actions]]
 id = "resize-left"
 title = "Resize left"
 contexts = ["pane"]

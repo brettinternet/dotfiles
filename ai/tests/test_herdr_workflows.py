@@ -90,6 +90,10 @@ class SeamlessNavigationTest(unittest.TestCase):
         call = self.run_dispatch("nvim", "navigate", "right", "ctrl+l")
         self.assertEqual(call, "pane send-keys w1:p2 ctrl+l")
 
+    def test_focus_bypasses_vim_navigation(self):
+        call = self.run_dispatch("nvim", "focus", "right", "ctrl+alt+l")
+        self.assertEqual(call, "pane focus --direction right --pane w1:p2")
+
     def test_resizes_herdr_from_a_shell(self):
         call = self.run_dispatch("zsh", "resize", "left", "alt+shift+h")
         self.assertEqual(call, "pane resize --direction left --pane w1:p2")
