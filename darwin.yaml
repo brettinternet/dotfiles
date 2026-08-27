@@ -22,8 +22,6 @@
       path: darwin/.zprofile
     ~/.hushlogin:
       path: darwin/.hushlogin
-    ~/.aerospace.toml:
-      path: darwin/.aerospace.toml
     ~/.functions/:
       glob: true
       path: darwin/.functions/*
