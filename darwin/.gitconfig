@@ -9,6 +9,12 @@
 [pull]
   rebase = true
 
+[diff]
+  tool = nvimdiff
+
+[difftool "nvimdiff"]
+  cmd = nvim -d -c \"set notermguicolors\" -c \"colorscheme default\" \"$LOCAL\" \"$REMOTE\"
+
 [alias]
 	graph = log --graph --all --format='%h %s%n        (%an, %ar)%d' --abbrev-commit
 
