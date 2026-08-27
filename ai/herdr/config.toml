@@ -29,7 +29,6 @@ new_workspace = "prefix+shift+c"
 switch_workspace = "prefix+shift+1..9"
 previous_workspace = ["prefix+shift+p", "prefix+shift+["]
 next_workspace = ["prefix+shift+n", "prefix+shift+]"]
-#goto = "prefix+g"
 detach = ["prefix+d", "prefix+ctrl+d"]
 
 [[keys.command]]
@@ -41,10 +40,17 @@ description = "set tab title from focused pane title"
 [[keys.command]]
 key = "prefix+t"
 type = "popup"
-#command = "exec \"${SHELL:-sh}\""
+command = "exec \"${SHELL:-sh}\""
+description = "open terminal"
+width = 80
+height = 30
+
+[[keys.command]]
+key = "prefix+g"
+type = "popup"
 command = "lazygit"
 description = "open lazygit"
-width = 140
+width = 160
 height = 60
 
 [[keys.command]]
