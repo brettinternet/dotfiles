@@ -102,8 +102,23 @@
         umask 077
         mkdir -p "$ssh_dir"
         touch "$ssh_config"
+        ssh_config_target="$ssh_config"
+        symlink_depth=0
+        while [ -L "$ssh_config_target" ]; do
+          symlink_depth=$((symlink_depth + 1))
+          if [ "$symlink_depth" -gt 40 ]; then
+            echo "Too many symbolic links while resolving $ssh_config" >&2
+            exit 1
+          fi
+          target_dir="$(dirname "$ssh_config_target")"
+          link_target="$(readlink "$ssh_config_target")"
+          case "$link_target" in
+            /*) ssh_config_target="$link_target" ;;
+            *) ssh_config_target="$target_dir/$link_target" ;;
+          esac
+        done
 
-        temporary="$(mktemp "$ssh_config.XXXXXX")"
+        temporary="$(mktemp "$ssh_config_target.XXXXXX")"
         trap 'unlink "$temporary" 2>/dev/null || true' EXIT HUP INT TERM
         {
           printf '%s\n' \
@@ -169,7 +184,7 @@
           ' "$ssh_config"
         } > "$temporary"
         chmod 600 "$temporary"
-        mv "$temporary" "$ssh_config"
+        mv "$temporary" "$ssh_config_target"
         trap - EXIT HUP INT TERM
       description: Route GitHub SSH through port 443
     # Initializing Zsh installs missing Zinit plugins without updating existing
