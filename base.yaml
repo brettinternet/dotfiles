@@ -30,6 +30,8 @@
       path: base/.editorconfig
     ~/.profile:
       path: base/.profile
+    ~/.ssh/config.d/github.conf:
+      path: base/.ssh/config.d/github.conf
     ~/.vimrc:
       path: base/.vimrc
       force: true
@@ -98,96 +100,26 @@
 
         ssh_dir="$HOME/.ssh"
         ssh_config="$ssh_dir/config"
+        include='Include ~/.ssh/config.d/*'
 
         umask 077
         mkdir -p "$ssh_dir"
-        ssh_config_target="$ssh_config"
-        symlink_depth=0
-        while [ -L "$ssh_config_target" ]; do
-          symlink_depth=$((symlink_depth + 1))
-          if [ "$symlink_depth" -gt 40 ]; then
-            echo "Too many symbolic links while resolving $ssh_config" >&2
-            exit 1
-          fi
-          target_dir="$(dirname "$ssh_config_target")"
-          link_target="$(readlink "$ssh_config_target")"
-          case "$link_target" in
-            /*) ssh_config_target="$link_target" ;;
-            *) ssh_config_target="$target_dir/$link_target" ;;
-          esac
-        done
-
-        temporary="$(mktemp "$ssh_config_target.XXXXXX")"
-        trap 'unlink "$temporary" 2>/dev/null || true' EXIT HUP INT TERM
-        {
-          printf '%s\n' \
-            '# BEGIN dotfiles GitHub SSH over port 443' \
-            'Host github.com' \
-            '  HostName ssh.github.com' \
-            '  Port 443' \
-            '  User git' \
-            '  HostKeyAlias github.com' \
-            '  ConnectTimeout 10' \
-            '  ServerAliveInterval 15' \
-            '  ServerAliveCountMax 2' \
-            '# END dotfiles GitHub SSH over port 443' \
-            ''
-          if [ -e "$ssh_config_target" ]; then
-            awk '
-            BEGIN {
-              expected[1] = "Host github.com"
-              expected[2] = "  HostName ssh.github.com"
-              expected[3] = "  Port 443"
-              expected[4] = "  User git"
-              expected[5] = "  HostKeyAlias github.com"
-              expected[6] = "  ConnectTimeout 10"
-              expected[7] = "  ServerAliveInterval 15"
-              expected[8] = "  ServerAliveCountMax 2"
-              expected[9] = "# END dotfiles GitHub SSH over port 443"
-            }
-            skip_separator {
-              skip_separator = 0
-              if ($0 == "") {
-                next
-              }
-            }
-            $0 == "# BEGIN dotfiles GitHub SSH over port 443" && !candidate {
-              candidate = 1
-              exact = 1
-              position = 0
-              buffered = $0 ORS
-              next
-            }
-            candidate {
-              position++
-              buffered = buffered $0 ORS
-              if ($0 != expected[position]) {
-                exact = 0
-              }
-              if ($0 == "# END dotfiles GitHub SSH over port 443") {
-                if (exact && position == 9) {
-                  skip_separator = 1
-                } else {
-                  printf "%s", buffered
-                }
-                candidate = 0
-                buffered = ""
-              }
-              next
-            }
-            { print }
-            END {
-              if (candidate) {
-                printf "%s", buffered
-              }
-            }
-            ' "$ssh_config_target"
-          fi
-        } > "$temporary"
-        chmod 600 "$temporary"
-        mv "$temporary" "$ssh_config_target"
-        trap - EXIT HUP INT TERM
-      description: Route GitHub SSH through port 443
+        if [ -f "$ssh_config" ] && grep -Fqx "$include" "$ssh_config"; then
+          chmod 600 "$ssh_config"
+        else
+          temporary="$(mktemp "$ssh_config.XXXXXX")"
+          trap 'unlink "$temporary" 2>/dev/null || true' EXIT HUP INT TERM
+          {
+            printf '%s\n' "$include"
+            if [ -f "$ssh_config" ]; then
+              cat "$ssh_config"
+            fi
+          } > "$temporary"
+          chmod 600 "$temporary"
+          mv "$temporary" "$ssh_config"
+          trap - EXIT HUP INT TERM
+        fi
+      description: Include managed SSH configuration
     # Initializing Zsh installs missing Zinit plugins without updating existing
     # checkouts. Version updates are explicit through `make update-zinit`.
     - command: |
