@@ -1,6 +1,6 @@
 # AI agent setup
 
-Shared config for Claude Code (`~/.claude`), oh-my-pi (`~/.omp`), Codex, Amp CLI (`~/.config/amp`), OpenCode (`~/.config/opencode`), herdr (`~/.config/herdr`), and the DeepSeek Harness (`~/.dsh`), installed by [`ai.yaml`](../ai.yaml). `AGENTS.md` is the global instruction file for all six agent tools. `ai/.agents/` is the canonical source for authored shared skills and command workflows. `ai/agents/` is the canonical source for subagent definitions: one file per role holding the shared description, the per-tool model/effort tiers, and the single instruction body. `install-agents` renders the Claude, pi, OpenCode, and Codex formats from it, since their frontmatter and discovery paths differ.
+Shared config for Claude Code (`~/.claude`), oh-my-pi (`~/.omp`), Codex, Amp CLI (`~/.config/amp`), OpenCode (`~/.config/opencode`), and the DeepSeek Harness (`~/.dsh`), installed by [`ai.yaml`](../ai.yaml). `AGENTS.md` is the global instruction file for all six agent tools. `ai/.agents/` is the canonical source for authored shared skills and command workflows. `ai/agents/` is the canonical source for subagent definitions: one file per role holding the shared description, the per-tool model/effort tiers, and the single instruction body. `install-agents` renders the Claude, pi, OpenCode, and Codex formats from it, since their frontmatter and discovery paths differ.
 
 ## OpenCode profiles
 
@@ -67,13 +67,11 @@ Run `make ai` after changing a route. New sessions then use the regenerated glob
 
 ## herdr
 
-[herdr](https://herdr.dev/docs/) is an agent-aware multiplexer for local agent sessions. It keeps them alive after the client closes and shows their status. Use tmux for servers and non-agent CLI work.
+[herdr](https://herdr.dev/docs/) is the shared terminal multiplexer on macOS and headless Linux servers. It keeps terminal and agent processes alive after the client disconnects and exposes agent status. Tmux remains installed as a fallback and for nested sessions.
 
-Run herdr outside a remote tmux session: herdr manages local agents; tmux preserves remote work over SSH. Defaults avoid prefix conflicts (`ctrl+b` for herdr, `ctrl+a` for tmux).
+`make base` symlinks `base/.config/herdr/config.toml` to `~/.config/herdr/config.toml`, backing up an existing local file as `config.toml.dotbot-backup.<timestamp>`. One config is used locally and over SSH: keybindings are client-independent and remain useful on a remote server, so there is no separate remote config. Herdr writes configuration through the link; commit intended changes. Use `herdr server reload-config` for a running server.
 
-`make ai` symlinks `ai/herdr/config.toml` to `~/.config/herdr/config.toml`, backing up an existing local file as `config.toml.dotbot-backup.<timestamp>`. Herdr writes configuration through the link, so commit intended changes. Use `herdr server reload-config` for a running server.
-
-`make ai` also installs the external `drovr` plugin and links seven local plugins. Drovr supplies the pane and tab move actions. `brett.window-title` mirrors the focused pane title to Ghostty. The pane collapse, equalize, and rotate plugins manage layouts. `brett.last-workspace` toggles back to the previously focused workspace, `brett.seamless-navigation` routes directional movement through Vim or tmux when needed, and `brett.command-palette` searches every installed plugin action with `fzf`. Check or manage integrations with `herdr integration status`, `install`, and `uninstall`.
+`make base` also installs the external `drovr` plugin and links seven local plugins. Drovr supplies the pane and tab move actions. `brett.window-title` mirrors the focused pane title to the outer terminal. The pane collapse, equalize, and rotate plugins manage layouts. `brett.last-workspace` toggles back to the previously focused workspace, `brett.seamless-navigation` routes directional movement through Vim or tmux when needed, and `brett.command-palette` searches every installed plugin action with `fzf`. `make ai` installs integrations for locally available agent tools; check or manage them with `herdr integration status`, `install`, and `uninstall`.
 
 ## Bounded backlog loop
 

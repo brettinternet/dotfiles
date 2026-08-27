@@ -3,7 +3,7 @@ name = "Equalize tab panes"
 version = "0.1.1"
 min_herdr_version = "0.8.0"
 description = "Balance pane sizes while giving taller panes additional width"
-platforms = ["macos"]
+platforms = ["linux", "macos"]
 
 [[actions]]
 id = "equalize"

@@ -3,7 +3,7 @@ name = "Rotate neighboring panes"
 version = "0.1.0"
 min_herdr_version = "0.8.0"
 description = "Toggle the split axis shared by the focused pane and a declared neighbor"
-platforms = ["macos"]
+platforms = ["linux", "macos"]
 
 [[actions]]
 id = "left"

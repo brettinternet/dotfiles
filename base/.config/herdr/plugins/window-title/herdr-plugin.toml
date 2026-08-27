@@ -3,7 +3,7 @@ name = "Active pane window title"
 version = "0.1.0"
 min_herdr_version = "0.8.0"
 description = "Mirror the focused pane title to the outer terminal"
-platforms = ["macos"]
+platforms = ["linux", "macos"]
 
 [[actions]]
 id = "set-tab-title-from-pane"

@@ -64,6 +64,9 @@
       glob: true
       path: base/.config/mise/conf.d/*
       if: '[ -x "$(command -v mise)" ]'
+    ~/.config/herdr/config.toml:
+      path: base/.config/herdr/config.toml
+      backup: true
     ~/.config/nvim:
       path: base/.config/nvim
       if: '[ -x "$(command -v nvim)" ]'
@@ -102,6 +105,22 @@
     # Allow direnv access to ~/.envrc
     - ['[ -f "$HOME/.zinit/plugins/direnv---direnv/direnv" ] && direnv allow "$HOME" || true']
     - ['[ -f "$HOME/.zinit/plugins/mise/mise" ] && chmod u+x "$HOME/.zinit/plugins/mise/mise" || true']
+    - command: |
+        set -eu
+        if ! command -v herdr >/dev/null 2>&1; then
+          echo 'herdr not on PATH; skipping local plugins (mise install herdr)'
+          exit 0
+        fi
+        if [ ! -d "$HOME/.config/herdr/plugins/config/drovr" ]; then
+          env -u HERDR_SOCKET_PATH herdr plugin install "AVGVSTVS96/herdr-drovr" --yes
+          echo 'herdr plugin: drovr'
+        fi
+        for plugin in window-title pane-collapse pane-equalize pane-rotate last-workspace seamless-navigation command-palette; do
+          herdr plugin link "base/.config/herdr/plugins/$plugin"
+        done
+      description: Install and link herdr plugins
+      stdout: true
+      stderr: true
     # Install plugins at the versions committed in lazy-lock.json. Deliberately
     # NOT `Lazy! sync`, which silently updates every plugin and rewrites the
     # lockfile during an unrelated dotfile install. Update with `make update-nvim`.

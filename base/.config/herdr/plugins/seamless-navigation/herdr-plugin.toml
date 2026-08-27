@@ -3,7 +3,7 @@ name = "Pane-aware navigation"
 version = "0.1.0"
 min_herdr_version = "0.8.0"
 description = "Navigate and resize Herdr panes while forwarding directional keys to Vim and tmux"
-platforms = ["macos"]
+platforms = ["linux", "macos"]
 
 [[actions]]
 id = "navigate-left"

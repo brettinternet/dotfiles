@@ -120,22 +120,6 @@
       description: Install herdr agent integrations for locally installed agents
       stdout: true
       stderr: true
-    - command: |
-        set -eu
-        if ! command -v herdr >/dev/null 2>&1; then
-          echo 'herdr not on PATH; skipping local plugins'
-          exit 0
-        fi
-        if [ ! -d "$HOME/.config/herdr/plugins/config/drovr" ]; then
-          env -u HERDR_SOCKET_PATH herdr plugin install "AVGVSTVS96/herdr-drovr" --yes
-          echo 'herdr plugin: drovr'
-        fi
-        for plugin in window-title pane-collapse pane-equalize pane-rotate last-workspace seamless-navigation command-palette; do
-          herdr plugin link "ai/herdr/plugins/$plugin"
-        done
-      description: Install and link herdr plugins
-      stdout: true
-      stderr: true
     - command: ai/.bin/install-agent-commands
       description: Generate shared skills plus Claude and OpenCode command adapters
       stdout: true
@@ -149,9 +133,6 @@
     ~/.bin/:
       glob: true
       path: ai/.bin/*
-    ~/.functions/:
-      glob: true
-      path: ai/.functions/*
     # Claude
     ~/.claude/CLAUDE.md:
       path: ai/AGENTS.md
@@ -187,10 +168,6 @@
       path: ai/amp/settings.json
     ~/.config/amp/AGENTS.md:
       path: ai/AGENTS.md
-    # Herdr
-    ~/.config/herdr/config.toml:
-      path: ai/herdr/config.toml
-      backup: true
     # OpenCode
     ~/.config/opencode/AGENTS.md:
       path: ai/AGENTS.md

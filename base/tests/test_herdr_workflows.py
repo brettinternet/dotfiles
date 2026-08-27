@@ -9,11 +9,11 @@ from pathlib import Path
 from unittest import mock
 
 
-AI_ROOT = Path(__file__).parents[1]
-WORKSPACE_SCRIPT = AI_ROOT / "herdr/plugins/last-workspace/workspace.py"
-NAVIGATION_SCRIPT = AI_ROOT / "herdr/plugins/seamless-navigation/dispatch.sh"
-WORKSPACE_PICKER_SCRIPT = AI_ROOT / "herdr/plugins/command-palette/workspace-picker.py"
-FILEPATH_SCRIPT = AI_ROOT / ".bin/herdr-insert-file-path"
+BASE_ROOT = Path(__file__).parents[1]
+WORKSPACE_SCRIPT = BASE_ROOT / ".config/herdr/plugins/last-workspace/workspace.py"
+NAVIGATION_SCRIPT = BASE_ROOT / ".config/herdr/plugins/seamless-navigation/dispatch.sh"
+WORKSPACE_PICKER_SCRIPT = BASE_ROOT / ".config/herdr/plugins/command-palette/workspace-picker.py"
+FILEPATH_SCRIPT = BASE_ROOT / ".bin/herdr-insert-file-path"
 ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;]*m")
 
 spec = importlib.util.spec_from_file_location("last_workspace", WORKSPACE_SCRIPT)
@@ -285,7 +285,7 @@ class CommandPaletteTest(unittest.TestCase):
             }
 
             subprocess.run(
-                ["sh", str(AI_ROOT / "herdr/plugins/command-palette/palette.sh")],
+                ["sh", str(BASE_ROOT / ".config/herdr/plugins/command-palette/palette.sh")],
                 check=True,
                 env=environment,
             )

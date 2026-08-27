@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-SCRIPT = Path(__file__).parents[1] / "herdr/plugins/pane-collapse/toggle.py"
+SCRIPT = Path(__file__).parents[1] / ".config/herdr/plugins/pane-collapse/toggle.py"
 spec = importlib.util.spec_from_file_location("pane_collapse", SCRIPT)
 pane_collapse = importlib.util.module_from_spec(spec)
 assert spec.loader is not None
