@@ -406,6 +406,7 @@ def pick_workspace() -> None:
             "--id-nth=2",
             "--track",
             "--layout=reverse",
+            "--cycle",
             "--info=inline-right",
             "--pointer=▶",
             "--no-scrollbar",
