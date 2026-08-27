@@ -167,6 +167,30 @@ hs.hotkey.bind({ "alt", "cmd", "shift" }, "V", function()
   hs.eventtap.keyStrokes(hs.pasteboard.getContents())
 end)
 
+-- Keep Fn-Control-R reserved for macOS's native window command. When the
+-- command is unavailable, consume the chord before the focused app sees Control-R.
+local returnToPreviousSizePath = { "Window", "Move & Resize", "Return to Previous Size" }
+local returnToPreviousSizeKeyCode = hs.keycodes.map.r
+windowShortcutGuard = hs.eventtap
+  .new({ hs.eventtap.event.types.keyDown }, function(event)
+    local flags = event:getFlags()
+    if
+      event:getKeyCode() ~= returnToPreviousSizeKeyCode
+      or not flags.fn
+      or not flags.ctrl
+      or flags.cmd
+      or flags.alt
+      or flags.shift
+    then
+      return false
+    end
+
+    local app = hs.application.frontmostApplication()
+    local menuItem = app and app:findMenuItem(returnToPreviousSizePath)
+    return not (menuItem and menuItem.enabled)
+  end)
+  :start()
+
 -- Load all modules
 
 require("audio")
