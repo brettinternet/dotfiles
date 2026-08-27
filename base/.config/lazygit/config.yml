@@ -1,5 +1,9 @@
 quitOnTopLevelReturn: true
 
+git:
+  diffRenderers:
+    - command: delta --dark --line-numbers --paging=never
+
 gui:
   showBottomLine: false
   showCommandLog: false
