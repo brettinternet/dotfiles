@@ -1,14 +1,5 @@
 #!/bin/bash
 
-alias ta='tmux attach -t'
-alias tad='tmux attach -d -t'
-alias ts='tmux new-session -s'
-alias tl='tmux list-sessions'
-alias tksv='tmux kill-server'
-alias tkss='tmux kill-session -t'
-
-alias ce="context-editor"
-
 # Source: https://github.com/ohmyzsh/ohmyzsh/blob/c52e646bb7b109e15f6dc4047b29ca8c8e029433/lib/functions.zsh
 function shell_stats {
   fc -l 1 \
@@ -27,10 +18,6 @@ function palette {
     colors+=("%F{$n}$n%f")
   done
   print -cP "${colors[@]}"
-}
-
-function password {
-  LC_ALL=C tr -dc 'A-Za-z0-9!#%&'\''()*+,-./:;<=>?@[\]^_{|}~' </dev/urandom | head -c 32; echo ''
 }
 
 # Moving around
@@ -95,3 +82,14 @@ alias v='vim'
 
 # Zippin
 alias gz='tar -zcvf'
+
+# Tools
+alias ta='tmux attach -t'
+alias tad='tmux attach -d -t'
+alias ts='tmux new-session -s'
+alias tl='tmux list-sessions'
+alias tksv='tmux kill-server'
+alias tkss='tmux kill-session -t'
+
+alias ce="context-editor"
+alias lg="lazygit"
