@@ -128,25 +128,25 @@ command = "brett.command-palette.open-workspace-overview"
 description = "open workspace overview"
 
 [[keys.command]]
-key = "prefix+ctrl+h"
+key = ["prefix+ctrl+h", "ctrl+alt+h"]
 type = "plugin_action"
 command = "brett.seamless-navigation.navigate-left"
 description = "navigate left"
 
 [[keys.command]]
-key = "prefix+ctrl+j"
+key = ["prefix+ctrl+j", "ctrl+alt+j"]
 type = "plugin_action"
 command = "brett.seamless-navigation.navigate-down"
 description = "navigate down"
 
 [[keys.command]]
-key = "prefix+ctrl+k"
+key = ["prefix+ctrl+k", "ctrl+alt+k"]
 type = "plugin_action"
 command = "brett.seamless-navigation.navigate-up"
 description = "navigate up"
 
 [[keys.command]]
-key = "prefix+ctrl+l"
+key = ["prefix+ctrl+l", "ctrl+alt+l"]
 type = "plugin_action"
 command = "brett.seamless-navigation.navigate-right"
 description = "navigate right"
