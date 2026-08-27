@@ -1,3 +1,9 @@
+tui.editor.cursorUp:
+  - Up
+  - Ctrl+P
+tui.editor.cursorDown:
+  - Down
+  - Ctrl+N
 tui.select.up:
   - Up
   - Ctrl+P
