@@ -101,6 +101,10 @@ return {
       -- matched.
       opts.picker = opts.picker or {}
       opts.picker.sources = opts.picker.sources or {}
+      opts.picker.sources.files = vim.tbl_deep_extend("force", opts.picker.sources.files or {}, {
+        hidden = true,
+      })
+
       for _, source in ipairs {
         "diagnostics",
         "diagnostics_buffer",
