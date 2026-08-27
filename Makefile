@@ -2,7 +2,7 @@ INSTALL := ./install
 ALL_GROUPS := base,darwin,x11,thinkpad,i3,ai
 
 .DEFAULT_GOAL := help
-.PHONY: help install update update-zinit update-mise update-herdr update-brew update-gh update-nvim update-vim update-doom update-tmux update-mas update-dotbot update_dotbot uninstall base server darwin mac thinkpad i3 ai
+.PHONY: help install update up update-zinit update-mise update-herdr update-brew update-gh update-nvim update-vim update-doom update-tmux update-mas update-dotbot update_dotbot uninstall base server darwin mac thinkpad i3 ai
 
 help:
 	@printf '%s\n' \
@@ -29,6 +29,8 @@ help:
 
 install:
 	@$(INSTALL) $(ARGS)
+
+up: update
 
 update:
 	@$(MAKE) --no-print-directory update-zinit
