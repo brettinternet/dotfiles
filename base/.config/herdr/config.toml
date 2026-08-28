@@ -110,7 +110,7 @@ command = "brett.pane-rotate.down"
 description = "rotate focused pane with direct lower neighbor"
 
 [[keys.command]]
-key = "prefix+shift+l"
+key = "prefix+`"
 type = "plugin_action"
 command = "brett.last-workspace.toggle"
 description = "toggle last workspace"
