@@ -12,6 +12,8 @@ Prefer the simplest design that satisfies the requirement. Do not add abstractio
 
 When the same approach fails the same way twice, change approach or surface the blocker; don't retry variations.
 
+When making technical decisions, do not give much weight to development time cost. Instead, prefer quality, simplicity, robustness, scalability, and long term-maintainability.
+
 Before introducing a new pattern, search for an existing implementation and reuse or extend it. Announce "CODE PATTERN:" with a very brief description only when introducing a genuinely new reusable pattern or consolidating a duplicate.
 
 ## Tools
