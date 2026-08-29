@@ -51,7 +51,7 @@ class PaneEqualizeTest(unittest.TestCase):
             result = pane_equalize.equalize()
         return result, calls
 
-    def test_gives_tall_pane_more_width_than_equal_area(self):
+    def test_gives_stacked_panes_the_same_width_as_neighbor(self):
         layout = {
             "tab_id": "w1:t1",
             "root": split(
@@ -73,7 +73,7 @@ class PaneEqualizeTest(unittest.TestCase):
         self.assertEqual(calls[1][0], "layout.set_split_ratio")
         self.assertEqual(calls[1][1]["tab_id"], "w1:t1")
         self.assertEqual(calls[1][1]["path"], [])
-        self.assertAlmostEqual(calls[1][1]["ratio"], 1 / (1 + 2**0.5))
+        self.assertEqual(calls[1][1]["ratio"], 0.5)
         self.assertEqual(
             calls[2],
             (
@@ -81,6 +81,26 @@ class PaneEqualizeTest(unittest.TestCase):
                 {"tab_id": "w1:t1", "path": [True], "ratio": 0.5},
             ),
         )
+
+    def test_gives_side_by_side_panes_the_same_height_as_neighbor(self):
+        layout = {
+            "tab_id": "w1:t1",
+            "root": split(
+                pane("w1:p1"),
+                split(
+                    pane("w1:p2"),
+                    pane("w1:p3"),
+                    ratio=0.8,
+                ),
+                ratio=0.8,
+                direction="down",
+            ),
+        }
+
+        _, calls = self.run_with_layout(layout)
+
+        self.assertEqual(calls[1][1]["ratio"], 0.5)
+        self.assertEqual(calls[2][1]["ratio"], 0.5)
 
     def test_keeps_equal_widths_for_panes_in_the_same_row(self):
         layout = {

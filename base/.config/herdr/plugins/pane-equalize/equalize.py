@@ -3,7 +3,6 @@ import json
 import os
 import socket
 import sys
-from math import sqrt
 from typing import Any
 
 
@@ -48,21 +47,13 @@ def balanced_ratios(
     pane_count = first_count + second_count
 
     if node["direction"] == "right":
-        first_span = first_width
-        second_span = second_width
+        ratio = first_width / (first_width + second_width)
         width = first_width + second_width
         height = max(first_height, second_height)
     else:
-        first_span = first_height
-        second_span = second_height
+        ratio = first_height / (first_height + second_height)
         width = max(first_width, second_width)
         height = first_height + second_height
-
-    # Blend equal-area counts with grid spans so cross-axis stacks do not
-    # squeeze neighboring tall or wide panes.
-    first_weight = sqrt(first_count * first_span)
-    second_weight = sqrt(second_count * second_span)
-    ratio = first_weight / (first_weight + second_weight)
     return (
         pane_count,
         width,
