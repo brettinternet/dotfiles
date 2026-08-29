@@ -103,6 +103,56 @@ class PaneTitleTest(unittest.TestCase):
 
         self.assertEqual(pane_title.pane_title(pane), "omp")
 
+    def test_custom_pane_label_overrides_automatic_title(self):
+        pane = {
+            "pane_id": "w1:p1",
+            "label": "Database migration",
+            "agent": None,
+            "display_agent": None,
+            "terminal_title_stripped": None,
+            "title": "zsh",
+            "tokens": {"brett_pane_title": "1"},
+        }
+
+        with (
+            mock.patch.object(pane_title, "foreground_process_name") as process,
+            mock.patch.object(pane_title, "herdr_request") as request,
+        ):
+            pane_title.sync_pane(pane)
+
+        process.assert_not_called()
+        request.assert_called_once_with(
+            "pane.report_metadata",
+            {
+                "pane_id": "w1:p1",
+                "source": "brett.pane-title",
+                "clear_title": True,
+                "tokens": {"brett_pane_title": None},
+            },
+        )
+
+    def test_empty_custom_pane_label_restores_automatic_title(self):
+        pane = {
+            "pane_id": "w1:p1",
+            "label": "  ",
+            "agent": "omp",
+            "terminal_title_stripped": "Fix pane headers",
+            "title": None,
+        }
+
+        with mock.patch.object(pane_title, "herdr_request") as request:
+            pane_title.sync_pane(pane)
+
+        request.assert_called_once_with(
+            "pane.report_metadata",
+            {
+                "pane_id": "w1:p1",
+                "source": "brett.pane-title",
+                "title": "omp · Fix pane headers",
+                "tokens": {"brett_pane_title": "1"},
+            },
+        )
+
     def test_uses_terminal_title_without_agent_prefix_for_shell_pane(self):
         pane = {
             "pane_id": "w1:p2",
