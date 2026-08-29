@@ -70,7 +70,7 @@ alias du='du -h -d 2'
 alias grep='grep --color=auto'
 
 # Common shell functions
-function terminal_title {
+function title {
   printf '\033]0;%s\007' "${1-}"
 }
 
