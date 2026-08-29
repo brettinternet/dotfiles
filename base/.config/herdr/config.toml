@@ -31,6 +31,7 @@ switch_workspace = "prefix+shift+1..9"
 previous_workspace = ["prefix+shift+p", "prefix+shift+["]
 next_workspace = ["prefix+shift+n", "prefix+shift+]"]
 detach = ["prefix+d", "prefix+ctrl+d"]
+zoom = ["prefix+z", "ctrl+alt+z"]
 
 [[keys.command]]
 key = "prefix+shift+,"
