@@ -47,11 +47,7 @@ def refresh_panes(
 
     for pane in panes:
         pane_id = pane["pane_id"]
-        needs_process = (
-            not pane.get("agent")
-            and not pane.get("display_agent")
-            and not pane.get("terminal_title_stripped")
-        )
+        needs_process = sync.needs_process_name(pane)
         if needs_process and process_refresh_due(pane, process_refreshed_at, now):
             process_names[pane_id] = sync.foreground_process_name(pane_id)
             process_refreshed_at[pane_id] = now

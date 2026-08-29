@@ -56,16 +56,22 @@ def foreground_process_name(pane_id: str) -> str:
     return clean(process.get("name") or process.get("argv0"))
 
 
-def sync_pane(pane: dict, process_name: str | None = None) -> None:
-    pane_id = pane["pane_id"]
-    needs_process = (
-        not pane.get("agent")
+def needs_process_name(pane: dict) -> bool:
+    return (
+        not clean(pane.get("label"))
+        and not pane.get("agent")
         and not pane.get("display_agent")
         and not pane.get("terminal_title_stripped")
     )
+
+
+def sync_pane(pane: dict, process_name: str | None = None) -> None:
+    pane_id = pane["pane_id"]
+    has_custom_label = bool(clean(pane.get("label")))
+    needs_process = needs_process_name(pane)
     if needs_process and process_name is None:
         process_name = foreground_process_name(pane_id)
-    desired = pane_title(pane, process_name or "")
+    desired = "" if has_custom_label else pane_title(pane, process_name or "")
     if desired and clean(pane.get("title")) != desired:
         herdr_request(
             "pane.report_metadata",
