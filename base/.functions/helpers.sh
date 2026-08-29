@@ -70,6 +70,10 @@ alias du='du -h -d 2'
 alias grep='grep --color=auto'
 
 # Common shell functions
+function terminal_title {
+  printf '\033]0;%s\007' "${1-}"
+}
+
 alias less='less -R'
 alias tf='tail -f'
 alias l='less'
