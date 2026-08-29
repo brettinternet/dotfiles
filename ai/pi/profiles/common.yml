@@ -26,6 +26,8 @@ loop:
 doubleEscapeAction: tree
 github:
   enabled: false
+computer:
+  enabled: true
 commands:
   enableOpencodeUser: false
   enableOpencodeProject: false
