@@ -4,6 +4,7 @@ import os
 import re
 import subprocess
 import tempfile
+import sys
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -13,6 +14,8 @@ BASE_ROOT = Path(__file__).parents[1]
 WORKSPACE_SCRIPT = BASE_ROOT / ".config/herdr/plugins/last-workspace/workspace.py"
 NAVIGATION_SCRIPT = BASE_ROOT / ".config/herdr/plugins/seamless-navigation/dispatch.sh"
 WORKSPACE_PICKER_SCRIPT = BASE_ROOT / ".config/herdr/plugins/command-palette/workspace-picker.py"
+PANE_TITLE_SCRIPT = BASE_ROOT / ".config/herdr/plugins/pane-title/sync.py"
+PANE_TITLE_WATCHER = BASE_ROOT / ".config/herdr/plugins/pane-title/watch.py"
 FILEPATH_SCRIPT = BASE_ROOT / ".bin/herdr-insert-file-path"
 ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;]*m")
 
@@ -25,6 +28,19 @@ picker_spec = importlib.util.spec_from_file_location("workspace_picker", WORKSPA
 workspace_picker = importlib.util.module_from_spec(picker_spec)
 assert picker_spec.loader is not None
 picker_spec.loader.exec_module(workspace_picker)
+
+pane_title_spec = importlib.util.spec_from_file_location("pane_title", PANE_TITLE_SCRIPT)
+pane_title = importlib.util.module_from_spec(pane_title_spec)
+assert pane_title_spec.loader is not None
+pane_title_spec.loader.exec_module(pane_title)
+
+pane_title_watcher_spec = importlib.util.spec_from_file_location(
+    "pane_title_watcher", PANE_TITLE_WATCHER
+)
+pane_title_watcher = importlib.util.module_from_spec(pane_title_watcher_spec)
+assert pane_title_watcher_spec.loader is not None
+with mock.patch.dict(sys.modules, {"sync": pane_title}):
+    pane_title_watcher_spec.loader.exec_module(pane_title_watcher)
 
 
 class LastWorkspaceTest(unittest.TestCase):
@@ -54,6 +70,198 @@ class LastWorkspaceTest(unittest.TestCase):
                 last_workspace.main()
 
             self.assertEqual(run.call_args.args[0], ["herdr", "workspace", "focus", "w1"])
+
+
+class PaneTitleTest(unittest.TestCase):
+    def test_combines_agent_and_terminal_title(self):
+        pane = {
+            "pane_id": "w1:p1",
+            "agent": "omp",
+            "display_agent": None,
+            "terminal_title_stripped": "Fix pane headers",
+            "title": None,
+        }
+
+        with mock.patch.object(pane_title, "herdr_request") as request:
+            pane_title.sync_pane(pane)
+
+        request.assert_called_once_with(
+            "pane.report_metadata",
+            {
+                "pane_id": "w1:p1",
+                "source": "brett.pane-title",
+                "title": "omp · Fix pane headers",
+                "tokens": {"brett_pane_title": "1"},
+            },
+        )
+
+    def test_does_not_duplicate_identical_agent_and_title(self):
+        pane = {
+            "agent": "omp",
+            "terminal_title_stripped": "OMP",
+        }
+
+        self.assertEqual(pane_title.pane_title(pane), "omp")
+
+    def test_uses_terminal_title_without_agent_prefix_for_shell_pane(self):
+        pane = {
+            "pane_id": "w1:p2",
+            "agent": None,
+            "display_agent": None,
+            "terminal_title_stripped": "project.py - Nvim",
+            "title": None,
+        }
+
+        with mock.patch.object(pane_title, "herdr_request") as request:
+            pane_title.sync_pane(pane)
+
+        request.assert_called_once_with(
+            "pane.report_metadata",
+            {
+                "pane_id": "w1:p2",
+                "source": "brett.pane-title",
+                "title": "project.py - Nvim",
+                "tokens": {"brett_pane_title": "1"},
+            },
+        )
+
+    def test_falls_back_to_foreground_process_for_untitled_shell(self):
+        pane = {
+            "pane_id": "w1:p3",
+            "agent": None,
+            "display_agent": None,
+            "terminal_title_stripped": None,
+            "title": None,
+        }
+        process_info = {
+            "process_info": {
+                "shell_pid": 10,
+                "foreground_processes": [
+                    {"pid": 10, "name": "zsh"},
+                    {"pid": 11, "name": "lazygit"},
+                ],
+            }
+        }
+
+        with mock.patch.object(
+            pane_title,
+            "herdr_request",
+            side_effect=[process_info, {"type": "ok"}],
+        ) as request:
+            pane_title.sync_pane(pane)
+
+        self.assertEqual(
+            request.call_args_list,
+            [
+                mock.call("pane.process_info", {"pane_id": "w1:p3"}),
+                mock.call(
+                    "pane.report_metadata",
+                    {
+                        "pane_id": "w1:p3",
+                        "source": "brett.pane-title",
+                        "title": "lazygit",
+                        "tokens": {"brett_pane_title": "1"},
+                    },
+                ),
+            ],
+        )
+
+    def test_event_syncs_only_its_pane(self):
+        panes = [
+            {
+                "pane_id": "w1:p1",
+                "agent": "omp",
+                "terminal_title_stripped": "First",
+                "title": None,
+            },
+            {
+                "pane_id": "w1:p2",
+                "agent": "claude",
+                "terminal_title_stripped": "Second",
+                "title": None,
+            },
+        ]
+        snapshot = {"snapshot": {"panes": panes}}
+
+        with (
+            mock.patch.dict(os.environ, {"HERDR_PANE_ID": "w1:p2"}, clear=True),
+            mock.patch.object(
+                pane_title, "herdr_request", side_effect=[snapshot, {"type": "ok"}]
+            ) as request,
+        ):
+            pane_title.main()
+
+        self.assertEqual(
+            request.call_args_list,
+            [
+                mock.call("session.snapshot", {}),
+                mock.call(
+                    "pane.report_metadata",
+                    {
+                        "pane_id": "w1:p2",
+                        "source": "brett.pane-title",
+                        "title": "claude · Second",
+                        "tokens": {"brett_pane_title": "1"},
+                    },
+                ),
+            ],
+        )
+
+    def test_watcher_refreshes_titles_without_querying_processes(self):
+        pane = {
+            "pane_id": "w1:p1",
+            "agent": "omp",
+            "terminal_title_stripped": "Updated task",
+        }
+
+        with (
+            mock.patch.object(pane_title, "snapshot_panes", return_value=[pane]),
+            mock.patch.object(pane_title, "foreground_process_name") as process,
+            mock.patch.object(pane_title, "sync_pane") as sync_pane,
+        ):
+            pane_title_watcher.refresh_panes({}, {}, 20.0)
+
+        process.assert_not_called()
+        sync_pane.assert_called_once_with(pane, "")
+
+    def test_watcher_throttles_background_process_queries(self):
+        pane = {
+            "pane_id": "w1:p2",
+            "agent": None,
+            "display_agent": None,
+            "terminal_title_stripped": None,
+            "focused": False,
+        }
+
+        with (
+            mock.patch.object(pane_title, "snapshot_panes", return_value=[pane]),
+            mock.patch.object(
+                pane_title, "foreground_process_name", return_value="lazygit"
+            ) as process,
+            mock.patch.object(pane_title, "sync_pane") as sync_pane,
+        ):
+            names, refreshed = pane_title_watcher.refresh_panes({}, {}, 20.0)
+            pane_title_watcher.refresh_panes(names, refreshed, 25.0)
+
+        process.assert_called_once_with("w1:p2")
+        self.assertEqual(
+            sync_pane.call_args_list,
+            [mock.call(pane, "lazygit"), mock.call(pane, "lazygit")],
+        )
+
+    def test_does_not_report_unchanged_title(self):
+        pane = {
+            "pane_id": "w1:p1",
+            "agent": "omp",
+            "display_agent": None,
+            "terminal_title_stripped": "Fix pane headers",
+            "title": "omp · Fix pane headers",
+        }
+
+        with mock.patch.object(pane_title, "herdr_request") as request:
+            pane_title.sync_pane(pane)
+
+        request.assert_not_called()
 
 
 class SeamlessNavigationTest(unittest.TestCase):

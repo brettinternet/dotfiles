@@ -1,0 +1,25 @@
+id = "brett.pane-title"
+name = "Pane title labels"
+version = "0.1.0"
+min_herdr_version = "0.8.2"
+description = "Show each agent and terminal title or foreground process on its pane border"
+platforms = ["linux", "macos"]
+
+[[startup]]
+command = ["python3", "start.py"]
+
+[[events]]
+on = "pane.created"
+command = ["python3", "sync.py"]
+
+[[events]]
+on = "pane.focused"
+command = ["python3", "sync.py"]
+
+[[events]]
+on = "pane.agent_detected"
+command = ["python3", "sync.py"]
+
+[[events]]
+on = "pane.agent_status_changed"
+command = ["python3", "sync.py"]
