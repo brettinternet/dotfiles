@@ -17,6 +17,7 @@ prefix = "ctrl+a"                               # remove to avoid conflict with 
 split_horizontal = ["prefix+minus", "prefix+s"] # from tmux
 split_vertical = "prefix+v"
 rename_tab = "prefix+,"
+rename_pane = "prefix+."
 previous_tab = "prefix+p"
 next_tab = "prefix+n"
 last_pane = "prefix+ctrl+p"
