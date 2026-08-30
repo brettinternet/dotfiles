@@ -1,10 +1,10 @@
 ---
 description: PR/CI snapshot and bounded-watch specialist. Reports CI and review deltas since a baseline, including failure excerpts, new reviews/comments/threads, and genuinely new commits with rebases and main-syncs filtered out. Use for cheap one-shot checks or waits with an explicit deadline; never as an unbounded background poller. Read-only - never posts, pushes, re-runs, or fixes.
-tools: claude pi opencode codex
+tools: claude omp pi opencode codex
 claude-model: haiku
 claude-effort: low
-pi-model: pi/smol
-pi-effort: low
+omp-model: pi/smol
+omp-effort: low
 codex-model: gpt-5.6-luna
 codex-effort: low
 ---

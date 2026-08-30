@@ -1,0 +1,23 @@
+{
+  "defaultProvider": "openai-codex",
+  "defaultModel": "gpt-5.6-sol",
+  "defaultThinkingLevel": "medium",
+  "subagents": {
+    "defaultModel": "openai-codex/gpt-5.6-luna",
+    "defaultThinking": "high",
+    "agentOverrides": {
+      "scout": { "model": "openai-codex/gpt-5.6-luna", "thinking": "low" },
+      "researcher": { "model": "openai-codex/gpt-5.6-luna", "thinking": "medium" },
+      "worker": { "model": "openai-codex/gpt-5.6-luna", "thinking": "max" },
+      "reviewer": { "model": "openai-codex/gpt-5.6-terra", "thinking": "max" },
+      "oracle": { "model": "openai-codex/gpt-5.6-sol", "thinking": "max" },
+      "delegate": { "model": "openai-codex/gpt-5.6-luna", "thinking": "high" },
+      "explore": { "model": "openai-codex/gpt-5.6-luna", "thinking": "low" },
+      "executor": { "model": "openai-codex/gpt-5.6-luna", "thinking": "max" },
+      "verifier": { "model": "openai-codex/gpt-5.6-luna", "thinking": "max" },
+      "pr-watcher": { "model": "openai-codex/gpt-5.6-luna", "thinking": "low" },
+      "thermo-nuclear-code-quality-review": { "model": "openai-codex/gpt-5.6-sol", "thinking": "max" },
+      "writer": { "model": "openai-codex/gpt-5.6-terra", "thinking": "low" }
+    }
+  }
+}

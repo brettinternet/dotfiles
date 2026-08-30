@@ -1,10 +1,10 @@
 ---
 description: Scoped implementer on a mid-tier model for well-specified tasks - a refined backlog item, an independent file area, tests, UI, or a migration. Give it the exact target, scope boundaries, acceptance criteria, and non-goals; it implements real behavior, runs targeted checks, and reports evidence. Returns open questions instead of guessing on design or product decisions.
-tools: claude pi opencode codex
+tools: claude omp pi opencode codex
 claude-model: sonnet
 claude-effort: medium
-pi-model: pi/task
-pi-effort: medium
+omp-model: pi/task
+omp-effort: medium
 codex-model: gpt-5.6-luna
 codex-effort: high
 ---

@@ -3,7 +3,7 @@
 startup:
   quiet: true
   checkUpdate: false
-hideThinkingBlock: true
+hideThinkingBlock: false
 advisor:
   enabled: true
 theme:
@@ -13,7 +13,7 @@ tui:
   titleState: false
 steeringMode: one-at-a-time
 statusLine:
-  preset: minimal
+  preset: default
   separator: powerline-thin
 composer:
   shape: box

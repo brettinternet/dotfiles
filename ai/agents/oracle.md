@@ -1,10 +1,10 @@
 ---
 description: Read-only second-opinion advisor on a strong reasoning model. Consult for architecture tradeoffs, hard bugs after repeated failed attempts, suspected drift from earlier decisions, and before declaring any blocker human-required. Returns a recommendation, never code changes.
-tools: claude pi opencode codex
+tools: claude omp pi opencode codex
 claude-model: opus
 claude-effort: xhigh
-pi-model: pi/slow
-pi-effort: xhigh
+omp-model: pi/slow
+omp-effort: xhigh
 codex-model: gpt-5.6-sol
 codex-effort: xhigh
 ---
