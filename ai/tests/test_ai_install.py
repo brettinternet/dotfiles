@@ -50,6 +50,16 @@ class AiInstallTests(unittest.TestCase):
         self.assertEqual(0, completed.returncode, completed.stderr)
         return completed.stdout
 
+    def load_yaml(self, text: str) -> object:
+        yaml_path = str(ROOT / "dotbot/lib/pyyaml/lib")
+        sys.path.insert(0, yaml_path)
+        try:
+            import yaml
+
+            return yaml.safe_load(text)
+        finally:
+            sys.path.remove(yaml_path)
+
     def test_command_adapters_are_generated_without_duplicate_claude_commands(
         self,
     ) -> None:
@@ -93,11 +103,6 @@ class AiInstallTests(unittest.TestCase):
         self.assertEqual(before, self.repository_status())
 
     def test_generated_skill_frontmatter_is_valid_yaml(self) -> None:
-        yaml_path = str(ROOT / "dotbot/lib/pyyaml/lib")
-        sys.path.insert(0, yaml_path)
-        self.addCleanup(sys.path.remove, yaml_path)
-        import yaml
-
         self.run_command("ai/.bin/install-agent-commands")
 
         for skill in (self.home / ".agents/skills").glob("*/SKILL.md"):
@@ -105,7 +110,7 @@ class AiInstallTests(unittest.TestCase):
                 text = skill.read_text()
                 self.assertTrue(text.startswith("---\n"))
                 frontmatter = text.split("---\n", 2)[1]
-                metadata = yaml.safe_load(frontmatter)
+                metadata = self.load_yaml(frontmatter)
                 self.assertIsInstance(metadata, dict)
                 self.assertEqual(skill.parent.name, metadata["name"])
 
@@ -506,13 +511,39 @@ trusted_hash = "sha256:trusted"
 
     def test_model_limits_are_managed_by_ai_install(self) -> None:
         installer = (ROOT / "ai.yaml").read_text()
-        models = (ROOT / "ai/omp/models.yml").read_text()
+        omp_models = self.load_yaml((ROOT / "ai/omp/models.yml").read_text())
+        pi_models = json.loads((ROOT / "ai/pi/models.json").read_text())
 
         self.assertIn("~/.omp/agent/models.yml:", installer)
         self.assertIn("path: ai/omp/models.yml", installer)
-        self.assertIn("contextWindow: 256000", models)
-        self.assertIn("openai/gpt-5.6-sol:", models)
-        self.assertIn("~anthropic/claude-opus-latest:", models)
+        expected_codex = {
+            "gpt-5.6-luna": {"contextWindow": 272000},
+            "gpt-5.6-sol": {"contextWindow": 272000},
+            "gpt-5.6-terra": {"contextWindow": 272000},
+        }
+        self.assertEqual(
+            expected_codex,
+            omp_models["providers"]["openai-codex"]["modelOverrides"],
+        )
+        openrouter_overrides = omp_models["providers"]["openrouter"][
+            "modelOverrides"
+        ]
+        codex_openrouter_models = {f"openai/{name}" for name in expected_codex}
+        for model, override in openrouter_overrides.items():
+            expected = 272000 if model in codex_openrouter_models else 256000
+            self.assertEqual({"contextWindow": expected}, override, model)
+        for model, override in omp_models["providers"]["anthropic"][
+            "modelOverrides"
+        ].items():
+            self.assertEqual({"contextWindow": 256000}, override, model)
+        self.assertEqual(
+            {
+                "gpt-5.6-luna": {"contextWindow": 272000},
+                "gpt-5.6-sol": {"contextWindow": 272000},
+                "gpt-5.6-terra": {"contextWindow": 272000},
+            },
+            pi_models["providers"]["openai-codex"]["modelOverrides"],
+        )
         self.run_command(
             "dotbot/bin/dotbot",
             "-d",
@@ -525,6 +556,20 @@ trusted_hash = "sha256:trusted"
         installed = self.home / ".omp/agent/models.yml"
         self.assertTrue(installed.is_symlink())
         self.assertEqual((ROOT / "ai/omp/models.yml").resolve(), installed.resolve())
+        pi_installed = self.home / ".pi/agent/models.json"
+        self.assertTrue(pi_installed.is_symlink())
+        self.assertEqual((ROOT / "ai/pi/models.json").resolve(), pi_installed.resolve())
+        pi_keybindings = self.home / ".pi/agent/keybindings.json"
+        self.assertTrue(pi_keybindings.is_symlink())
+        self.assertEqual(
+            (ROOT / "ai/pi/keybindings.json").resolve(), pi_keybindings.resolve()
+        )
+        bindings = json.loads(pi_keybindings.read_text())
+        self.assertEqual(["up", "ctrl+p"], bindings["tui.editor.cursorUp"])
+        self.assertEqual(["down", "ctrl+n"], bindings["tui.editor.cursorDown"])
+        self.assertEqual(["up", "ctrl+p"], bindings["tui.select.up"])
+        self.assertEqual(["down", "ctrl+n"], bindings["tui.select.down"])
+        self.assertEqual([], bindings["app.model.cycleForward"])
         watchdog = self.home / ".omp/agent/WATCHDOG.md"
         self.assertTrue(watchdog.is_symlink())
         self.assertEqual((ROOT / "ai/WATCHDOG.md").resolve(), watchdog.resolve())

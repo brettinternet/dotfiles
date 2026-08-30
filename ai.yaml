@@ -215,6 +215,10 @@
     # Pi
     ~/.pi/agent/AGENTS.md:
       path: ai/AGENTS.md
+    ~/.pi/agent/models.json:
+      path: ai/pi/models.json
+    ~/.pi/agent/keybindings.json:
+      path: ai/pi/keybindings.json
     # Oh My Pi
     ~/.omp/agent/AGENTS.md:
       path: ai/AGENTS.md
