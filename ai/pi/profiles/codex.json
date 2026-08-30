@@ -2,8 +2,10 @@
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-5.6-sol",
   "defaultThinkingLevel": "medium",
+  "enabledModels": ["gpt-5.6-luna", "gpt-5.6-sol", "gpt-5.6-terra"],
   "subagents": {
     "defaultModel": "openai-codex/gpt-5.6-luna",
+    "defaultProvider": "openai-codex",
     "defaultThinking": "high",
     "agentOverrides": {
       "scout": { "model": "openai-codex/gpt-5.6-luna", "thinking": "low" },
@@ -18,6 +20,11 @@
       "pr-watcher": { "model": "openai-codex/gpt-5.6-luna", "thinking": "low" },
       "thermo-nuclear-code-quality-review": { "model": "openai-codex/gpt-5.6-sol", "thinking": "max" },
       "writer": { "model": "openai-codex/gpt-5.6-terra", "thinking": "low" }
+    },
+    "modelScope": {
+      "enforce": true,
+      "strict": true,
+      "allow": ["openai-codex/gpt-5.6-*"]
     }
   }
 }

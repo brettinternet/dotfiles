@@ -566,8 +566,13 @@ trusted_hash = "sha256:trusted"
         self.assertEqual("openai-codex", settings["defaultProvider"])
         self.assertEqual("gpt-5.6-sol", settings["defaultModel"])
         self.assertEqual("medium", settings["defaultThinkingLevel"])
+        self.assertEqual(
+            ["gpt-5.6-luna", "gpt-5.6-sol", "gpt-5.6-terra"],
+            settings["enabledModels"],
+        )
         self.assertTrue(settings["quietStartup"])
         self.assertTrue(settings["hideThinkingBlock"])
+        self.assertEqual("dark", settings["theme"])
         self.assertEqual(0, settings["outputPad"])
         self.assertEqual(0, settings["editorPaddingX"])
         self.assertEqual(
@@ -577,6 +582,16 @@ trusted_hash = "sha256:trusted"
                 "npm:pi-web-access@0.27.0",
             ],
             settings["packages"],
+        )
+        subagents = settings["subagents"]
+        self.assertEqual("openai-codex", subagents["defaultProvider"])
+        self.assertEqual(
+            {
+                "enforce": True,
+                "strict": True,
+                "allow": ["openai-codex/gpt-5.6-*"],
+            },
+            subagents["modelScope"],
         )
         reviewer = settings["subagents"]["agentOverrides"]["reviewer"]
         self.assertEqual("openai-codex/gpt-5.6-terra", reviewer["model"])
