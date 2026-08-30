@@ -6,6 +6,8 @@ Shared config for Claude Code (`~/.claude`), Pi (`~/.pi`), Oh My Pi (`~/.omp`), 
 
 Vanilla Pi renders `~/.pi/agent/settings.json` from `pi/profiles/common.json` plus a selected overlay. `pi-profile use codex` selects ChatGPT subscription models through Pi's built-in `openai-codex` provider. The common profile keeps the regular TUI sparse and installs pinned `pi-subagents`, `pi-lsp-adapter`, and `pi-web-access` packages. Pi discovers the shared `~/.agents/skills/` tree natively; `make ai` also installs the global instructions and custom subagents into Pi's native paths.
 
+The Codex overlay pins the parent to `gpt-5.6-sol`, restricts model cycling and subagent launches to the current GPT-5.6 family, and routes roles by task shape: Luna for scouting and bounded execution, Terra for adversarial review and writing, and Sol for judgment-heavy work. For implementation, use `clarify → scout → worker → fresh reviewers → worker`; parallelize only independent slices, keep one writer per file boundary, and have the parent synthesize reviewer findings before sending a bounded fix task.
+
 OMP remains separate under `ai/omp/` and uses `omp-profile`.
 
 ## OpenCode profiles
