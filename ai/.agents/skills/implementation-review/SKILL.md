@@ -1,6 +1,6 @@
 ---
 name: implementation-review
-description: Explicit full implementation-review method for correctness, security, performance, maintainability, tests, and likely future failure modes. Use only when a full-review trigger applies to a branch, PR, commit range, changed files, or completed backlog item; do not use for light or style-only review or backlog state mutation.
+description: Explicit full implementation-review method for correctness, security, performance, maintainability, tests, and likely future failure modes. Use only when a full-review trigger applies to a branch, PR, commit range, changed files, or one fully implemented backlog item; do not use for partial item slices, light or style-only review, or backlog state mutation.
 ---
 
 # Implementation Review
@@ -8,6 +8,9 @@ description: Explicit full implementation-review method for correctness, securit
 This skill supplies a full-review method. It never grants permission to edit, commit, push, post, or mutate backlog/remote state. The caller owns scope, fix authority, integration, voice, markers, and delegation limits.
 
 Use full review for materially complex or multi-subsystem changes; auth/security/privacy, schema/data, concurrency/transaction, public API/compatibility, or meaningful performance risk; or an explicit deep-review request.
+
+For backlog-driven work, review one complete backlog item as the unit of scope. Do not run a full review on a checklist entry, partial implementation slice, or intermediate commit merely because it is a convenient stopping point. Wait until the item's implementation and acceptance criteria are complete, then review the resolved item diff; review an incomplete item only when the caller explicitly requests an early deep review.
+
 
 Before judging code, establish the exact target, intended behavior, acceptance criteria, non-goals, and compatibility constraints from the request, issue/PR, backlog, and relevant documentation. Report a missing intent source instead of inventing requirements.
 

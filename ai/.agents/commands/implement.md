@@ -1,11 +1,11 @@
 ---
-description: Implement the feature described by the user in an isolated worktree, verify independently, commit, and integrate per the repo's flow
+description: Implement one complete feature in an isolated worktree, verify independently, commit, and integrate per the repo's flow
 argument-hint: <feature-description> [acceptance-criteria|constraints|relevant-files]
 ---
 
-Implement exactly the feature described in `$ARGUMENTS` in an isolated worktree. Preserve existing unstaged work, use the smallest targeted verification loop, commit only feature-related work, integrate it per the repo's flow (merge to local main or open a PR), and clean up the worktree.
+Implement exactly one complete feature described in `$ARGUMENTS` in an isolated worktree. Preserve existing unstaged work, use the smallest targeted verification loop, commit only feature-related work, integrate it per the repo's flow (merge to local main or open a PR), and clean up the worktree.
 
-Treat `$ARGUMENTS` as the complete feature request and source of scope. Extract the requested behavior, acceptance criteria, constraints, relevant files, and explicit non-goals from the user's description. Existing code and repository conventions are implementation context, not an additional source of requested work. Do not search for, create, update, complete, or archive backlog/spec/planning items, and do not infer scope from nearby issues or TODOs.
+Treat `$ARGUMENTS` as the complete feature request and source of scope. One invocation owns that request through completion. If it describes a backlog item, the whole item is the completion unit: internal checklist entries, execution slices, and intermediate commits are not separate deliverables or stopping points. Extract the requested behavior, acceptance criteria, constraints, relevant files, and explicit non-goals from the user's description. Existing code and repository conventions are implementation context, not an additional source of requested work. Do not search for, create, update, complete, or archive backlog/spec/planning items, and do not infer scope from nearby issues or TODOs.
 
 ## Feature contract
 
@@ -15,7 +15,7 @@ Before editing:
 2. Convert `$ARGUMENTS` into a concrete implementation contract: user-visible behavior, acceptance criteria, constraints, non-goals, and directly affected surfaces. Do not expand the request with retries, telemetry, validation, abstractions, or cleanup that the feature does not require.
 3. Read the relevant existing code, callsites, tests, configuration, and repository patterns. Use symbol-aware references before changing exported symbols.
 4. Resolve ordinary implementation details from established repository conventions. Carry only a materially different product or architecture choice into the oracle policy below; do not escalate routine implementation choices.
-5. Confirm the feature can be completed safely. If it is large, split only the execution plan; do not silently shrink the requested acceptance.
+5. Confirm the complete feature can be delivered safely. Split a large feature only into internal execution steps; do not silently shrink the requested acceptance or stop after a coherent partial slice.
 6. Create or switch to an isolated worktree for implementation so local user work is not disturbed.
 
 ## Subagent budget
@@ -35,7 +35,7 @@ Before editing:
 - Delete obsolete code paths made unnecessary by the change. Do not leave compatibility shims, aliases, deprecated paths, or duplicate implementations unless `$ARGUMENTS` explicitly requires them.
 - Add or update tests for requested behavior, conditional branches, edge values, invariants, and failure modes implied by the feature.
 - Failed feature-scoped checks, missing required code, and outdated tests or fixtures caused by the feature are implementation work. Fix them in-repo and rerun targeted verification. Ignore unrelated failures only after recording evidence that they are unrelated.
-- If product information is missing, implement everything not blocked and record the exact remaining decision instead of guessing.
+- If product information is missing, implement everything not blocked and record the exact remaining decision instead of guessing. A partial implementation is not a successful outcome; continue until the whole feature is complete or only a genuine human-required or unavailable external prerequisite remains.
 - Use the one optional oracle consultation only after gathering repository evidence, and only for consequential, hard-to-reverse design tradeoffs or a possible genuine external blocker. Batch related questions; do not consult for ordinary choices or routine check failures.
 - Before reporting a human-required blocker, include the exact blocker, attempted paths, and evidence in that consultation. Report it as human-required only if no safe, repo-evidenced path remains.
 
@@ -47,7 +47,7 @@ Before editing:
 
 ## Completion criteria
 
-Treat the feature as complete only when:
+Treat the whole feature request or supplied backlog item as the unit of completion, never an internal checklist entry, code area, execution slice, or intermediate commit. It is complete only when:
 
 - every stated acceptance criterion and behavior directly required for end-to-end correctness is implemented
 - every required callsite and affected artifact is updated
