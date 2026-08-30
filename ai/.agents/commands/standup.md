@@ -1,6 +1,6 @@
 ---
 description: Emit a scannable standup report of your GitHub and backlog activity for a daily or weekly window
-argument-hint: [daily|weekly|Nd|YYYY-MM-DD[..YYYY-MM-DD]] [repo:owner/name|org:name]
+argument-hint: '[daily|weekly|Nd|YYYY-MM-DD[..YYYY-MM-DD]] [repo:owner/name|org:name]'
 ---
 
 Report what the user did, what is in progress, and what is blocked, for a standup

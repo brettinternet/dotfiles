@@ -1,6 +1,6 @@
 ---
 description: List backlog work in dependency order with readiness, review, and claim status
-argument-hint: [backlog-source|remote-ref] [item selectors]
+argument-hint: '[backlog-source|remote-ref] [item selectors]'
 ---
 
 List open work for `$ARGUMENTS`. This command is read-only: do not acquire claims or change local or remote state.

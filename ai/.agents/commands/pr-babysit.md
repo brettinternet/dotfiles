@@ -1,6 +1,6 @@
 ---
 description: Babysit a PR — keep CI green, address PR feedback, request a reviewer, then work their feedback until they approve
-argument-hint: [pr-number] [reviewer]
+argument-hint: '[pr-number] [reviewer]'
 ---
 
 Babysit a pull request through to ready-to-merge.
