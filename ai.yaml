@@ -103,11 +103,22 @@
             esac
           fi
         }
+        profiles_root="$HOME/.omp/profiles"
+        if [ -L "$profiles_root" ]; then
+          printf 'Refusing to use linked OMP profiles directory: %s\n' "$profiles_root" >&2
+          exit 1
+        fi
+        mkdir -p "$profiles_root"
         for src in "$DOTFILES/ai/omp/profiles"/*.yml; do
           [ -f "$src" ] || continue
           name="$(basename "$src" .yml)"
           [ "$name" = common ] && continue
-          dir="$HOME/.omp/profiles/$name/agent"
+          profile_dir="$profiles_root/$name"
+          dir="$profile_dir/agent"
+          if [ -L "$profile_dir" ] || [ -L "$dir" ]; then
+            printf 'Refusing to use linked OMP profile directory: %s\n' "$profile_dir" >&2
+            exit 1
+          fi
           mkdir -p "$dir"
           config="$dir/config.yml"
           legacy_profile="$DOTFILES/ai/pi/profiles/$name.yml"
