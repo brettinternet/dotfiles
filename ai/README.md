@@ -2,6 +2,10 @@
 
 Shared config for Claude Code (`~/.claude`), oh-my-pi (`~/.omp`), Codex, Amp CLI (`~/.config/amp`), OpenCode (`~/.config/opencode`), and the DeepSeek Harness (`~/.dsh`), installed by [`ai.yaml`](../ai.yaml). `AGENTS.md` is the global instruction file for all six agent tools. `ai/.agents/` is the canonical source for authored shared skills and command workflows. `ai/agents/` is the canonical source for subagent definitions: one file per role holding the shared description, the per-tool model/effort tiers, and the single instruction body. `install-agents` renders the Claude, pi, OpenCode, and Codex formats from it, since their frontmatter and discovery paths differ.
 
+## Pi profiles
+
+`make ai` renders every `pi/profiles/*.yml` overlay except `common.yml` into a native `~/.omp/profiles/<name>/agent/` profile, and renders the selected overlay into `~/.omp/agent/config.yml`. The `codex` profile is the default OpenAI-only route. Every profile receives the shared instructions, agents, skills, model limits, keybindings, watchdog, and Context7 MCP server. The common profile keeps the TUI quiet: no startup chrome or terminal-title updates, a minimal status line, hidden thinking blocks, and no token counter.
+
 ## OpenCode profiles
 
 OpenCode renders `~/.config/opencode/opencode.jsonc` from `opencode/profiles/common.jsonc` plus a selected overlay. `opencode-profile list` shows `gpt`, `claude`, `claude-gpt`, `gpt-cc-proxy`, `or`, and `or-cheap`; `opencode-profile use <name>` regenerates the local active config. Its eight global subagents mirror the pi roster; each profile supplies their OpenCode model routing. `gpt-cc-proxy` retains Meridian-backed Anthropic routing and requires `MERIDIAN_BASE_URL`. OpenCode uses neither oh-my-openagent nor OCX.
@@ -39,7 +43,7 @@ pi and OpenCode also ship `reviewer` and `thermo-nuclear-code-quality-review`, p
 
 ## Where each concern lives
 
-- **Role + tier**: `ai/agents/<role>.md` frontmatter — the shared description plus each tool's model and effort, never inherited from the session. `install-agents` renders it into `~/.claude/agents/`, `~/.omp/agents/`, `~/.config/opencode/agents/`, and `~/.codex/`; OpenCode is the exception, taking its model from the active profile's `agent.<role>` entry.
+- **Role + tier**: `ai/agents/<role>.md` frontmatter — the shared description plus each tool's model and effort, never inherited from the session. `install-agents` renders it into `~/.claude/agents/`, `~/.omp/agent/agents/`, `~/.config/opencode/agents/`, and `~/.codex/`; OpenCode is the exception, taking its model from the active profile's `agent.<role>` entry.
 - **Policy** (when to delegate/escalate/verify, the two-failure escalation ladder, don't-delegate list, subagent guard): `AGENTS.md` § Subagents, one source for all tools.
 - **Workflow entrypoints**: `ai/.agents/commands/*.md` templates, rendered per tool by `install-agent-commands` as described below.
 - **Reusable workflow methods**: authored `ai/.agents/skills/*/SKILL.md` packages plus optional references, templates, scripts, and source-controlled tool metadata.

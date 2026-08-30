@@ -4,7 +4,7 @@ set -eu
 
 source_dir=${1:-ai/agents}
 claude_dir=${2:-"$HOME/.claude/agents"}
-pi_dir=${3:-"$HOME/.omp/agents"}
+pi_dir=${3:-"$HOME/.omp/agent/agents"}
 opencode_dir=${4:-"$HOME/.config/opencode/agents"}
 codex_dir=${5:-"$HOME/.codex/agents"}
 codex_config=${6:-"$HOME/.codex/config.toml"}
@@ -82,6 +82,20 @@ $name
     printf '%s\n' "$manifest_marker"
     printf '%s' "$names"
   } > "$manifest"
+}
+
+retire_managed_directory() {
+  directory=$1
+  manifest="$directory/$manifest_name"
+  [ -f "$manifest" ] || return 0
+
+  while read -r name; do
+    case "$name" in '' | '#'*) continue ;; esac
+    [ -e "$directory/$name" ] || [ -L "$directory/$name" ] || continue
+    trash "$directory/$name"
+  done < "$manifest"
+  trash "$manifest"
+  rmdir "$directory" 2>/dev/null || true
 }
 
 for directory in "$claude_dir" "$pi_dir" "$opencode_dir" "$codex_dir"; do
@@ -194,6 +208,10 @@ done
 reconcile "$claude_dir" "$claude_names"
 reconcile "$pi_dir" "$pi_names"
 reconcile "$opencode_dir" "$opencode_names"
+
+if [ "$pi_dir" = "$HOME/.omp/agent/agents" ]; then
+  retire_managed_directory "$HOME/.omp/agents"
+fi
 
 for target in "$codex_dir"/*.toml; do
   [ -f "$target" ] || continue

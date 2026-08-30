@@ -55,15 +55,38 @@
     - command: |
         set -eu
         DOTFILES="$(pwd -P)"
+        common="$DOTFILES/ai/pi/profiles/common.yml"
+        link_shared() {
+          source=$1
+          destination=$2
+          if [ -L "$destination" ]; then
+            [ "$(readlink "$destination")" = "$source" ] && return 0
+            printf 'Refusing to replace unmanaged pi profile link: %s\n' "$destination" >&2
+            exit 1
+          fi
+          if [ -e "$destination" ]; then
+            printf 'Refusing to overwrite unmanaged pi profile path: %s\n' "$destination" >&2
+            exit 1
+          fi
+          ln -s "$source" "$destination"
+        }
         for src in "$DOTFILES/ai/pi/profiles"/*.yml; do
           [ -f "$src" ] || continue
           name="$(basename "$src" .yml)"
+          [ "$name" = common ] && continue
           dir="$HOME/.omp/profiles/$name/agent"
           mkdir -p "$dir"
-          ln -sfn "$src" "$dir/config.yml"
-          ln -sfn "$DOTFILES/ai/WATCHDOG.md" "$dir/WATCHDOG.md"
+          tmp="$dir/config.yml.tmp.$$"
+          python3 "$DOTFILES/ai/pi/merge-profile.py" "$common" "$src" "$tmp"
+          mv "$tmp" "$dir/config.yml"
+          link_shared "$DOTFILES/ai/AGENTS.md" "$dir/AGENTS.md"
+          link_shared "$DOTFILES/ai/pi/models.yml" "$dir/models.yml"
+          link_shared "$DOTFILES/ai/pi/keybindings.yml" "$dir/keybindings.yml"
+          link_shared "$DOTFILES/ai/pi/mcp.json" "$dir/mcp.json"
+          link_shared "$DOTFILES/ai/WATCHDOG.md" "$dir/WATCHDOG.md"
+          link_shared "$HOME/.omp/agent/agents" "$dir/agents"
         done
-      description: Symlink pi profiles and watchdog into ~/.omp/profiles/*/agent
+      description: Materialize pi profiles with shared config and tooling
       stdout: true
       stderr: true
 
@@ -143,10 +166,14 @@
       relink: false
       path: ai/.agents/skills/*
     # Oh My Pi
+    ~/.omp/agent/AGENTS.md:
+      path: ai/AGENTS.md
     ~/.omp/agent/models.yml:
       path: ai/pi/models.yml
     ~/.omp/agent/keybindings.yml:
       path: ai/pi/keybindings.yml
+    ~/.omp/agent/mcp.json:
+      path: ai/pi/mcp.json
     ~/.omp/agent/WATCHDOG.md:
       path: ai/WATCHDOG.md
     # Codex
