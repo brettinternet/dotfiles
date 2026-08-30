@@ -1,20 +1,21 @@
 providers:
   openai-codex:
     modelOverrides:
-      gpt-5.6-sol: &conservative-limit
-        contextWindow: 256000
-      gpt-5.6-terra: *conservative-limit
-      gpt-5.6-luna: *conservative-limit
+      gpt-5.6-sol: &codex-context-limit
+        contextWindow: 272000
+      gpt-5.6-terra: *codex-context-limit
+      gpt-5.6-luna: *codex-context-limit
   anthropic:
     modelOverrides:
-      claude-fable-5: *conservative-limit
+      claude-fable-5: &conservative-limit
+        contextWindow: 256000
       claude-opus-5: *conservative-limit
       claude-sonnet-5: *conservative-limit
   openrouter:
     modelOverrides:
-      openai/gpt-5.6-sol: *conservative-limit
-      openai/gpt-5.6-terra: *conservative-limit
-      openai/gpt-5.6-luna: *conservative-limit
+      openai/gpt-5.6-sol: *codex-context-limit
+      openai/gpt-5.6-terra: *codex-context-limit
+      openai/gpt-5.6-luna: *codex-context-limit
       ~openai/gpt-latest: *conservative-limit
       anthropic/claude-opus-4.8: *conservative-limit
       ~anthropic/claude-opus-latest: *conservative-limit
