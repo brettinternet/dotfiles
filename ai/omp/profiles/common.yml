@@ -11,7 +11,7 @@ theme:
 symbolPreset: nerd
 tui:
   titleState: false
-steeringMode: one-at-a-time
+steeringMode: all
 statusLine:
   preset: default
   separator: powerline-thin
