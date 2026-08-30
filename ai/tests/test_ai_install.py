@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -90,6 +91,23 @@ class AiInstallTests(unittest.TestCase):
             "Unmanaged OpenCode command\n", unmanaged_opencode_command.read_text()
         )
         self.assertEqual(before, self.repository_status())
+
+    def test_generated_skill_frontmatter_is_valid_yaml(self) -> None:
+        yaml_path = str(ROOT / "dotbot/lib/pyyaml/lib")
+        sys.path.insert(0, yaml_path)
+        self.addCleanup(sys.path.remove, yaml_path)
+        import yaml
+
+        self.run_command("ai/.bin/install-agent-commands")
+
+        for skill in (self.home / ".agents/skills").glob("*/SKILL.md"):
+            with self.subTest(skill=skill):
+                text = skill.read_text()
+                self.assertTrue(text.startswith("---\n"))
+                frontmatter = text.split("---\n", 2)[1]
+                metadata = yaml.safe_load(frontmatter)
+                self.assertIsInstance(metadata, dict)
+                self.assertEqual(skill.parent.name, metadata["name"])
 
     def test_interactive_workflows_request_human_input_before_blocking(
         self,
