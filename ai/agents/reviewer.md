@@ -1,10 +1,10 @@
 ---
 description: Read-only adversarial implementation reviewer on the strongest premise-checking model available. Tries to falsify a change's correctness with concrete counterexamples, validates every finding, and reports only actionable defects. Never edits, commits, or posts.
-tools: claude pi opencode codex
+tools: claude omp pi opencode codex
 claude-model: claude-opus-4-8
 claude-effort: xhigh
-pi-model: pi/reviewer
-pi-effort: xhigh
+omp-model: pi/reviewer
+omp-effort: xhigh
 codex-model: gpt-5.6-terra
 codex-effort: xhigh
 ---

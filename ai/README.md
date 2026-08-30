@@ -1,10 +1,12 @@
 # AI agent setup
 
-Shared config for Claude Code (`~/.claude`), oh-my-pi (`~/.omp`), Codex, Amp CLI (`~/.config/amp`), OpenCode (`~/.config/opencode`), and the DeepSeek Harness (`~/.dsh`), installed by [`ai.yaml`](../ai.yaml). `AGENTS.md` is the global instruction file for all six agent tools. `ai/.agents/` is the canonical source for authored shared skills and command workflows. `ai/agents/` is the canonical source for subagent definitions: one file per role holding the shared description, the per-tool model/effort tiers, and the single instruction body. `install-agents` renders the Claude, pi, OpenCode, and Codex formats from it, since their frontmatter and discovery paths differ.
+Shared config for Claude Code (`~/.claude`), Pi (`~/.pi`), Oh My Pi (`~/.omp`), Codex, Amp CLI (`~/.config/amp`), OpenCode (`~/.config/opencode`), and the DeepSeek Harness (`~/.dsh`), installed by [`ai.yaml`](../ai.yaml). `AGENTS.md` is the global instruction file for all seven agent tools. `ai/.agents/` is the canonical source for authored shared skills and command workflows. `ai/agents/` is the canonical source for subagent definitions: one file per role holding the shared description, harness-specific routing, and the single instruction body. `install-agents` renders the Claude, OMP, Pi, OpenCode, and Codex formats from it.
 
 ## Pi profiles
 
-`make ai` renders every `pi/profiles/*.yml` overlay except `common.yml` into a native `~/.omp/profiles/<name>/agent/` profile, and renders the selected overlay into `~/.omp/agent/config.yml`. The `codex` profile is the default OpenAI-only route. Every profile receives the shared instructions, agents, skills, model limits, keybindings, watchdog, and Context7 MCP server. The common profile keeps the TUI quiet: no startup chrome or terminal-title updates, a minimal status line, hidden thinking blocks, and no token counter.
+Vanilla Pi renders `~/.pi/agent/settings.json` from `pi/profiles/common.json` plus a selected overlay. `pi-profile use codex` selects ChatGPT subscription models through Pi's built-in `openai-codex` provider. The common profile keeps the regular TUI sparse and installs pinned `pi-subagents`, `pi-lsp-adapter`, and `pi-web-access` packages. Pi discovers the shared `~/.agents/skills/` tree natively; `make ai` also installs the global instructions and custom subagents into Pi's native paths.
+
+OMP remains separate under `ai/omp/` and uses `omp-profile`.
 
 ## OpenCode profiles
 
@@ -23,27 +25,27 @@ Two complementary patterns; which one is active depends only on the session mode
 - **Escalation (advisor)** — a cheap/mid session does the work and escalates judgment to the `oracle` (pinned to the strongest model, fresh context). Right when the plan already exists — the command file or a refined backlog item is the decomposition. Example: one `/backlog-implement-review-loop` pass on a mid-tier session.
 - **Delegation (orchestrator)** — a smart session keeps decisions, synthesis, and shared-interface coordination, and delegates only materially substantial, independent volume branches to cheap pinned workers under an explicit per-command budget. Small or tightly coupled work stays in the session. Right when judgment is continuous and the surface is broad: refinement, review, diagnosis.
 
-The pipeline is deliberately asymmetric: smart refine → cheap implement → independent verify/review. Worker and oracle tiers are pinned in `ai/agents/*.md` frontmatter, so both patterns hold from any starting tier; pick the orchestrator via `/model` (Claude) or the pi profile's `modelRoles.default`.
+The pipeline is deliberately asymmetric: smart refine → cheap implement → independent verify/review. Worker and oracle tiers are pinned at each harness's routing point, so both patterns hold from any starting tier; pick the orchestrator via `/model` or the active Pi/OMP profile.
 
 ## Agent roster
 
 | Agent        | Tier                                                                                                          | Role                                                                 |
 | ------------ | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
 | `reviewer`   | benchmark leader where available (`Claude Opus 4.8`; OpenAI-only profiles use `GPT-5.6 Terra`)                | read-only falsification review with independently validated findings |
-| `explore`    | low (`pi/smol`; Claude uses built-in Explore)                                                                 | read-only discovery, evidence gathering                              |
-| `executor`   | mid (`sonnet` / `pi/task`)                                                                                    | well-specified implementation; returns questions instead of guessing |
-| `verifier`   | mid (`sonnet` / `pi/task`)                                                                                    | independent acceptance check from criteria + commits; never fixes    |
-| `pr-watcher` | low (`haiku` / `pi/smol`)                                                                                     | CI/review delta watching                                             |
-| `oracle`     | max (`opus` / `pi/slow`, xhigh)                                                                               | second-opinion judgment: tradeoffs, diagnoses, blocker triage        |
+| `explore`    | low (OMP `pi/smol`; Pi Codex Luna; Claude uses built-in Explore)                                              | read-only discovery, evidence gathering                              |
+| `executor`   | mid (`sonnet`; OMP `pi/task`; Pi Codex Luna)                                                                  | well-specified implementation; returns questions instead of guessing |
+| `verifier`   | mid (`sonnet`; OMP `pi/task`; Pi Codex Luna)                                                                  | independent acceptance check from criteria + commits; never fixes    |
+| `pr-watcher` | low (`haiku`; OMP `pi/smol`; Pi Codex Luna)                                                                   | CI/review delta watching                                             |
+| `oracle`     | max (`opus`; OMP `pi/slow`; Pi Codex Sol)                                                                     | second-opinion judgment: tradeoffs, diagnoses, blocker triage        |
 | `writer`     | independently pinned per harness or active provider profile                                                   | final wording for externally directed messages                       |
 
 The base roster covers the complete find/do/check/judge/watch/write loop. No tester (executor writes tests, verifier runs them skeptically) and no librarian (context7/web search cover docs).
 
-pi and OpenCode also ship `reviewer` and `thermo-nuclear-code-quality-review`, pinned to their strongest applicable tiers. The reviewer applies the full `implementation-review` skill and tries to falsify correctness claims; the thermo-nuclear reviewer applies its dedicated maintainability rubric. Claude and Codex receive `reviewer`; Claude invokes the thermo-nuclear skill directly.
+Pi, OMP, and OpenCode also ship `reviewer` and `thermo-nuclear-code-quality-review`, pinned to their strongest applicable tiers. The reviewer applies the full `implementation-review` skill and tries to falsify correctness claims; the thermo-nuclear reviewer applies its dedicated maintainability rubric. Claude and Codex receive `reviewer`; Claude invokes the thermo-nuclear skill directly.
 
 ## Where each concern lives
 
-- **Role + tier**: `ai/agents/<role>.md` frontmatter — the shared description plus each tool's model and effort, never inherited from the session. `install-agents` renders it into `~/.claude/agents/`, `~/.omp/agent/agents/`, `~/.config/opencode/agents/`, and `~/.codex/`; OpenCode is the exception, taking its model from the active profile's `agent.<role>` entry.
+- **Role + tier**: `ai/agents/<role>.md` frontmatter plus profile routing. `install-agents` renders definitions into `~/.claude/agents/`, `~/.omp/agent/agents/`, `~/.pi/agent/agents/`, `~/.config/opencode/agents/`, and `~/.codex/`.
 - **Policy** (when to delegate/escalate/verify, the two-failure escalation ladder, don't-delegate list, subagent guard): `AGENTS.md` § Subagents, one source for all tools.
 - **Workflow entrypoints**: `ai/.agents/commands/*.md` templates, rendered per tool by `install-agent-commands` as described below.
 - **Reusable workflow methods**: authored `ai/.agents/skills/*/SKILL.md` packages plus optional references, templates, scripts, and source-controlled tool metadata.
@@ -57,15 +59,16 @@ Customize the model at the harness-owned routing point:
 
 - Claude Code: `claude-model` and `claude-effort` in `ai/agents/writer.md`.
 - Codex: `codex-model` and `codex-effort` in `ai/agents/writer.md`.
-- OMP: `modelRoles.writer` in each `ai/pi/profiles/*.yml` overlay; the generated agent targets `pi/writer`.
+- OMP: `modelRoles.writer` in each `ai/omp/profiles/*.yml` overlay; the generated agent targets `pi/writer`.
+- Pi: `subagents.agentOverrides.writer` in each `ai/pi/profiles/*.json` overlay.
 - OpenCode: `agent.writer` in each `ai/opencode/profiles/*.jsonc` overlay.
 
 Run `make ai` after changing a route. New sessions then use the regenerated global `writer` definition and active profile config.
 
 ## Shared skills and commands
 
-- `ai/.agents/skills/<distinct-name>/` is the source for authored reusable skills. Codex, OMP, OpenCode, and Amp discover its `~/.agents/skills/` links natively; Claude receives links to the same packages at `~/.claude/skills/`.
-- `ai/.agents/commands/*.md` is the source for shared slash-command workflows. `install-agent-commands` renders marked explicit-only adapters into `~/.agents/skills/` and `~/.claude/skills/`; Claude exposes the skill adapters as slash commands, while Codex, OMP, OpenCode, and Amp consume them from their native skill locations. The installer removes its legacy `~/.claude/commands/` copies so Claude does not index each workflow twice.
+- `ai/.agents/skills/<distinct-name>/` is the source for authored reusable skills. Pi, Codex, OMP, OpenCode, and Amp discover its `~/.agents/skills/` links natively; Claude receives links to the same packages at `~/.claude/skills/`.
+- `ai/.agents/commands/*.md` is the source for shared slash-command workflows. `install-agent-commands` renders marked explicit-only adapters into `~/.agents/skills/` and `~/.claude/skills/`; Claude exposes the skill adapters as slash commands, while Pi, Codex, OMP, OpenCode, and Amp consume them from their native skill locations. The installer removes its legacy `~/.claude/commands/` copies so Claude does not index each workflow twice.
 - `make ai` writes generated agent definitions and adapters, active profile state, and rendered profile configuration under `$HOME`; it removes only recognized legacy checkout state and explicitly retired local artifacts.
 - Keep optional Codex `agents/openai.yaml` metadata inside authored skill packages; the common `.agents` links carry it unchanged.
 
