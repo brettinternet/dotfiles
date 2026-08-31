@@ -117,6 +117,9 @@ return {
       opts.picker.sources.files = vim.tbl_deep_extend("force", opts.picker.sources.files or {}, {
         hidden = true,
       })
+      opts.picker.sources.grep = vim.tbl_deep_extend("force", opts.picker.sources.grep or {}, {
+        hidden = true,
+      })
 
       for _, source in ipairs {
         "diagnostics",
