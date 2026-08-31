@@ -28,6 +28,8 @@ Whole-invocation budget: at most one executor, one verifier, one oracle consulta
 
 A code-editing executor works in an isolated worktree and never spawns subagents, broadens beyond the item, holds claim secrets, or touches provider state. It returns only: outcome, remaining work, commits and changed-file names, check pass/fail without routine output, and blocker evidence or the next step.
 
+When this command creates the implementation worktree itself, prefer `hwt create --branch <branch> --base <base> --json` when HWT and a Herdr server are available, then pass the returned path to the executor; the executor must not create a second worktree. Use harness-provided isolation as-is, and fall back to `git worktree` only for exact-SHA detached work or when HWT/Herdr is unavailable.
+
 ## Implementation pass
 
 - Read the full item, acceptance criteria, prior progress, and the relevant code and history.
@@ -45,7 +47,7 @@ After implementation tasks and acceptance criteria are complete, review the reso
 
 ## Finish
 
-Inspect the resulting commits, then integrate the completed item after refreshing provider and repository state. Remove a clean command-created worktree after integration. Retain and report a dirty or conflicted worktree only when a genuine blocker prevents safe completion.
+Inspect the resulting commits, then integrate the completed item after refreshing provider and repository state. Remove a clean command-created worktree after integration using the creator's lifecycle command; for HWT, use `hwt remove --workspace <workspace-id> --json`. Retain and report a dirty or conflicted worktree only when a genuine blocker prevents safe completion.
 
 Before declaring the item complete, run one verifier with the acceptance criteria, commits, and changed files — not the worker's conclusions — and require a criterion-by-criterion result. Any failed or unverified criterion stays open. Record a substantive excess observation as follow-up work on an existing backlog item that covers it, or a new item if none does; it never blocks completing this item.
 
