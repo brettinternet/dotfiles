@@ -235,6 +235,18 @@ type = "plugin_action"
 command = "drovr.move-tab"
 description = "move tab to workspace"
 
+[[keys.command]]
+key = "prefix+shift+g"
+type = "plugin_action"
+command = "hwt.worktrees.new"
+description = "new configured worktree"
+
+[[keys.command]]
+key = "prefix+shift+r"
+type = "plugin_action"
+command = "hwt.worktrees.remove"
+description = "remove configured worktree"
+
 [worktrees]
 # Worktrees opened through Herdr are grouped beneath their source workspace.
 directory = "~/.herdr/worktrees"
