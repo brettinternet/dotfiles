@@ -77,6 +77,9 @@
     ~/.config/herdr/config.toml:
       path: base/.config/herdr/config.toml
       backup: true
+    ~/.config/hwt/config.yaml:
+      path: base/.config/hwt/config.yaml
+      backup: true
     ~/.config/nvim:
       path: base/.config/nvim
       if: '[ -x "$(command -v nvim)" ]'
@@ -149,6 +152,14 @@
         if [ ! -d "$HOME/.config/herdr/plugins/config/drovr" ]; then
           env -u HERDR_SOCKET_PATH herdr plugin install "AVGVSTVS96/herdr-drovr" --yes
           echo 'herdr plugin: drovr'
+        fi
+        if command -v hwt >/dev/null 2>&1; then
+          if [ ! -d "$HOME/.config/herdr/plugins/config/hwt.worktrees" ]; then
+            env -u HERDR_SOCKET_PATH hwt plugin install
+            echo 'herdr plugin: hwt.worktrees'
+          fi
+        else
+          echo 'hwt not on PATH; skipping HWT plugin (mise install hwt)'
         fi
         for plugin in window-title pane-collapse pane-equalize pane-rotate last-workspace seamless-navigation command-palette; do
           herdr plugin link "base/.config/herdr/plugins/$plugin"

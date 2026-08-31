@@ -16,7 +16,7 @@ Before editing:
 3. Read the relevant existing code, callsites, tests, configuration, and repository patterns. Use symbol-aware references before changing exported symbols.
 4. Resolve ordinary implementation details from established repository conventions. Carry only a materially different product or architecture choice into the oracle policy below; do not escalate routine implementation choices.
 5. Confirm the complete feature can be delivered safely. Split a large feature only into internal execution steps; do not silently shrink the requested acceptance or stop after a coherent partial slice.
-6. Create or switch to an isolated worktree for implementation so local user work is not disturbed.
+6. Create or switch to an isolated worktree for implementation so local user work is not disturbed. Prefer `hwt create --branch <branch> --base <base> --json` when HWT and a Herdr server are available; retain its returned path and workspace ID. Use harness-provided isolation as-is, and fall back to `git worktree` only for exact-SHA detached work or when HWT/Herdr is unavailable.
 
 ## Subagent budget
 
@@ -76,7 +76,7 @@ Resolve the finish flow before pushing, merging, or opening anything:
 2. Otherwise auto-detect: if you lack push access to the base branch, the base branch is protected, or `origin` is a shared remote you do not own, use `pull-request`.
 3. When still ambiguous, default to `local-merge`.
 
-- `local-merge`: merge the completed, verified work back to local `main`; clean up the temporary worktree; do not push.
+- `local-merge`: merge the completed, verified work back to local `main`; clean up the temporary worktree without pushing. If HWT created it, use `hwt remove --workspace <workspace-id> --json`; otherwise use the worktree creator's normal cleanup.
 - `pull-request`: push the feature branch to `origin` and open a PR against the base branch with `gh`, using a concise title and body summarizing the feature and verification; clean up the worktree but keep the pushed branch; do not merge locally and do not merge the PR; report the PR URL and recommend `/pr-babysit [reviewer]` as the follow-up to drive it to green and approval. This flow authorizes pushing and opening the PR for this feature's branch only; it does not authorize force-pushing, merging, or touching unrelated branches.
 
 ## Finish

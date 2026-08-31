@@ -37,6 +37,10 @@ class HerdrInstallTests(unittest.TestCase):
                 BASE / ".config/herdr/config.toml",
                 (home / ".config/herdr/config.toml").resolve(),
             )
+            self.assertEqual(
+                BASE / ".config/hwt/config.yaml",
+                (home / ".config/hwt/config.yaml").resolve(),
+            )
             for name in (
                 "herdr-insert-file-path",
                 "herdr-open-dev-dir",
@@ -47,11 +51,25 @@ class HerdrInstallTests(unittest.TestCase):
                 BASE / ".functions/herdr.sh",
                 (home / ".functions/herdr.sh").resolve(),
             )
+            self.assertEqual(
+                BASE / ".functions/_hwt",
+                (home / ".functions/_hwt").resolve(),
+            )
 
     def test_base_mise_fragment_provides_herdr_runtimes(self) -> None:
         config = tomllib.loads((BASE / ".config/mise/conf.d/00-base.toml").read_text())
         tools = config["tools"]
-        for tool in ("herdr", "jq", "python", "node", "fd", "fzf", "gdu", "lazygit"):
+        for tool in (
+            "herdr",
+            "github:dkarter/hwt",
+            "jq",
+            "python",
+            "node",
+            "fd",
+            "fzf",
+            "gdu",
+            "lazygit",
+        ):
             self.assertIn(tool, tools)
 
     def test_local_plugins_support_linux_and_macos(self) -> None:
