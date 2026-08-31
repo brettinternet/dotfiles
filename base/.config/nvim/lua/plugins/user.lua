@@ -16,6 +16,19 @@ return {
   { "jay-babu/mason-nvim-dap.nvim", enabled = false },
 
   {
+    "iamcco/markdown-preview.nvim",
+    cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
+    ft = "markdown",
+    build = function(plugin)
+      vim.cmd("source " .. vim.fn.fnameescape(plugin.dir .. "/autoload/mkdp/util.vim"))
+      vim.fn["mkdp#util#install_sync"](true)
+    end,
+    keys = {
+      { "<Leader>mp", "<Cmd>MarkdownPreviewToggle<CR>", desc = "Toggle Markdown preview" },
+    },
+  },
+
+  {
     "AstroNvim/astrocore",
     opts = function(_, opts)
       opts.mappings.n["<Leader>tu"] = vim.fn.executable "mise" == 1
