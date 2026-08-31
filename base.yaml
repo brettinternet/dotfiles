@@ -62,6 +62,14 @@
     ~/Library/Application Support/k9s/skins/skin.yaml:
       path: base/.config/k9s/skin.yaml
       if: '[ "$(uname)" = Darwin ] && [ -x "$(command -v kubectl)" ]'
+    ~/.config/nushell/config.nu:
+      path: base/nushell/config.nu
+      force: true
+      if: '[ "$(uname)" = Linux ]'
+    ~/.config/nushell/conf.d/:
+      glob: true
+      path: base/nushell/conf.d/*
+      if: '[ "$(uname)" = Linux ]'
     ~/.config/mise/conf.d/:
       glob: true
       path: base/.config/mise/conf.d/*

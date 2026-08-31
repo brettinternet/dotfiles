@@ -35,6 +35,12 @@
       glob: true
       path: darwin/.config/ghostty/*
       if: '[ -x "$(command -v ghostty)" ]'
+    ~/Library/Application Support/nushell/config.nu:
+      path: base/nushell/config.nu
+      force: true
+    ~/Library/Application Support/nushell/conf.d/:
+      glob: true
+      path: base/nushell/conf.d/*
     ~/.config/mise/conf.d/:
       glob: true
       path: darwin/.config/mise/conf.d/*

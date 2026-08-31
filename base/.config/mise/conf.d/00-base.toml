@@ -15,6 +15,10 @@ gdu = "latest"
 herdr = { version = "latest", minimum_release_age = "0" }
 python = "latest"
 node = "latest"
+"aqua:nushell/nushell" = "latest"
+atuin = "latest"
+direnv = "latest"
+usage = "latest"
 
 # search
 fd = "latest"

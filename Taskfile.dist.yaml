@@ -25,6 +25,21 @@ tasks:
     cmds:
       - mise trust -q -a
       - mise install -q
+      - |
+        case "$(uname)" in
+          Darwin) autoload_dir="$HOME/Library/Application Support/nushell/vendor/autoload" ;;
+          Linux) autoload_dir="$HOME/.config/nushell/vendor/autoload" ;;
+          *) exit 0 ;;
+        esac
+
+        mkdir -p "$autoload_dir"
+        mise activate nu > "$autoload_dir/mise.nu"
+        if mise exec -- zoxide --version >/dev/null 2>&1; then
+          mise exec -- zoxide init nushell > "$autoload_dir/zoxide.nu"
+        fi
+        if mise exec -- atuin --version >/dev/null 2>&1; then
+          mise exec -- atuin init nu > "$autoload_dir/atuin.nu"
+        fi
     preconditions:
       - sh: command -v mise
         msg: Mise is not installed
