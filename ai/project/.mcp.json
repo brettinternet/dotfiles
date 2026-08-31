@@ -6,7 +6,13 @@
     },
     "chrome-devtools": {
       "command": "bunx",
-      "args": ["chrome-devtools-mcp@latest", "--executable-path", "/Applications/Chromium.app/Contents/MacOS/Chromium"]
+      "args": [
+        "chrome-devtools-mcp@latest",
+        "--executable-path",
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        "--headless=true",
+        "--isolated=true"
+      ]
     },
     "linear": {
       "url": "https://mcp.linear.app/mcp"
