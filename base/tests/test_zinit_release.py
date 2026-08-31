@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import subprocess
 import tempfile
 import unittest
@@ -8,6 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 HELPERS = ROOT / "base/.zsh/zinit-release.zsh"
+ZSHRC = ROOT / "base/.zshrc"
 
 
 class ZinitReleaseTests(unittest.TestCase):
@@ -62,6 +64,37 @@ class ZinitReleaseTests(unittest.TestCase):
                 self.assertEqual(
                     [str(expected.resolve()), exposed], completed.stdout.splitlines()
                 )
+
+    def test_atuin_release_selector_excludes_server_assets(self) -> None:
+        match = re.search(
+            r'bpick"([^"]+)"',
+            next(
+                line
+                for line in ZSHRC.read_text().splitlines()
+                if "zinit ice" in line and "atuin-" in line
+            ),
+        )
+        self.assertIsNotNone(match)
+        pattern = match.group(1)
+
+        for name in (
+            "atuin-aarch64-apple-darwin.tar.gz",
+            "atuin-x86_64-unknown-linux-gnu.tar.gz",
+            "atuin-server-x86_64-unknown-linux-gnu.tar.gz",
+            "source.tar.gz",
+        ):
+            (self.root / name).touch()
+
+        completed = self.run_zsh(
+            f"matches=( {pattern}(N) ); print -l -- ${{matches:t}}"
+        )
+        self.assertEqual(
+            [
+                "atuin-aarch64-apple-darwin.tar.gz",
+                "atuin-x86_64-unknown-linux-gnu.tar.gz",
+            ],
+            completed.stdout.splitlines(),
+        )
 
     def test_missing_release_executable_is_loud(self) -> None:
         completed = self.run_zsh(

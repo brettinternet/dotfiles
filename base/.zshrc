@@ -187,7 +187,7 @@ if [ -x "$(command -v emacs)" ]; then
   zinit light doomemacs/doomemacs
 fi
 
-zinit ice as"command" from"gh-r" bpick"atuin-*.tar.gz" \
+zinit ice as"command" from"gh-r" bpick"atuin-[ax]*.tar.gz" \
     atclone='zinit_activate_release_command atuin ./atuin "./atuin*/atuin" && zinit_generate_file _atuin "$REPLY" gen-completions --shell zsh' \
     atpull="%atclone" \
     atload='zinit_activate_release_command atuin ./atuin "./atuin*/atuin" && zinit_eval_init atuin "$REPLY" init zsh'
