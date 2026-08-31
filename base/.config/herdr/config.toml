@@ -32,6 +32,7 @@ previous_workspace = ["prefix+shift+p", "prefix+shift+["]
 next_workspace = ["prefix+shift+n", "prefix+shift+]"]
 detach = ["prefix+d", "prefix+ctrl+d"]
 zoom = ["prefix+z", "ctrl+alt+z"]
+open_worktree = "prefix+shift+t"
 
 [[keys.command]]
 key = "prefix+shift+,"
@@ -206,6 +207,7 @@ key = "alt+shift+l"
 type = "plugin_action"
 command = "brett.seamless-navigation.resize-right"
 description = "resize right"
+
 
 [[keys.command]]
 key = "prefix+shift+o"
