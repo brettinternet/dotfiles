@@ -4,7 +4,6 @@
 # personal
 "github:brettinternet/worklease" = "latest"
 "github:brettinternet/panelctl" = { version = "latest", matching_regex = '^panelctl-cli-v.*-macos-universal\.zip$' }
-"github:zenbu-labs/terminal-browser" = "latest"
 
 # dev
 go = "latest"
