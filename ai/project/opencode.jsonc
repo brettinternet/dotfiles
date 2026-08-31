@@ -4,7 +4,14 @@
   "mcp": {
     "chrome-devtools": {
       "type": "local",
-      "command": ["bunx", "chrome-devtools-mcp@latest", "--executable-path", "/Applications/Chromium.app/Contents/MacOS/Chromium"],
+      "command": [
+        "bunx",
+        "chrome-devtools-mcp@latest",
+        "--executable-path",
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        "--headless=true",
+        "--isolated=true",
+      ],
     },
     "linear": {
       "type": "remote",
