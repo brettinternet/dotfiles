@@ -161,8 +161,8 @@
         else
           echo 'hwt not on PATH; skipping HWT plugin (mise install hwt)'
         fi
-        for plugin in window-title pane-collapse pane-equalize pane-rotate last-workspace seamless-navigation command-palette; do
-          herdr plugin link "base/.config/herdr/plugins/$plugin"
+        for manifest in base/.config/herdr/plugins/*/herdr-plugin.toml; do
+          herdr plugin link "${manifest%/herdr-plugin.toml}"
         done
       description: Install and link herdr plugins
       stdout: true
