@@ -15,6 +15,7 @@ steeringMode: all
 statusLine:
   preset: default
   separator: powerline-thin
+  compactThinkingLevel: false
 composer:
   shape: box
 display:
