@@ -1,6 +1,6 @@
 interface:
   display_name: "Backlog.md"
-  short_description: "Use Backlog.md with consistent task workflows"
-  default_prompt: "Use $backlog-md for Backlog.md task operations and ticket authoring."
+  short_description: "Operate on Backlog.md through its provider interface"
+  default_prompt: "Use $backlog-md for Backlog.md provider operations."
 policy:
   allow_implicit_invocation: true

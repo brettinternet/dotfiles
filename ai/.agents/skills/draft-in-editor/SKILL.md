@@ -1,62 +1,16 @@
 ---
 name: draft-in-editor
-description: Hand a generated draft to the user's editor and treat the edited file as the source of truth. Use whenever a workflow produces a draft the user is expected to review or amend before it is sent, posted, or committed, such as a PR review, a comment, a commit message, or an issue body.
+description: Hand a draft to the user's editor and use the saved file as the source of truth.
 ---
 
 # Draft in Editor
 
-Write the draft to a file, open it in the user's editor, and stop. When the workflow later acts on the draft, it reads that file back rather than the chat transcript. This skill controls draft handoff only and never grants permission to send, post, or commit.
+Use this only for a non-empty draft the user is expected to review. It does not authorize sending, posting, or committing.
 
-Apply this skill only when the destination workflow has a non-empty artifact to hand off. When there is nothing to send, post, or commit, do not create or open a draft file and do not write placeholder content merely to invoke this skill.
+Put the draft under `$(git rev-parse --git-dir)/drafts/<slug>.md`, or a temporary directory outside a repository. Reuse the same path for the same artifact. Apply `user-voice` before writing externally directed text, print the draft in chat, and open it without waiting.
 
-## Path
+Prefer `$HOME/.bin/context-editor --no-terminal <path>`. If unavailable, use a non-blocking graphical `$VISUAL` or `$EDITOR`. Never launch a terminal editor or wait inside a tool call. If no safe editor is available, print the path.
 
-Put the file inside the git directory so it is never staged, never committed, and never noise in `git status`.
+Stop after handoff. When the user later authorizes the external action, reread the file immediately beforehand and use its contents exactly. Do not reconcile it with the original draft or apply another writing pass. An empty file cancels the action; a missing file means it was discarded.
 
-```bash
-path="$(git rev-parse --git-dir)/drafts/<slug>.md"
-mkdir -p "$(dirname "$path")"
-```
-
-Use a `<slug>` that identifies the artifact, such as `pr-review-1234` or `commit-msg`. Outside a git repository, use `$(mktemp -d)/<slug>.md`. Reuse the same path when regenerating the same artifact rather than accumulating numbered copies.
-
-## Handoff
-
-Before writing an externally directed draft, apply the `user-voice` skill, including its `writer` routing. The destination workflow still owns content and structure, and anything the user edits afterward remains untouched.
-
-Write the file, print the draft in chat as well, then open it without waiting.
-
-```bash
-if [ -x "$HOME/.bin/context-editor" ]; then
-  nohup "$HOME/.bin/context-editor" --no-terminal "$path" >/dev/null 2>&1 &
-else
-  editor="${VISUAL:-${EDITOR:-}}"
-  editor="${editor% --wait}"; editor="${editor% -w}"
-  nohup $editor "$path" >/dev/null 2>&1 &
-fi
-```
-
-Prefer the known context-aware launcher over the inherited editor variables. `--no-terminal` lets it use a reachable Herdr/tmux pane, Ghostty window, or VS Code while refusing its foreground Neovim fallback, which is unsafe in a tool call without a TTY. Agent tool environments do not consistently inherit interactive shell startup files and may replace `VISUAL` or `EDITOR` with a no-op such as `true`. Only fall back to those variables when the launcher is unavailable. Strip their wait flag and detach the process: a tool call times out long before a real edit session ends, so waiting here just kills the editor mid-edit.
-
-The Bash tool has no TTY, so a fallback terminal editor such as `vim`, `nvim`, or `helix` will hang or corrupt the session. Check the fallback editor's base command against that list first and skip the open when it matches, is a no-op such as `true`, `false`, or `:`, or is unset. In that case print the path so the user can open it themselves.
-
-After opening, stop and say the draft is in the editor and that the workflow will use the file as saved. Do not summarize the draft again, and do not ask whether it looks good.
-
-## Reading it back
-
-After the user authorizes sending, posting, or committing, read the file fresh in a new tool call. Construct the outbound body exclusively from the contents returned by that read—never from the original draft, the chat transcript, or memory. Do not rewrite, reconcile, or regenerate it. If the file cannot be read, do not act. The user may have rewritten, reordered, or deleted anything in it.
-
-- Treat the file contents as final wording. Do not re-apply voice rules, re-run a finding bar, or reconcile it against what you originally drafted.
-- An empty file, or one reduced to whitespace, means cancel. Say so and do nothing.
-- If the file is missing, the user discarded it. Ask before regenerating.
-- Treat any location marker used to route a comment, such as `path:line`, as metadata, never as part of the comment body. Try the exact location first, then a nearby valid location in the same file when the destination rejects it. If no suitable inline location exists, post the comment without location metadata. **MUST NOT** prepend, append, or otherwise copy the marker into the posted text.
-
-Delete the file once the artifact is sent, posted, or committed.
-
-## Rules
-
-- **MUST** open the editor non-blocking and never wait on it inside a tool call.
-- **MUST** re-read the file immediately before acting on the draft.
-- **MUST NOT** create or open a draft file when the destination workflow has no non-empty artifact to hand off.
-- **MUST NOT** open a terminal editor from a tool call.
-- **MUST NOT** treat opening the editor as authorization to send, post, or commit.
+Treat routing markers such as `path:line` as metadata, never comment text. After the artifact is successfully sent, posted, or committed, move the draft to trash.

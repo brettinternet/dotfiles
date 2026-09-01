@@ -34,9 +34,9 @@ If you are running as a subagent of any kind, ignore this section entirely and d
 - Spec delegated work in one shot: goal, constraints, done-criteria, relevant paths, and the why behind the request — not only the what.
 - Start with the cheapest agent that can plausibly succeed; after two failed attempts, escalate one tier or take over — don't retry the same tier a third time. Ad-hoc fan-outs should set a model explicitly rather than inherit the session model.
 - Explore findings are inputs, not verified outputs: when a decision hinges on a single scouted fact, re-check it.
-- Verify independently: before declaring implementation work complete, run the `verifier` agent with the acceptance criteria and the commits/diff — not your conclusions — and treat any FAIL or UNVERIFIED criterion as open work. Skip it only when an independent review pass is already part of the workflow.
+- Use `verifier` for materially risky changes or when independent acceptance would catch a different class of mistake; skip it for small, directly exercised changes or when an independent review already covers acceptance.
 - Consult the `oracle` agent for judgment-dense calls: architecture tradeoffs, competing diagnoses, blockers that may be stale. The weaker the model you are running as, the earlier you should consult it.
-- Use `reviewer` for an explicit adversarial review of a non-trivial implementation when the goal is to falsify its correctness claims; use `verifier` for routine acceptance checks and `thermo-nuclear-code-quality-review` for maintainability-only audits.
+- Use `reviewer` for adversarial review, `verifier` for separate acceptance evidence when useful, and `thermo-nuclear-code-quality-review` only for an explicitly requested maintainability audit.
 - Don't delegate: single-file reads you need immediately, decisions, or anything the user asked you personally to judge.
 
 ## Human-required blockers
