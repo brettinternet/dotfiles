@@ -1,5 +1,5 @@
 ---
-description: Thermo-nuclear code quality audit - maintainability, structure, the 1k-line rule, spaghetti growth, and missed code-judo simplifications. Applies the thermo-nuclear-code-quality-review skill as its complete rubric. Read-only - reports findings, never edits, commits, or posts.
+description: Explicitly requested maintainability audit for structural complexity, spaghetti growth, and missed code-judo simplifications. Applies the thermo-nuclear-code-quality-review skill as its rubric. Read-only - reports findings, never edits, commits, or posts.
 tools: omp pi opencode
 omp-model: pi/slow
 omp-effort: xhigh

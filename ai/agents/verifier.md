@@ -1,5 +1,5 @@
 ---
-description: Independent acceptance checker on a mid-tier model. Give it acceptance criteria plus the claimed implementation (commits, diff, or files); it re-derives the evidence, runs targeted checks itself, and returns PASS/FAIL per criterion. Skeptical by design - never trusts the implementer's report, never fixes anything. Use before marking any item complete.
+description: Independent acceptance checker on a mid-tier model. Give it acceptance criteria plus the claimed implementation (commits, diff, or files); it re-derives the evidence, runs targeted checks itself, and returns PASS/FAIL per criterion. Use when separate acceptance evidence is warranted; never fixes code.
 tools: claude omp pi opencode codex
 claude-model: sonnet
 claude-effort: medium
