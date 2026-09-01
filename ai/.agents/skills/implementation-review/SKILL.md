@@ -11,6 +11,12 @@ Use full review for materially complex or multi-subsystem changes; auth/security
 
 For backlog-driven work, review one complete backlog item as the unit of scope. Do not run a full review on a checklist entry, partial implementation slice, or intermediate commit merely because it is a convenient stopping point. Wait until the item's implementation and acceptance criteria are complete, then review the resolved item diff; review an incomplete item only when the caller explicitly requests an early deep review.
 
+## Repeat-review mode
+
+When prior review findings or blockers are part of the input, this is a re-review unless the caller explicitly requests a fresh full review. Do not repeat the full-review procedure. Treat the prior review as the baseline and inspect only the latest delta plus the minimum surrounding context needed to determine whether each finding or blocker is resolved and whether the delta introduces a concrete correctness or security defect. Do not inspect unrelated code, run project-wide checks, or restate resolved findings.
+
+Finish in one pass. Return `PASS` when every prior finding or blocker is resolved and the delta introduces no qualifying defect. Otherwise return only a concise list of remaining or delta-introduced defects with exact `path:line` evidence, trigger, and observable impact. This mode overrides the full-review output and three-month-risk requirements below.
+
 
 Before judging code, establish the exact target, intended behavior, acceptance criteria, non-goals, and compatibility constraints from the request, issue/PR, backlog, and relevant documentation. Report a missing intent source instead of inventing requirements.
 
