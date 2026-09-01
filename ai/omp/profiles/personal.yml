@@ -15,4 +15,5 @@ modelRoles:
   title: openai-codex/gpt-5.3-codex-spark:high
   tiny: nvidia/nvidia/nemotron-3-ultra-550b-a55b:medium
   # Which voice is best? Anything but Opus 5
-  writer: openai-codex/gpt-5.6-terra:high
+  # https://llm-stats.com/leaderboards/best-ai-for-writing
+  writer: openrouter/anthropic/claude-opus-4.6:medium
