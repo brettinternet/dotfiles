@@ -43,19 +43,19 @@ The pipeline is deliberately asymmetric: smart refine → cheap implement → in
 
 The base roster covers the complete find/do/check/judge/watch/write loop. No tester (executor writes tests, verifier runs them skeptically) and no librarian (context7/web search cover docs).
 
-Pi, OMP, and OpenCode also ship `reviewer` and `thermo-nuclear-code-quality-review`, pinned to their strongest applicable tiers. The reviewer applies the full `implementation-review` skill and tries to falsify correctness claims; the thermo-nuclear reviewer applies its dedicated maintainability rubric. Claude and Codex receive `reviewer`; Claude invokes the thermo-nuclear skill directly.
+Pi, OMP, OpenCode, Claude, and Codex ship a read-only `reviewer` that applies a compact adversarial finding bar. Pi, OMP, and OpenCode also pin `thermo-nuclear-code-quality-review` to their strongest applicable tiers; Claude invokes that explicit maintainability skill directly.
 
 ## Where each concern lives
 
 - **Role + tier**: `ai/agents/<role>.md` frontmatter plus profile routing. `install-agents` renders definitions into `~/.claude/agents/`, `~/.omp/agent/agents/`, `~/.pi/agent/agents/`, `~/.config/opencode/agents/`, and `~/.codex/`.
 - **Policy** (when to delegate/escalate/verify, the two-failure escalation ladder, don't-delegate list, subagent guard): `AGENTS.md` § Subagents, one source for all tools.
 - **Workflow entrypoints**: `ai/.agents/commands/*.md` templates, rendered per tool by `install-agent-commands` as described below.
-- **Reusable workflow methods**: authored `ai/.agents/skills/*/SKILL.md` packages plus optional references, templates, scripts, and source-controlled tool metadata.
+- **Reusable provider and handoff mechanics**: authored `ai/.agents/skills/*/SKILL.md` packages plus narrow references and source-controlled tool metadata.
 - **Orchestrator tier**: chosen per session; the oracle nudge is the safety net when starting cheap.
 
 ## Writer model routing
 
-The `user-voice` skill delegates final wording to `writer`; `draft-in-editor` reaches it through `user-voice`. The caller supplies facts, constraints, and authority, while `writer` returns wording only. User-edited drafts bypass it when read back.
+`AGENTS.md` routes externally directed wording to `writer`; `user-voice` supplies the compact style target, and `draft-in-editor` preserves user edits as the source of truth.
 
 Customize the model at the harness-owned routing point:
 
