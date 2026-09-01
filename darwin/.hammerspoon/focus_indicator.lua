@@ -53,7 +53,7 @@ local function render(window, applicationName)
     return
   end
   local frame = window:frame()
-  if not frame or not frame.w or not frame.h or frame.w <= 4 or frame.h <= 4 then
+  if not frame or not frame.w or not frame.h or frame.w <= 6 or frame.h <= 6 then
     return
   end
 
@@ -71,8 +71,8 @@ local function render(window, applicationName)
   canvas[1] = {
     type = "rectangle",
     action = "stroke",
-    frame = { x = 2, y = 2, w = frame.w - 4, h = frame.h - 4 },
-    strokeWidth = 4,
+    frame = { x = 3, y = 3, w = frame.w - 6, h = frame.h - 6 },
+    strokeWidth = 6,
     roundedRectRadii = { xRadius = 10, yRadius = 10 },
     strokeColor = { red = 0.04, green = 0.52, blue = 1, alpha = 0.95 },
   }
@@ -100,7 +100,7 @@ local function render(window, applicationName)
   end
 
   canvas:show()
-  dismissalTimer = hs.timer.doAfter(0.8, function()
+  dismissalTimer = hs.timer.doAfter(1.8, function()
     dismissalTimer = nil
     if canvas == newCanvas then
       canvas:delete(0.2)
