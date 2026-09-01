@@ -8,6 +8,12 @@ disable-model-invocation: true
 
 Audit the current branch's changes for implementation quality, maintainability, abstraction quality, and codebase health. This review never grants permission to edit, commit, push, or post. Preserve behavior, but be ambitious about restructuring. Measure twice, cut once.
 
+## Repeat-review mode
+
+When prior findings or blockers are part of the input, treat the request as a re-review unless the caller explicitly requests a fresh audit. Do not repeat the broad audit. Treat the prior review as the baseline and inspect only the latest delta plus the minimum surrounding context needed to determine whether each finding or blocker is resolved and whether the delta introduces a qualifying maintainability defect. Do not inspect unrelated code, run project-wide checks, or restate resolved findings.
+
+Finish in one pass. Return `PASS` when every prior finding or blocker is resolved and the delta introduces no qualifying defect. Otherwise return only a concise list of remaining or delta-introduced defects with exact `path:line` evidence and concrete structural cost. This mode overrides the broad-audit output requirements below.
+
 ## Standard
 
 Actively seek "code judo": use the existing architecture more effectively to make the implementation dramatically simpler, smaller, and more inevitable. Reframe the design so concepts, branches, helpers, modes, conditionals, or layers disappear. Prefer deleting complexity to rearranging it, and do not accept working code that leaves the design messier when a materially cleaner path is visible.
