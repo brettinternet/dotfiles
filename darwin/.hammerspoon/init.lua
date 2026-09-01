@@ -41,6 +41,17 @@ local function prefixFn(fn)
   end
 end
 
+local function getLaunchFocusOrHideFn(bundleid)
+  return function()
+    local currentApp = hs.application.frontmostApplication()
+    if currentApp and currentApp:bundleID() == bundleid and not currentApp:isHidden() then
+      currentApp:hide()
+    else
+      hs.application.launchOrFocusByBundleID(bundleid)
+    end
+  end
+end
+
 local lastApp = nil
 function getLaunchFocusOrHideAndSwitchBackFn(bundleid, kill)
   kill = kill or false
@@ -73,22 +84,22 @@ function getLaunchFocusOrHideAndSwitchBackFn(bundleid, kill)
 end
 
 -- Applications
-prefix:bind("", ";", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.mitchellh.ghostty")))
-prefix:bind("", "J", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("org.chromium.Chromium")))
-prefix:bind("", "H", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.apple.finder")))
-prefix:bind("", "K", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.tinyspeck.slackmacgap")))
-prefix:bind("", "F", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("org.chromium.Chromium")))
-prefix:bind("", "C", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.microsoft.VSCode")))
-prefix:bind("", "G", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.github.GitHubClient")))
-prefix:bind("", "S", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.spotify.client")))
-prefix:bind("", "E", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.apple.finder")))
-prefix:bind("", "M", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.apple.MobileSMS")))
-prefix:bind("", "V", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.vivaldi.Vivaldi")))
-prefix:bind("", "X", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.googlecode.iterm2")))
-prefix:bind("", "A", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.tinyspeck.slackmacgap")))
-prefix:bind("", "D", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.hnc.Discord")))
-prefix:bind("", "Z", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("us.zoom.xos")))
-prefix:bind("", "O", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.obsproject.obs-studio")))
+prefix:bind("", ";", prefixFn(getLaunchFocusOrHideFn("com.mitchellh.ghostty")))
+prefix:bind("", "J", prefixFn(getLaunchFocusOrHideFn("org.chromium.Chromium")))
+prefix:bind("", "H", prefixFn(getLaunchFocusOrHideFn("com.apple.finder")))
+prefix:bind("", "K", prefixFn(getLaunchFocusOrHideFn("com.tinyspeck.slackmacgap")))
+prefix:bind("", "F", prefixFn(getLaunchFocusOrHideFn("org.chromium.Chromium")))
+prefix:bind("", "C", prefixFn(getLaunchFocusOrHideFn("com.microsoft.VSCode")))
+prefix:bind("", "G", prefixFn(getLaunchFocusOrHideFn("com.github.GitHubClient")))
+prefix:bind("", "S", prefixFn(getLaunchFocusOrHideFn("com.spotify.client")))
+prefix:bind("", "E", prefixFn(getLaunchFocusOrHideFn("com.apple.finder")))
+prefix:bind("", "M", prefixFn(getLaunchFocusOrHideFn("com.apple.MobileSMS")))
+prefix:bind("", "V", prefixFn(getLaunchFocusOrHideFn("com.vivaldi.Vivaldi")))
+prefix:bind("", "X", prefixFn(getLaunchFocusOrHideFn("com.googlecode.iterm2")))
+prefix:bind("", "A", prefixFn(getLaunchFocusOrHideFn("com.tinyspeck.slackmacgap")))
+prefix:bind("", "D", prefixFn(getLaunchFocusOrHideFn("com.hnc.Discord")))
+prefix:bind("", "Z", prefixFn(getLaunchFocusOrHideFn("us.zoom.xos")))
+prefix:bind("", "O", prefixFn(getLaunchFocusOrHideFn("com.obsproject.obs-studio")))
 
 -- System
 prefix:bind(
