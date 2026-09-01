@@ -198,6 +198,7 @@ require("media")
 require("system")
 require("http")
 require("sd")
+require("focus_indicator").start()
 
 -- Reload config on change
 local home = os.getenv("HOME")
