@@ -73,6 +73,10 @@ function getLaunchFocusOrHideAndSwitchBackFn(bundleid, kill)
 end
 
 -- Applications
+prefix:bind("", ";", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.mitchellh.ghostty")))
+prefix:bind("", "J", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("org.chromium.Chromium")))
+prefix:bind("", "H", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.apple.finder")))
+prefix:bind("", "K", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.tinyspeck.slackmacgap")))
 prefix:bind("", "F", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("org.chromium.Chromium")))
 prefix:bind("", "C", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.microsoft.VSCode")))
 prefix:bind("", "G", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.github.GitHubClient")))
@@ -85,7 +89,6 @@ prefix:bind("", "A", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.tinyspeck
 prefix:bind("", "D", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.hnc.Discord")))
 prefix:bind("", "Z", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("us.zoom.xos")))
 prefix:bind("", "O", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.obsproject.obs-studio")))
-prefix:bind("", "H", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("io.robbie.HomeAssistant")))
 
 -- System
 prefix:bind(
