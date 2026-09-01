@@ -46,6 +46,8 @@ Preserve stable task IDs and checked tasks. Prefer an item-local checklist:
 
 Keep inseparable implementation, integration, callers, fixtures or migrations, and tests in one task. Split only at independently useful behavioral or subsystem boundaries where each resulting item is independently schedulable and verifiable. Consolidate artificial layer- or file-based splits. Create separate provider items only when the result is independently deliverable, exposes real dependency order, or enables useful parallel work; persist parent and dependency relationships. Otherwise retain item-local tasks.
 
+Use four signals to size a provider item: one primary behavioral invariant, one primary subsystem boundary, one focused verification command (or deterministic procedure), and work that should fit roughly one review cycle. Treat these as a heuristic, not independent hard limits. Keep cross-boundary work together when splitting would break an end-to-end invariant; split an item when it owns multiple independently useful invariants, crosses separable subsystem boundaries, requires unrelated verification paths, or would force reviewers to reason about unrelated changes at once.
+
 Map every acceptance criterion, including previously checked criteria, to one implementation task or deliverable. For every criterion, provide autonomous evidence:
 
 1. an exact local command, deterministic inspection, or reproducible procedure;
