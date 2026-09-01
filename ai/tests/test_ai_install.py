@@ -616,6 +616,8 @@ trusted_hash = "sha256:trusted"
                 "npm:pi-subagents@0.60.0",
                 "npm:pi-lsp-adapter@0.1.3",
                 "npm:pi-web-access@0.27.0",
+                "npm:pi-mcp-adapter@2.32.1",
+                "npm:@sting8k/pi-vcc@0.7.0",
             ],
             settings["packages"],
         )
