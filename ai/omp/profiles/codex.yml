@@ -15,4 +15,5 @@ modelRoles:
   advisor: openai-codex/gpt-5.6-luna:high
   title: openai-codex/gpt-5.3-codex-spark:high
   tiny: openai-codex/gpt-5.3-codex-spark:high
-  writer: openai-codex/gpt-5.6-terra:low
+  # https://llm-stats.com/leaderboards/best-ai-for-writing
+  writer: openai-codex/gpt-5.4:medium
