@@ -621,6 +621,18 @@ trusted_hash = "sha256:trusted"
             ],
             settings["packages"],
         )
+        vcc_config = json.loads(
+            (self.home / ".pi/agent/pi-vcc-config.json").read_text()
+        )
+        self.assertEqual(
+            {
+                "overrideDefaultCompaction": True,
+                "smartKeepTail": True,
+                "continueAfterThresholdCompact": False,
+                "debug": False,
+            },
+            vcc_config,
+        )
         subagents = settings["subagents"]
         self.assertEqual("openai-codex", subagents["defaultProvider"])
         self.assertEqual(

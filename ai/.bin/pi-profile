@@ -22,6 +22,8 @@ CONFIG_DIR="${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}"
 CONFIG_FILE="$CONFIG_DIR/settings.json"
 ACTIVE_FILE="$CONFIG_DIR/.active-profile"
 MERGE_PROFILE="$DOTFILES/ai/pi/merge-profile.py"
+VCC_CONFIG_SOURCE="$DOTFILES/ai/pi/pi-vcc-config.json"
+VCC_CONFIG_FILE="$CONFIG_DIR/pi-vcc-config.json"
 
 die() { printf '%s\n' "$*" >&2; exit 1; }
 
@@ -74,12 +76,20 @@ render_config() {
     return 1
   fi
 }
+render_vcc_config() {
+  [ -f "$VCC_CONFIG_SOURCE" ] || die "pi-profile: VCC config not found: $VCC_CONFIG_SOURCE"
+  [ ! -L "$VCC_CONFIG_FILE" ] || die "pi-profile: refusing to overwrite linked VCC config: $VCC_CONFIG_FILE"
+  tmp="$VCC_CONFIG_FILE.tmp.$$"
+  cp "$VCC_CONFIG_SOURCE" "$tmp"
+  mv "$tmp" "$VCC_CONFIG_FILE"
+}
 
 cmd_use() {
   name=${1:-}
   [ -n "$name" ] || die "usage: pi-profile use <name>"
   require_managed_active_file
   render_config "$name"
+  render_vcc_config
   tmp="$ACTIVE_FILE.tmp.$$"
   printf '%s\n' "$name" > "$tmp"
   mv "$tmp" "$ACTIVE_FILE"
