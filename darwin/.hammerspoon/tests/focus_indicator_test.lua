@@ -13,6 +13,8 @@ local subscriptionCount = 0
 local canvases = {}
 local timers = {}
 local canvasAllocationFails = false
+local currentFocusedWindow = nil
+local frontmostApplication = nil
 
 local function stoppable(callback)
   return {
@@ -89,6 +91,11 @@ _G.hs = {
       return canvas
     end,
   },
+  application = {
+    frontmostApplication = function()
+      return frontmostApplication
+    end,
+  },
   window = {
     filter = {
       windowFocused = "windowFocused",
@@ -100,6 +107,9 @@ _G.hs = {
         end,
       },
     },
+    focusedWindow = function()
+      return currentFocusedWindow
+    end,
   },
   keycodes = {
     map = { w = 13, q = 12 },
@@ -107,7 +117,7 @@ _G.hs = {
 }
 
 local focusIndicator = require("focus_indicator")
-assert_equal(focusIndicator.start(), focusIndicator, "start returns module")
+assert_equal(focusIndicator.start({ closeFocusBundleIDs = { "org.chromium.Chromium" } }), focusIndicator, "start returns module")
 assert_equal(focusIndicator.start(), focusIndicator, "repeated start returns module")
 assert_equal(eventtapCount, 1, "eventtap registered once")
 assert_equal(subscriptionCount, 1, "window filter registered once")
@@ -126,8 +136,36 @@ local function event(eventType, flags, keyCode)
   }
 end
 
-local function window(frame, title, fallbackName)
-  return {
+local function application(bundleID, name)
+  local mainWindow = nil
+  local app = {
+    activationCount = 0,
+    bundleID = function()
+      return bundleID
+    end,
+    name = function()
+      return name
+    end,
+    mainWindow = function()
+      return mainWindow
+    end,
+    activate = function(self)
+      self.activationCount = self.activationCount + 1
+      frontmostApplication = self
+    end,
+  }
+  function app:setMainWindow(window)
+    mainWindow = window
+  end
+  return app
+end
+
+local function window(frame, title, fallbackApplication)
+  if type(fallbackApplication) == "string" then
+    fallbackApplication = application(nil, fallbackApplication)
+  end
+  local target = {
+    focusCount = 0,
     frame = function()
       return frame
     end,
@@ -135,16 +173,16 @@ local function window(frame, title, fallbackName)
       return title
     end,
     application = function()
-      if not fallbackName then
-        return nil
-      end
-      return {
-        name = function()
-          return fallbackName
-        end,
-      }
+      return fallbackApplication
     end,
   }
+  function target:focus()
+    self.focusCount = self.focusCount + 1
+    currentFocusedWindow = self
+    frontmostApplication = fallbackApplication
+    return self
+  end
+  return target
 end
 
 local function keyboardFocus(target, applicationName)
@@ -263,5 +301,39 @@ canvasAllocationFails = true
 keyboardFocus(firstWindow, "Ghostty")
 assert_equal(#timers, timersBeforeFailure, "allocation failure creates no timer")
 canvasAllocationFails = false
+
+local ghosttyApplication = application("com.mitchellh.ghostty", "Ghostty")
+local chromiumApplication = application("org.chromium.Chromium", "Chromium")
+local ghosttyWindow = window({ x = 0, y = 0, w = 700, h = 500 }, "Terminal", ghosttyApplication)
+local chromiumWindow = window({ x = 20, y = 20, w = 900, h = 700 }, "Browser", chromiumApplication)
+
+keyboardFocus(ghosttyWindow, "Ghostty")
+keyboardFocus(chromiumWindow, "Chromium")
+frontmostApplication = chromiumApplication
+chromiumApplication:setMainWindow(nil)
+local timersBeforeLastWindowClose = #timers
+inputCallback(event(types.keyDown, { cmd = true }, hs.keycodes.map.w))
+assert_equal(#timers, timersBeforeLastWindowClose + 1, "designated app schedules last-window check")
+local closeCheckTimer = timers[#timers]
+assert_equal(closeCheckTimer.delay, 0.15, "last-window check waits for close to settle")
+closeCheckTimer.callback()
+assert_equal(ghosttyWindow.focusCount, 1, "last window close focuses previous window")
+local canvasesBeforeFallbackIndicator = #canvases
+local fallbackIndicatorTimer = timers[#timers]
+assert_equal(fallbackIndicatorTimer.delay, 0, "fallback indicator waits for focus to settle")
+fallbackIndicatorTimer.callback()
+assert_equal(#canvases, canvasesBeforeFallbackIndicator + 1, "fallback focus explicitly shows indicator")
+
+frontmostApplication = chromiumApplication
+chromiumApplication:setMainWindow(chromiumWindow)
+local previousWindowFocusCount = ghosttyWindow.focusCount
+inputCallback(event(types.keyDown, { cmd = true }, hs.keycodes.map.w))
+timers[#timers].callback()
+assert_equal(ghosttyWindow.focusCount, previousWindowFocusCount, "remaining app window prevents fallback focus")
+
+frontmostApplication = ghosttyApplication
+local timersBeforeUnconfiguredClose = #timers
+inputCallback(event(types.keyDown, { cmd = true }, hs.keycodes.map.w))
+assert_equal(#timers, timersBeforeUnconfiguredClose, "unconfigured app does not schedule fallback focus")
 
 print("focus indicator tests passed")

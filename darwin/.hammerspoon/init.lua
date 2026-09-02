@@ -219,7 +219,15 @@ require("media")
 require("system")
 require("http")
 require("sd")
-focusIndicator.start()
+focusIndicator.start({
+  closeFocusBundleIDs = {
+    "com.apple.finder",
+    "com.mitchellh.ghostty",
+    "com.spotify.client",
+    "com.tinyspeck.slackmacgap",
+    "org.chromium.Chromium",
+  },
+})
 
 -- Reload config on change
 local home = os.getenv("HOME")
