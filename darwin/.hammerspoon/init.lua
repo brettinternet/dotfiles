@@ -68,12 +68,28 @@ local function getNextVisibleWindow(application, currentWindow)
   return windows[1].window
 end
 
-local function getLaunchOrFocusFn(bundleid)
+local function getLaunchOrFocusFn(bundleIDs)
+  if type(bundleIDs) == "string" then
+    bundleIDs = { bundleIDs }
+  end
+
   return function()
     local currentApp = hs.application.frontmostApplication()
-    local alreadyFocused = currentApp and currentApp:bundleID() == bundleid and not currentApp:isHidden()
+    local currentBundleID = currentApp and currentApp:bundleID()
+    local alreadyFocused = false
+    for _, bundleID in ipairs(bundleIDs) do
+      if currentBundleID == bundleID and not currentApp:isHidden() then
+        alreadyFocused = true
+        break
+      end
+    end
+
     if not alreadyFocused then
-      hs.application.launchOrFocusByBundleID(bundleid)
+      for _, bundleID in ipairs(bundleIDs) do
+        if hs.application.launchOrFocusByBundleID(bundleID) then
+          break
+        end
+      end
     end
 
     local currentWindow = hs.window.focusedWindow()
@@ -128,17 +144,11 @@ function getLaunchFocusOrHideAndSwitchBackFn(bundleid, kill)
   end
 end
 
-local browserBundleID = "com.apple.Safari"
-for _, bundleID in ipairs({ "org.chromium.Chromium", "com.google.Chrome" }) do
-  if hs.application.pathForBundleID(bundleID) then
-    browserBundleID = bundleID
-    break
-  end
-end
+local browserBundleIDs = { "org.chromium.Chromium", "com.google.Chrome", "com.apple.Safari" }
 
 -- Applications
 prefix:bind("", ";", prefixFn(getLaunchOrFocusFn("com.mitchellh.ghostty")))
-prefix:bind("", "J", prefixFn(getLaunchOrFocusFn(browserBundleID)))
+prefix:bind("", "J", prefixFn(getLaunchOrFocusFn(browserBundleIDs)))
 prefix:bind("", "H", prefixFn(getLaunchOrFocusFn("com.apple.finder")))
 prefix:bind("", "K", prefixFn(getLaunchOrFocusFn("com.tinyspeck.slackmacgap")))
 prefix:bind("", "L", prefixFn(getLaunchOrFocusFn("com.hnc.Discord")))
@@ -267,7 +277,7 @@ focusIndicator.start({
     "com.mitchellh.ghostty",
     "com.spotify.client",
     "com.tinyspeck.slackmacgap",
-    browserBundleID,
+    table.unpack(browserBundleIDs),
   },
 })
 
