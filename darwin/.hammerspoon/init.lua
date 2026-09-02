@@ -109,6 +109,7 @@ prefix:bind("", "P", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("us.zoom.xos")
 prefix:bind("", "O", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.obsproject.obs-studio")))
 
 -- System
+prefix:bind("", "R", prefixFn(hs.reload))
 prefix:bind(
   "cmd",
   "L",
