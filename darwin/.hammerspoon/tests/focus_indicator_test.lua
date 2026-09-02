@@ -8,10 +8,12 @@ end
 local now = 0
 local inputCallback
 local focusCallback
+local followCallback
 local eventtapCount = 0
 local subscriptionCount = 0
 local canvases = {}
 local timers = {}
+local periodicTimers = {}
 local canvasAllocationFails = false
 local currentFocusedWindow = nil
 local frontmostApplication = nil
@@ -60,6 +62,13 @@ _G.hs = {
       table.insert(timers, timer)
       return timer
     end,
+    doEvery = function(interval, callback)
+      local timer = stoppable(callback)
+      timer.interval = interval
+      followCallback = callback
+      table.insert(periodicTimers, timer)
+      return timer
+    end,
   },
   canvas = {
     new = function(frame)
@@ -71,6 +80,13 @@ _G.hs = {
         deleted = false,
         shown = false,
       }
+      function canvas:frame(value)
+        if value then
+          self.sourceFrame = value
+          return self
+        end
+        return self.sourceFrame
+      end
       function canvas:level(value)
         self.levelValue = value
         return self
@@ -117,7 +133,11 @@ _G.hs = {
 }
 
 local focusIndicator = require("focus_indicator")
-assert_equal(focusIndicator.start({ closeFocusBundleIDs = { "org.chromium.Chromium" } }), focusIndicator, "start returns module")
+assert_equal(
+  focusIndicator.start({ closeFocusBundleIDs = { "org.chromium.Chromium" } }),
+  focusIndicator,
+  "start returns module"
+)
 assert_equal(focusIndicator.start(), focusIndicator, "repeated start returns module")
 assert_equal(eventtapCount, 1, "eventtap registered once")
 assert_equal(subscriptionCount, 1, "window filter registered once")
@@ -164,10 +184,11 @@ local function window(frame, title, fallbackApplication)
   if type(fallbackApplication) == "string" then
     fallbackApplication = application(nil, fallbackApplication)
   end
+  local currentFrame = frame
   local target = {
     focusCount = 0,
     frame = function()
-      return frame
+      return currentFrame
     end,
     title = function()
       return title
@@ -176,6 +197,9 @@ local function window(frame, title, fallbackApplication)
       return fallbackApplication
     end,
   }
+  function target:setFrame(newFrame)
+    currentFrame = newFrame
+  end
   function target:focus()
     self.focusCount = self.focusCount + 1
     currentFocusedWindow = self
@@ -204,14 +228,42 @@ assert_equal(firstCanvas[1].strokeWidth, 6, "border stroke width")
 assert_equal(firstCanvas[3].text, "Ghostty — README", "canvas label")
 assert_equal(firstCanvas[3].textLineBreak, "truncateTail", "label truncation")
 assert_equal(firstTimer.delay, 1.8, "dismissal delay")
+assert_equal(periodicTimers[1].interval, 0.03, "follow polling interval")
 firstTimer.callback()
 assert(firstCanvas.deleted, "dismissal deletes canvas")
 assert_equal(firstCanvas.deleteFade, 0.2, "dismissal fade")
+assert(periodicTimers[1].stopped, "dismissal stops follow polling")
 
 local beforeExplicitShow = #canvases
 focusIndicator.show(firstWindow, "Ghostty")
 assert_equal(#canvases, beforeExplicitShow + 1, "explicit show renders without a focus event")
 assert_equal(canvases[#canvases][3].text, "Ghostty — README", "explicit show uses the supplied label")
+local movingCanvas = canvases[#canvases]
+local movingDismissalTimer = timers[#timers]
+local movingFollowTimer = periodicTimers[#periodicTimers]
+local canvasCountBeforeMove = #canvases
+firstWindow:setFrame({ x = 30, y = 40, w = 800, h = 600 })
+followCallback()
+assert_equal(#canvases, canvasCountBeforeMove, "follow tick reuses active canvas")
+assert_equal(movingCanvas.sourceFrame.x, 30, "canvas follows window position")
+assert_equal(timers[#timers], movingDismissalTimer, "follow tick preserves dismissal timer")
+assert(not movingFollowTimer.stopped, "follow tick preserves polling timer")
+
+firstWindow:setFrame({ x = 30, y = 40, w = 400, h = 300 })
+followCallback()
+assert_equal(movingCanvas.sourceFrame.w, 400, "canvas follows window size")
+assert_equal(movingCanvas[1].frame.w, 394, "resize updates border width")
+assert_equal(movingCanvas[2].frame.w, 368, "resize updates label width")
+assert_equal(movingCanvas[3].text, "Ghostty — README", "resize preserves label")
+
+firstWindow:setFrame({ x = 30, y = 40, w = 150, h = 63 })
+followCallback()
+assert_equal(movingCanvas[2], nil, "small resize removes label background")
+assert_equal(movingCanvas[3], nil, "small resize removes label")
+
+firstWindow:setFrame({ x = 30, y = 40, w = 400, h = 300 })
+followCallback()
+assert_equal(movingCanvas[3].text, "Ghostty — README", "larger resize restores label")
 
 for _, pointerType in ipairs({ types.mouseMoved, types.leftMouseDown, types.gesture }) do
   local before = #canvases

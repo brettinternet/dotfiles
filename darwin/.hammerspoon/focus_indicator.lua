@@ -3,12 +3,17 @@ local focusIndicator = {}
 local keyboardFreshnessNanoseconds = 1000000000
 local closeFocusFreshnessNanoseconds = 10000000000
 local closeWindowCheckDelaySeconds = 0.15
+local followIntervalSeconds = 0.03
 local inputTap = nil
 local windowFilter = nil
 local lastInputKind = nil
 local lastInputTime = nil
 local closeFocusPendingAt = nil
 local canvas = nil
+local highlightedWindow = nil
+local followTimer = nil
+local highlightedFrame = nil
+local highlightedLabel = nil
 local dismissalTimer = nil
 local closeFocusBundleIDs = {}
 local focusedApplication = nil
@@ -16,6 +21,7 @@ local focusedWindow = nil
 local previousFocusedApplication = nil
 local previousFocusedWindow = nil
 local renderVersion = 0
+local followHighlightedWindow
 
 local eventTypes = hs.eventtap.event.types
 local keyboardEvents = {
@@ -28,10 +34,17 @@ local function dismissCurrent()
     dismissalTimer:stop()
     dismissalTimer = nil
   end
+  if followTimer then
+    followTimer:stop()
+    followTimer = nil
+  end
   if canvas then
     canvas:delete()
     canvas = nil
   end
+  highlightedWindow = nil
+  highlightedFrame = nil
+  highlightedLabel = nil
 end
 
 local function labelFor(window, applicationName)
@@ -71,6 +84,9 @@ local function render(window, applicationName)
     return
   end
   canvas = newCanvas
+  highlightedWindow = window
+  highlightedFrame = frame
+  highlightedLabel = labelFor(window, applicationName)
   canvas:level("overlay")
   canvas:behavior({
     "canJoinAllSpaces",
@@ -99,7 +115,7 @@ local function render(window, applicationName)
     }
     canvas[3] = {
       type = "text",
-      text = labelFor(window, applicationName),
+      text = highlightedLabel,
       frame = { x = labelX + 12, y = labelY + 8, w = labelWidth - 24, h = 18 },
       textColor = { white = 1, alpha = 1 },
       textSize = 14,
@@ -109,14 +125,75 @@ local function render(window, applicationName)
   end
 
   canvas:show()
+  followTimer = hs.timer.doEvery(followIntervalSeconds, followHighlightedWindow)
   dismissalTimer = hs.timer.doAfter(1.8, function()
     dismissalTimer = nil
     if canvas == newCanvas then
+      if followTimer then
+        followTimer:stop()
+        followTimer = nil
+      end
       canvas:delete(0.2)
       canvas = nil
+      highlightedWindow = nil
+      highlightedFrame = nil
+      highlightedLabel = nil
     end
   end)
   renderVersion = renderVersion + 1
+end
+
+followHighlightedWindow = function()
+  if not canvas or not highlightedWindow then
+    return
+  end
+
+  local frame = highlightedWindow:frame()
+  if not frame or not frame.w or not frame.h or frame.w <= 6 or frame.h <= 6 then
+    dismissCurrent()
+    return
+  end
+
+  if
+    frame.x == highlightedFrame.x
+    and frame.y == highlightedFrame.y
+    and frame.w == highlightedFrame.w
+    and frame.h == highlightedFrame.h
+  then
+    return
+  end
+
+  canvas:frame(frame)
+  if frame.w == highlightedFrame.w and frame.h == highlightedFrame.h then
+    highlightedFrame = frame
+    return
+  end
+  canvas[1].frame = { x = 3, y = 3, w = frame.w - 6, h = frame.h - 6 }
+  if frame.w >= 160 and frame.h >= 64 then
+    local labelWidth = math.min(520, frame.w - 32)
+    local labelX = (frame.w - labelWidth) / 2
+    local labelY = frame.h - 46
+    canvas[2] = {
+      type = "rectangle",
+      action = "fill",
+      frame = { x = labelX, y = labelY, w = labelWidth, h = 34 },
+      roundedRectRadii = { xRadius = 8, yRadius = 8 },
+      fillColor = { white = 0.08, alpha = 0.88 },
+    }
+    canvas[3] = {
+      type = "text",
+      text = highlightedLabel,
+      frame = { x = labelX + 12, y = labelY + 8, w = labelWidth - 24, h = 18 },
+      textColor = { white = 1, alpha = 1 },
+      textSize = 14,
+      textAlignment = "center",
+      textLineBreak = "truncateTail",
+    }
+  else
+    canvas[3] = nil
+    canvas[2] = nil
+  end
+  highlightedFrame = frame
 end
 
 local function applicationFor(window)
