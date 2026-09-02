@@ -109,21 +109,21 @@ prefix:bind("", "P", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("us.zoom.xos")
 prefix:bind("", "O", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.obsproject.obs-studio")))
 
 -- System
-prefix:bind("", "R", prefixFn(hs.reload))
+prefix:bind("cmd", "R", prefixFn(hs.reload))
 prefix:bind(
   "cmd",
-  "L",
+  "U",
   prefixFn(function()
     hs.caffeinate.lockScreen()
   end)
 )
-prefix:bind(
-  "cmd",
-  "P",
-  prefixFn(function()
-    hs.caffeinate.systemSleep()
-  end)
-)
+-- prefix:bind(
+--   "cmd",
+--   "Y",
+--   prefixFn(function()
+--     hs.caffeinate.systemSleep()
+--   end)
+-- )
 local caffeine = require("caffeine").start()
 prefix:bind("cmd", "K", prefixFn(caffeine.toggle))
 prefix:bind(
