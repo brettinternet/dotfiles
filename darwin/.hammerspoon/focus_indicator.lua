@@ -2,6 +2,7 @@ local focusIndicator = {}
 
 local keyboardFreshnessNanoseconds = 1000000000
 local closeFocusFreshnessNanoseconds = 10000000000
+local closeWindowCheckDelaySeconds = 0.15
 local inputTap = nil
 local windowFilter = nil
 local lastInputKind = nil
@@ -9,6 +10,12 @@ local lastInputTime = nil
 local closeFocusPendingAt = nil
 local canvas = nil
 local dismissalTimer = nil
+local closeFocusBundleIDs = {}
+local focusedApplication = nil
+local focusedWindow = nil
+local previousFocusedApplication = nil
+local previousFocusedWindow = nil
+local renderVersion = 0
 
 local eventTypes = hs.eventtap.event.types
 local keyboardEvents = {
@@ -109,6 +116,64 @@ local function render(window, applicationName)
       canvas = nil
     end
   end)
+  renderVersion = renderVersion + 1
+end
+
+local function applicationFor(window)
+  return window and window:application() or nil
+end
+
+local function rememberFocus(window)
+  local application = applicationFor(window)
+  if application and application ~= focusedApplication then
+    previousFocusedApplication = focusedApplication
+    previousFocusedWindow = focusedWindow
+  end
+  if application then
+    focusedApplication = application
+    focusedWindow = window
+  end
+end
+
+local function configuredForCloseFocus(application)
+  if not application then
+    return false
+  end
+  local bundleID = application:bundleID()
+  return bundleID and closeFocusBundleIDs[bundleID] == true
+end
+
+local function focusPreviousApplicationAfterClose()
+  local closingApplication = hs.application.frontmostApplication()
+  if not configuredForCloseFocus(closingApplication) then
+    return
+  end
+
+  local targetApplication = previousFocusedApplication
+  local targetWindow = previousFocusedWindow
+  if not targetApplication or targetApplication == closingApplication then
+    return
+  end
+
+  hs.timer.doAfter(closeWindowCheckDelaySeconds, function()
+    if hs.application.frontmostApplication() ~= closingApplication or closingApplication:mainWindow() then
+      return
+    end
+
+    local versionBeforeFocus = renderVersion
+    local focused = targetWindow and pcall(function()
+      targetWindow:focus()
+    end)
+    if not focused then
+      targetApplication:activate(true)
+    end
+
+    hs.timer.doAfter(0, function()
+      if renderVersion == versionBeforeFocus then
+        render(hs.window.focusedWindow())
+      end
+    end)
+  end)
 end
 
 local function inputEvent(event)
@@ -124,6 +189,9 @@ local function inputEvent(event)
     local keyCode = event:getKeyCode()
     if flags.cmd and (keyCode == hs.keycodes.map.w or keyCode == hs.keycodes.map.q) then
       closeFocusPendingAt = lastInputTime
+      if keyCode == hs.keycodes.map.w then
+        focusPreviousApplicationAfterClose()
+      end
     else
       closeFocusPendingAt = nil
     end
@@ -132,6 +200,7 @@ local function inputEvent(event)
 end
 
 local function windowFocused(window, applicationName)
+  rememberFocus(window)
   local now = hs.timer.absoluteTime()
   local recentKeyboard = lastInputKind == "keyboard"
     and lastInputTime
@@ -149,11 +218,17 @@ function focusIndicator.show(window, applicationName)
   render(window or hs.window.focusedWindow(), applicationName)
 end
 
-function focusIndicator.start()
+function focusIndicator.start(options)
   if inputTap then
     return focusIndicator
   end
 
+  options = options or {}
+  for _, bundleID in ipairs(options.closeFocusBundleIDs or {}) do
+    closeFocusBundleIDs[bundleID] = true
+  end
+
+  rememberFocus(hs.window.focusedWindow())
   inputTap = hs.eventtap
     .new({
       eventTypes.keyDown,
