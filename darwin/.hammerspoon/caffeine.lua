@@ -9,6 +9,15 @@ local overrideAlert = nil
 local lastDisabledReason = nil
 local menubar = nil
 local watchers = {}
+local iconDirectory = hs.configdir .. "/icons/lucide/"
+local function menubarIcon(name)
+  return assert(hs.image.imageFromPath(iconDirectory .. name .. ".svg")):size({ w = 16, h = 16 }, true)
+end
+local menubarIcons = {
+  displayAwake = menubarIcon("monitor-up"),
+  systemAwake = menubarIcon("coffee"),
+  allowSleep = menubarIcon("moon"),
+}
 local notificationDepth = 0
 
 local function disabledReason()
@@ -41,18 +50,19 @@ local function updateMenubar()
     return
   end
 
+  menubar:setTitle("")
   if caffeine.isEnabled() then
-    menubar:setTitle("Awake")
+    menubar:setIcon(menubarIcons.displayAwake, true)
     if caffeine.isSystemIdleEnabled() then
       menubar:setTooltip("Display and system idle sleep are disabled")
     else
       menubar:setTooltip("Display sleep is disabled")
     end
   elseif caffeine.isSystemIdleEnabled() then
-    menubar:setTitle("System")
+    menubar:setIcon(menubarIcons.systemAwake, true)
     menubar:setTooltip("System idle sleep is disabled; display sleep is allowed")
   else
-    menubar:setTitle("Sleep")
+    menubar:setIcon(menubarIcons.allowSleep, true)
     menubar:setTooltip("Display sleep is allowed")
   end
 end
