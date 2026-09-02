@@ -128,9 +128,17 @@ function getLaunchFocusOrHideAndSwitchBackFn(bundleid, kill)
   end
 end
 
+local browserBundleID = "com.apple.Safari"
+for _, bundleID in ipairs({ "org.chromium.Chromium", "com.google.Chrome" }) do
+  if hs.application.pathForBundleID(bundleID) then
+    browserBundleID = bundleID
+    break
+  end
+end
+
 -- Applications
 prefix:bind("", ";", prefixFn(getLaunchOrFocusFn("com.mitchellh.ghostty")))
-prefix:bind("", "J", prefixFn(getLaunchOrFocusFn("org.chromium.Chromium")))
+prefix:bind("", "J", prefixFn(getLaunchOrFocusFn(browserBundleID)))
 prefix:bind("", "H", prefixFn(getLaunchOrFocusFn("com.apple.finder")))
 prefix:bind("", "K", prefixFn(getLaunchOrFocusFn("com.tinyspeck.slackmacgap")))
 prefix:bind("", "L", prefixFn(getLaunchOrFocusFn("com.hnc.Discord")))
@@ -259,7 +267,7 @@ focusIndicator.start({
     "com.mitchellh.ghostty",
     "com.spotify.client",
     "com.tinyspeck.slackmacgap",
-    "org.chromium.Chromium",
+    browserBundleID,
   },
 })
 
