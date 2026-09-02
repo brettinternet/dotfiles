@@ -100,17 +100,12 @@ prefix:bind("", ";", prefixFn(getLaunchOrFocusFn("com.mitchellh.ghostty")))
 prefix:bind("", "J", prefixFn(getLaunchOrFocusFn("org.chromium.Chromium")))
 prefix:bind("", "H", prefixFn(getLaunchOrFocusFn("com.apple.finder")))
 prefix:bind("", "K", prefixFn(getLaunchOrFocusFn("com.tinyspeck.slackmacgap")))
-prefix:bind("", "F", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("org.chromium.Chromium")))
+prefix:bind("", "L", prefixFn(getLaunchOrFocusFn("com.hnc.Discord")))
 prefix:bind("", "C", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.microsoft.VSCode")))
 prefix:bind("", "G", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.github.GitHubClient")))
 prefix:bind("", "S", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.spotify.client")))
-prefix:bind("", "E", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.apple.finder")))
 prefix:bind("", "M", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.apple.MobileSMS")))
-prefix:bind("", "V", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.vivaldi.Vivaldi")))
-prefix:bind("", "X", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.googlecode.iterm2")))
-prefix:bind("", "A", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.tinyspeck.slackmacgap")))
-prefix:bind("", "D", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.hnc.Discord")))
-prefix:bind("", "Z", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("us.zoom.xos")))
+prefix:bind("", "P", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("us.zoom.xos")))
 prefix:bind("", "O", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.obsproject.obs-studio")))
 
 -- System
@@ -198,24 +193,24 @@ end)
 local returnToPreviousSizePath = { "Window", "Move & Resize", "Return to Previous Size" }
 local returnToPreviousSizeKeyCode = hs.keycodes.map.r
 windowShortcutGuard = hs.eventtap
-  .new({ hs.eventtap.event.types.keyDown }, function(event)
-    local flags = event:getFlags()
-    if
-      event:getKeyCode() ~= returnToPreviousSizeKeyCode
-      or not flags.fn
-      or not flags.ctrl
-      or flags.cmd
-      or flags.alt
-      or flags.shift
-    then
-      return false
-    end
+    .new({ hs.eventtap.event.types.keyDown }, function(event)
+      local flags = event:getFlags()
+      if
+          event:getKeyCode() ~= returnToPreviousSizeKeyCode
+          or not flags.fn
+          or not flags.ctrl
+          or flags.cmd
+          or flags.alt
+          or flags.shift
+      then
+        return false
+      end
 
-    local app = hs.application.frontmostApplication()
-    local menuItem = app and app:findMenuItem(returnToPreviousSizePath)
-    return not (menuItem and menuItem.enabled)
-  end)
-  :start()
+      local app = hs.application.frontmostApplication()
+      local menuItem = app and app:findMenuItem(returnToPreviousSizePath)
+      return not (menuItem and menuItem.enabled)
+    end)
+    :start()
 
 -- Load all modules
 
@@ -229,8 +224,8 @@ focusIndicator.start()
 -- Reload config on change
 local home = os.getenv("HOME")
 hs.pathwatcher
-  .new(home .. "/.dotfiles/darwin/.hammerspoon/", function()
-    hs.reload()
-  end)
-  :start()
+    .new(home .. "/.dotfiles/darwin/.hammerspoon/", function()
+      hs.reload()
+    end)
+    :start()
 hs.alert.show("Hammerspoon config loaded")
