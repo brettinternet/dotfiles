@@ -14,6 +14,17 @@ local batteryPercentage
 local failDisplayToggle = false
 
 _G.hs = {
+  configdir = (arg[0]:match("(.*/)") or "") .. "..",
+  image = {
+    imageFromPath = function(path)
+      return {
+        path = path,
+        size = function(self)
+          return self
+        end,
+      }
+    end,
+  },
   battery = {
     percentage = function()
       return batteryPercentage
@@ -66,7 +77,7 @@ assert_equal(idle.systemIdle, true, "system idle prevention should be enabled")
 idle.systemIdle = false
 
 local sleep_appearance = action.appearance({})
-assert_equal(sleep_appearance.title, "Allow\nsleep", "sleep state title")
+assert_equal(sleep_appearance.title, "", "sleep state should use only its icon")
 assert_equal(sleep_appearance.state, "inactive", "sleep state")
 assert_equal(sleep_appearance.presentationState, 0, "sleep presentation state")
 
@@ -75,17 +86,19 @@ assert_equal(idle.displayIdle, false, "first press should allow displays to slee
 assert_equal(idle.systemIdle, true, "first press should prevent system idle sleep")
 
 local system_appearance = action.appearance({})
-assert_equal(system_appearance.title, "System\nawake", "system-awake state title")
+assert_equal(system_appearance.title, "", "system-awake state should use only its icon")
 assert_equal(system_appearance.state, "active", "system-awake state")
 assert_equal(system_appearance.presentationState, 1, "system-awake presentation state")
+assert(system_appearance.icon ~= sleep_appearance.icon, "system-awake and sleep states should use distinct icons")
 action.press({})
 assert_equal(idle.displayIdle, true, "second press should prevent display idle sleep")
 assert_equal(idle.systemIdle, true, "second press should retain system idle prevention")
 
 local awake_appearance = action.appearance({})
-assert_equal(awake_appearance.title, "Display\nawake", "display-awake state title")
+assert_equal(awake_appearance.title, "", "display-awake state should use only its icon")
 assert_equal(awake_appearance.state, "active", "awake state")
 assert_equal(awake_appearance.presentationState, 2, "display-awake presentation state")
+assert(awake_appearance.icon ~= system_appearance.icon, "display- and system-awake states should use distinct icons")
 
 action.press({})
 assert_equal(idle.displayIdle, false, "third press should allow displays to sleep")
@@ -100,7 +113,7 @@ assert_equal(idle.systemIdle, true, "system-awake press should retain system idl
 
 idle.systemIdle = false
 local display_only_appearance = action.appearance({})
-assert_equal(display_only_appearance.title, "Display\nawake", "display-only state title")
+assert_equal(display_only_appearance.title, "", "display-only state should use only its icon")
 assert_equal(display_only_appearance.presentationState, 2, "display-only presentation state")
 
 action.press({})
