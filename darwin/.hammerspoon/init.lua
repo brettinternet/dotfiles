@@ -42,6 +42,32 @@ local function prefixFn(fn)
 end
 local focusIndicator = require("focus_indicator")
 
+local function getNextVisibleWindow(application, currentWindow)
+  local windows = {}
+  for _, window in ipairs(application:visibleWindows()) do
+    local windowID = window:id()
+    if windowID and window:isStandard() then
+      table.insert(windows, { id = windowID, window = window })
+    end
+  end
+  table.sort(windows, function(left, right)
+    return left.id < right.id
+  end)
+
+  if #windows < 2 then
+    return nil
+  end
+
+  local currentWindowID = currentWindow and currentWindow:id()
+  for index, entry in ipairs(windows) do
+    if entry.id == currentWindowID then
+      return windows[index % #windows + 1].window
+    end
+  end
+
+  return windows[1].window
+end
+
 local function getLaunchOrFocusFn(bundleid)
   return function()
     local currentApp = hs.application.frontmostApplication()
@@ -51,15 +77,22 @@ local function getLaunchOrFocusFn(bundleid)
     end
 
     local currentWindow = hs.window.focusedWindow()
+    if alreadyFocused then
+      local nextWindow = getNextVisibleWindow(currentApp, currentWindow)
+      if nextWindow then
+        nextWindow:focus()
+        currentWindow = nextWindow
+        focusIndicator.show(currentWindow, currentApp:name())
+      else
+        focusIndicator.show(currentWindow, currentApp:name())
+      end
+    end
+
     if currentWindow then
       local currentFrame = currentWindow:frame()
       hs.mouse.absolutePosition(
         hs.geometry.point(currentFrame.x + currentFrame.w / 2, currentFrame.y + currentFrame.h / 2)
       )
-    end
-
-    if alreadyFocused then
-      focusIndicator.show(currentWindow, currentApp:name())
     end
   end
 end
