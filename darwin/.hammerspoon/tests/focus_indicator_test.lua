@@ -170,6 +170,11 @@ firstTimer.callback()
 assert(firstCanvas.deleted, "dismissal deletes canvas")
 assert_equal(firstCanvas.deleteFade, 0.2, "dismissal fade")
 
+local beforeExplicitShow = #canvases
+focusIndicator.show(firstWindow, "Ghostty")
+assert_equal(#canvases, beforeExplicitShow + 1, "explicit show renders without a focus event")
+assert_equal(canvases[#canvases][3].text, "Ghostty — README", "explicit show uses the supplied label")
+
 for _, pointerType in ipairs({ types.mouseMoved, types.leftMouseDown, types.gesture }) do
   local before = #canvases
   now = now + 100

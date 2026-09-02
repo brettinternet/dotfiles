@@ -40,10 +40,15 @@ local function prefixFn(fn)
     prefix:exit()
   end
 end
+local focusIndicator = require("focus_indicator")
 
 local function getLaunchOrFocusFn(bundleid)
   return function()
-    hs.application.launchOrFocusByBundleID(bundleid)
+    local currentApp = hs.application.frontmostApplication()
+    local alreadyFocused = currentApp and currentApp:bundleID() == bundleid and not currentApp:isHidden()
+    if not alreadyFocused then
+      hs.application.launchOrFocusByBundleID(bundleid)
+    end
 
     local currentWindow = hs.window.focusedWindow()
     if currentWindow then
@@ -51,6 +56,10 @@ local function getLaunchOrFocusFn(bundleid)
       hs.mouse.absolutePosition(
         hs.geometry.point(currentFrame.x + currentFrame.w / 2, currentFrame.y + currentFrame.h / 2)
       )
+    end
+
+    if alreadyFocused then
+      focusIndicator.show(currentWindow, currentApp:name())
     end
   end
 end
@@ -215,7 +224,7 @@ require("media")
 require("system")
 require("http")
 require("sd")
-require("focus_indicator").start()
+focusIndicator.start()
 
 -- Reload config on change
 local home = os.getenv("HOME")

@@ -145,6 +145,10 @@ local function windowFocused(window, applicationName)
   render(window, applicationName)
 end
 
+function focusIndicator.show(window, applicationName)
+  render(window or hs.window.focusedWindow(), applicationName)
+end
+
 function focusIndicator.start()
   if inputTap then
     return focusIndicator
