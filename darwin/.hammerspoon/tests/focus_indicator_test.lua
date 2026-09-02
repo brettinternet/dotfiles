@@ -101,6 +101,9 @@ _G.hs = {
       },
     },
   },
+  keycodes = {
+    map = { w = 13, q = 12 },
+  },
 }
 
 local focusIndicator = require("focus_indicator")
@@ -109,10 +112,16 @@ assert_equal(focusIndicator.start(), focusIndicator, "repeated start returns mod
 assert_equal(eventtapCount, 1, "eventtap registered once")
 assert_equal(subscriptionCount, 1, "window filter registered once")
 
-local function event(eventType)
+local function event(eventType, flags, keyCode)
   return {
     getType = function()
       return eventType
+    end,
+    getFlags = function()
+      return flags or {}
+    end,
+    getKeyCode = function()
+      return keyCode
     end,
   }
 end
@@ -175,6 +184,39 @@ inputCallback(event(types.flagsChanged))
 now = now + 1000000001
 focusCallback(firstWindow, "Ghostty")
 assert_equal(#canvases, beforeStale, "stale keyboard focus remains silent")
+
+local beforeDelayedClose = #canvases
+now = now + 100
+inputCallback(event(types.keyDown, { cmd = true }, hs.keycodes.map.w))
+now = now + 2000000000
+focusCallback(firstWindow, "Ghostty")
+assert_equal(#canvases, beforeDelayedClose + 1, "delayed Cmd-W focus shows indicator")
+
+local beforeConsumedClose = #canvases
+focusCallback(firstWindow, "Ghostty")
+assert_equal(#canvases, beforeConsumedClose, "close focus intent is consumed")
+
+local beforeDelayedQuit = #canvases
+now = now + 100
+inputCallback(event(types.keyDown, { cmd = true }, hs.keycodes.map.q))
+now = now + 2000000000
+focusCallback(firstWindow, "Ghostty")
+assert_equal(#canvases, beforeDelayedQuit + 1, "delayed Cmd-Q focus shows indicator")
+
+local beforePointerCancelledClose = #canvases
+now = now + 100
+inputCallback(event(types.keyDown, { cmd = true }, hs.keycodes.map.w))
+inputCallback(event(types.mouseMoved))
+focusCallback(firstWindow, "Ghostty")
+assert_equal(#canvases, beforePointerCancelledClose, "pointer input cancels close focus intent")
+
+local beforeKeyboardCancelledClose = #canvases
+now = now + 100
+inputCallback(event(types.keyDown, { cmd = true }, hs.keycodes.map.w))
+inputCallback(event(types.keyDown, {}, 0))
+now = now + 2000000000
+focusCallback(firstWindow, "Ghostty")
+assert_equal(#canvases, beforeKeyboardCancelledClose, "other key cancels close focus intent")
 
 keyboardFocus(firstWindow, "Ghostty")
 local replacedCanvas = canvases[#canvases]

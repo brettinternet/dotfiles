@@ -1,10 +1,12 @@
 local focusIndicator = {}
 
 local keyboardFreshnessNanoseconds = 1000000000
+local closeFocusFreshnessNanoseconds = 10000000000
 local inputTap = nil
 local windowFilter = nil
 local lastInputKind = nil
 local lastInputTime = nil
+local closeFocusPendingAt = nil
 local canvas = nil
 local dismissalTimer = nil
 
@@ -110,17 +112,34 @@ local function render(window, applicationName)
 end
 
 local function inputEvent(event)
-  lastInputKind = keyboardEvents[event:getType()] and "keyboard" or "pointer"
+  local eventType = event:getType()
+  local isKeyboard = keyboardEvents[eventType]
+  lastInputKind = isKeyboard and "keyboard" or "pointer"
   lastInputTime = hs.timer.absoluteTime()
+
+  if not isKeyboard then
+    closeFocusPendingAt = nil
+  elseif eventType == eventTypes.keyDown then
+    local flags = event:getFlags()
+    local keyCode = event:getKeyCode()
+    if flags.cmd and (keyCode == hs.keycodes.map.w or keyCode == hs.keycodes.map.q) then
+      closeFocusPendingAt = lastInputTime
+    else
+      closeFocusPendingAt = nil
+    end
+  end
   return false
 end
 
 local function windowFocused(window, applicationName)
-  if
-    lastInputKind ~= "keyboard"
-    or not lastInputTime
-    or hs.timer.absoluteTime() - lastInputTime > keyboardFreshnessNanoseconds
-  then
+  local now = hs.timer.absoluteTime()
+  local recentKeyboard = lastInputKind == "keyboard"
+    and lastInputTime
+    and now - lastInputTime <= keyboardFreshnessNanoseconds
+  local recentClose = closeFocusPendingAt and now - closeFocusPendingAt <= closeFocusFreshnessNanoseconds
+  closeFocusPendingAt = nil
+
+  if not recentKeyboard and not recentClose then
     return
   end
   render(window, applicationName)
