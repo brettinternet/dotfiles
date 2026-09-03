@@ -560,6 +560,11 @@ trusted_hash = "sha256:trusted"
         self.assertEqual(["down", "ctrl+n"], bindings["tui.editor.cursorDown"])
         self.assertEqual(["up", "ctrl+p"], bindings["tui.select.up"])
         self.assertEqual(["down", "ctrl+n"], bindings["tui.select.down"])
+        self.assertEqual(
+            ["shift+enter", "ctrl+j", "alt+enter"],
+            bindings["tui.input.newLine"],
+        )
+        self.assertEqual("ctrl+q", bindings["app.message.followUp"])
         self.assertEqual([], bindings["app.model.cycleForward"])
         watchdog = self.home / ".omp/agent/WATCHDOG.md"
         self.assertTrue(watchdog.is_symlink())
