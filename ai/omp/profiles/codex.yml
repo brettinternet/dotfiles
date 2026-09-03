@@ -2,6 +2,8 @@
 providers:
   webSearchOrder:
     - codex
+advisor:
+  enabled: false
 modelRoles:
   reviewer: openai-codex/gpt-5.6-terra:max
   default: openai-codex/gpt-5.6-sol:medium
