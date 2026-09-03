@@ -74,7 +74,7 @@ return {
         },
         window = {
           mappings = {
-            ["<S-CR>"] = "open_keep_focus",
+            ["go"] = "open_keep_focus",
           },
         },
         filtered_items = {
