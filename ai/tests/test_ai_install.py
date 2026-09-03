@@ -528,13 +528,38 @@ trusted_hash = "sha256:trusted"
         ].items():
             self.assertEqual({"contextWindow": 256000}, override, model)
         self.assertEqual(
-            {
-                "gpt-5.6-luna": {"contextWindow": 272000},
-                "gpt-5.6-sol": {"contextWindow": 272000},
-                "gpt-5.6-terra": {"contextWindow": 272000},
-            },
+            expected_codex,
             pi_models["providers"]["openai-codex"]["modelOverrides"],
         )
+        expected_pi_openrouter = {
+            "anthropic/claude-fable-latest": {"contextWindow": 256000},
+            "anthropic/claude-opus-4.6": {"contextWindow": 256000},
+            "anthropic/claude-opus-4.8": {"contextWindow": 256000},
+            "openai/gpt-5.6-luna": {"contextWindow": 272000},
+            "openai/gpt-5.6-sol": {"contextWindow": 272000},
+            "openai/gpt-5.6-sol-pro": {"contextWindow": 272000},
+            "z-ai/glm-5.3": {"contextWindow": 256000},
+            "~anthropic/claude-fable-latest": {"contextWindow": 256000},
+        }
+        self.assertEqual(
+            expected_pi_openrouter,
+            pi_models["providers"]["openrouter"]["modelOverrides"],
+        )
+
+        pi_openrouter_profile = json.loads(
+            (ROOT / "ai/pi/profiles/or.json").read_text()
+        )
+        profile_models = set(pi_openrouter_profile["enabledModels"])
+        profile_models.add(pi_openrouter_profile["defaultModel"])
+        subagents = pi_openrouter_profile["subagents"]
+        profile_models.add(
+            subagents["defaultModel"].removeprefix("openrouter/")
+        )
+        profile_models.update(
+            override["model"].removeprefix("openrouter/")
+            for override in subagents["agentOverrides"].values()
+        )
+        self.assertLessEqual(profile_models, set(expected_pi_openrouter))
         self.run_command(
             "dotbot/bin/dotbot",
             "-d",
