@@ -161,6 +161,7 @@ prefix:bind("", "O", prefixFn(getLaunchFocusOrHideAndSwitchBackFn("com.obsprojec
 
 -- System
 prefix:bind("cmd", "R", prefixFn(hs.reload))
+prefix:bind({ "cmd", "shift" }, "R", prefixFn(hs.relaunch))
 prefix:bind(
   "cmd",
   "U",
