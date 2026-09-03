@@ -318,11 +318,10 @@ class PaneTitleTest(unittest.TestCase):
 
 
 class PreviousPaneFocusTest(unittest.TestCase):
-    def test_tracker_records_tab_with_pane(self):
+    def test_tracker_records_pane_without_changing_history_format(self):
         with tempfile.TemporaryDirectory() as temporary:
             environment = os.environ | {
                 "XDG_STATE_HOME": temporary,
-                "HERDR_TAB_ID": "w1:t1",
                 "HERDR_PANE_ID": "w1:p1",
             }
 
@@ -330,7 +329,7 @@ class PreviousPaneFocusTest(unittest.TestCase):
             subprocess.run(["sh", str(PREVIOUS_PANE_TRACKER)], check=True, env=environment)
 
             history = Path(temporary) / "herdr/previous-pane-focus.history"
-            self.assertEqual(history.read_text(), "w1:t1\tw1:p1\n")
+            self.assertEqual(history.read_text(), "w1:p1\n")
 
     def run_restore(self, history: str, panes: list[dict], closed_id: str) -> str:
         with tempfile.TemporaryDirectory() as temporary:
@@ -354,6 +353,7 @@ class PreviousPaneFocusTest(unittest.TestCase):
                 "XDG_STATE_HOME": temporary,
                 "HERDR_BIN_PATH": str(herdr),
                 "HERDR_PANE_ID": closed_id,
+                "HERDR_TAB_ID": "w1:t1",
             }
 
             subprocess.run(["sh", str(PREVIOUS_PANE_RESTORER)], check=True, env=environment)
@@ -361,9 +361,10 @@ class PreviousPaneFocusTest(unittest.TestCase):
 
     def test_restores_nearest_open_pane_above_closed_pane_in_same_tab(self):
         call = self.run_restore(
-            "w1:t1\tw1:p1\nw1:t1\tw1:p3\nw2:t1\tw2:p1\nw1:t1\tw1:p2\n",
+            "w1:p1\nw1:p3\nw2:p1\nw1:p2\n",
             [
                 {"pane_id": "w1:p1", "tab_id": "w1:t1"},
+                {"pane_id": "w1:p3", "tab_id": "w2:t1"},
                 {"pane_id": "w2:p1", "tab_id": "w2:t1"},
             ],
             "w1:p2",
@@ -373,7 +374,7 @@ class PreviousPaneFocusTest(unittest.TestCase):
 
     def test_keeps_default_focus_when_same_tab_has_no_open_history(self):
         call = self.run_restore(
-            "w2:t1\tw2:p1\nw1:t1\tw1:p2\n",
+            "w2:p1\nw1:p2\n",
             [{"pane_id": "w2:p1", "tab_id": "w2:t1"}],
             "w1:p2",
         )
