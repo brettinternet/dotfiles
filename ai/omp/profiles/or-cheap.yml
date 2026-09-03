@@ -1,3 +1,4 @@
+---
 modelRoles:
   default: openrouter/deepseek/deepseek-v4-pro-0813:high
   smol: openrouter/~deepseek/deepseek-v4-flash-latest:low
