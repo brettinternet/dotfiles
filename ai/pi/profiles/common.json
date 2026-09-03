@@ -7,14 +7,13 @@
   "collapseChangelog": true,
   "enableInstallTelemetry": false,
   "defaultProjectTrust": "ask",
-  "steeringMode": "one-at-a-time",
+  "steeringMode": "all",
   "followUpMode": "one-at-a-time",
   "packages": [
     "npm:pi-subagents@0.60.0",
     "npm:pi-lsp-adapter@0.1.3",
     "npm:pi-web-access@0.27.0",
     "npm:pi-mcp-adapter@2.32.1",
-    "https://github.com/earendil-works/pi-transcribe@1f44de633b0be6fd3f684f158da7c3899bd2ac1b",
     "npm:pi-chrome@0.15.46",
     "npm:@sting8k/pi-vcc@0.7.0"
   ]

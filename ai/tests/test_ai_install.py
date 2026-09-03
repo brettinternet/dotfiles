@@ -613,6 +613,7 @@ trusted_hash = "sha256:trusted"
             settings["enabledModels"],
         )
         self.assertTrue(settings["quietStartup"])
+        self.assertEqual("all", settings["steeringMode"])
         self.assertTrue(settings["hideThinkingBlock"])
         self.assertEqual("dark", settings["theme"])
         self.assertEqual(0, settings["outputPad"])
@@ -623,7 +624,6 @@ trusted_hash = "sha256:trusted"
                 "npm:pi-lsp-adapter@0.1.3",
                 "npm:pi-web-access@0.27.0",
                 "npm:pi-mcp-adapter@2.32.1",
-                "https://github.com/earendil-works/pi-transcribe@1f44de633b0be6fd3f684f158da7c3899bd2ac1b",
                 "npm:pi-chrome@0.15.46",
                 "npm:@sting8k/pi-vcc@0.7.0",
             ],
