@@ -8,6 +8,8 @@ Vanilla Pi renders `~/.pi/agent/settings.json` from `pi/profiles/common.json` pl
 
 The Codex overlay pins the parent to `gpt-5.6-sol`, restricts model cycling and subagent launches to the current GPT-5.6 family, and routes roles by task shape: Luna for scouting and bounded execution, Terra for adversarial review and writing, and Sol for judgment-heavy work. `ai/pi/models.json` explicitly fixes Luna, Sol, and Terra at a 272k context window instead of inheriting catalog defaults; OMP uses the same explicit cap for those Codex models while retaining conservative limits for other providers. Pi's native keybindings mirror OMP's `Ctrl+P`/`Ctrl+N` editor and selector navigation and disable the conflicting model-cycle binding. For implementation, use `clarify → scout → worker → fresh reviewers → worker`; parallelize only independent slices, keep one writer per file boundary, and have the parent synthesize reviewer findings before sending a bounded fix task.
 
+The OpenRouter overlay mirrors OMP's `or` routing for vanilla Pi: Sol drives the parent, Luna handles bounded subagent work, Fable handles research, GLM handles oracle calls, and Opus handles review and writing. Select it with `pi-profile use or`; it requires `OPENROUTER_API_KEY`.
+
 OMP remains separate under `ai/omp/` and uses `omp-profile`.
 
 ## OpenCode profiles

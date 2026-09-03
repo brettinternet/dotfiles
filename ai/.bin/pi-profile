@@ -44,8 +44,8 @@ active_profile() {
 
 is_managed_active_file() {
   [ -f "$ACTIVE_FILE" ] && [ ! -L "$ACTIVE_FILE" ] || return 1
-  name=$(cat "$ACTIVE_FILE")
-  [ -n "$name" ] && [ "$name" != common ] && [ -f "$(profile_path "$name")" ]
+  active_name=$(cat "$ACTIVE_FILE")
+  [ -n "$active_name" ] && [ "$active_name" != common ] && [ -f "$(profile_path "$active_name")" ]
 }
 
 require_managed_config() {

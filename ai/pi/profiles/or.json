@@ -1,0 +1,38 @@
+{
+  "defaultProvider": "openrouter",
+  "defaultModel": "openai/gpt-5.6-sol",
+  "defaultThinkingLevel": "medium",
+  "enabledModels": [
+    "openai/gpt-5.6-sol",
+    "openai/gpt-5.6-luna",
+    "openai/gpt-5.6-sol-pro",
+    "~anthropic/claude-fable-latest",
+    "z-ai/glm-5.3",
+    "anthropic/claude-opus-4.8",
+    "anthropic/claude-opus-4.6"
+  ],
+  "subagents": {
+    "defaultModel": "openrouter/openai/gpt-5.6-luna",
+    "defaultProvider": "openrouter",
+    "defaultThinking": "high",
+    "agentOverrides": {
+      "scout": { "model": "openrouter/openai/gpt-5.6-luna", "thinking": "low" },
+      "researcher": { "model": "openrouter/~anthropic/claude-fable-latest", "thinking": "high" },
+      "worker": { "model": "openrouter/openai/gpt-5.6-luna", "thinking": "max" },
+      "reviewer": { "model": "openrouter/anthropic/claude-opus-4.8", "thinking": "xhigh" },
+      "oracle": { "model": "openrouter/z-ai/glm-5.3", "thinking": "max" },
+      "delegate": { "model": "openrouter/openai/gpt-5.6-luna", "thinking": "high" },
+      "explore": { "model": "openrouter/openai/gpt-5.6-luna", "thinking": "low" },
+      "executor": { "model": "openrouter/openai/gpt-5.6-luna", "thinking": "max" },
+      "verifier": { "model": "openrouter/openai/gpt-5.6-luna", "thinking": "max" },
+      "pr-watcher": { "model": "openrouter/openai/gpt-5.6-luna", "thinking": "low" },
+      "thermo-nuclear-code-quality-review": { "model": "openrouter/openai/gpt-5.6-sol-pro", "thinking": "xhigh" },
+      "writer": { "model": "openrouter/anthropic/claude-opus-4.6", "thinking": "medium" }
+    },
+    "modelScope": {
+      "enforce": true,
+      "strict": true,
+      "allow": ["openrouter/*"]
+    }
+  }
+}
