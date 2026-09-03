@@ -64,6 +64,19 @@ return {
     "nvim-neo-tree/neo-tree.nvim",
     opts = {
       filesystem = {
+        commands = {
+          open_keep_focus = function(state)
+            local tree_win = state.winid
+            require("neo-tree.sources.filesystem.commands").open(state)
+
+            if vim.api.nvim_win_is_valid(tree_win) then vim.api.nvim_set_current_win(tree_win) end
+          end,
+        },
+        window = {
+          mappings = {
+            ["<S-CR>"] = "open_keep_focus",
+          },
+        },
         filtered_items = {
           visible = true,
           hide_dotfiles = false,
