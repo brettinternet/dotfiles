@@ -1,5 +1,6 @@
 import copy
 import importlib.util
+import json
 import os
 import re
 import subprocess
@@ -16,6 +17,8 @@ NAVIGATION_SCRIPT = BASE_ROOT / ".config/herdr/plugins/seamless-navigation/dispa
 WORKSPACE_PICKER_SCRIPT = BASE_ROOT / ".config/herdr/plugins/command-palette/workspace-picker.py"
 PANE_TITLE_SCRIPT = BASE_ROOT / ".config/herdr/plugins/pane-title/sync.py"
 PANE_TITLE_WATCHER = BASE_ROOT / ".config/herdr/plugins/pane-title/watch.py"
+PREVIOUS_PANE_TRACKER = BASE_ROOT / ".config/herdr/plugins/previous-pane-focus/track-focus.sh"
+PREVIOUS_PANE_RESTORER = BASE_ROOT / ".config/herdr/plugins/previous-pane-focus/restore-previous.sh"
 FILEPATH_SCRIPT = BASE_ROOT / ".bin/herdr-insert-file-path"
 ANSI_ESCAPE = re.compile(r"\x1b\[[0-9;]*m")
 
@@ -312,6 +315,70 @@ class PaneTitleTest(unittest.TestCase):
             pane_title.sync_pane(pane)
 
         request.assert_not_called()
+
+
+class PreviousPaneFocusTest(unittest.TestCase):
+    def test_tracker_records_tab_with_pane(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            environment = os.environ | {
+                "XDG_STATE_HOME": temporary,
+                "HERDR_TAB_ID": "w1:t1",
+                "HERDR_PANE_ID": "w1:p1",
+            }
+
+            subprocess.run(["sh", str(PREVIOUS_PANE_TRACKER)], check=True, env=environment)
+            subprocess.run(["sh", str(PREVIOUS_PANE_TRACKER)], check=True, env=environment)
+
+            history = Path(temporary) / "herdr/previous-pane-focus.history"
+            self.assertEqual(history.read_text(), "w1:t1\tw1:p1\n")
+
+    def run_restore(self, history: str, panes: list[dict], closed_id: str) -> str:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            state_dir = root / "herdr"
+            state_dir.mkdir()
+            (state_dir / "previous-pane-focus.history").write_text(history)
+            log = root / "calls"
+            herdr = root / "herdr-bin"
+            pane_json = json.dumps({"result": {"panes": panes}})
+            herdr.write_text(
+                "#!/bin/sh\n"
+                "if [ \"$1 $2\" = \"pane list\" ]; then\n"
+                f"  printf '%s\\n' '{pane_json}'\n"
+                "  exit 0\n"
+                "fi\n"
+                f"printf '%s\\n' \"$*\" > '{log}'\n"
+            )
+            herdr.chmod(0o755)
+            environment = os.environ | {
+                "XDG_STATE_HOME": temporary,
+                "HERDR_BIN_PATH": str(herdr),
+                "HERDR_PANE_ID": closed_id,
+            }
+
+            subprocess.run(["sh", str(PREVIOUS_PANE_RESTORER)], check=True, env=environment)
+            return log.read_text().strip() if log.exists() else ""
+
+    def test_restores_nearest_open_pane_above_closed_pane_in_same_tab(self):
+        call = self.run_restore(
+            "w1:t1\tw1:p1\nw1:t1\tw1:p3\nw2:t1\tw2:p1\nw1:t1\tw1:p2\n",
+            [
+                {"pane_id": "w1:p1", "tab_id": "w1:t1"},
+                {"pane_id": "w2:p1", "tab_id": "w2:t1"},
+            ],
+            "w1:p2",
+        )
+
+        self.assertEqual(call, "agent focus w1:p1")
+
+    def test_keeps_default_focus_when_same_tab_has_no_open_history(self):
+        call = self.run_restore(
+            "w2:t1\tw2:p1\nw1:t1\tw1:p2\n",
+            [{"pane_id": "w2:p1", "tab_id": "w2:t1"}],
+            "w1:p2",
+        )
+
+        self.assertEqual(call, "")
 
 
 class SeamlessNavigationTest(unittest.TestCase):
