@@ -651,6 +651,42 @@ trusted_hash = "sha256:trusted"
         )
         self.assertEqual(before, self.repository_status())
 
+    def test_pi_openrouter_profile_routes_parent_and_subagents(self) -> None:
+        before = self.repository_status()
+
+        self.run_command("ai/.bin/pi-profile", "use", "codex")
+        completed = self.run_command("ai/.bin/pi-profile", "use", "or")
+        self.assertEqual("switched to or\n", completed.stdout)
+
+        settings = json.loads((self.home / ".pi/agent/settings.json").read_text())
+        self.assertEqual("openrouter", settings["defaultProvider"])
+        self.assertEqual("openai/gpt-5.6-sol", settings["defaultModel"])
+        self.assertEqual("medium", settings["defaultThinkingLevel"])
+        subagents = settings["subagents"]
+        self.assertEqual("openrouter", subagents["defaultProvider"])
+        self.assertEqual(
+            "openrouter/openai/gpt-5.6-luna", subagents["defaultModel"]
+        )
+        overrides = subagents["agentOverrides"]
+        self.assertEqual(
+            {
+                "model": "openrouter/anthropic/claude-opus-4.8",
+                "thinking": "xhigh",
+            },
+            overrides["reviewer"],
+        )
+        self.assertEqual(
+            {
+                "model": "openrouter/anthropic/claude-opus-4.6",
+                "thinking": "medium",
+            },
+            overrides["writer"],
+        )
+        self.assertEqual(
+            "or\n", (self.home / ".pi/agent/.active-profile").read_text()
+        )
+        self.assertEqual(before, self.repository_status())
+
     def test_pi_profile_preserves_unmanaged_settings_and_state(self) -> None:
         settings = self.home / ".pi/agent/settings.json"
         settings.parent.mkdir(parents=True)
