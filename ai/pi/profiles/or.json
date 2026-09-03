@@ -11,6 +11,12 @@
     "anthropic/claude-opus-4.8",
     "anthropic/claude-opus-4.6"
   ],
+  "extensions": ["$DOTFILES/ai/pi/extensions/openrouter-web-search.ts"],
+  "webSearchConfig": {
+    "tools": {
+      "webSearch": { "enabled": false }
+    }
+  },
   "subagents": {
     "defaultModel": "openrouter/openai/gpt-5.6-luna",
     "defaultProvider": "openrouter",
