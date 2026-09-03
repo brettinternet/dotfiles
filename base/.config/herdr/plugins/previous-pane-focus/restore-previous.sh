@@ -6,32 +6,32 @@ history_file="$state_dir/previous-pane-focus.history"
 [ -f "$history_file" ] || exit 0
 
 closed_id="${HERDR_PANE_ID:-}"
-[ -n "$closed_id" ] || exit 0
+closed_tab="${HERDR_TAB_ID:-}"
+[ -n "$closed_id" ] && [ -n "$closed_tab" ] || exit 0
 
 herdr_bin="${HERDR_BIN_PATH:-herdr}"
 open_panes="$("$herdr_bin" pane list 2>/dev/null || true)"
 [ -n "$open_panes" ] || exit 0
 
-# Walk upward through focus history from the closed pane. Ignore panes from
-# other tabs and panes that have since closed, then restore the nearest match.
-open_ids="$(printf '%s\n' "$open_panes" | jq -r '.result.panes[].pane_id' 2>/dev/null | tr '\n' ' ' || true)"
-target="$(awk -F '\t' -v closed="$closed_id" -v open="$open_ids" '
+# Walk upward through focus history from the closed pane. Use current pane
+# membership so panes moved to other tabs are ignored along with closed panes.
+open_entries="$(printf '%s\n' "$open_panes" | jq -r '.result.panes[] | "\(.tab_id) \(.pane_id)"' 2>/dev/null | tr '\n' ' ' || true)"
+target="$(awk -v closed="$closed_id" -v closed_tab="$closed_tab" -v open="$open_entries" '
   BEGIN {
-    count = split(open, ids, " ")
-    for (i = 1; i <= count; i++) is_open[ids[i]] = 1
+    count = split(open, fields, " ")
+    for (i = 1; i < count; i += 2) {
+      pane_tabs[fields[i + 1]] = fields[i]
+    }
   }
-  NF == 2 {
-    tabs[NR] = $1
-    panes[NR] = $2
-  }
+  { panes[NR] = $0 }
   END {
     last_closed = 0
     for (i = NR; i >= 1; i--) {
-      if (panes[i] == closed) { last_closed = i; closed_tab = tabs[i]; break }
+      if (panes[i] == closed) { last_closed = i; break }
     }
     if (last_closed == 0) exit
     for (i = last_closed - 1; i >= 1; i--) {
-      if (tabs[i] == closed_tab && panes[i] != closed && is_open[panes[i]]) {
+      if (panes[i] != closed && pane_tabs[panes[i]] == closed_tab) {
         print panes[i]
         exit
       }
