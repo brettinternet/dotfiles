@@ -219,6 +219,8 @@
       path: ai/pi/models.json
     ~/.pi/agent/keybindings.json:
       path: ai/pi/keybindings.json
+    ~/.pi/agent/lsp.json:
+      path: ai/pi/lsp.json
     # Oh My Pi
     ~/.omp/agent/AGENTS.md:
       path: ai/AGENTS.md
