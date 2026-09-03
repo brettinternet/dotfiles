@@ -565,6 +565,7 @@ trusted_hash = "sha256:trusted"
             bindings["tui.input.newLine"],
         )
         self.assertEqual("ctrl+q", bindings["app.message.followUp"])
+        self.assertEqual("alt+p", bindings["app.model.select"])
         self.assertEqual([], bindings["app.model.cycleForward"])
         watchdog = self.home / ".omp/agent/WATCHDOG.md"
         self.assertTrue(watchdog.is_symlink())

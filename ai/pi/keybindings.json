@@ -5,5 +5,6 @@
   "tui.select.down": ["down", "ctrl+n"],
   "tui.input.newLine": ["shift+enter", "ctrl+j", "alt+enter"],
   "app.message.followUp": "ctrl+q",
+  "app.model.select": "alt+p",
   "app.model.cycleForward": []
 }
