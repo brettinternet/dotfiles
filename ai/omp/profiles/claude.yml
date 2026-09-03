@@ -1,0 +1,15 @@
+---
+modelRoles:
+  reviewer: anthropic/claude-opus-5:xhigh
+  default: anthropic/claude-sonnet-5:medium
+  smol: anthropic/claude-haiku-4-5:medium
+  slow: anthropic/claude-opus-5:xhigh
+  designer: anthropic/claude-opus-5:xhigh
+  vision: anthropic/claude-sonnet-5:high
+  task: anthropic/claude-sonnet-5:max
+  commit: anthropic/claude-haiku-4-5:high
+  plan: anthropic/claude-opus-5:high
+  advisor: anthropic/claude-opus-5:xhigh
+  title: anthropic/claude-haiku-4-5:high
+  tiny: anthropic/claude-haiku-4-5:medium
+  writer: anthropic/claude-sonnet-5:low
