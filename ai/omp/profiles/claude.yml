@@ -1,6 +1,6 @@
 ---
 modelRoles:
-  reviewer: anthropic/claude-opus-5:xhigh
+  reviewer: anthropic/claude-opus-4.8:xhigh
   default: anthropic/claude-sonnet-5:medium
   smol: anthropic/claude-haiku-4-5:medium
   slow: anthropic/claude-opus-5:xhigh
@@ -12,4 +12,14 @@ modelRoles:
   advisor: anthropic/claude-opus-5:xhigh
   title: anthropic/claude-haiku-4-5:high
   tiny: anthropic/claude-haiku-4-5:medium
-  writer: anthropic/claude-sonnet-5:low
+  writer: anthropic/claude-opus-4.6:medium
+commands:
+  enableOpencodeUser: false
+  enableOpencodeProject: false
+  enableClaudeProject: true
+  enableClaudeUser: true
+providers:
+  webSearchOrder:
+    - anthropic
+advisor:
+  enabled: false

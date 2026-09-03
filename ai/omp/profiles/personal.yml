@@ -1,3 +1,4 @@
+---
 modelRoles:
   # Try a no-bullshit model: https://petergpt.github.io/bullshit-benchmark/viewer/index.v2.html
   reviewer: openrouter/anthropic/claude-opus-4.8:xhigh

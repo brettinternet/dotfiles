@@ -1,9 +1,4 @@
-# Use the ChatGPT OAuth-backed hosted search available to openai-codex.
-providers:
-  webSearchOrder:
-    - codex
-advisor:
-  enabled: false
+---
 modelRoles:
   reviewer: openai-codex/gpt-5.6-terra:max
   default: openai-codex/gpt-5.6-sol:medium
@@ -19,3 +14,9 @@ modelRoles:
   tiny: openai-codex/gpt-5.3-codex-spark:high
   # https://llm-stats.com/leaderboards/best-ai-for-writing
   writer: openai-codex/gpt-5.4:medium
+# Use the ChatGPT OAuth-backed hosted search available to openai-codex.
+providers:
+  webSearchOrder:
+    - codex
+advisor:
+  enabled: false
