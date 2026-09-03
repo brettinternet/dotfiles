@@ -75,6 +75,7 @@ export default function openRouterWebSearch(pi: ExtensionAPI): void {
     }),
     async execute(_callId, params, signal, _onUpdate, ctx) {
       const model = selectModel(ctx);
+      const maxResults = params.maxResults ?? 5;
       const auth = await ctx.modelRegistry.getApiKeyAndHeaders(model);
       if (!auth.ok || !auth.apiKey) {
         throw new Error(
@@ -96,7 +97,8 @@ export default function openRouterWebSearch(pi: ExtensionAPI): void {
               type: "openrouter:web_search",
               parameters: {
                 engine: "perplexity",
-                max_results: params.maxResults ?? 5,
+                max_results: maxResults,
+                max_total_results: maxResults,
               },
             },
           ],
