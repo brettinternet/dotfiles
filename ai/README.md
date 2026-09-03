@@ -1,127 +1,42 @@
 # AI agent setup
 
-Shared config for Claude Code (`~/.claude`), Pi (`~/.pi`), Oh My Pi (`~/.omp`), Codex, Amp CLI (`~/.config/amp`), OpenCode (`~/.config/opencode`), and the DeepSeek Harness (`~/.dsh`), installed by [`ai.yaml`](../ai.yaml). `AGENTS.md` is the global instruction file for all seven agent tools. `ai/.agents/` is the canonical source for authored shared skills and command workflows. `ai/agents/` is the canonical source for subagent definitions: one file per role holding the shared description, harness-specific routing, and the single instruction body. `install-agents` renders the Claude, OMP, Pi, OpenCode, and Codex formats from it.
+Shared configuration for Claude Code, Pi, Oh My Pi (OMP), Codex, Amp, OpenCode, and the DeepSeek Harness (dsh). Install or refresh it with:
 
-## Pi profiles
+```sh
+make ai
+```
 
-Vanilla Pi renders `~/.pi/agent/settings.json` from `pi/profiles/common.json` plus a selected overlay and manages `~/.pi/agent/pi-vcc-config.json` from `pi/pi-vcc-config.json`. `pi-profile use codex` selects ChatGPT subscription models through Pi's built-in `openai-codex` provider. The common profile keeps the regular TUI sparse and installs pinned `pi-subagents`, `pi-lsp-adapter`, `pi-web-access`, `pi-mcp-adapter`, and `@sting8k/pi-vcc` packages. The MCP adapter exposes configured MCP servers through one lazy proxy tool instead of loading every server schema into context. VCC replaces Pi's LLM compaction by default with deterministic, no-LLM extraction and adds transcript recall; its redundant auto-continue is disabled because Pi 0.84.4 resumes mid-run compaction itself. Pi discovers the shared `~/.agents/skills/` tree natively; `make ai` also installs the global instructions and custom subagents into Pi's native paths.
+[`ai.yaml`](../ai.yaml) links configuration into each tool's home directory. [`AGENTS.md`](AGENTS.md) provides shared instructions.
 
-`pi-profile` also renders `~/.pi/web-search.json` so search routing changes with the model profile. Codex uses the active ChatGPT-backed model through `pi-web-access`; OpenRouter disables that package's search tool and loads `ai/pi/extensions/openrouter-web-search.ts`, which uses OpenRouter's Perplexity-backed server tool.
+## Sources
 
-The Codex overlay pins the parent to `gpt-5.6-sol`, restricts model cycling and subagent launches to the current GPT-5.6 family, and routes roles by task shape: Luna for scouting and bounded execution, Terra for adversarial review and writing, and Sol for judgment-heavy work. `ai/pi/models.json` explicitly fixes Luna, Sol, and Terra at a 272k context window instead of inheriting catalog defaults; OMP uses the same explicit cap for those Codex models while retaining conservative limits for other providers. Pi's native keybindings mirror OMP's `Ctrl+P`/`Ctrl+N` editor and selector navigation and disable the conflicting model-cycle binding. For implementation, use `clarify → scout → worker → fresh reviewers → worker`; parallelize only independent slices, keep one writer per file boundary, and have the parent synthesize reviewer findings before sending a bounded fix task.
+- `agents/` — shared subagent roles; `install-agents` renders harness-specific definitions
+- `.agents/skills/` — reusable skills discovered through `~/.agents/skills/`
+- `.agents/commands/` — shared workflows rendered as skills by `install-agent-commands`
+- `pi/`, `omp/`, `opencode/`, `claude/`, `amp/`, and `dsh/` — harness-specific configuration
+- `project/` — project-level defaults
 
-The OpenRouter overlay mirrors OMP's `or` routing for vanilla Pi: Sol drives the parent, Luna handles bounded subagent work, Fable handles research, GLM handles oracle calls, and Opus handles review and writing. Select it with `pi-profile use or`; it requires `OPENROUTER_API_KEY`.
+Generated files under `$HOME` should not be edited directly. Change their source here and rerun `make ai`.
 
-OMP remains separate under `ai/omp/` and uses `omp-profile`.
+## Profiles
 
-## OpenCode profiles
+```sh
+pi-profile use codex     # or: or
+omp-profile use <name>
+opencode-profile use <name>
+```
 
-OpenCode renders `~/.config/opencode/opencode.jsonc` from `opencode/profiles/common.jsonc` plus a selected overlay. `opencode-profile list` shows `gpt`, `claude`, `claude-gpt`, `gpt-cc-proxy`, `or`, and `or-cheap`; `opencode-profile use <name>` regenerates the local active config. Its eight global subagents mirror the pi roster; each profile supplies their OpenCode model routing. `gpt-cc-proxy` retains Meridian-backed Anthropic routing and requires `MERIDIAN_BASE_URL`. OpenCode uses neither oh-my-openagent nor OCX.
+- **Pi:** combines `pi/profiles/common.json` with the selected overlay. `codex` uses ChatGPT subscription models; `or` requires `OPENROUTER_API_KEY`.
+- **OMP:** remains independently configured under `omp/`.
+- **OpenCode:** combines `opencode/profiles/common.jsonc` with an overlay. Run `opencode-profile list` for available profiles.
+- **dsh:** links global instructions, presets, and a settings template. API keys come from environment variables; OAuth credentials remain machine-local in `~/.dsh/.credentials.yaml`.
 
-## DeepSeek Harness (dsh)
+Pi and OMP model metadata is intentionally pinned where provider defaults are unsuitable. Profile overlays own role-to-model routing.
 
-`make ai` links `~/.dsh/AGENTS.md` (global instructions), `~/.dsh/cordis.patch.yml` (home-level patch), and `~/.dsh/.agent-presets` (`ai/dsh/presets`, holding the dsh-tui `liangshen` preset) into this repo. It seeds `~/.dsh/settings.yaml` from `ai/dsh/settings.yaml` once, leaving subsequent GUI and model changes local. dsh discovers `~/.agents/skills/` natively, so the shared skills need no adapter. `make darwin` installs the dsh-tui profile with Bun (dsh's `dsh plugin` manager requires pnpm, which stays off this system); the web profile self-initializes with `dsh web`.
+## Shared agents
 
-The settings template carries only `apiKeyEnv` references, never secrets. API keys resolve from the environment; OAuth grants (ChatGPT subscription via `openai-codex`, Claude subscription, GitHub Copilot, OpenRouter OAuth) live per-machine in `~/.dsh/.credentials.yaml` — sign in once per machine with `/login` in dsh-tui and never sync the grant. A commented provider template sits at the bottom of the settings document.
+The roster covers discovery (`explore`), implementation (`executor`), verification (`verifier`), review (`reviewer`), judgment (`oracle`), PR monitoring (`pr-watcher`), and external wording (`writer`). Delegation policy lives in [`AGENTS.md`](AGENTS.md); role instructions and harness routing live in `agents/<role>.md`.
 
-## Orchestration strategy
+## Herdr
 
-Two complementary patterns; which one is active depends only on the session model, not on config:
-
-- **Escalation (advisor)** — a cheap/mid session does the work and escalates judgment to the `oracle` (pinned to the strongest model, fresh context). Right when the plan already exists — the command file or a refined backlog item is the decomposition. Example: one `/backlog-implement-review-loop` pass on a mid-tier session.
-- **Delegation (orchestrator)** — a smart session keeps decisions, synthesis, and shared-interface coordination, and delegates only materially substantial, independent volume branches to cheap pinned workers under an explicit per-command budget. Small or tightly coupled work stays in the session. Right when judgment is continuous and the surface is broad: refinement, review, diagnosis.
-
-The pipeline is deliberately asymmetric: smart refine → cheap implement → independent verify/review. Worker and oracle tiers are pinned at each harness's routing point, so both patterns hold from any starting tier; pick the orchestrator via `/model` or the active Pi/OMP profile.
-
-## Agent roster
-
-| Agent        | Tier                                                                                                          | Role                                                                 |
-| ------------ | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| `reviewer`   | benchmark leader where available (`Claude Opus 4.8`; OpenAI-only profiles use `GPT-5.6 Terra`)                | read-only falsification review with independently validated findings |
-| `explore`    | low (OMP `pi/smol`; Pi Codex Luna; Claude uses built-in Explore)                                              | read-only discovery, evidence gathering                              |
-| `executor`   | mid (`sonnet`; OMP `pi/task`; Pi Codex Luna)                                                                  | well-specified implementation; returns questions instead of guessing |
-| `verifier`   | mid (`sonnet`; OMP `pi/task`; Pi Codex Luna)                                                                  | independent acceptance check from criteria + commits; never fixes    |
-| `pr-watcher` | low (`haiku`; OMP `pi/smol`; Pi Codex Luna)                                                                   | CI/review delta watching                                             |
-| `oracle`     | max (`opus`; OMP `pi/slow`; Pi Codex Sol)                                                                     | second-opinion judgment: tradeoffs, diagnoses, blocker triage        |
-| `writer`     | independently pinned per harness or active provider profile                                                   | final wording for externally directed messages                       |
-
-The base roster covers the complete find/do/check/judge/watch/write loop. No tester (executor writes tests, verifier runs them skeptically) and no librarian (context7/web search cover docs).
-
-Pi, OMP, OpenCode, Claude, and Codex ship a read-only `reviewer` that applies a compact adversarial finding bar. Pi, OMP, and OpenCode also pin `thermo-nuclear-code-quality-review` to their strongest applicable tiers; Claude invokes that explicit maintainability skill directly.
-
-## Where each concern lives
-
-- **Role + tier**: `ai/agents/<role>.md` frontmatter plus profile routing. `install-agents` renders definitions into `~/.claude/agents/`, `~/.omp/agent/agents/`, `~/.pi/agent/agents/`, `~/.config/opencode/agents/`, and `~/.codex/`.
-- **Policy** (when to delegate/escalate/verify, the two-failure escalation ladder, don't-delegate list, subagent guard): `AGENTS.md` § Subagents, one source for all tools.
-- **Workflow entrypoints**: `ai/.agents/commands/*.md` templates, rendered per tool by `install-agent-commands` as described below.
-- **Reusable provider and handoff mechanics**: authored `ai/.agents/skills/*/SKILL.md` packages plus narrow references and source-controlled tool metadata.
-- **Orchestrator tier**: chosen per session; the oracle nudge is the safety net when starting cheap.
-
-## Writer model routing
-
-`AGENTS.md` routes externally directed wording to `writer`; `user-voice` supplies the compact style target, and `draft-in-editor` preserves user edits as the source of truth.
-
-Customize the model at the harness-owned routing point:
-
-- Claude Code: `claude-model` and `claude-effort` in `ai/agents/writer.md`.
-- Codex: `codex-model` and `codex-effort` in `ai/agents/writer.md`.
-- OMP: `modelRoles.writer` in each `ai/omp/profiles/*.yml` overlay; the generated agent targets `pi/writer`.
-- Pi: `subagents.agentOverrides.writer` in each `ai/pi/profiles/*.json` overlay.
-- OpenCode: `agent.writer` in each `ai/opencode/profiles/*.jsonc` overlay.
-
-Run `make ai` after changing a route. New sessions then use the regenerated global `writer` definition and active profile config.
-
-## Shared skills and commands
-
-- `ai/.agents/skills/<distinct-name>/` is the source for authored reusable skills. Pi, Codex, OMP, OpenCode, and Amp discover its `~/.agents/skills/` links natively; Claude receives links to the same packages at `~/.claude/skills/`.
-- `ai/.agents/commands/*.md` is the source for shared slash-command workflows. `install-agent-commands` renders marked explicit-only adapters into `~/.agents/skills/` and `~/.claude/skills/`; Claude exposes the skill adapters as slash commands, while Pi, Codex, OMP, OpenCode, and Amp consume them from their native skill locations. The installer removes its legacy `~/.claude/commands/` copies so Claude does not index each workflow twice.
-- `make ai` writes generated agent definitions and adapters, active profile state, and rendered profile configuration under `$HOME`; it removes only recognized legacy checkout state and explicitly retired local artifacts.
-- Keep optional Codex `agents/openai.yaml` metadata inside authored skill packages; the common `.agents` links carry it unchanged.
-
-## herdr
-
-[herdr](https://herdr.dev/docs/) is the shared terminal multiplexer on macOS and headless Linux servers. It keeps terminal and agent processes alive after the client disconnects and exposes agent status. Tmux remains installed as a fallback and for nested sessions.
-
-`make base` symlinks `base/.config/herdr/config.toml` to `~/.config/herdr/config.toml`, backing up an existing local file as `config.toml.dotbot-backup.<timestamp>`. One config is used locally and over SSH: keybindings are client-independent and remain useful on a remote server, so there is no separate remote config. Herdr writes configuration through the link; commit intended changes. Use `herdr server reload-config` for a running server.
-
-`make base` also installs the external `drovr` plugin and links the local plugins. Drovr supplies the pane and tab move actions. `brett.window-title` mirrors the focused pane title to the outer terminal, while `brett.pane-title` keeps pane-border labels synchronized with the detected agent, terminal title, or foreground process. The pane collapse, equalize, and rotate plugins manage layouts. `brett.last-workspace` toggles back to the previously focused workspace, `brett.seamless-navigation` routes directional movement through Vim or tmux when needed, and `brett.command-palette` searches every installed plugin action with `fzf`. `make ai` installs integrations for locally available agent tools; check or manage them with `herdr integration status`, `install`, and `uninstall`.
-
-## Bounded backlog loop
-
-OMP's `/loop` can run this command a fixed number of times as a bounded [Ralph loop](https://ghuntley.com/ralph/):
-
-`/loop 10 /backlog-implement-review-loop path/to/backlog.md`
-
-Every iteration starts fresh and chooses one coherent implementation, review, or unblock pass from authoritative provider state. The agent claims the provider item before work, records resumable progress, and releases after verifying the checkpoint. All work on an item uses the same lease resource, while independent items in the same dependency-ready wave may proceed concurrently. Active claims mean wait or choose independent work; unfinished defined prerequisites are dependency gates, not blockers.
-
-## Harness delegation triggers
-
-- Claude Code recognizes "fan out subagents".
-- OMP recognizes `orchestrate`.
-- These phrases activate orchestration behavior before a command can apply its own conditions. Do not put them in command prompts; name optional roles only inside conditional, explicitly capped delegation policy.
-- Specialized watcher delegation is bounded by the selected PR set and replaces polling rather than duplicating analysis. A final batched verifier is independent acceptance evidence, not a reason to fan out implementation.
-
-## Model notes
-
-- `reviewer` is manually pinned from the [BullshitBench v2 leaderboard](https://petergpt.github.io/bullshit-benchmark/viewer/index.v2.html). Accessed 2026-08-13; dataset generated 2026-07-31T22:07:20Z. Claude Opus 4.8 is first overall; GPT-5.6 Terra is the highest-ranked OpenAI model available to OpenAI-only profiles. Recheck this pin when the leaderboard or provider catalogs change.
-- https://artificialanalysis.ai/models/gpt-5-6-luna#intelligence
-- https://openrouter.ai/compare/openai/gpt-5.6-sol-pro/openai/gpt-5.6-sol/anthropic/claude-fable-5/anthropic/claude-opus-4.8
-
-### `or-cheap` OpenRouter profile
-
-- `DeepSeek V4 Pro 0813` handles default execution, implementation, verification, design, and writing. It is the newest Pro release in the live catalog and costs $1.188/M input and $3.564/M output, keeping the main worker competitive without frontier-model pricing.
-- `GLM 5.3` handles planning, advice, and adversarial review. The live catalog reports 59.5 intelligence, 74.8 coding, and 59.1 agentic scores at $1.40/M input and $4.40/M output.
-- `DeepSeek V4 Flash Latest` handles exploration, PR watching, titles, and commits at $0.065/M input and $0.18/M output. Its underlying release reports a 69.1 coding score, substantially ahead of the current inexpensive Nemotron Lightning and Super routes; the vision role uses the Flash Vision experiment at a time-dependent $0.22–$0.44/M input and $0.66–$1.32/M output.
-- The cheapest DeepSeek first-party routes may retain prompts for training, so enforce the account's data-policy filters when repository privacy requires it. Sources accessed 2026-08-22: [OpenRouter catalog](https://openrouter.ai/models) and [OpenRouter's open-weight model review](https://openrouter.ai/blog/insights/the-open-weight-models-that-matter-june-2026/).
-
-### GPT
-
-- For coding tasks, [5.6 Luna max and 5.6 Sol medium are probably best cost per task.](https://artificialanalysis.ai/?intelligence-efficiency=intelligence-vs-cost-per-task&agentic-speed=intelligence-vs-time-per-task&cost=intelligence-vs-cost-per-task) ([frontier models](https://artificialanalysis.ai/?intelligence-efficiency=intelligence-vs-cost-per-task&agentic-speed=intelligence-vs-time-per-task&models=gpt-5-5%2Cclaude-sonnet-5%2Cgpt-5-6-luna%2Cclaude-opus-4-8%2Cclaude-4-5-haiku-reasoning%2Cgpt-5-6-terra%2Cclaude-fable-5%2Cgpt-5-6-sol%2Cgpt-5-5-pro%2Cgpt-5-6-luna-xhigh%2Cgpt-5-6-terra-medium%2Cgpt-5-6-luna-high%2Cgpt-5-6-sol-xhigh%2Cgpt-5-6-sol-high%2Cgpt-5-6-sol-medium%2Cgpt-5-6-luna-medium%2Cgpt-5-6-luna-low%2Cgpt-5-6-sol-low%2Cclaude-sonnet-5-high%2Cclaude-sonnet-5-xhigh&speed=intelligence-vs-speed&intelligence=agentic-index&total-cost=intelligence-vs-total-cost))
-- [Luna's speed/latency is best](https://artificialanalysis.ai/?intelligence-efficiency=intelligence-vs-cost-per-task&agentic-speed=intelligence-vs-time-per-task#speed), a probably [better choice than Haiku or Gemini Flash](https://openrouter.ai/compare/openai/gpt-5.6-luna/anthropic/claude-haiku-4.5).
-- [There's no place for 5.6 Terra](https://artificialanalysis.ai/articles/gpt-5-6-has-landed):
-  > Luna and Sol are always on the Pareto frontier ahead of Terra. This means that for any Terra effort level, there is a Luna or Sol effort level that is more intelligent at no extra cost, or equally intelligent at lower cost.
-
-### Claude
-
-- [At Sonnet's price point, 5.6 Luna is a better choice](https://openrouter.ai/compare/openai/gpt-5.6-luna/anthropic/claude-sonnet-5/anthropic/claude-sonnet-4.6) (where Sonnet 4.6's performance was always good enough for planned tasks).
-- In my experience, Fable is best at UI.
+Herdr keeps terminal and agent processes alive across disconnects. `make ai` installs integrations for locally available agents; manage them with `herdr integration status`, `install`, and `uninstall`.
