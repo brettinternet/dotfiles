@@ -9,6 +9,7 @@
   "defaultProjectTrust": "ask",
   "steeringMode": "all",
   "followUpMode": "one-at-a-time",
+  "tuiMode": "fullscreen",
   "packages": [
     "npm:pi-subagents@0.60.0",
     "npm:pi-lsp-adapter@0.1.3",
