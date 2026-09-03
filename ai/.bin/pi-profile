@@ -24,6 +24,11 @@ ACTIVE_FILE="$CONFIG_DIR/.active-profile"
 MERGE_PROFILE="$DOTFILES/ai/pi/merge-profile.py"
 VCC_CONFIG_SOURCE="$DOTFILES/ai/pi/pi-vcc-config.json"
 VCC_CONFIG_FILE="$CONFIG_DIR/pi-vcc-config.json"
+if [ -n "${PI_CODING_AGENT_DIR:-}" ]; then
+  WEB_SEARCH_CONFIG_FILE="$CONFIG_DIR/web-search.json"
+else
+  WEB_SEARCH_CONFIG_FILE="$HOME/.pi/web-search.json"
+fi
 
 die() { printf '%s\n' "$*" >&2; exit 1; }
 
@@ -67,12 +72,15 @@ render_config() {
   [ -f "$COMMON_PROFILE" ] || die "pi-profile: common profile not found: $COMMON_PROFILE"
   [ -f "$target" ] || die "pi-profile: profile '$name' not found: $target"
   require_managed_config
-  mkdir -p "$CONFIG_DIR"
+  [ ! -L "$WEB_SEARCH_CONFIG_FILE" ] || die "pi-profile: refusing to overwrite linked web search config: $WEB_SEARCH_CONFIG_FILE"
+  mkdir -p "$CONFIG_DIR" "$(dirname "$WEB_SEARCH_CONFIG_FILE")"
   tmp="$CONFIG_FILE.tmp.$$"
-  if python3 "$MERGE_PROFILE" "$COMMON_PROFILE" "$target" "$tmp"; then
+  web_tmp="$WEB_SEARCH_CONFIG_FILE.tmp.$$"
+  if python3 "$MERGE_PROFILE" "$COMMON_PROFILE" "$target" "$tmp" "$web_tmp" "$DOTFILES"; then
     mv "$tmp" "$CONFIG_FILE"
+    mv "$web_tmp" "$WEB_SEARCH_CONFIG_FILE"
   else
-    trash "$tmp" 2>/dev/null || true
+    trash "$tmp" "$web_tmp" 2>/dev/null || true
     return 1
   fi
 }

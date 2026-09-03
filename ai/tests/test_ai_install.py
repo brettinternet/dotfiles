@@ -622,9 +622,27 @@ trusted_hash = "sha256:trusted"
                 "npm:pi-lsp-adapter@0.1.3",
                 "npm:pi-web-access@0.27.0",
                 "npm:pi-mcp-adapter@2.32.1",
+                "https://github.com/earendil-works/pi-transcribe@1f44de633b0be6fd3f684f158da7c3899bd2ac1b",
+                "npm:pi-chrome@0.15.46",
                 "npm:@sting8k/pi-vcc@0.7.0",
             ],
             settings["packages"],
+        )
+        self.assertEqual(
+            {
+                "searchRouting": {
+                    "providers": ["openai"],
+                    "useCurrentModel": True,
+                    "fallbackOn": [
+                        "unsupported",
+                        "transient",
+                        "quota",
+                        "network",
+                        "invalid-response",
+                    ],
+                }
+            },
+            json.loads((self.home / ".pi/web-search.json").read_text()),
         )
         vcc_config = json.loads(
             (self.home / ".pi/agent/pi-vcc-config.json").read_text()
@@ -667,6 +685,14 @@ trusted_hash = "sha256:trusted"
         self.assertEqual("openrouter", settings["defaultProvider"])
         self.assertEqual("openai/gpt-5.6-sol", settings["defaultModel"])
         self.assertEqual("medium", settings["defaultThinkingLevel"])
+        self.assertEqual(
+            [str(ROOT / "ai/pi/extensions/openrouter-web-search.ts")],
+            settings["extensions"],
+        )
+        self.assertEqual(
+            {"tools": {"webSearch": {"enabled": False}}},
+            json.loads((self.home / ".pi/web-search.json").read_text()),
+        )
         subagents = settings["subagents"]
         self.assertEqual("openrouter", subagents["defaultProvider"])
         self.assertEqual(

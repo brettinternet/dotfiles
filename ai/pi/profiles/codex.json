@@ -3,6 +3,13 @@
   "defaultModel": "gpt-5.6-sol",
   "defaultThinkingLevel": "medium",
   "enabledModels": ["gpt-5.6-luna", "gpt-5.6-sol", "gpt-5.6-terra"],
+  "webSearchConfig": {
+    "searchRouting": {
+      "providers": ["openai"],
+      "useCurrentModel": true,
+      "fallbackOn": ["unsupported", "transient", "quota", "network", "invalid-response"]
+    }
+  },
   "subagents": {
     "defaultModel": "openai-codex/gpt-5.6-luna",
     "defaultProvider": "openai-codex",

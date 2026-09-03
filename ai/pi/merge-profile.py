@@ -27,16 +27,44 @@ def deep_merge(base: Mapping[str, Any], overlay: Mapping[str, Any]) -> dict[str,
     return merged
 
 
+def expand_dotfiles(value: Any, dotfiles: Path) -> Any:
+    if isinstance(value, str) and value.startswith("$DOTFILES/"):
+        return str(dotfiles / value.removeprefix("$DOTFILES/"))
+    if isinstance(value, list):
+        return [expand_dotfiles(item, dotfiles) for item in value]
+    if isinstance(value, Mapping):
+        return {key: expand_dotfiles(item, dotfiles) for key, item in value.items()}
+    return value
+
+
 def main(argv: list[str]) -> int:
-    if len(argv) != 4:
-        print("usage: merge-profile.py <common.json> <profile.json> <output.json>", file=sys.stderr)
+    if len(argv) != 6:
+        print(
+            "usage: merge-profile.py <common.json> <profile.json> "
+            "<settings-output.json> <web-search-output.json> <dotfiles>",
+            file=sys.stderr,
+        )
         return 2
 
     common_path = Path(argv[1])
     profile_path = Path(argv[2])
-    output_path = Path(argv[3])
-    merged = deep_merge(load_json(common_path), load_json(profile_path))
-    output_path.write_text(json.dumps(merged, indent=2) + "\n", encoding="utf-8")
+    settings_output_path = Path(argv[3])
+    web_search_output_path = Path(argv[4])
+    dotfiles = Path(argv[5]).resolve()
+    merged = expand_dotfiles(
+        deep_merge(load_json(common_path), load_json(profile_path)), dotfiles
+    )
+    web_search_config = merged.pop("webSearchConfig", {})
+    if not isinstance(web_search_config, dict):
+        raise SystemExit(
+            f"merge-profile: webSearchConfig in {profile_path} must be a JSON object"
+        )
+    settings_output_path.write_text(
+        json.dumps(merged, indent=2) + "\n", encoding="utf-8"
+    )
+    web_search_output_path.write_text(
+        json.dumps(web_search_config, indent=2) + "\n", encoding="utf-8"
+    )
     return 0
 
 
