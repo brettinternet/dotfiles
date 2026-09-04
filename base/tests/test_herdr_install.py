@@ -72,14 +72,6 @@ class HerdrInstallTests(unittest.TestCase):
         ):
             self.assertIn(tool, tools)
 
-    def test_local_plugins_support_linux_and_macos(self) -> None:
-        manifests = (BASE / ".config/herdr/plugins").glob("*/herdr-plugin.toml")
-        self.assertGreater(sum(1 for _ in manifests), 0)
-        for manifest in (BASE / ".config/herdr/plugins").glob("*/herdr-plugin.toml"):
-            with self.subTest(plugin=manifest.parent.name):
-                platforms = tomllib.loads(manifest.read_text())["platforms"]
-                self.assertEqual(["linux", "macos"], platforms)
-
     def test_herdr_panes_are_exempt_from_idle_logout(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

@@ -161,10 +161,24 @@
         else
           echo 'hwt not on PATH; skipping HWT plugin (mise install hwt)'
         fi
-        for manifest in base/.config/herdr/plugins/*/herdr-plugin.toml; do
-          herdr plugin link "${manifest%/herdr-plugin.toml}"
+        plugins='command-palette last-workspace pane-collapse pane-equalize pane-rotate pane-title previous-pane-focus seamless-navigation window-title'
+        installed="$(herdr plugin list --json)"
+        for plugin in $plugins; do
+          plugin_id="brett.$plugin"
+          source="brettinternet/herdr-plugins/$plugin"
+          if printf '%s' "$installed" | jq -e --arg id "$plugin_id" \
+            '.result.plugins[] | select(.plugin_id == $id and .source.kind == "local")' \
+            >/dev/null; then
+            herdr plugin unlink "$plugin_id"
+          fi
+          if ! printf '%s' "$installed" | jq -e --arg id "$plugin_id" --arg subdir "$plugin" \
+            '.result.plugins[] | select(.plugin_id == $id and .source.kind == "github" and .source.owner == "brettinternet" and .source.repo == "herdr-plugins" and .source.subdir == $subdir)' \
+            >/dev/null; then
+            herdr plugin install "$source" --yes
+            echo "herdr plugin: $plugin_id"
+          fi
         done
-      description: Install and link herdr plugins
+      description: Install herdr plugins
       stdout: true
       stderr: true
     # Install plugins at the versions committed in lazy-lock.json. Deliberately
