@@ -142,6 +142,10 @@ for source in "$source_dir"/*.md; do
     printf 'Missing agent tools in: %s\n' "$source" >&2
     exit 1
   fi
+  if ships "$source" pi && [ -z "$(field "$source" pi-tools)" ]; then
+    printf 'Missing Pi agent tools in: %s\n' "$source" >&2
+    exit 1
+  fi
 
   if ships "$source" claude; then require_managed "$claude_dir/$role.md"; fi
   if ships "$source" omp; then require_managed "$omp_dir/$role.md"; fi
@@ -201,10 +205,19 @@ for source in "$source_dir"/*.md; do
   fi
 
   if ships "$source" pi; then
+    pi_tools=$(field "$source" pi-tools)
     {
       printf '%s\n' '---'
       printf 'name: %s\n' "$role"
       printf 'description: %s\n' "$description"
+      if [ "$pi_tools" = none ]; then
+        printf '%s\n' 'tools:'
+      else
+        printf 'tools: %s\n' "$pi_tools"
+      fi
+      printf '%s\n' 'systemPromptMode: replace'
+      printf '%s\n' 'inheritProjectContext: true'
+      printf '%s\n' 'inheritGlobalContext: true'
       printf '%s\n\n' '---'
       body "$source"
     } > "$pi_dir/$role.md"

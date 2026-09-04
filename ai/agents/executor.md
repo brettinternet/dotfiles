@@ -1,6 +1,7 @@
 ---
 description: Scoped implementer on a mid-tier model for well-specified tasks - a refined backlog item, an independent file area, tests, UI, or a migration. Give it the exact target, scope boundaries, acceptance criteria, and non-goals; it implements real behavior, runs targeted checks, and reports evidence. Returns open questions instead of guessing on design or product decisions.
 tools: claude omp pi opencode codex
+pi-tools: read, grep, find, ls, bash, edit, write
 claude-model: sonnet
 claude-effort: medium
 omp-model: pi/task

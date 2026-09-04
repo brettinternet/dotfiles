@@ -1,6 +1,7 @@
 ---
 description: Read-only codebase scout on a cheap model. Fan out for discovery - find files, trace callsites, map data flow, gather evidence, summarize conventions. Returns findings with exact path:line references, never edits. Run several in parallel to keep the orchestrating context clean.
 tools: omp pi opencode
+pi-tools: read, grep, find, ls
 omp-model: pi/smol
 omp-effort: low
 ---
