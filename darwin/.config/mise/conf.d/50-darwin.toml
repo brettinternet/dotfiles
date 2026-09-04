@@ -50,7 +50,8 @@ lima = "latest"
 colima = "latest"
 docker-cli = "latest"
 [tools."npm:@deepseek-harness-tui/dsh-tui"]
-version = "latest"
+# 0.10.0-beta.5 was published with unresolved workspace: and link: dependencies.
+version = "0.9.3"
 depends = ["bun", "npm:@deepseek-ai/dsh"]
 
 [tools.docker-compose]
