@@ -743,8 +743,7 @@ trusted_hash = "sha256:trusted"
                 "npm:pi-mcp-adapter@2.32.1",
                 "npm:pi-chrome@0.15.46",
                 "npm:@sting8k/pi-vcc@0.7.0",
-                "../../dev/me/pi-live-codex",
-                "../../dev/me/pi-session-title",
+                "../../dev/me/pi-extensions",
             ],
             settings["packages"],
         )
