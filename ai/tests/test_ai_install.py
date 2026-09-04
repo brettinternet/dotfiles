@@ -743,6 +743,7 @@ trusted_hash = "sha256:trusted"
                 "npm:pi-mcp-adapter@2.32.1",
                 "npm:pi-chrome@0.15.46",
                 "npm:@sting8k/pi-vcc@0.7.0",
+                "npm:@narumitw/pi-btw@0.57.0",
                 "git:github.com/brettinternet/pi-extensions",
             ],
             settings["packages"],
