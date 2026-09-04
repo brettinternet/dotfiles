@@ -216,6 +216,8 @@
       path: ai/AGENTS.md
     ~/.claude/statusline-command.sh:
       path: ai/claude/statusline-command.sh
+    ~/.claude/keybindings.json:
+      path: ai/claude/keybindings.json
     ~/.claude/skills/:
       glob: true
       relink: false
