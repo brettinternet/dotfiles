@@ -2,7 +2,7 @@ INSTALL := ./install
 ALL_GROUPS := base,darwin,x11,thinkpad,i3,ai
 
 .DEFAULT_GOAL := help
-.PHONY: help install update up update-zinit update-mise update-herdr update-brew update-gh update-nvim update-vim update-doom update-tmux update-mas update-dotbot update_dotbot uninstall base server darwin mac thinkpad i3 ai
+.PHONY: help install update up update-zinit update-mise update-pi update-herdr update-brew update-gh update-nvim update-vim update-doom update-tmux update-mas update-dotbot update_dotbot uninstall base server darwin mac thinkpad i3 ai
 
 help:
 	@printf '%s\n' \
@@ -16,6 +16,7 @@ help:
 		'  make update        update user-managed dependencies' \
 		'  make update-zinit  update Zinit and Zinit-managed plugins' \
 		'  make update-mise   update tools installed by mise' \
+		'  make update-pi     update installed Pi extensions' \
 		'  make update-herdr update GitHub-installed Herdr plugins' \
 		'  make update-brew   update Homebrew formulae and casks' \
 		'  make update-gh     update GitHub CLI extensions' \
@@ -35,6 +36,7 @@ up: update
 update:
 	@$(MAKE) --no-print-directory update-zinit
 	@$(MAKE) --no-print-directory update-mise
+	@$(MAKE) --no-print-directory update-pi
 	@$(MAKE) --no-print-directory update-herdr
 	@$(MAKE) --no-print-directory update-gh
 	@$(MAKE) --no-print-directory update-nvim
@@ -55,6 +57,13 @@ update-mise:
 		mise up --yes; \
 	else \
 		printf '%s\n' 'Skipping mise update: mise is not installed'; \
+	fi
+
+update-pi:
+	@if command -v pi >/dev/null 2>&1; then \
+		pi update --extensions; \
+	else \
+		printf '%s\n' 'Skipping Pi extension update: pi is not installed'; \
 	fi
 
 update-herdr:
