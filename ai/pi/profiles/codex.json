@@ -15,12 +15,9 @@
     "defaultProvider": "openai-codex",
     "defaultThinking": "high",
     "agentOverrides": {
-      "scout": { "model": "openai-codex/gpt-5.6-luna", "thinking": "low" },
       "researcher": { "model": "openai-codex/gpt-5.6-luna", "thinking": "medium" },
-      "worker": { "model": "openai-codex/gpt-5.6-luna", "thinking": "max" },
       "reviewer": { "model": "openai-codex/gpt-5.6-terra", "thinking": "max" },
       "oracle": { "model": "openai-codex/gpt-5.6-sol", "thinking": "max" },
-      "delegate": { "model": "openai-codex/gpt-5.6-luna", "thinking": "high" },
       "explore": { "model": "openai-codex/gpt-5.6-luna", "thinking": "low" },
       "executor": { "model": "openai-codex/gpt-5.6-luna", "thinking": "max" },
       "verifier": { "model": "openai-codex/gpt-5.6-luna", "thinking": "max" },

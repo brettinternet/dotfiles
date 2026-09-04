@@ -35,7 +35,23 @@ Pi and OMP model metadata is intentionally pinned where provider defaults are un
 
 ## Shared agents
 
-The roster covers discovery (`explore`), implementation (`executor`), verification (`verifier`), review (`reviewer`), judgment (`oracle`), PR monitoring (`pr-watcher`), and external wording (`writer`). Delegation policy lives in [`AGENTS.md`](AGENTS.md); role instructions and harness routing live in `agents/<role>.md`.
+The roster covers discovery (`explore`), implementation (`executor`), verification (`verifier`), review (`reviewer`), judgment (`oracle`), PR monitoring (`pr-watcher`), external wording (`writer`), and explicit maintainability audits (`thermo-nuclear-code-quality-review`). Pi also keeps the builtin `researcher` for sourced web research.
+
+Pi disables the overlapping builtin `scout`, `worker`, and `delegate` roles. It also disables the optional `claude-code`, `codex-exec`, and `cursor-agent` read-only/writer pairs: those are isolated one-shot adapters to separately installed CLIs, not native Pi roles, and duplicate this roster without supporting native model routing. They can be re-enabled in `pi/profiles/common.json` if a separate CLI subscription or runtime is intentionally needed.
+
+Pi profile overlays route the active roster by task shape:
+
+| Role                                 | `codex`      | `or`                    |
+| ------------------------------------ | ------------ | ----------------------- |
+| `explore`, `pr-watcher`              | Luna, low    | Luna, low               |
+| `researcher`                         | Luna, medium | Luna, medium            |
+| `executor`, `verifier`               | Luna, max    | Luna, max               |
+| `reviewer`                           | Terra, max   | Claude Opus 4.8, xhigh  |
+| `oracle`                             | Sol, max     | Claude Fable, high      |
+| `thermo-nuclear-code-quality-review` | Sol, max     | Sol Pro, xhigh          |
+| `writer`                             | Terra, low   | Claude Opus 4.6, medium |
+
+Delegation policy lives in [`AGENTS.md`](AGENTS.md); role instructions and harness routing live in `agents/<role>.md`.
 
 ## Herdr
 

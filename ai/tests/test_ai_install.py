@@ -789,12 +789,34 @@ trusted_hash = "sha256:trusted"
             },
             subagents["modelScope"],
         )
-        reviewer = settings["subagents"]["agentOverrides"]["reviewer"]
-        self.assertEqual("openai-codex/gpt-5.6-terra", reviewer["model"])
-        self.assertEqual("max", reviewer["thinking"])
-        for override in subagents["agentOverrides"].values():
-            self.assertTrue(override["inheritProjectContext"])
-            self.assertTrue(override["inheritGlobalContext"])
+        overrides = subagents["agentOverrides"]
+        disabled = {
+            name for name, override in overrides.items() if override.get("disabled")
+        }
+        self.assertEqual(
+            {
+                "scout",
+                "worker",
+                "delegate",
+                "claude-code",
+                "claude-code-writer",
+                "codex-exec",
+                "codex-exec-writer",
+                "cursor-agent",
+                "cursor-agent-writer",
+            },
+            disabled,
+        )
+        self.assertEqual(
+            ("openai-codex/gpt-5.6-luna", "medium"),
+            (overrides["researcher"]["model"], overrides["researcher"]["thinking"]),
+        )
+        self.assertEqual("openai-codex/gpt-5.6-terra", overrides["reviewer"]["model"])
+        self.assertEqual("max", overrides["reviewer"]["thinking"])
+        for name, override in overrides.items():
+            if name not in disabled:
+                self.assertTrue(override["inheritProjectContext"])
+                self.assertTrue(override["inheritGlobalContext"])
         self.assertEqual(
             "codex\n", (self.home / ".pi/agent/.active-profile").read_text()
         )
@@ -826,23 +848,34 @@ trusted_hash = "sha256:trusted"
         self.assertEqual("openrouter", subagents["defaultProvider"])
         self.assertEqual("openrouter/openai/gpt-5.6-luna", subagents["defaultModel"])
         overrides = subagents["agentOverrides"]
+        disabled = {
+            name for name, override in overrides.items() if override.get("disabled")
+        }
         self.assertEqual(
             {
-                "model": "openrouter/anthropic/claude-opus-4.8",
-                "thinking": "xhigh",
-                "inheritProjectContext": True,
-                "inheritGlobalContext": True,
+                "scout",
+                "worker",
+                "delegate",
+                "claude-code",
+                "claude-code-writer",
+                "codex-exec",
+                "codex-exec-writer",
+                "cursor-agent",
+                "cursor-agent-writer",
             },
-            overrides["reviewer"],
+            disabled,
         )
         self.assertEqual(
-            {
-                "model": "openrouter/anthropic/claude-opus-4.6",
-                "thinking": "medium",
-                "inheritProjectContext": True,
-                "inheritGlobalContext": True,
-            },
-            overrides["writer"],
+            ("openrouter/openai/gpt-5.6-luna", "medium"),
+            (overrides["researcher"]["model"], overrides["researcher"]["thinking"]),
+        )
+        self.assertEqual(
+            ("openrouter/anthropic/claude-opus-4.8", "xhigh"),
+            (overrides["reviewer"]["model"], overrides["reviewer"]["thinking"]),
+        )
+        self.assertEqual(
+            ("openrouter/anthropic/claude-opus-4.6", "medium"),
+            (overrides["writer"]["model"], overrides["writer"]["thinking"]),
         )
         self.assertEqual("or\n", (self.home / ".pi/agent/.active-profile").read_text())
         self.assertEqual(before, self.repository_status())
