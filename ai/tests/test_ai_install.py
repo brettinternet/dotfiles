@@ -39,6 +39,33 @@ class AiInstallTests(unittest.TestCase):
         )
         return completed
 
+    def install_fake_dcg(self) -> Path:
+        dcg = self.home / "bin/dcg"
+        dcg.parent.mkdir(exist_ok=True)
+        dcg.write_text(
+            """#!/usr/bin/env python3
+import os
+import sys
+from pathlib import Path
+
+target = sys.argv[2]
+if target == "--opencode":
+    path = Path(os.environ["HOME"]) / ".config/opencode/plugins/dcg-guard.js"
+    marker = "// dcg-opencode-plugin generated for test\\n"
+elif target == "--omp":
+    path = Path(os.environ["HOME"]) / ".omp/agent/extensions/dcg-guard.ts"
+    marker = "// dcg-omp-extension generated for test\\n"
+else:
+    raise SystemExit(f"unexpected arguments: {sys.argv[1:]}")
+path.parent.mkdir(parents=True, exist_ok=True)
+path.write_text(marker)
+"""
+        )
+        dcg.chmod(0o755)
+        self.environment["DCG_BIN"] = str(dcg)
+        return dcg
+
+
     def repository_status(self) -> str:
         completed = subprocess.run(
             ["git", "status", "--porcelain"],
@@ -231,6 +258,67 @@ class AiInstallTests(unittest.TestCase):
             (self.home / ".claude/agents/.install-agents").read_text(),
         )
         self.assertEqual(before, self.repository_status())
+
+    def test_destructive_command_guards_are_installed_idempotently(self) -> None:
+        dcg = self.install_fake_dcg()
+
+        claude_settings = self.home / ".claude/settings.json"
+        claude_settings.parent.mkdir(parents=True)
+        claude_settings.write_text(
+            json.dumps(
+                {
+                    "hooks": {
+                        "PreToolUse": [
+                            {
+                                "matcher": "Read",
+                                "hooks": [
+                                    {"type": "command", "command": "keep-claude"}
+                                ],
+                            }
+                        ]
+                    }
+                }
+            )
+        )
+        codex_hooks = self.home / ".codex/hooks.json"
+        codex_hooks.parent.mkdir(parents=True)
+        codex_hooks.write_text(
+            json.dumps(
+                {
+                    "hooks": {
+                        "PreToolUse": [
+                            {
+                                "matcher": "Read",
+                                "hooks": [{"type": "command", "command": "keep-codex"}],
+                            }
+                        ]
+                    }
+                }
+            )
+        )
+
+        self.run_command("ai/.bin/install-dcg-guards")
+        self.run_command("ai/.bin/install-dcg-guards")
+
+        for path, preserved, matcher in (
+            (claude_settings, "keep-claude", "Bash|PowerShell"),
+            (codex_hooks, "keep-codex", "Bash"),
+        ):
+            entries = json.loads(path.read_text())["hooks"]["PreToolUse"]
+            self.assertEqual(matcher, entries[0]["matcher"])
+            self.assertEqual(str(dcg), entries[0]["hooks"][0]["command"])
+            self.assertEqual(
+                1, sum("dcg" in entry["hooks"][0]["command"] for entry in entries)
+            )
+            self.assertEqual(preserved, entries[1]["hooks"][0]["command"])
+
+        opencode_guard = self.home / ".config/opencode/plugins/dcg-guard.js"
+        omp_guard = self.home / ".omp/agent/extensions/dcg-guard.ts"
+        self.assertFalse(opencode_guard.is_symlink())
+        self.assertFalse(omp_guard.is_symlink())
+        self.assertIn("dcg-opencode-plugin", opencode_guard.read_text())
+        self.assertIn("dcg-omp-extension", omp_guard.read_text())
+
 
     def test_agent_definitions_retire_legacy_omp_directory(self) -> None:
         legacy = self.home / ".omp/agents"
@@ -656,6 +744,9 @@ trusted_hash = "sha256:trusted"
             settings["packages"],
         )
         self.assertEqual(
+            [str(ROOT / "ai/pi/extensions/dcg-guard.ts")], settings["extensions"]
+        )
+        self.assertEqual(
             {
                 "searchRouting": {
                     "providers": ["openai"],
@@ -713,7 +804,10 @@ trusted_hash = "sha256:trusted"
         self.assertEqual("openai/gpt-5.6-sol", settings["defaultModel"])
         self.assertEqual("medium", settings["defaultThinkingLevel"])
         self.assertEqual(
-            [str(ROOT / "ai/pi/extensions/openrouter-web-search.ts")],
+            [
+                str(ROOT / "ai/pi/extensions/dcg-guard.ts"),
+                str(ROOT / "ai/pi/extensions/openrouter-web-search.ts"),
+            ],
             settings["extensions"],
         )
         self.assertEqual(
@@ -1056,6 +1150,7 @@ trusted_hash = "sha256:trusted"
 
     def test_make_ai_is_idempotent_without_dirtying_checkout(self) -> None:
         before = self.repository_status()
+        self.install_fake_dcg()
         repository_envrc = ROOT / "base/.envrc"
         if not (repository_envrc.exists() or repository_envrc.is_symlink()):
             local_envrc = self.home / ".envrc"
