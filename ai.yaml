@@ -180,7 +180,7 @@
         # Each integration refuses with a nonzero status when its agent's config
         # directory is absent, so skip those instead of failing the whole run.
         # Reinstalling is byte-idempotent: hook entries are replaced, not appended.
-        for name in omp opencode claude codex; do
+        for name in pi omp opencode claude codex; do
           if [ "$name" = opencode ] && [ ! -L "$HOME/.config/opencode/tui.jsonc" ]; then
             echo "herdr integration: opencode deferred until managed links exist"
             continue
