@@ -1,0 +1,27 @@
+{
+  "defaultProvider": "anthropic",
+  "defaultModel": "claude-sonnet-5",
+  "defaultThinkingLevel": "medium",
+  "enabledModels": ["claude-sonnet-5", "claude-opus-4.8", "claude-haiku-4-5", "claude-opus-5", "claude-opus-4.6"],
+  "subagents": {
+    "defaultModel": "anthropic/claude-haiku-4-5",
+    "defaultProvider": "anthropic",
+    "defaultThinking": "medium",
+    "agentOverrides": {
+      "researcher": { "model": "anthropic/claude-haiku-4-5", "thinking": "medium" },
+      "reviewer": { "model": "anthropic/claude-opus-4.8", "thinking": "xhigh" },
+      "oracle": { "model": "anthropic/claude-opus-5", "thinking": "xhigh" },
+      "explore": { "model": "anthropic/claude-haiku-4-5", "thinking": "medium" },
+      "executor": { "model": "anthropic/claude-sonnet-5", "thinking": "max" },
+      "verifier": { "model": "anthropic/claude-sonnet-5", "thinking": "max" },
+      "pr-watcher": { "model": "anthropic/claude-haiku-4-5", "thinking": "medium" },
+      "thermo-nuclear-code-quality-review": { "model": "anthropic/claude-opus-5", "thinking": "xhigh" },
+      "writer": { "model": "anthropic/claude-opus-4.6", "thinking": "medium" }
+    },
+    "modelScope": {
+      "enforce": true,
+      "strict": true,
+      "allow": ["anthropic/*"]
+    }
+  }
+}
