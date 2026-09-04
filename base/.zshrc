@@ -302,6 +302,16 @@ zinit ice silent atload"load_prompt"
 # https://github.com/geometry-zsh/geometry/blob/0f82c567db277024f340b5854a646094d194a31f/options.md
 zinit load geometry-zsh/geometry
 
+# Geometry's upstream implementation assigns `dir` globally when called
+# outside its normal command-substitution wrapper.
+geometry_path() {
+  local dir
+  (($+GEOMETRY_PATH_TRUNCATE)) || GEOMETRY_PATH_TRUNCATE=3
+  dir=${GEOMETRY_PATH_SYMBOL_HOME:-"%$GEOMETRY_PATH_TRUNCATE~"}
+  ( ${GEOMETRY_PATH_SHOW_BASENAME:-false} ) && dir=${PWD:t}
+  ansi ${GEOMETRY_PATH_COLOR:-blue} "$dir"
+}
+
 
 # -- Autocompletion
 
