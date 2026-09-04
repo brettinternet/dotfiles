@@ -1,0 +1,113 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+import tempfile
+from pathlib import Path
+from typing import Any
+
+DOTFILES = Path(
+    os.environ.get("DOTFILES", Path(__file__).resolve().parents[2])
+).resolve()
+HOME = Path.home()
+DCG_BIN = Path(
+    os.environ.get(
+        "DCG_BIN",
+        HOME
+        / ".local/share/mise/installs/github-dicklesworthstone-destructive-command-guard/latest/dcg",
+    )
+)
+
+
+def write_json_atomic(path: Path, data: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(
+        "w", encoding="utf-8", dir=path.parent, delete=False
+    ) as handle:
+        json.dump(data, handle, indent=2)
+        handle.write("\n")
+        temporary = Path(handle.name)
+    temporary.replace(path)
+
+
+def is_dcg_command(command: object) -> bool:
+    return isinstance(command, str) and (
+        "destructive-command-guard" in command or Path(command).name == "dcg"
+    )
+
+
+def install_hook(path: Path, matcher: str) -> None:
+    if path.is_symlink():
+        raise SystemExit(f"Refusing to modify linked hook configuration: {path}")
+    if path.exists():
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            raise SystemExit(f"Hook configuration must contain an object: {path}")
+    else:
+        data = {}
+
+    hooks = data.setdefault("hooks", {})
+    if not isinstance(hooks, dict):
+        raise SystemExit(f"hooks must contain an object: {path}")
+    entries = hooks.setdefault("PreToolUse", [])
+    if not isinstance(entries, list):
+        raise SystemExit(f"hooks.PreToolUse must contain a list: {path}")
+
+    retained: list[object] = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            retained.append(entry)
+            continue
+        handlers = entry.get("hooks")
+        if not isinstance(handlers, list):
+            retained.append(entry)
+            continue
+        filtered = [
+            handler
+            for handler in handlers
+            if not (
+                isinstance(handler, dict) and is_dcg_command(handler.get("command"))
+            )
+        ]
+        if filtered:
+            retained.append({**entry, "hooks": filtered})
+
+    retained.insert(
+        0,
+        {
+            "matcher": matcher,
+            "hooks": [{"type": "command", "command": str(DCG_BIN)}],
+        },
+    )
+    hooks["PreToolUse"] = retained
+    write_json_atomic(path, data)
+
+
+def remove_legacy_link(destination: Path, legacy_source: Path) -> None:
+    if destination.is_symlink() and destination.resolve() == legacy_source.resolve():
+        subprocess.run(["trash", str(destination)], check=True)
+
+
+def main() -> int:
+    if not DCG_BIN.is_file() or not os.access(DCG_BIN, os.X_OK):
+        raise SystemExit(f"dcg executable not found: {DCG_BIN}")
+
+    install_hook(HOME / ".claude/settings.json", "Bash|PowerShell")
+    install_hook(HOME / ".codex/hooks.json", "Bash")
+    remove_legacy_link(
+        HOME / ".omp/agent/extensions/dcg-guard.ts",
+        DOTFILES / "ai/pi/extensions/dcg-guard.ts",
+    )
+    remove_legacy_link(
+        HOME / ".config/opencode/plugins/dcg-guard.js",
+        DOTFILES / "ai/opencode/dcg-guard.js",
+    )
+    subprocess.run([str(DCG_BIN), "install", "--omp", "--force"], check=True)
+    subprocess.run([str(DCG_BIN), "install", "--opencode", "--force"], check=True)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

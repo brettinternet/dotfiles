@@ -190,6 +190,10 @@
       description: Install herdr agent integrations for locally installed agents
       stdout: true
       stderr: true
+    - command: ai/.bin/install-dcg-guards
+      description: Enforce destructive-command guards for installed AI harnesses
+      stdout: true
+      stderr: true
     - command: ai/.bin/install-agent-commands
       description: Generate shared skills plus Claude and OpenCode command adapters
       stdout: true
