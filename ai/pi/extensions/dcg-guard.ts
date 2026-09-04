@@ -16,6 +16,46 @@ const ALLOW = { deny: false, reason: "" };
 
 type Decision = { deny: boolean; reason: string };
 
+const VARIABLE_REFERENCE = /(^|[^\\])\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[^}]+\}|[0-9@*#?!$(-])/;
+const DELETE_COMMAND =
+  /(?:^|[|&(]\s*)(?:(?:command|builtin|sudo)\s+)*(?:\/[^\s]+\/)?(?:rm|trash)\b|\bfind\b[^\n]*(?:-delete|-exec\s+(?:\/[^\s]+\/)?(?:rm|trash)\b)|\bxargs\b[^\n]*(?:\/[^\s]+\/)?(?:rm|trash)\b/;
+
+export function localDestructiveTargetDecision(command: string, home = homedir()): Decision {
+  for (const clause of command.split(/&&|\|\||[;\n]/)) {
+    if (!DELETE_COMMAND.test(clause)) continue;
+
+    if (VARIABLE_REFERENCE.test(clause)) {
+      return {
+        deny: true,
+        reason:
+          "Blocked variable-derived deletion target. Use a verified literal target, or leave the path in place and report it.",
+      };
+    }
+
+    const protectedPaths = [
+      home,
+      join(home, ".dotfiles"),
+      join(home, ".config"),
+      join(home, ".ssh"),
+      join(home, ".gnupg"),
+      join(home, ".local"),
+      join(home, ".pi"),
+      join(home, ".omp"),
+      join(home, ".claude"),
+      join(home, ".codex"),
+    ];
+    const namesProtectedPath = protectedPaths.some((path) => {
+      const escaped = path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      return new RegExp(`(?:^|\\s|["'])${escaped}(?=$|\\s|["'])`).test(clause);
+    });
+    if (/(?:^|\s)(?:--\s+)?\/(?:\s|$)/.test(clause) || namesProtectedPath) {
+      return { deny: true, reason: "Blocked deletion of a protected root path." };
+    }
+  }
+
+  return ALLOW;
+}
+
 function dcgDecision(command: string): Promise<Decision> {
   const { promise, resolve } = Promise.withResolvers<Decision>();
   let settled = false;
@@ -76,7 +116,9 @@ export default function dcgGuard(pi: ExtensionAPI): void {
     const command = String(event.input?.command ?? "");
     if (!command.trim()) return;
 
-    let decision: Decision;
+    let decision: Decision = localDestructiveTargetDecision(command);
+    if (decision.deny) return { block: true, reason: decision.reason };
+
     try {
       decision = await dcgDecision(command);
     } catch {
