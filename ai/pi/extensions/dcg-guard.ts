@@ -17,11 +17,16 @@ const ALLOW = { deny: false, reason: "" };
 type Decision = { deny: boolean; reason: string };
 
 const VARIABLE_REFERENCE = /(^|[^\\])\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[^}]+\}|[0-9@*#?!$(-])/;
+const RM_COMMAND =
+  /(?:^|[|&(]\s*)(?:(?:command|builtin|sudo)\s+)*(?:\/[^\s]+\/)?rm\b|\bfind\b[^\n]*-exec\s+(?:\/[^\s]+\/)?rm\b|\bxargs\b[^\n]*(?:\/[^\s]+\/)?rm\b/;
 const DELETE_COMMAND =
   /(?:^|[|&(]\s*)(?:(?:command|builtin|sudo)\s+)*(?:\/[^\s]+\/)?(?:rm|trash)\b|\bfind\b[^\n]*(?:-delete|-exec\s+(?:\/[^\s]+\/)?(?:rm|trash)\b)|\bxargs\b[^\n]*(?:\/[^\s]+\/)?(?:rm|trash)\b/;
 
 export function localDestructiveTargetDecision(command: string, home = homedir()): Decision {
   for (const clause of command.split(/&&|\|\||[;\n]/)) {
+    if (RM_COMMAND.test(clause)) {
+      return { deny: true, reason: "Blocked `rm` by local policy. Use `trash` instead." };
+    }
     if (!DELETE_COMMAND.test(clause)) continue;
 
     if (VARIABLE_REFERENCE.test(clause)) {
