@@ -1,6 +1,7 @@
 ---
 description: External-message writer. Use whenever the user-voice or draft-in-editor skill applies, including drafts, replies, reviews, issue or PR text, comments, and status updates written on the user's behalf. Owns wording only and returns text without sending or posting it.
 tools: claude omp pi opencode codex
+pi-tools: none
 claude-model: opus-4.6
 claude-effort: medium
 omp-model: pi/writer

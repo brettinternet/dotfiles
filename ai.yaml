@@ -181,6 +181,10 @@
         # directory is absent, so skip those instead of failing the whole run.
         # Reinstalling is byte-idempotent: hook entries are replaced, not appended.
         for name in omp opencode claude codex; do
+          if [ "$name" = opencode ] && [ ! -L "$HOME/.config/opencode/tui.jsonc" ]; then
+            echo "herdr integration: opencode deferred until managed links exist"
+            continue
+          fi
           if herdr integration install "$name" >/dev/null 2>&1; then
             echo "herdr integration: $name"
           else
