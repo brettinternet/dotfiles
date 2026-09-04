@@ -22,12 +22,9 @@
     "defaultProvider": "openrouter",
     "defaultThinking": "high",
     "agentOverrides": {
-      "scout": { "model": "openrouter/openai/gpt-5.6-luna", "thinking": "low" },
-      "researcher": { "model": "openrouter/openai/gpt-5.6-luna", "thinking": "max" },
-      "worker": { "model": "openrouter/openai/gpt-5.6-luna", "thinking": "max" },
+      "researcher": { "model": "openrouter/openai/gpt-5.6-luna", "thinking": "medium" },
       "reviewer": { "model": "openrouter/anthropic/claude-opus-4.8", "thinking": "xhigh" },
       "oracle": { "model": "openrouter/anthropic/claude-fable-latest", "thinking": "high" },
-      "delegate": { "model": "openrouter/openai/gpt-5.6-luna", "thinking": "high" },
       "explore": { "model": "openrouter/openai/gpt-5.6-luna", "thinking": "low" },
       "executor": { "model": "openrouter/openai/gpt-5.6-luna", "thinking": "max" },
       "verifier": { "model": "openrouter/openai/gpt-5.6-luna", "thinking": "max" },
