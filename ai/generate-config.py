@@ -52,12 +52,18 @@ class Manifest:
         if not isinstance(data, dict) or data.get("version") != 1:
             raise SystemExit(f"{path}: expected manifest version 1")
         self.path = path
+        self.pi_launchers: dict[str, Any] = data.get("piLaunchers", {})
         self.roles: dict[str, Any] = data.get("roles", {})
         self.models: dict[str, Any] = data.get("models", {})
         self.profiles: dict[str, Any] = data.get("profiles", {})
         self.validate()
 
     def validate(self) -> None:
+        for name, route in self.pi_launchers.items():
+            if not re.fullmatch(r"[a-z][a-z0-9-]*", name) or name == "list":
+                raise SystemExit(f"{self.path}: invalid Pi launcher name {name!r}")
+            self.validate_route(route, f"piLaunchers.{name}")
+            self.model_id(route[0], "pi")
         for name, role in self.roles.items():
             if not isinstance(role, dict) or not role.get("route"):
                 raise SystemExit(f"{self.path}: role {name!r} requires route")
@@ -244,6 +250,11 @@ def render_outputs(manifest: Manifest) -> dict[Path, str]:
     omp_catalog = render_catalog(manifest, "omp")
     outputs[AI_ROOT / "omp/models.yml"] = yaml.safe_dump(omp_catalog, sort_keys=False)
     outputs[AI_ROOT / "pi/models.json"] = json.dumps(render_catalog(manifest, "pi"), indent=2) + "\n"
+    launcher_lines = [
+        f"  {json.dumps(name)}: {json.dumps([manifest.model_id(route[0], 'pi'), route[1]])}"
+        for name, route in manifest.pi_launchers.items()
+    ]
+    outputs[AI_ROOT / "pi/launchers.json"] = "{\n" + ",\n".join(launcher_lines) + "\n}\n"
 
     opencode_common = deep_merge(
         load_jsonc(AI_ROOT / "opencode/common-base.jsonc"),

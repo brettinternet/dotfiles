@@ -10,7 +10,7 @@ make ai
 
 ## Sources
 
-- `manifest.yaml` — central model catalog, profile routing, and cross-harness role mapping; `generate-config.py` renders harness-specific sources
+- `manifest.yaml` — central model catalog, Pi launchers, profile routing, and cross-harness role mapping; `generate-config.py` renders harness-specific sources
 - `agents/` — shared subagent prompts; `install-agents` renders harness-specific definitions
 - `.agents/skills/` — reusable skills discovered through `~/.agents/skills/`
 - `.agents/commands/` — shared workflows rendered as skills by `install-agent-commands`
@@ -28,6 +28,13 @@ ai-config generate --check
 ```
 
 The individual `pi-profile`, `omp-profile`, and `opencode-profile` commands remain available. Generated profile and model files under `pi/`, `omp/`, and `opencode/` should not be edited directly; change `manifest.yaml` and run `ai-config generate`.
+
+Use `p <launcher> [pi arguments...]` for a manifest-backed Pi model and thinking preset, or `p list` to show presets:
+
+```sh
+p fast
+p oracle --no-session "Review this design"
+```
 
 - **Pi:** combines `pi/profiles/common.json` with the selected generated overlay. `codex` uses ChatGPT subscription models; `or` requires `OPENROUTER_API_KEY`.
 - **OMP:** remains independently configured under `omp/`.

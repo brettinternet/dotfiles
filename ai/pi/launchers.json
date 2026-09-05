@@ -1,0 +1,4 @@
+{
+  "fast": ["openrouter/nvidia/nemotron-3.5-lightning", "low"],
+  "oracle": ["openrouter/openai/gpt-5.6-sol-pro", "high"]
+}

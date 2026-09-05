@@ -1,5 +1,9 @@
 version: 1
 
+piLaunchers:
+  fast: [or-nemotron-lightning, low]
+  oracle: [or-sol-pro, high]
+
 roles:
   explore: { route: smol }
   executor: { route: task }
