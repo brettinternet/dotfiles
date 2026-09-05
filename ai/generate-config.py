@@ -97,7 +97,7 @@ class Manifest:
                     self.validate_effort(effort, f"profiles.{profile_name}.{harness}.efforts")
             pi = profile.get("pi")
             if pi:
-                for key in ("parent", "defaultAgent", "researcher"):
+                for key in ("parent", "defaultAgent", "researcher", "progress"):
                     self.validate_route(pi[key], f"profiles.{profile_name}.pi.{key}")
                 for model in pi.get("enabled", []):
                     self.model_id(model, "pi")
@@ -217,6 +217,13 @@ def render_pi_profile(manifest: Manifest, profile: dict[str, Any]) -> dict[str, 
         "model": f"{manifest.model_id(title_alias, 'pi')}:{title_effort}",
         "maxTokens": 30,
         "maxLength": 60,
+    }
+    progress_alias, progress_effort = config["progress"]
+    rendered["progressConfig"] = {
+        "model": f"{manifest.model_id(progress_alias, 'pi')}:{progress_effort}",
+        "maxInputChars": 12000,
+        "maxTokens": 180,
+        "timeoutMs": 15000,
     }
     return deep_merge(rendered, config.get("settings", {}))
 

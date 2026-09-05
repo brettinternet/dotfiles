@@ -34,7 +34,7 @@ The individual `pi-profile`, `omp-profile`, and `opencode-profile` commands rema
 - **OpenCode:** combines `opencode/profiles/common.jsonc` with an overlay. Run `opencode-profile list` for available profiles.
 - **dsh:** links global instructions, presets, and a settings template. API keys come from environment variables; OAuth credentials remain machine-local in `~/.dsh/.credentials.yaml`.
 
-`manifest.yml` owns model metadata and role-to-model routing. OMP's richer `modelRoles` vocabulary is canonical: shared agents map through it (for example, `oracle` maps to `slow`), `title` also renders Pi's title-model config, and OMP-only roles remain OMP-only. Harness profile names are mapped by the manifest, such as central `codex` to OpenCode `gpt`.
+`manifest.yml` owns model metadata and role-to-model routing. OMP's richer `modelRoles` vocabulary is canonical: shared agents map through it (for example, `oracle` maps to `slow`), while Pi-specific `title` and `progress` routes render their model configs. OMP-only roles remain OMP-only. Harness profile names are mapped by the manifest, such as central `codex` to OpenCode `gpt`.
 
 ## Shared agents
 

@@ -26,6 +26,8 @@ VCC_CONFIG_SOURCE="$DOTFILES/ai/pi/pi-vcc-config.json"
 VCC_CONFIG_FILE="$CONFIG_DIR/pi-vcc-config.json"
 TITLE_CONFIG_FILE="$CONFIG_DIR/pi-title.jsonc"
 LEGACY_TITLE_SOURCE="$DOTFILES/ai/pi/pi-title.jsonc"
+PROGRESS_CONFIG_FILE="$CONFIG_DIR/pi-progress.jsonc"
+LEGACY_PROGRESS_SOURCE="$DOTFILES/ai/pi/pi-progress.jsonc"
 if [ -n "${PI_CODING_AGENT_DIR:-}" ]; then
   WEB_SEARCH_CONFIG_FILE="$CONFIG_DIR/web-search.json"
 else
@@ -77,6 +79,16 @@ require_managed_title_config() {
   die "pi-profile: refusing to overwrite unmanaged title config: $TITLE_CONFIG_FILE"
 }
 
+require_managed_progress_config() {
+  [ ! -e "$PROGRESS_CONFIG_FILE" ] && [ ! -L "$PROGRESS_CONFIG_FILE" ] && return 0
+  if [ -L "$PROGRESS_CONFIG_FILE" ]; then
+    [ "$(readlink "$PROGRESS_CONFIG_FILE")" = "$LEGACY_PROGRESS_SOURCE" ] && return 0
+    die "pi-profile: refusing to overwrite unmanaged progress config: $PROGRESS_CONFIG_FILE"
+  fi
+  is_managed_active_file && return 0
+  die "pi-profile: refusing to overwrite unmanaged progress config: $PROGRESS_CONFIG_FILE"
+}
+
 render_config() {
   name=$1
   [ "$name" != common ] || die "pi-profile: 'common' is not selectable"
@@ -85,18 +97,22 @@ render_config() {
   [ -f "$target" ] || die "pi-profile: profile '$name' not found: $target"
   require_managed_config
   require_managed_title_config
+  require_managed_progress_config
   [ ! -L "$WEB_SEARCH_CONFIG_FILE" ] || die "pi-profile: refusing to overwrite linked web search config: $WEB_SEARCH_CONFIG_FILE"
   mkdir -p "$CONFIG_DIR" "$(dirname "$WEB_SEARCH_CONFIG_FILE")"
   tmp="$CONFIG_FILE.tmp.$$"
   web_tmp="$WEB_SEARCH_CONFIG_FILE.tmp.$$"
   title_tmp="$TITLE_CONFIG_FILE.tmp.$$"
-  if python3 "$MERGE_PROFILE" "$COMMON_PROFILE" "$target" "$tmp" "$web_tmp" "$title_tmp" "$DOTFILES"; then
+  progress_tmp="$PROGRESS_CONFIG_FILE.tmp.$$"
+  if python3 "$MERGE_PROFILE" "$COMMON_PROFILE" "$target" "$tmp" "$web_tmp" "$title_tmp" "$progress_tmp" "$DOTFILES"; then
     mv "$tmp" "$CONFIG_FILE"
     mv "$web_tmp" "$WEB_SEARCH_CONFIG_FILE"
     [ ! -L "$TITLE_CONFIG_FILE" ] || trash "$TITLE_CONFIG_FILE"
     mv "$title_tmp" "$TITLE_CONFIG_FILE"
+    [ ! -L "$PROGRESS_CONFIG_FILE" ] || trash "$PROGRESS_CONFIG_FILE"
+    mv "$progress_tmp" "$PROGRESS_CONFIG_FILE"
   else
-    trash "$tmp" "$web_tmp" "$title_tmp" 2>/dev/null || true
+    trash "$tmp" "$web_tmp" "$title_tmp" "$progress_tmp" 2>/dev/null || true
     return 1
   fi
 }
@@ -118,6 +134,7 @@ cmd_check() {
   require_managed_active_file
   require_managed_config
   require_managed_title_config
+  require_managed_progress_config
   [ ! -L "$WEB_SEARCH_CONFIG_FILE" ] || die "pi-profile: refusing to overwrite linked web search config: $WEB_SEARCH_CONFIG_FILE"
 }
 

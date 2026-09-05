@@ -46,6 +46,8 @@ models:
     ids: { omp: anthropic/claude-opus-4.6, pi: anthropic/claude-opus-4.6, opencode: anthropic/claude-opus-4.6 }
     context: conservative
 
+  or-nemotron-lightning:
+    ids: { pi: openrouter/nvidia/nemotron-3.5-lightning }
   or-sol:
     ids: { omp: openrouter/openai/gpt-5.6-sol, pi: openrouter/openai/gpt-5.6-sol, opencode: openrouter/openai/gpt-5.6-sol }
     context: codex
@@ -161,6 +163,7 @@ profiles:
       enabled: [codex-luna, codex-sol, codex-terra, codex-astra]
       defaultAgent: [codex-luna, high]
       researcher: [codex-luna, medium]
+      progress: [or-nemotron-lightning, low]
       efforts:
         {
           reviewer: max,
@@ -217,6 +220,7 @@ profiles:
       enabled: [claude-sonnet, claude-reviewer, claude-haiku, claude-opus, claude-writer]
       defaultAgent: [claude-haiku, medium]
       researcher: [claude-haiku, medium]
+      progress: [or-nemotron-lightning, low]
       efforts:
         {
           reviewer: xhigh,
@@ -293,6 +297,7 @@ profiles:
       enabled: [or-sol, or-luna, or-sol-pro, or-fable-auto, or-glm, or-reviewer, or-writer]
       defaultAgent: [or-luna, high]
       researcher: [or-luna, medium]
+      progress: [or-nemotron-lightning, low]
       efforts:
         {
           reviewer: xhigh,
