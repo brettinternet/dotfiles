@@ -1,0 +1,46 @@
+#!/usr/bin/env python3
+"""Launch Pi with a manifest-backed model and thinking preset."""
+from __future__ import annotations
+
+import json
+import os
+import sys
+from pathlib import Path
+
+LAUNCHERS_PATH = Path(__file__).resolve().parents[1] / "pi/launchers.json"
+
+
+def usage() -> None:
+    print("usage: p <launcher> [pi arguments...]\n       p list", file=sys.stderr)
+
+
+def main() -> int:
+    if len(sys.argv) < 2:
+        usage()
+        return 2
+
+    with LAUNCHERS_PATH.open() as source:
+        launchers: dict[str, list[str]] = json.load(source)
+
+    key = sys.argv[1]
+    if key == "list":
+        if len(sys.argv) != 2:
+            usage()
+            return 2
+        for name, (model, thinking) in launchers.items():
+            print(f"{name}\t{model}:{thinking}")
+        return 0
+
+    if key not in launchers:
+        available = ", ".join(launchers)
+        print(f"p: unknown launcher {key!r}; available: {available}", file=sys.stderr)
+        return 2
+
+    model, thinking = launchers[key]
+    os.execvp(
+        "pi", ["pi", "--model", model, "--thinking", thinking, *sys.argv[2:]]
+    )
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

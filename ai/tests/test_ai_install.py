@@ -250,6 +250,33 @@ path.write_text("// generated guard for test\\n")
         self.run_command("python3", "ai/generate-config.py", "--check")
         self.run_command("ai/.bin/ai-config", "check")
 
+    def test_pi_launcher_resolves_preset_and_forwards_arguments(self) -> None:
+        fake_bin = self.home / "bin"
+        fake_bin.mkdir()
+        fake_pi = fake_bin / "pi"
+        fake_pi.write_text("#!/bin/sh\nprintf '%s\\n' \"$@\"\n")
+        fake_pi.chmod(0o755)
+        self.environment["PATH"] = f"{fake_bin}:{self.environment['PATH']}"
+
+        listed = self.run_command("ai/.bin/p", "list")
+        self.assertIn(
+            "fast\topenrouter/nvidia/nemotron-3.5-lightning:low\n",
+            listed.stdout,
+        )
+
+        launched = self.run_command("ai/.bin/p", "fast", "--no-session", "Fix it")
+        self.assertEqual(
+            [
+                "--model",
+                "openrouter/nvidia/nemotron-3.5-lightning",
+                "--thinking",
+                "low",
+                "--no-session",
+                "Fix it",
+            ],
+            launched.stdout.splitlines(),
+        )
+
     def test_unified_profile_preflights_every_target_before_writing(self) -> None:
         pi_settings = self.home / ".pi/agent/settings.json"
         pi_settings.parent.mkdir(parents=True)
