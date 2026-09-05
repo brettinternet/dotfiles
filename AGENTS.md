@@ -34,6 +34,12 @@ make thinkpad  # Thinkpad: base + x11 + thinkpad groups
 task check   # runs lint checks
 ```
 
+## Testing
+
+- Test architecture, generated results, state transitions, safety boundaries, and other moving behavior.
+- Do not test mere configuration values or mirror static config in assertions. Validate generated config structurally or through its consumers instead.
+- Prefer a small number of high-value behavioral tests over exhaustive permutations of fixed settings.
+
 ## Structure
 
 - `base.yaml` / `darwin.yaml` / `thinkpad.yaml` / etc. — dotbot config files per group; define symlinks, directories to create, and shell commands to run
