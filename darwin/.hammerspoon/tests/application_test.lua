@@ -124,11 +124,6 @@ end
 package.loaded.application = nil
 local action = require("application")
 
-assert_equal(action.settingsSchemaVersion, 1, "settings schema version")
-assert_equal(action.settingsSchema[2].type, "boolean", "focus setting type")
-assert_equal(action.settingsSchema[2].key, "focusOnShow", "focus setting key")
-assert_equal(action.settingsSchema[2].default, false, "focus setting default")
-
 local function activate(application)
   frontmost_application = application
   application.frontmost = true

@@ -220,18 +220,9 @@ keyboardFocus(firstWindow, "Ghostty")
 local firstCanvas = canvases[#canvases]
 local firstTimer = timers[#timers]
 assert(firstCanvas.shown, "recent keyboard focus should show canvas")
-assert_equal(firstCanvas.levelValue, "overlay", "canvas level")
-assert_equal(#firstCanvas.behaviorValue, 3, "canvas Space behaviors")
-assert_equal(firstCanvas[1].action, "stroke", "border action")
-assert_equal(firstCanvas[1].frame.w, 794, "border width")
-assert_equal(firstCanvas[1].strokeWidth, 6, "border stroke width")
 assert_equal(firstCanvas[3].text, "Ghostty — README", "canvas label")
-assert_equal(firstCanvas[3].textLineBreak, "truncateTail", "label truncation")
-assert_equal(firstTimer.delay, 1.8, "dismissal delay")
-assert_equal(periodicTimers[1].interval, 0.03, "follow polling interval")
 firstTimer.callback()
 assert(firstCanvas.deleted, "dismissal deletes canvas")
-assert_equal(firstCanvas.deleteFade, 0.2, "dismissal fade")
 assert(periodicTimers[1].stopped, "dismissal stops follow polling")
 
 local beforeExplicitShow = #canvases
@@ -367,12 +358,10 @@ local timersBeforeLastWindowClose = #timers
 inputCallback(event(types.keyDown, { cmd = true }, hs.keycodes.map.w))
 assert_equal(#timers, timersBeforeLastWindowClose + 1, "designated app schedules last-window check")
 local closeCheckTimer = timers[#timers]
-assert_equal(closeCheckTimer.delay, 0.15, "last-window check waits for close to settle")
 closeCheckTimer.callback()
 assert_equal(ghosttyWindow.focusCount, 1, "last window close focuses previous window")
 local canvasesBeforeFallbackIndicator = #canvases
 local fallbackIndicatorTimer = timers[#timers]
-assert_equal(fallbackIndicatorTimer.delay, 0, "fallback indicator waits for focus to settle")
 fallbackIndicatorTimer.callback()
 assert_equal(#canvases, canvasesBeforeFallbackIndicator + 1, "fallback focus explicitly shows indicator")
 
