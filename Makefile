@@ -16,7 +16,7 @@ help:
 		'  make update        update user-managed dependencies' \
 		'  make update-zinit  update Zinit and Zinit-managed plugins' \
 		'  make update-mise   update tools installed by mise' \
-		'  make update-pi     update installed Pi extensions' \
+		'  make update-pi     update installed Pi extensions and model catalogs' \
 		'  make update-herdr update GitHub-installed Herdr plugins' \
 		'  make update-brew   update Homebrew formulae and casks' \
 		'  make update-gh     update GitHub CLI extensions' \
@@ -61,9 +61,9 @@ update-mise:
 
 update-pi:
 	@if command -v pi >/dev/null 2>&1; then \
-		pi update --extensions; \
+		pi update --extensions && pi update --models; \
 	else \
-		printf '%s\n' 'Skipping Pi extension update: pi is not installed'; \
+		printf '%s\n' 'Skipping Pi update: pi is not installed'; \
 	fi
 
 update-herdr:

@@ -2,7 +2,7 @@
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-5.6-sol",
   "defaultThinkingLevel": "medium",
-  "enabledModels": ["gpt-5.6-luna", "gpt-5.6-sol", "gpt-5.6-terra"],
+  "enabledModels": ["gpt-5.6-luna", "gpt-5.6-sol", "gpt-5.6-terra", "gpt-6-astra"],
   "webSearchConfig": {
     "searchRouting": {
       "providers": ["openai"],
@@ -28,7 +28,7 @@
     "modelScope": {
       "enforce": true,
       "strict": true,
-      "allow": ["openai-codex/gpt-5.6-*"]
+      "allow": ["openai-codex/gpt-5.6-*", "openai-codex/gpt-6-astra"]
     }
   }
 }
