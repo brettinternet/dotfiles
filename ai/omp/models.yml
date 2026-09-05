@@ -9,7 +9,7 @@ providers:
         contextWindow: 272000
   anthropic:
     modelOverrides:
-      claude-fable-5:
+      claude-fable-5.1:
         contextWindow: 256000
       claude-opus-5:
         contextWindow: 256000
