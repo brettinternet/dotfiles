@@ -235,8 +235,6 @@
       path: ai/pi/keybindings.json
     ~/.pi/agent/lsp.json:
       path: ai/pi/lsp.json
-    ~/.pi/agent/pi-progress.jsonc:
-      path: ai/pi/pi-progress.jsonc
     ~/.pi/agent/extensions/subagent/config.json:
       path: ai/pi/subagent-config.json
     # Oh My Pi

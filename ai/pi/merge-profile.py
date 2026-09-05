@@ -38,11 +38,11 @@ def expand_dotfiles(value: Any, dotfiles: Path) -> Any:
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) != 7:
+    if len(argv) != 8:
         print(
             "usage: merge-profile.py <common.json> <profile.json> "
             "<settings-output.json> <web-search-output.json> "
-            "<title-output.jsonc> <dotfiles>",
+            "<title-output.jsonc> <progress-output.jsonc> <dotfiles>",
             file=sys.stderr,
         )
         return 2
@@ -52,12 +52,14 @@ def main(argv: list[str]) -> int:
     settings_output_path = Path(argv[3])
     web_search_output_path = Path(argv[4])
     title_output_path = Path(argv[5])
-    dotfiles = Path(argv[6]).resolve()
+    progress_output_path = Path(argv[6])
+    dotfiles = Path(argv[7]).resolve()
     merged = expand_dotfiles(
         deep_merge(load_json(common_path), load_json(profile_path)), dotfiles
     )
     web_search_config = merged.pop("webSearchConfig", {})
     title_config = merged.pop("titleConfig", {})
+    progress_config = merged.pop("progressConfig", {})
     if not isinstance(web_search_config, dict):
         raise SystemExit(
             f"merge-profile: webSearchConfig in {profile_path} must be a JSON object"
@@ -65,6 +67,10 @@ def main(argv: list[str]) -> int:
     if not isinstance(title_config, dict):
         raise SystemExit(
             f"merge-profile: titleConfig in {profile_path} must be a JSON object"
+        )
+    if not isinstance(progress_config, dict):
+        raise SystemExit(
+            f"merge-profile: progressConfig in {profile_path} must be a JSON object"
         )
     settings_output_path.write_text(
         json.dumps(merged, indent=2) + "\n", encoding="utf-8"
@@ -74,6 +80,9 @@ def main(argv: list[str]) -> int:
     )
     title_output_path.write_text(
         json.dumps(title_config, indent=2) + "\n", encoding="utf-8"
+    )
+    progress_output_path.write_text(
+        json.dumps(progress_config, indent=2) + "\n", encoding="utf-8"
     )
     return 0
 

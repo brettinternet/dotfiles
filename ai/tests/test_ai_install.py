@@ -645,15 +645,6 @@ trusted_hash = "sha256:trusted"
         self.assertEqual(
             (ROOT / "ai/pi/keybindings.json").resolve(), pi_keybindings.resolve()
         )
-        pi_progress = self.home / ".pi/agent/pi-progress.jsonc"
-        self.assertTrue(pi_progress.is_symlink())
-        self.assertEqual(
-            (ROOT / "ai/pi/pi-progress.jsonc").resolve(), pi_progress.resolve()
-        )
-        self.assertEqual(
-            "openrouter/nvidia/nemotron-3.5-lightning:low",
-            json.loads(pi_progress.read_text())["model"],
-        )
         bindings = json.loads(pi_keybindings.read_text())
         self.assertEqual(["up", "ctrl+p"], bindings["tui.editor.cursorUp"])
         self.assertEqual(["down", "ctrl+n"], bindings["tui.editor.cursorDown"])
@@ -850,6 +841,18 @@ trusted_hash = "sha256:trusted"
         title = json.loads((self.home / ".pi/agent/pi-title.jsonc").read_text())
         self.assertEqual(
             "openai-codex/gpt-5.3-codex-spark:high", title["model"]
+        )
+        progress = json.loads(
+            (self.home / ".pi/agent/pi-progress.jsonc").read_text()
+        )
+        self.assertEqual(
+            {
+                "model": "openrouter/nvidia/nemotron-3.5-lightning:low",
+                "maxInputChars": 12000,
+                "maxTokens": 180,
+                "timeoutMs": 15000,
+            },
+            progress,
         )
         self.assertEqual(
             "codex\n", (self.home / ".pi/agent/.active-profile").read_text()
