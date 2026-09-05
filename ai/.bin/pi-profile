@@ -24,6 +24,8 @@ ACTIVE_FILE="$CONFIG_DIR/.active-profile"
 MERGE_PROFILE="$DOTFILES/ai/pi/merge-profile.py"
 VCC_CONFIG_SOURCE="$DOTFILES/ai/pi/pi-vcc-config.json"
 VCC_CONFIG_FILE="$CONFIG_DIR/pi-vcc-config.json"
+TITLE_CONFIG_FILE="$CONFIG_DIR/pi-title.jsonc"
+LEGACY_TITLE_SOURCE="$DOTFILES/ai/pi/pi-title.jsonc"
 if [ -n "${PI_CODING_AGENT_DIR:-}" ]; then
   WEB_SEARCH_CONFIG_FILE="$CONFIG_DIR/web-search.json"
 else
@@ -65,6 +67,16 @@ require_managed_active_file() {
   die "pi-profile: refusing to overwrite unmanaged active profile: $ACTIVE_FILE"
 }
 
+require_managed_title_config() {
+  [ ! -e "$TITLE_CONFIG_FILE" ] && [ ! -L "$TITLE_CONFIG_FILE" ] && return 0
+  if [ -L "$TITLE_CONFIG_FILE" ]; then
+    [ "$(readlink "$TITLE_CONFIG_FILE")" = "$LEGACY_TITLE_SOURCE" ] && return 0
+    die "pi-profile: refusing to overwrite unmanaged title config: $TITLE_CONFIG_FILE"
+  fi
+  is_managed_active_file && return 0
+  die "pi-profile: refusing to overwrite unmanaged title config: $TITLE_CONFIG_FILE"
+}
+
 render_config() {
   name=$1
   [ "$name" != common ] || die "pi-profile: 'common' is not selectable"
@@ -72,15 +84,19 @@ render_config() {
   [ -f "$COMMON_PROFILE" ] || die "pi-profile: common profile not found: $COMMON_PROFILE"
   [ -f "$target" ] || die "pi-profile: profile '$name' not found: $target"
   require_managed_config
+  require_managed_title_config
   [ ! -L "$WEB_SEARCH_CONFIG_FILE" ] || die "pi-profile: refusing to overwrite linked web search config: $WEB_SEARCH_CONFIG_FILE"
   mkdir -p "$CONFIG_DIR" "$(dirname "$WEB_SEARCH_CONFIG_FILE")"
   tmp="$CONFIG_FILE.tmp.$$"
   web_tmp="$WEB_SEARCH_CONFIG_FILE.tmp.$$"
-  if python3 "$MERGE_PROFILE" "$COMMON_PROFILE" "$target" "$tmp" "$web_tmp" "$DOTFILES"; then
+  title_tmp="$TITLE_CONFIG_FILE.tmp.$$"
+  if python3 "$MERGE_PROFILE" "$COMMON_PROFILE" "$target" "$tmp" "$web_tmp" "$title_tmp" "$DOTFILES"; then
     mv "$tmp" "$CONFIG_FILE"
     mv "$web_tmp" "$WEB_SEARCH_CONFIG_FILE"
+    [ ! -L "$TITLE_CONFIG_FILE" ] || trash "$TITLE_CONFIG_FILE"
+    mv "$title_tmp" "$TITLE_CONFIG_FILE"
   else
-    trash "$tmp" "$web_tmp" 2>/dev/null || true
+    trash "$tmp" "$web_tmp" "$title_tmp" 2>/dev/null || true
     return 1
   fi
 }
@@ -92,10 +108,23 @@ render_vcc_config() {
   mv "$tmp" "$VCC_CONFIG_FILE"
 }
 
+cmd_check() {
+  name=${1:-}
+  [ -n "$name" ] || die "usage: pi-profile check <name>"
+  [ "$name" != common ] || die "pi-profile: 'common' is not selectable"
+  target=$(profile_path "$name")
+  [ -f "$COMMON_PROFILE" ] || die "pi-profile: common profile not found: $COMMON_PROFILE"
+  [ -f "$target" ] || die "pi-profile: profile '$name' not found: $target"
+  require_managed_active_file
+  require_managed_config
+  require_managed_title_config
+  [ ! -L "$WEB_SEARCH_CONFIG_FILE" ] || die "pi-profile: refusing to overwrite linked web search config: $WEB_SEARCH_CONFIG_FILE"
+}
+
 cmd_use() {
   name=${1:-}
   [ -n "$name" ] || die "usage: pi-profile use <name>"
-  require_managed_active_file
+  cmd_check "$name"
   render_config "$name"
   render_vcc_config
   tmp="$ACTIVE_FILE.tmp.$$"
@@ -146,6 +175,7 @@ usage() {
   cat <<'EOF'
 usage: pi-profile [show]                 print active profile
        pi-profile list                   list profiles
+       pi-profile check <name>           validate that a profile can be activated
        pi-profile use <name>             render and activate a profile
        pi-profile config                 print generated settings path
        pi-profile path [<name>|common]   print source profile path
@@ -156,6 +186,7 @@ EOF
 case "${1:-show}" in
   show) shift; cmd_show "$@" ;;
   list) shift; cmd_list "$@" ;;
+  check) shift; cmd_check "$@" ;;
   use) shift; cmd_use "$@" ;;
   config) shift; cmd_config "$@" ;;
   path) shift; cmd_path "$@" ;;

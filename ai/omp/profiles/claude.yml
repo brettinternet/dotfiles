@@ -20,6 +20,6 @@ commands:
   enableClaudeUser: true
 providers:
   webSearchOrder:
-    - anthropic
+  - anthropic
 advisor:
   enabled: false

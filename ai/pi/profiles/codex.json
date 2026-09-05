@@ -2,33 +2,82 @@
   "defaultProvider": "openai-codex",
   "defaultModel": "gpt-5.6-sol",
   "defaultThinkingLevel": "medium",
-  "enabledModels": ["gpt-5.6-luna", "gpt-5.6-sol", "gpt-5.6-terra", "gpt-6-astra"],
-  "webSearchConfig": {
-    "searchRouting": {
-      "providers": ["openai"],
-      "useCurrentModel": true,
-      "fallbackOn": ["unsupported", "transient", "quota", "network", "invalid-response"]
-    }
-  },
+  "enabledModels": [
+    "gpt-5.6-luna",
+    "gpt-5.6-sol",
+    "gpt-5.6-terra",
+    "gpt-6-astra"
+  ],
   "subagents": {
     "defaultModel": "openai-codex/gpt-5.6-luna",
     "defaultProvider": "openai-codex",
     "defaultThinking": "high",
     "agentOverrides": {
-      "researcher": { "model": "openai-codex/gpt-5.6-luna", "thinking": "medium" },
-      "reviewer": { "model": "openai-codex/gpt-5.6-terra", "thinking": "max" },
-      "oracle": { "model": "openai-codex/gpt-5.6-sol", "thinking": "max" },
-      "explore": { "model": "openai-codex/gpt-5.6-luna", "thinking": "low" },
-      "executor": { "model": "openai-codex/gpt-5.6-luna", "thinking": "max" },
-      "verifier": { "model": "openai-codex/gpt-5.6-luna", "thinking": "max" },
-      "pr-watcher": { "model": "openai-codex/gpt-5.6-luna", "thinking": "low" },
-      "thermo-nuclear-code-quality-review": { "model": "openai-codex/gpt-5.6-sol", "thinking": "max" },
-      "writer": { "model": "openai-codex/gpt-5.6-terra", "thinking": "low" }
+      "researcher": {
+        "model": "openai-codex/gpt-5.6-luna",
+        "thinking": "medium"
+      },
+      "reviewer": {
+        "model": "openai-codex/gpt-5.6-terra",
+        "thinking": "max"
+      },
+      "oracle": {
+        "model": "openai-codex/gpt-5.6-sol",
+        "thinking": "max"
+      },
+      "explore": {
+        "model": "openai-codex/gpt-5.6-luna",
+        "thinking": "low"
+      },
+      "executor": {
+        "model": "openai-codex/gpt-5.6-luna",
+        "thinking": "max"
+      },
+      "verifier": {
+        "model": "openai-codex/gpt-5.6-luna",
+        "thinking": "max"
+      },
+      "pr-watcher": {
+        "model": "openai-codex/gpt-5.6-luna",
+        "thinking": "low"
+      },
+      "thermo-nuclear-code-quality-review": {
+        "model": "openai-codex/gpt-5.6-sol",
+        "thinking": "max"
+      },
+      "writer": {
+        "model": "openai-codex/gpt-5.4",
+        "thinking": "low"
+      }
     },
     "modelScope": {
       "enforce": true,
       "strict": true,
-      "allow": ["openai-codex/gpt-5.6-*", "openai-codex/gpt-6-astra"]
+      "allow": [
+        "openai-codex/gpt-5.6-*",
+        "openai-codex/gpt-6-astra"
+      ]
+    }
+  },
+  "titleConfig": {
+    "enabled": true,
+    "model": "openai-codex/gpt-5.3-codex-spark:high",
+    "maxTokens": 30,
+    "maxLength": 60
+  },
+  "webSearchConfig": {
+    "searchRouting": {
+      "providers": [
+        "openai"
+      ],
+      "useCurrentModel": true,
+      "fallbackOn": [
+        "unsupported",
+        "transient",
+        "quota",
+        "network",
+        "invalid-response"
+      ]
     }
   }
 }

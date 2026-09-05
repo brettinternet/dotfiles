@@ -11,10 +11,7 @@ modelRoles:
   advisor: openrouter/z-ai/glm-5.3:max
   title: openrouter/deepseek/deepseek-v4-flash-latest:low
   reviewer: openrouter/anthropic/claude-opus-4.8:xhigh
-  # https://llm-stats.com/leaderboards/best-ai-for-writing
-  writer: openrouter/anthropic/claue-opus-4.6:medium
-# Explicit Perplexity search falls back to OPENROUTER_API_KEY when no direct
-# Perplexity credential is available.
+  writer: openrouter/anthropic/claude-opus-4.6:medium
 providers:
   webSearchOrder:
-    - perplexity
+  - perplexity

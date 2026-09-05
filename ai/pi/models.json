@@ -2,41 +2,69 @@
   "providers": {
     "openai-codex": {
       "modelOverrides": {
-        "gpt-5.6-luna": {
-          "contextWindow": 272000
-        },
         "gpt-5.6-sol": {
           "contextWindow": 272000
         },
         "gpt-5.6-terra": {
           "contextWindow": 272000
+        },
+        "gpt-5.6-luna": {
+          "contextWindow": 272000
+        }
+      }
+    },
+    "anthropic": {
+      "modelOverrides": {
+        "claude-fable-5": {
+          "contextWindow": 256000
+        },
+        "claude-opus-5": {
+          "contextWindow": 256000
+        },
+        "claude-opus-4.8": {
+          "contextWindow": 256000
+        },
+        "claude-sonnet-5": {
+          "contextWindow": 256000
+        },
+        "claude-haiku-4-5": {
+          "contextWindow": 256000
+        },
+        "claude-opus-4.6": {
+          "contextWindow": 256000
         }
       }
     },
     "openrouter": {
       "modelOverrides": {
-        "anthropic/claude-fable-latest": {
-          "contextWindow": 256000
-        },
-        "anthropic/claude-opus-4.6": {
-          "contextWindow": 256000
-        },
-        "anthropic/claude-opus-4.8": {
-          "contextWindow": 256000
-        },
-        "openai/gpt-5.6-luna": {
+        "openai/gpt-5.6-sol": {
           "contextWindow": 272000
         },
-        "openai/gpt-5.6-sol": {
+        "openai/gpt-5.6-terra": {
+          "contextWindow": 272000
+        },
+        "openai/gpt-5.6-luna": {
           "contextWindow": 272000
         },
         "openai/gpt-5.6-sol-pro": {
           "contextWindow": 272000
         },
-        "z-ai/glm-5.3": {
+        "anthropic/claude-fable-latest": {
           "contextWindow": 256000
         },
         "~anthropic/claude-fable-latest": {
+          "contextWindow": 256000
+        },
+        "anthropic/claude-opus-4.8": {
+          "contextWindow": 256000
+        },
+        "anthropic/claude-opus-4.6": {
+          "contextWindow": 256000
+        },
+        "deepseek/deepseek-v4-flash-latest": {
+          "contextWindow": 256000
+        },
+        "z-ai/glm-5.3": {
           "contextWindow": 256000
         }
       }

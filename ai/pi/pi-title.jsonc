@@ -1,6 +1,0 @@
-{
-  "enabled": true,
-  "model": "openrouter/nvidia/nemotron-3.5-lightning:low",
-  "maxTokens": 30,
-  "maxLength": 60,
-}

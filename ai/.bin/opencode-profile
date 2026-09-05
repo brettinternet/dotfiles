@@ -127,10 +127,22 @@ render_config() {
   fi
 }
 
+cmd_check() {
+  name="${1:-}"
+  [ -n "$name" ] || die "usage: opencode-profile check <name>"
+  [ "$name" != common ] || die "opencode-profile: 'common' is not selectable"
+  target="$(profile_path "$name")"
+  [ -f "$COMMON_PROFILE" ] || die "opencode-profile: common profile not found ($COMMON_PROFILE)"
+  [ -f "$target" ] || die "opencode-profile: profile '$name' not found ($target)"
+  [ -f "$MERGE_PROFILE" ] || die "opencode-profile: merge helper not found ($MERGE_PROFILE)"
+  require_managed_active_file
+  require_managed_config
+}
+
 cmd_use() {
   name="${1:-}"
   [ -n "$name" ] || die "usage: opencode-profile use <name>"
-  require_managed_active_file
+  cmd_check "$name"
   render_config "$name"
   tmp="${ACTIVE_FILE}.tmp.$$"
   printf '%s\n' "$name" > "$tmp"
@@ -182,6 +194,7 @@ usage() {
   cat <<EOF
 usage: opencode-profile [show]             print active profile and source profile path
        opencode-profile list               list selectable profiles (active marked with *)
+       opencode-profile check <name>       validate that a profile can be activated
        opencode-profile use <name>         generate config from common + profile <name>
        opencode-profile config             print generated active config path
        opencode-profile path [<name>|common]  print source profile path (default: active)
@@ -197,6 +210,7 @@ case "${1:-show}" in
     cmd_show "$@"
     ;;
   list)       shift; cmd_list "$@" ;;
+  check)      shift; cmd_check "$@" ;;
   use)        shift; cmd_use "$@" ;;
   path)       shift; cmd_path "$@" ;;
   config)     shift; cmd_config "$@" ;;
