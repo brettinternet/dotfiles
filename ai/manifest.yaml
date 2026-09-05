@@ -152,7 +152,7 @@ profiles:
       commit: [codex-spark, high]
       plan: [codex-sol, high]
       advisor: [codex-luna, high]
-      title: [codex-spark, high]
+      title: [codex-spark, low]
       tiny: [codex-spark, high]
       writer: [codex-writer, medium]
     ompSettings:
@@ -163,7 +163,7 @@ profiles:
       enabled: [codex-luna, codex-sol, codex-terra, codex-astra]
       defaultAgent: [codex-luna, high]
       researcher: [codex-luna, medium]
-      progress: [or-nemotron-lightning, low]
+      progress: [codex-luna, low]
       efforts:
         {
           reviewer: max,
@@ -220,7 +220,7 @@ profiles:
       enabled: [claude-sonnet, claude-reviewer, claude-haiku, claude-opus, claude-writer]
       defaultAgent: [claude-haiku, medium]
       researcher: [claude-haiku, medium]
-      progress: [or-nemotron-lightning, low]
+      progress: [claude-haiku, low]
       efforts:
         {
           reviewer: xhigh,

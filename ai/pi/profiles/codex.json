@@ -61,12 +61,12 @@
   },
   "titleConfig": {
     "enabled": true,
-    "model": "openai-codex/gpt-5.3-codex-spark:high",
+    "model": "openai-codex/gpt-5.3-codex-spark:low",
     "maxTokens": 30,
     "maxLength": 60
   },
   "progressConfig": {
-    "model": "openrouter/nvidia/nemotron-3.5-lightning:low",
+    "model": "openai-codex/gpt-5.6-luna:low",
     "maxInputChars": 12000,
     "maxTokens": 180,
     "timeoutMs": 15000

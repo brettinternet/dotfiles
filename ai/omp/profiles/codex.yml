@@ -10,7 +10,7 @@ modelRoles:
   commit: openai-codex/gpt-5.3-codex-spark:high
   plan: openai-codex/gpt-5.6-sol:high
   advisor: openai-codex/gpt-5.6-luna:high
-  title: openai-codex/gpt-5.3-codex-spark:high
+  title: openai-codex/gpt-5.3-codex-spark:low
   tiny: openai-codex/gpt-5.3-codex-spark:high
   writer: openai-codex/gpt-5.4:medium
 providers:
