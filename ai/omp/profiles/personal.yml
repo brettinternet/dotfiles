@@ -1,20 +1,15 @@
 ---
 modelRoles:
-  # Try a no-bullshit model: https://petergpt.github.io/bullshit-benchmark/viewer/index.v2.html
   reviewer: openrouter/anthropic/claude-opus-4.8:xhigh
-  # Use a solid, smart, frontier model that won't overarchitect
   default: openai-codex/gpt-5.6-sol:medium
   smol: openai-codex/gpt-5.6-luna:medium
   slow: openai-codex/gpt-5.6-sol:max
   designer: openrouter/moonshotai/kimi-k3:xhigh
   vision: openai-codex/gpt-5.6-sol:high
-  # Less expensive work horse, possible to use models with less inputs since parent defines the work
   task: openai-codex/gpt-5.6-luna:max
   commit: openai-codex/gpt-5.3-codex-spark:high
   plan: openai-codex/gpt-5.6-sol:high
   advisor: openai-codex/gpt-5.6-luna:high
   title: openai-codex/gpt-5.3-codex-spark:high
   tiny: nvidia/nvidia/nemotron-3-ultra-550b-a55b:medium
-  # Which voice is best? Anything but Opus 5
-  # https://llm-stats.com/leaderboards/best-ai-for-writing
   writer: openrouter/anthropic/claude-opus-4.6:medium

@@ -1,0 +1,395 @@
+version: 1
+
+roles:
+  explore: { route: smol }
+  executor: { route: task }
+  oracle: { route: slow }
+  pr-watcher: { route: smol }
+  reviewer: { route: reviewer }
+  thermo-nuclear-code-quality-review: { route: slow }
+  verifier: { route: task }
+  writer: { route: writer }
+
+models:
+  codex-sol:
+    ids: { omp: openai-codex/gpt-5.6-sol, pi: openai-codex/gpt-5.6-sol, opencode: openai/gpt-5.6-sol }
+    context: codex
+  codex-terra:
+    ids: { omp: openai-codex/gpt-5.6-terra, pi: openai-codex/gpt-5.6-terra, opencode: openai/gpt-5.6-terra }
+    context: codex
+  codex-luna:
+    ids: { omp: openai-codex/gpt-5.6-luna, pi: openai-codex/gpt-5.6-luna, opencode: openai/gpt-5.6-luna }
+    context: codex
+  codex-astra:
+    ids: { pi: openai-codex/gpt-6-astra }
+  codex-spark:
+    ids: { omp: openai-codex/gpt-5.3-codex-spark, pi: openai-codex/gpt-5.3-codex-spark }
+  codex-writer:
+    ids: { omp: openai-codex/gpt-5.4, pi: openai-codex/gpt-5.4, opencode: openai/gpt-5.4 }
+
+  claude-fable:
+    ids: { omp: anthropic/claude-fable-5, pi: anthropic/claude-fable-5, opencode: anthropic/claude-fable-5 }
+    context: conservative
+  claude-opus:
+    ids: { omp: anthropic/claude-opus-5, pi: anthropic/claude-opus-5, opencode: anthropic/claude-opus-5 }
+    context: conservative
+  claude-reviewer:
+    ids: { omp: anthropic/claude-opus-4.8, pi: anthropic/claude-opus-4.8, opencode: anthropic/claude-opus-4.8 }
+    context: conservative
+  claude-sonnet:
+    ids: { omp: anthropic/claude-sonnet-5, pi: anthropic/claude-sonnet-5, opencode: anthropic/claude-sonnet-5 }
+    context: conservative
+  claude-haiku:
+    ids: { omp: anthropic/claude-haiku-4-5, pi: anthropic/claude-haiku-4-5, opencode: anthropic/claude-haiku-4-5 }
+    context: conservative
+  claude-writer:
+    ids: { omp: anthropic/claude-opus-4.6, pi: anthropic/claude-opus-4.6, opencode: anthropic/claude-opus-4.6 }
+    context: conservative
+
+  or-sol:
+    ids: { omp: openrouter/openai/gpt-5.6-sol, pi: openrouter/openai/gpt-5.6-sol, opencode: openrouter/openai/gpt-5.6-sol }
+    context: codex
+  or-terra:
+    ids: { omp: openrouter/openai/gpt-5.6-terra, pi: openrouter/openai/gpt-5.6-terra, opencode: openrouter/openai/gpt-5.6-terra }
+    context: codex
+  or-luna:
+    ids: { omp: openrouter/openai/gpt-5.6-luna, pi: openrouter/openai/gpt-5.6-luna, opencode: openrouter/openai/gpt-5.6-luna }
+    context: codex
+  or-sol-pro:
+    ids: { omp: openrouter/openai/gpt-5.6-sol-pro, pi: openrouter/openai/gpt-5.6-sol-pro, opencode: openrouter/openai/gpt-5.6-sol-pro }
+    context: codex
+  or-gpt-latest:
+    ids: { omp: openrouter/openai/gpt-latest, opencode: openrouter/openai/gpt-latest }
+    context: conservative
+  or-fable:
+    ids:
+      {
+        omp: openrouter/anthropic/claude-fable-latest,
+        pi: openrouter/anthropic/claude-fable-latest,
+        opencode: openrouter/anthropic/claude-fable-latest,
+      }
+    context: conservative
+  or-fable-auto:
+    ids: { pi: openrouter/~anthropic/claude-fable-latest }
+    context: conservative
+  or-opus:
+    ids: { omp: openrouter/anthropic/claude-opus-latest, opencode: openrouter/anthropic/claude-opus-latest }
+    context: conservative
+  or-reviewer:
+    ids:
+      {
+        omp: openrouter/anthropic/claude-opus-4.8,
+        pi: openrouter/anthropic/claude-opus-4.8,
+        opencode: openrouter/anthropic/claude-opus-4.8,
+      }
+    context: conservative
+  or-sonnet:
+    ids: { omp: openrouter/anthropic/claude-sonnet-latest, opencode: openrouter/anthropic/claude-sonnet-latest }
+    context: conservative
+  or-writer:
+    ids:
+      {
+        omp: openrouter/anthropic/claude-opus-4.6,
+        pi: openrouter/anthropic/claude-opus-4.6,
+        opencode: openrouter/anthropic/claude-opus-4.6,
+      }
+    context: conservative
+  or-kimi:
+    ids: { omp: openrouter/moonshotai/kimi-k3, opencode: openrouter/moonshotai/kimi-k3 }
+    context: conservative
+  or-deepseek-flash:
+    ids:
+      {
+        omp: openrouter/deepseek/deepseek-v4-flash-latest,
+        pi: openrouter/deepseek/deepseek-v4-flash-latest,
+        opencode: openrouter/deepseek/deepseek-v4-flash-latest,
+      }
+    context: conservative
+  or-deepseek-flash-auto:
+    ids: { omp: openrouter/~deepseek/deepseek-v4-flash-latest, opencode: openrouter/~deepseek/deepseek-v4-flash-latest }
+    context: conservative
+  or-deepseek-pro:
+    ids: { omp: openrouter/deepseek/deepseek-v4-pro-0813, opencode: openrouter/deepseek/deepseek-v4-pro-0813 }
+    context: conservative
+  or-deepseek-vision:
+    ids: { omp: openrouter/deepseek/deepseek-v4-flash-vision-exp }
+    context: conservative
+  or-glm:
+    ids: { omp: openrouter/z-ai/glm-5.3, pi: openrouter/z-ai/glm-5.3, opencode: openrouter/z-ai/glm-5.3 }
+    context: conservative
+  personal-tiny:
+    ids: { omp: nvidia/nvidia/nemotron-3-ultra-550b-a55b }
+    context: conservative
+
+  copilot-reviewer:
+    ids: { omp: github-copilot/claude-opus-4-8, opencode: github-copilot/claude-opus-4.8 }
+  copilot-sonnet:
+    ids: { omp: github-copilot/claude-sonnet-5, opencode: github-copilot/claude-sonnet-5 }
+  copilot-haiku:
+    ids: { omp: github-copilot/claude-haiku-4-5, opencode: github-copilot/claude-haiku-4.5 }
+  copilot-fable:
+    ids: { omp: github-copilot/claude-fable-5, opencode: github-copilot/claude-fable-5 }
+  copilot-sol:
+    ids: { omp: github-copilot/gpt-5.6-sol, opencode: github-copilot/gpt-5.6-sol }
+  copilot-luna:
+    ids: { omp: github-copilot/gpt-5.6-luna, opencode: github-copilot/gpt-5.6-luna }
+  copilot-mini:
+    ids: { omp: github-copilot/gpt-5.4-mini, opencode: github-copilot/gpt-5.4-mini }
+
+profiles:
+  codex:
+    outputs: { omp: codex, pi: codex, opencode: gpt }
+    ompRoles:
+      reviewer: [codex-terra, max]
+      default: [codex-sol, medium]
+      smol: [codex-luna, high]
+      slow: [codex-sol, max]
+      designer: [codex-sol, xhigh]
+      vision: [codex-sol, high]
+      task: [codex-luna, max]
+      commit: [codex-spark, high]
+      plan: [codex-sol, high]
+      advisor: [codex-luna, high]
+      title: [codex-spark, high]
+      tiny: [codex-spark, high]
+      writer: [codex-writer, medium]
+    ompSettings:
+      providers: { webSearchOrder: [codex] }
+      advisor: { enabled: false }
+    pi:
+      parent: [codex-sol, medium]
+      enabled: [codex-luna, codex-sol, codex-terra, codex-astra]
+      defaultAgent: [codex-luna, high]
+      researcher: [codex-luna, medium]
+      efforts:
+        {
+          reviewer: max,
+          oracle: max,
+          explore: low,
+          executor: max,
+          verifier: max,
+          pr-watcher: low,
+          thermo-nuclear-code-quality-review: max,
+          writer: low,
+        }
+      modelScope: [openai-codex/gpt-5.6-*, openai-codex/gpt-6-astra]
+      settings:
+        webSearchConfig:
+          searchRouting:
+            providers: [openai]
+            useCurrentModel: true
+            fallbackOn: [unsupported, transient, quota, network, invalid-response]
+    opencode:
+      efforts:
+        {
+          reviewer: max,
+          executor: high,
+          explore: medium,
+          oracle: max,
+          pr-watcher: medium,
+          thermo-nuclear-code-quality-review: max,
+          verifier: max,
+          writer: low,
+        }
+
+  claude:
+    outputs: { omp: claude, pi: claude, opencode: claude }
+    ompRoles:
+      reviewer: [claude-reviewer, xhigh]
+      default: [claude-sonnet, medium]
+      smol: [claude-haiku, medium]
+      slow: [claude-opus, xhigh]
+      designer: [claude-opus, xhigh]
+      vision: [claude-sonnet, high]
+      task: [claude-sonnet, max]
+      commit: [claude-haiku, high]
+      plan: [claude-opus, high]
+      advisor: [claude-opus, xhigh]
+      title: [claude-haiku, high]
+      tiny: [claude-haiku, medium]
+      writer: [claude-writer, medium]
+    ompSettings:
+      commands: { enableOpencodeUser: false, enableOpencodeProject: false, enableClaudeProject: true, enableClaudeUser: true }
+      providers: { webSearchOrder: [anthropic] }
+      advisor: { enabled: false }
+    pi:
+      parent: [claude-sonnet, medium]
+      enabled: [claude-sonnet, claude-reviewer, claude-haiku, claude-opus, claude-writer]
+      defaultAgent: [claude-haiku, medium]
+      researcher: [claude-haiku, medium]
+      efforts:
+        {
+          reviewer: xhigh,
+          oracle: xhigh,
+          explore: medium,
+          executor: max,
+          verifier: max,
+          pr-watcher: medium,
+          thermo-nuclear-code-quality-review: xhigh,
+          writer: medium,
+        }
+      modelScope: [anthropic/*]
+    opencode:
+      efforts:
+        {
+          reviewer: max,
+          executor: null,
+          explore: null,
+          oracle: max,
+          pr-watcher: null,
+          thermo-nuclear-code-quality-review: max,
+          verifier: null,
+          writer: low,
+        }
+
+  codex-claude:
+    outputs: { omp: codex-claude, opencode: claude-gpt }
+    ompRoles:
+      reviewer: [claude-opus, xhigh]
+      default: [claude-sonnet, medium]
+      smol: [codex-luna, medium]
+      slow: [claude-opus, xhigh]
+      designer: [claude-opus, xhigh]
+      vision: [codex-sol, high]
+      task: [codex-luna, max]
+      commit: [codex-spark, high]
+      plan: [claude-opus, high]
+      title: [codex-spark, high]
+      tiny: [codex-spark, high]
+      writer: [claude-sonnet, low]
+    ompSettings:
+      commands: { enableOpencodeUser: false, enableOpencodeProject: false, enableClaudeProject: true, enableClaudeUser: true }
+    opencode:
+      efforts:
+        {
+          reviewer: xhigh,
+          executor: medium,
+          explore: medium,
+          oracle: xhigh,
+          pr-watcher: medium,
+          thermo-nuclear-code-quality-review: xhigh,
+          verifier: max,
+          writer: low,
+        }
+
+  openrouter:
+    outputs: { omp: or, pi: or, opencode: or }
+    ompRoles:
+      default: [or-sol, medium]
+      smol: [or-luna, high]
+      slow: [or-sol-pro, xhigh]
+      designer: [or-sol-pro, high]
+      vision: [or-gpt-latest, high]
+      task: [or-luna, max]
+      commit: [or-deepseek-flash, low]
+      plan: [or-fable, high]
+      advisor: [or-glm, max]
+      title: [or-deepseek-flash, low]
+      reviewer: [or-reviewer, xhigh]
+      writer: [or-writer, medium]
+    ompSettings: { providers: { webSearchOrder: [perplexity] } }
+    pi:
+      parent: [or-sol, medium]
+      enabled: [or-sol, or-luna, or-sol-pro, or-fable-auto, or-glm, or-reviewer, or-writer]
+      defaultAgent: [or-luna, high]
+      researcher: [or-luna, medium]
+      efforts:
+        {
+          reviewer: xhigh,
+          oracle: high,
+          explore: low,
+          executor: max,
+          verifier: max,
+          pr-watcher: low,
+          thermo-nuclear-code-quality-review: xhigh,
+          writer: medium,
+        }
+      modelScope: [openrouter/*]
+      settings:
+        extensions: [$DOTFILES/ai/pi/extensions/dcg-guard.ts, $DOTFILES/ai/pi/extensions/openrouter-web-search.ts]
+        webSearchConfig: { tools: { webSearch: { enabled: false } } }
+    opencode:
+      efforts:
+        {
+          reviewer: xhigh,
+          executor: high,
+          explore: low,
+          oracle: high,
+          pr-watcher: low,
+          thermo-nuclear-code-quality-review: medium,
+          verifier: max,
+          writer: medium,
+        }
+
+  openrouter-cheap:
+    outputs: { omp: or-cheap, opencode: or-cheap }
+    ompRoles:
+      default: [or-deepseek-pro, high]
+      smol: [or-deepseek-flash-auto, low]
+      slow: [or-glm, max]
+      designer: [or-glm, high]
+      vision: [or-deepseek-vision, high]
+      task: [or-deepseek-pro, max]
+      commit: [or-deepseek-flash-auto, low]
+      plan: [or-glm, high]
+      advisor: [or-glm, max]
+      title: [or-deepseek-flash-auto, low]
+      reviewer: [or-glm, max]
+      writer: [or-deepseek-pro, low]
+    opencode:
+      efforts:
+        {
+          reviewer: max,
+          executor: max,
+          explore: low,
+          oracle: max,
+          pr-watcher: low,
+          thermo-nuclear-code-quality-review: high,
+          verifier: max,
+          writer: low,
+        }
+
+  copilot:
+    outputs: { omp: copilot, opencode: copilot }
+    ompRoles:
+      reviewer: [copilot-reviewer, null]
+      default: [copilot-sonnet, null]
+      smol: [copilot-haiku, null]
+      slow: [copilot-reviewer, null]
+      designer: [copilot-fable, null]
+      vision: [copilot-sol, null]
+      task: [copilot-luna, null]
+      commit: [copilot-mini, null]
+      plan: [copilot-reviewer, null]
+      advisor: [copilot-luna, null]
+      title: [copilot-mini, null]
+      writer: [copilot-sonnet, null]
+    opencode:
+      efforts:
+        {
+          reviewer: null,
+          executor: null,
+          explore: null,
+          oracle: null,
+          pr-watcher: null,
+          thermo-nuclear-code-quality-review: null,
+          verifier: null,
+          writer: null,
+        }
+
+  personal:
+    outputs: { omp: personal }
+    ompRoles:
+      reviewer: [or-reviewer, xhigh]
+      default: [codex-sol, medium]
+      smol: [codex-luna, medium]
+      slow: [codex-sol, max]
+      designer: [or-kimi, xhigh]
+      vision: [codex-sol, high]
+      task: [codex-luna, max]
+      commit: [codex-spark, high]
+      plan: [codex-sol, high]
+      advisor: [codex-luna, high]
+      title: [codex-spark, high]
+      tiny: [personal-tiny, medium]
+      writer: [or-writer, medium]

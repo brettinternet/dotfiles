@@ -1,0 +1,88 @@
+#!/bin/sh
+# ai-config — generate and activate manifest-backed AI harness profiles
+set -eu
+
+if [ -z "${DOTFILES:-}" ]; then
+  src="$0"
+  while [ -L "$src" ]; do
+    dir="$(cd "$(dirname "$src")" && pwd -P)"
+    src="$(readlink "$src")"
+    case "$src" in /*) ;; *) src="$dir/$src" ;; esac
+  done
+  self="$(cd "$(dirname "$src")" && pwd -P)"
+  DOTFILES="$(cd "$self/../.." && pwd -P)"
+fi
+
+generator="$DOTFILES/ai/generate-config.py"
+
+die() { printf '%s\n' "$*" >&2; exit 1; }
+
+case "${1:-generate}" in
+  generate)
+    shift
+    exec python3 "$generator" "$@"
+    ;;
+  check)
+    shift
+    [ "$#" -eq 0 ] || die "usage: ai-config check"
+    exec python3 "$generator" --check
+    ;;
+  use)
+    shift
+    profile=${1:-}
+    [ -n "$profile" ] || die "usage: ai-config use <profile> [--targets <list>]"
+    shift
+    targets=omp,pi,opencode
+    if [ "${1:-}" = --targets ]; then
+      [ "$#" -eq 2 ] || die "usage: ai-config use <profile> [--targets <list>]"
+      targets=$2
+    elif [ "$#" -ne 0 ]; then
+      die "usage: ai-config use <profile> [--targets <list>]"
+    fi
+    python3 "$generator"
+    old_ifs=$IFS
+    IFS=,
+    for harness in $targets; do
+      IFS=$old_ifs
+      case "$harness" in omp|pi|opencode) ;; *) die "unknown target: $harness" ;; esac
+      status=0
+      output=$(python3 "$generator" --profile-output "$profile" "$harness") || status=$?
+      if [ "$status" -eq 3 ]; then
+        :
+      elif [ "$status" -ne 0 ]; then
+        exit "$status"
+      else
+        case "$harness" in
+          omp) "$DOTFILES/ai/.bin/omp-profile" check "$output" ;;
+          pi) "$DOTFILES/ai/.bin/pi-profile" check "$output" ;;
+          opencode) "$DOTFILES/ai/.bin/opencode-profile" check "$output" ;;
+        esac
+      fi
+      IFS=,
+    done
+    IFS=,
+    for harness in $targets; do
+      IFS=$old_ifs
+      case "$harness" in omp|pi|opencode) ;; *) die "unknown target: $harness" ;; esac
+      status=0
+      output=$(python3 "$generator" --profile-output "$profile" "$harness") || status=$?
+      if [ "$status" -eq 3 ]; then
+        printf '%s has no %s profile; skipped\n' "$profile" "$harness"
+        status=0
+      elif [ "$status" -ne 0 ]; then
+        exit "$status"
+      else
+        case "$harness" in
+          omp) "$DOTFILES/ai/.bin/omp-profile" use "$output" ;;
+          pi) "$DOTFILES/ai/.bin/pi-profile" use "$output" ;;
+          opencode) "$DOTFILES/ai/.bin/opencode-profile" use "$output" ;;
+        esac
+      fi
+      IFS=,
+    done
+    IFS=$old_ifs
+    ;;
+  *)
+    die "usage: ai-config [generate [--check]|check|use <profile> [--targets <list>]]"
+    ;;
+esac

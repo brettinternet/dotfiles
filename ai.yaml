@@ -17,6 +17,10 @@
     - ~/.dsh/AGENTS.md
     - ~/.dsh/cordis.patch.yml
 - shell:
+    - command: python3 ai/generate-config.py
+      description: Generate harness model catalogs and profiles from the central manifest
+      stdout: true
+      stderr: true
     - command: |
         set -eu
         profile="$(ai/.bin/omp-profile show | cut -f1)"
@@ -231,8 +235,6 @@
       path: ai/pi/keybindings.json
     ~/.pi/agent/lsp.json:
       path: ai/pi/lsp.json
-    ~/.pi/agent/pi-title.jsonc:
-      path: ai/pi/pi-title.jsonc
     ~/.pi/agent/extensions/subagent/config.json:
       path: ai/pi/subagent-config.json
     # Oh My Pi

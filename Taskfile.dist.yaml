@@ -64,6 +64,7 @@ tasks:
     desc: Run checks on tracked files
     cmds:
       - git diff --check
+      - python3 ai/generate-config.py --check
       - python3 themes/kaile.py --check
       - task: check-files
         vars:
@@ -73,6 +74,7 @@ tasks:
     desc: Run checks on staged files
     cmds:
       - git diff --cached --check
+      - python3 ai/generate-config.py --check
       - python3 themes/kaile.py --check
       - task: check-files
         vars:

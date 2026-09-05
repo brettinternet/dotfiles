@@ -2,31 +2,31 @@
   "agent": {
     "reviewer": {
       "model": "anthropic/claude-opus-4.8",
-      "variant": "max",
+      "variant": "max"
     },
     "executor": {
-      "model": "anthropic/claude-sonnet-5",
+      "model": "anthropic/claude-sonnet-5"
     },
     "explore": {
-      "model": "anthropic/claude-haiku-4-5",
+      "model": "anthropic/claude-haiku-4-5"
     },
     "oracle": {
       "model": "anthropic/claude-opus-5",
-      "variant": "max",
+      "variant": "max"
     },
     "pr-watcher": {
-      "model": "anthropic/claude-haiku-4-5",
+      "model": "anthropic/claude-haiku-4-5"
     },
     "thermo-nuclear-code-quality-review": {
       "model": "anthropic/claude-opus-5",
-      "variant": "max",
+      "variant": "max"
     },
     "verifier": {
-      "model": "anthropic/claude-sonnet-5",
+      "model": "anthropic/claude-sonnet-5"
     },
     "writer": {
-      "model": "anthropic/claude-sonnet-5",
-      "variant": "low",
-    },
-  },
+      "model": "anthropic/claude-opus-4.6",
+      "variant": "low"
+    }
+  }
 }

@@ -144,10 +144,22 @@ render_config() {
   fi
 }
 
+cmd_check() {
+  name="${1:-}"
+  [ -n "$name" ] || die "usage: omp-profile check <name>"
+  [ "$name" != common ] || die "omp-profile: 'common' is a shared base, not a selectable profile"
+  target="$(profile_path "$name")"
+  [ -f "$COMMON_PROFILE" ] || die "omp-profile: common profile not found (${COMMON_PROFILE})"
+  [ -f "$target" ] || die "omp-profile: profile '${name}' not found (${target})"
+  [ -f "$MERGE_PROFILE" ] || die "omp-profile: merge helper not found (${MERGE_PROFILE})"
+  require_managed_active_file
+  require_managed_config
+}
+
 cmd_use() {
   name="${1:-}"
   [ -n "$name" ] || die "usage: omp-profile use <name>"
-  require_managed_active_file
+  cmd_check "$name"
   render_config "$name"
   tmp="${ACTIVE_FILE}.tmp.$$"
   printf '%s\n' "$name" > "$tmp"
@@ -204,6 +216,7 @@ usage() {
   cat <<EOF
 usage: omp-profile [show]             print active profile and source profile path
        omp-profile list               list selectable profiles (active marked with *)
+       omp-profile check <name>       validate that a profile can be activated
        omp-profile use <name>         generate config from common + profile <name>
        omp-profile config             print generated active config path
        omp-profile path [<name>|common]  print source profile path (default: active)
@@ -216,6 +229,7 @@ EOF
 case "${1:-show}" in
   show)       shift; cmd_show "$@" ;;
   list)       shift; cmd_list "$@" ;;
+  check)      shift; cmd_check "$@" ;;
   use)        shift; cmd_use "$@" ;;
   path)       shift; cmd_path "$@" ;;
   config)    shift; cmd_config "$@" ;;

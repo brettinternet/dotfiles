@@ -1,28 +1,28 @@
 {
   "agent": {
     "reviewer": {
-      "model": "github-copilot/claude-opus-4.8",
+      "model": "github-copilot/claude-opus-4.8"
     },
     "executor": {
-      "model": "github-copilot/claude-sonnet-5",
+      "model": "github-copilot/gpt-5.6-luna"
     },
     "explore": {
-      "model": "github-copilot/claude-haiku-4.5",
+      "model": "github-copilot/claude-haiku-4.5"
     },
     "oracle": {
-      "model": "github-copilot/claude-opus-4.8",
+      "model": "github-copilot/claude-opus-4.8"
     },
     "pr-watcher": {
-      "model": "github-copilot/claude-haiku-4.5",
+      "model": "github-copilot/claude-haiku-4.5"
     },
     "thermo-nuclear-code-quality-review": {
-      "model": "github-copilot/claude-opus-4.8",
+      "model": "github-copilot/claude-opus-4.8"
     },
     "verifier": {
-      "model": "github-copilot/gpt-5.6-luna",
+      "model": "github-copilot/gpt-5.6-luna"
     },
     "writer": {
-      "model": "github-copilot/claude-sonnet-5",
-    },
-  },
+      "model": "github-copilot/claude-sonnet-5"
+    }
+  }
 }

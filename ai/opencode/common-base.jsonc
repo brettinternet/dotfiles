@@ -1,0 +1,26 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "disabled_providers": ["opencode"],
+  "permission": {
+    "external_directory": {
+      "/tmp/*": "allow",
+    },
+  },
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+    },
+    "chrome-devtools": {
+      "type": "local",
+      "command": [
+        "bunx",
+        "chrome-devtools-mcp@latest",
+        "--executable-path",
+        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+        "--headless=true",
+        "--isolated=true",
+      ],
+    },
+  },
+}

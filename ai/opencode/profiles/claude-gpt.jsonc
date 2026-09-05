@@ -1,36 +1,36 @@
 {
   "agent": {
     "reviewer": {
-      "model": "anthropic/claude-opus-4.8",
-      "variant": "xhigh",
+      "model": "anthropic/claude-opus-5",
+      "variant": "xhigh"
     },
     "executor": {
-      "model": "anthropic/claude-sonnet-5",
-      "variant": "medium",
+      "model": "openai/gpt-5.6-luna",
+      "variant": "medium"
     },
     "explore": {
       "model": "openai/gpt-5.6-luna",
-      "variant": "medium",
+      "variant": "medium"
     },
     "oracle": {
       "model": "anthropic/claude-opus-5",
-      "variant": "xhigh",
+      "variant": "xhigh"
     },
     "pr-watcher": {
       "model": "openai/gpt-5.6-luna",
-      "variant": "medium",
+      "variant": "medium"
     },
     "thermo-nuclear-code-quality-review": {
       "model": "anthropic/claude-opus-5",
-      "variant": "xhigh",
+      "variant": "xhigh"
     },
     "verifier": {
       "model": "openai/gpt-5.6-luna",
-      "variant": "max",
+      "variant": "max"
     },
     "writer": {
       "model": "anthropic/claude-sonnet-5",
-      "variant": "low",
-    },
-  },
+      "variant": "low"
+    }
+  }
 }

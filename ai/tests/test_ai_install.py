@@ -605,9 +605,8 @@ trusted_hash = "sha256:trusted"
             omp_models["providers"]["openai-codex"]["modelOverrides"],
         )
         openrouter_overrides = omp_models["providers"]["openrouter"]["modelOverrides"]
-        codex_openrouter_models = {f"openai/{name}" for name in expected_codex}
         for model, override in openrouter_overrides.items():
-            expected = 272000 if model in codex_openrouter_models else 256000
+            expected = 272000 if model.startswith("openai/gpt-5.6-") else 256000
             self.assertEqual({"contextWindow": expected}, override, model)
         for model, override in omp_models["providers"]["anthropic"][
             "modelOverrides"
@@ -617,33 +616,15 @@ trusted_hash = "sha256:trusted"
             expected_codex,
             pi_models["providers"]["openai-codex"]["modelOverrides"],
         )
-        expected_pi_openrouter = {
-            "anthropic/claude-fable-latest": {"contextWindow": 256000},
-            "anthropic/claude-opus-4.6": {"contextWindow": 256000},
-            "anthropic/claude-opus-4.8": {"contextWindow": 256000},
-            "openai/gpt-5.6-luna": {"contextWindow": 272000},
-            "openai/gpt-5.6-sol": {"contextWindow": 272000},
-            "openai/gpt-5.6-sol-pro": {"contextWindow": 272000},
-            "z-ai/glm-5.3": {"contextWindow": 256000},
-            "~anthropic/claude-fable-latest": {"contextWindow": 256000},
-        }
+        pi_openrouter = pi_models["providers"]["openrouter"]["modelOverrides"]
         self.assertEqual(
-            expected_pi_openrouter,
-            pi_models["providers"]["openrouter"]["modelOverrides"],
+            {"contextWindow": 272000}, pi_openrouter["openai/gpt-5.6-sol-pro"]
         )
-
-        pi_openrouter_profile = json.loads(
-            (ROOT / "ai/pi/profiles/or.json").read_text()
+        self.assertEqual(
+            {"contextWindow": 256000},
+            pi_openrouter["anthropic/claude-opus-4.6"],
         )
-        profile_models = set(pi_openrouter_profile["enabledModels"])
-        profile_models.add(pi_openrouter_profile["defaultModel"])
-        subagents = pi_openrouter_profile["subagents"]
-        profile_models.add(subagents["defaultModel"].removeprefix("openrouter/"))
-        profile_models.update(
-            override["model"].removeprefix("openrouter/")
-            for override in subagents["agentOverrides"].values()
-        )
-        self.assertLessEqual(profile_models, set(expected_pi_openrouter))
+        self.run_command("python3", "ai/generate-config.py", "--check")
         self.run_command(
             "dotbot/bin/dotbot",
             "-d",
@@ -663,15 +644,6 @@ trusted_hash = "sha256:trusted"
         self.assertTrue(pi_keybindings.is_symlink())
         self.assertEqual(
             (ROOT / "ai/pi/keybindings.json").resolve(), pi_keybindings.resolve()
-        )
-        pi_title = self.home / ".pi/agent/pi-title.jsonc"
-        self.assertTrue(pi_title.is_symlink())
-        self.assertEqual((ROOT / "ai/pi/pi-title.jsonc").resolve(), pi_title.resolve())
-        pi_title_config = pi_title.read_text()
-        self.assertIn('"enabled": true', pi_title_config)
-        self.assertIn(
-            '"model": "openrouter/nvidia/nemotron-3.5-lightning:low"',
-            pi_title_config,
         )
         bindings = json.loads(pi_keybindings.read_text())
         self.assertEqual(["up", "ctrl+p"], bindings["tui.editor.cursorUp"])
@@ -713,6 +685,46 @@ trusted_hash = "sha256:trusted"
         mise = (ROOT / "darwin/.config/mise/conf.d/50-darwin.toml").read_text()
         self.assertIn("npm:@earendil-works/pi-coding-agent", mise)
 
+    def test_central_manifest_maps_profiles_and_shared_roles(self) -> None:
+        manifest = self.load_yaml((ROOT / "ai/manifest.yml").read_text())
+        self.assertIsInstance(manifest, dict)
+        if not isinstance(manifest, dict):
+            self.fail("AI manifest must be a mapping")
+
+        self.assertEqual("slow", manifest["roles"]["oracle"]["route"])
+        self.assertEqual("task", manifest["roles"]["executor"]["route"])
+        self.assertEqual(
+            {"omp": "codex", "pi": "codex", "opencode": "gpt"},
+            manifest["profiles"]["codex"]["outputs"],
+        )
+        self.assertIn("commit", manifest["profiles"]["codex"]["ompRoles"])
+        self.assertNotIn("commit", manifest["roles"])
+        self.run_command("ai/.bin/ai-config", "check")
+
+    def test_unified_profile_command_uses_harness_profile_names(self) -> None:
+        self.run_command("ai/.bin/ai-config", "use", "codex")
+
+        self.assertEqual("codex\n", (self.home / ".omp/agent/.active").read_text())
+        self.assertEqual(
+            "codex\n", (self.home / ".pi/agent/.active-profile").read_text()
+        )
+        self.assertEqual(
+            "gpt\n", (self.home / ".config/opencode/.active").read_text()
+        )
+
+    def test_unified_profile_command_preflights_all_targets(self) -> None:
+        pi_settings = self.home / ".pi/agent/settings.json"
+        pi_settings.parent.mkdir(parents=True)
+        pi_settings.write_text('{"unmanaged": true}\n')
+
+        completed = self.run_command(
+            "ai/.bin/ai-config", "use", "claude", expected_code=1
+        )
+
+        self.assertIn("refusing to overwrite unmanaged settings", completed.stderr)
+        self.assertFalse((self.home / ".omp/agent/.active").exists())
+        self.assertFalse((self.home / ".config/opencode/.active").exists())
+
     def test_omp_profiles_select_their_available_search_provider(self) -> None:
         config = self.home / ".omp/agent/config.yml"
 
@@ -735,7 +747,7 @@ trusted_hash = "sha256:trusted"
         self.assertEqual("gpt-5.6-sol", settings["defaultModel"])
         self.assertEqual("medium", settings["defaultThinkingLevel"])
         self.assertEqual(
-            ["gpt-5.6-luna", "gpt-5.6-sol", "gpt-5.6-terra"],
+            ["gpt-5.6-luna", "gpt-5.6-sol", "gpt-5.6-terra", "gpt-6-astra"],
             settings["enabledModels"],
         )
         self.assertTrue(settings["quietStartup"])
@@ -794,7 +806,7 @@ trusted_hash = "sha256:trusted"
             {
                 "enforce": True,
                 "strict": True,
-                "allow": ["openai-codex/gpt-5.6-*"],
+                "allow": ["openai-codex/gpt-5.6-*", "openai-codex/gpt-6-astra"],
             },
             subagents["modelScope"],
         )
@@ -826,6 +838,10 @@ trusted_hash = "sha256:trusted"
             if name not in disabled:
                 self.assertTrue(override["inheritProjectContext"])
                 self.assertTrue(override["inheritGlobalContext"])
+        title = json.loads((self.home / ".pi/agent/pi-title.jsonc").read_text())
+        self.assertEqual(
+            "openai-codex/gpt-5.3-codex-spark:high", title["model"]
+        )
         self.assertEqual(
             "codex\n", (self.home / ".pi/agent/.active-profile").read_text()
         )
@@ -961,7 +977,7 @@ trusted_hash = "sha256:trusted"
             pi_config_path.read_text(),
         )
         self.assertIn(
-            '"model": "openrouter/openai/gpt-5.6-terra"',
+            '"model": "openrouter/openai/gpt-5.6-luna"',
             opencode_config_path.read_text(),
         )
 
