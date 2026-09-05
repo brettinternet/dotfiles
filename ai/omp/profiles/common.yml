@@ -5,7 +5,7 @@ startup:
   checkUpdate: false
 hideThinkingBlock: false
 advisor:
-  enabled: true
+  enabled: false
 theme:
   dark: dark-terminal
 symbolPreset: nerd
