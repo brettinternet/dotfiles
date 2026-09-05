@@ -664,6 +664,18 @@ trusted_hash = "sha256:trusted"
         self.assertEqual(
             (ROOT / "ai/pi/keybindings.json").resolve(), pi_keybindings.resolve()
         )
+        pi_title = self.home / ".pi/agent/pi-title.json"
+        self.assertTrue(pi_title.is_symlink())
+        self.assertEqual((ROOT / "ai/pi/pi-title.json").resolve(), pi_title.resolve())
+        self.assertEqual(
+            {
+                "enabled": True,
+                "model": "openrouter/nvidia/nemotron-3.5-lightning:low",
+                "maxTokens": 30,
+                "maxLength": 60,
+            },
+            json.loads(pi_title.read_text()),
+        )
         bindings = json.loads(pi_keybindings.read_text())
         self.assertEqual(["up", "ctrl+p"], bindings["tui.editor.cursorUp"])
         self.assertEqual(["down", "ctrl+n"], bindings["tui.editor.cursorDown"])
