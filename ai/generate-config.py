@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render model catalogs and harness profiles from ai/manifest.yml."""
+"""Render model catalogs and harness profiles from ai/manifest.yaml."""
 from __future__ import annotations
 
 import argparse
@@ -273,7 +273,7 @@ def main() -> int:
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--profile-output", nargs=2, metavar=("PROFILE", "HARNESS"))
     args = parser.parse_args()
-    manifest = Manifest(AI_ROOT / "manifest.yml")
+    manifest = Manifest(AI_ROOT / "manifest.yaml")
     if args.profile_output:
         profile_name, harness = args.profile_output
         try:

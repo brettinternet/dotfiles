@@ -10,7 +10,7 @@ make ai
 
 ## Sources
 
-- `manifest.yml` — central model catalog, profile routing, and cross-harness role mapping; `generate-config.py` renders harness-specific sources
+- `manifest.yaml` — central model catalog, profile routing, and cross-harness role mapping; `generate-config.py` renders harness-specific sources
 - `agents/` — shared subagent prompts; `install-agents` renders harness-specific definitions
 - `.agents/skills/` — reusable skills discovered through `~/.agents/skills/`
 - `.agents/commands/` — shared workflows rendered as skills by `install-agent-commands`
@@ -27,14 +27,14 @@ ai-config use openrouter  # or: claude, codex-claude, openrouter-cheap, copilot,
 ai-config generate --check
 ```
 
-The individual `pi-profile`, `omp-profile`, and `opencode-profile` commands remain available. Generated profile and model files under `pi/`, `omp/`, and `opencode/` should not be edited directly; change `manifest.yml` and run `ai-config generate`.
+The individual `pi-profile`, `omp-profile`, and `opencode-profile` commands remain available. Generated profile and model files under `pi/`, `omp/`, and `opencode/` should not be edited directly; change `manifest.yaml` and run `ai-config generate`.
 
 - **Pi:** combines `pi/profiles/common.json` with the selected generated overlay. `codex` uses ChatGPT subscription models; `or` requires `OPENROUTER_API_KEY`.
 - **OMP:** remains independently configured under `omp/`.
 - **OpenCode:** combines `opencode/profiles/common.jsonc` with an overlay. Run `opencode-profile list` for available profiles.
 - **dsh:** links global instructions, presets, and a settings template. API keys come from environment variables; OAuth credentials remain machine-local in `~/.dsh/.credentials.yaml`.
 
-`manifest.yml` owns model metadata and role-to-model routing. OMP's richer `modelRoles` vocabulary is canonical: shared agents map through it (for example, `oracle` maps to `slow`), while Pi-specific `title` and `progress` routes render their model configs. OMP-only roles remain OMP-only. Harness profile names are mapped by the manifest, such as central `codex` to OpenCode `gpt`.
+`manifest.yaml` owns model metadata and role-to-model routing. OMP's richer `modelRoles` vocabulary is canonical: shared agents map through it (for example, `oracle` maps to `slow`), while Pi-specific `title` and `progress` routes render their model configs. OMP-only roles remain OMP-only. Harness profile names are mapped by the manifest, such as central `codex` to OpenCode `gpt`.
 
 ## Shared agents
 
