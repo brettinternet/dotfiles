@@ -2,7 +2,7 @@ version: 1
 
 piLaunchers:
   fast: [or-nemotron-lightning, low]
-  oracle: [or-sol-pro, high]
+  oracle: [claude-fable, high]
 
 roles:
   explore: { route: smol }
@@ -32,7 +32,7 @@ models:
     ids: { omp: openai-codex/gpt-5.4, pi: openai-codex/gpt-5.4, opencode: openai/gpt-5.4 }
 
   claude-fable:
-    ids: { omp: anthropic/claude-fable-5, pi: anthropic/claude-fable-5, opencode: anthropic/claude-fable-5 }
+    ids: { omp: anthropic/claude-fable-5.1, pi: anthropic/claude-fable-5.1, opencode: anthropic/claude-fable-5.1 }
     context: conservative
   claude-opus:
     ids: { omp: anthropic/claude-opus-5, pi: anthropic/claude-opus-5, opencode: anthropic/claude-opus-5 }

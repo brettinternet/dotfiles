@@ -53,7 +53,7 @@
     },
     "anthropic": {
       "models": {
-        "claude-fable-5": {
+        "claude-fable-5.1": {
           "limit": {
             "context": 256000,
             "input": 128000,
