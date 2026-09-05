@@ -686,7 +686,7 @@ trusted_hash = "sha256:trusted"
         self.assertIn("npm:@earendil-works/pi-coding-agent", mise)
 
     def test_central_manifest_maps_profiles_and_shared_roles(self) -> None:
-        manifest = self.load_yaml((ROOT / "ai/manifest.yml").read_text())
+        manifest = self.load_yaml((ROOT / "ai/manifest.yaml").read_text())
         self.assertIsInstance(manifest, dict)
         if not isinstance(manifest, dict):
             self.fail("AI manifest must be a mapping")
