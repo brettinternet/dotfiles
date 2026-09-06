@@ -99,6 +99,34 @@ describe("dcg user approval", () => {
     expect(decision.deny).toBe(false);
   });
 
+  test("reports the approval lifecycle for Herdr", async () => {
+    const lifecycle: Array<{ event: string; value: unknown }> = [];
+    const decision = await applyUserApproval(
+      {
+        deny: true,
+        reason: "hard reset requires explicit user approval.",
+        ruleId: "core.git:reset-hard",
+      },
+      "git reset --hard",
+      {
+        hasUI: true,
+        ui: { confirm: async () => true },
+      },
+      { emit: (event, value) => lifecycle.push({ event, value }) },
+    );
+
+    expect(decision.deny).toBe(false);
+    expect(lifecycle.map(({ event }) => event)).toEqual([
+      "pi:approval-status:v1:started",
+      "pi:approval-status:v1:finished",
+    ]);
+    expect(lifecycle[0]!.value).toEqual(lifecycle[1]!.value);
+    expect(lifecycle[0]!.value).toMatchObject({
+      version: 1,
+      label: "Destructive Git approval required",
+    });
+  });
+
   test("blocks destructive Git operations when approval is declined or unavailable", async () => {
     const blocked = {
       deny: true,

@@ -1,5 +1,6 @@
 // dotfiles-dcg-shell-guard
 import { spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
 type ToolCallContext = {
@@ -7,7 +8,12 @@ type ToolCallContext = {
   ui: { confirm(title: string, message: string): Promise<boolean> };
 };
 
+type ApprovalEvents = {
+  emit(event: string, value: unknown): void;
+};
+
 type ExtensionAPI = {
+  events: ApprovalEvents;
   on(
     event: "tool_call",
     handler: (
@@ -132,7 +138,12 @@ function dcgDecision(command: string): Promise<Decision> {
   return promise;
 }
 
-export async function applyUserApproval(decision: Decision, command: string, ctx: ToolCallContext): Promise<Decision> {
+export async function applyUserApproval(
+  decision: Decision,
+  command: string,
+  ctx: ToolCallContext,
+  events?: ApprovalEvents,
+): Promise<Decision> {
   if (!decision.deny || !decision.ruleId) return decision;
 
   if (decision.ruleId === "core.git:branch-force-delete" && isBranchDelete(command)) {
@@ -141,8 +152,18 @@ export async function applyUserApproval(decision: Decision, command: string, ctx
 
   if (!decision.ruleId.startsWith("core.git:") || !ctx.hasUI) return decision;
 
-  const approved = await ctx.ui.confirm("Allow destructive Git operation?", `${decision.reason}\n\nCommand:\n${command}`);
-  return approved ? ALLOW : { deny: true, reason: "Blocked by user." };
+  const status = {
+    version: 1,
+    requestId: randomUUID(),
+    label: "Destructive Git approval required",
+  };
+  events?.emit("pi:approval-status:v1:started", status);
+  try {
+    const approved = await ctx.ui.confirm("Allow destructive Git operation?", `${decision.reason}\n\nCommand:\n${command}`);
+    return approved ? ALLOW : { deny: true, reason: "Blocked by user." };
+  } finally {
+    events?.emit("pi:approval-status:v1:finished", status);
+  }
 }
 
 export default function dcgGuard(pi: ExtensionAPI): void {
@@ -159,7 +180,7 @@ export default function dcgGuard(pi: ExtensionAPI): void {
     } catch {
       decision = UNAVAILABLE;
     }
-    decision = await applyUserApproval(decision, command, ctx);
+    decision = await applyUserApproval(decision, command, ctx, pi.events);
     if (decision.deny) return { block: true, reason: decision.reason };
   });
 }
