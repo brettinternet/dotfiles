@@ -2,10 +2,18 @@
 import { spawn } from "node:child_process";
 import { homedir } from "node:os";
 import { join } from "node:path";
+type ToolCallContext = {
+  hasUI: boolean;
+  ui: { confirm(title: string, message: string): Promise<boolean> };
+};
+
 type ExtensionAPI = {
   on(
     event: "tool_call",
-    handler: (event: { toolName: string; input?: Record<string, unknown> }) => Promise<{ block: true; reason: string } | undefined>,
+    handler: (
+      event: { toolName: string; input?: Record<string, unknown> },
+      ctx: ToolCallContext,
+    ) => Promise<{ block: true; reason: string } | undefined>,
   ): void;
 };
 
@@ -14,7 +22,16 @@ const DCG_BIN =
 const UNAVAILABLE = { deny: true, reason: "Blocked because the dcg safety guard is unavailable." };
 const ALLOW = { deny: false, reason: "" };
 
-type Decision = { deny: boolean; reason: string };
+type Decision = { deny: boolean; reason: string; ruleId?: string };
+
+const BRANCH_COMMAND = /^\s*git(?:\s+-C\s+(?:"[^"]*"|'[^']*'|\S+))*\s+branch\s+([^;&|\n]+)\s*$/;
+const SAFE_DELETE_OPTION = /(?:^|\s)(?:-d|--delete)(?:\s|$)/;
+const FORCE_BRANCH_OPTION = /(?:^|\s)(?:-D|-M|-C|-f|--force)(?:\s|$)/;
+
+export function isSafeBranchDelete(command: string): boolean {
+  const branchArguments = command.match(BRANCH_COMMAND)?.[1];
+  return Boolean(branchArguments && SAFE_DELETE_OPTION.test(branchArguments) && !FORCE_BRANCH_OPTION.test(branchArguments));
+}
 
 const VARIABLE_REFERENCE = /(^|[^\\])\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[^}]+\}|[0-9@*#?!$(-])/;
 const RM_COMMAND =
@@ -32,8 +49,7 @@ export function localDestructiveTargetDecision(command: string, home = homedir()
     if (VARIABLE_REFERENCE.test(clause)) {
       return {
         deny: true,
-        reason:
-          "Blocked variable-derived deletion target. Use a verified literal target, or leave the path in place and report it.",
+        reason: "Blocked variable-derived deletion target. Use a verified literal target, or leave the path in place and report it.",
       };
     }
 
@@ -105,6 +121,8 @@ function dcgDecision(command: string): Promise<Decision> {
         if (typeof result.reason === "string") reason = result.reason;
         if (typeof result.rule_id === "string") {
           reason += ` [${result.rule_id}]`;
+          settle({ deny: true, reason, ruleId: result.rule_id });
+          return;
         }
       }
     } catch {
@@ -115,8 +133,22 @@ function dcgDecision(command: string): Promise<Decision> {
   return promise;
 }
 
+export async function applyUserApproval(decision: Decision, command: string, ctx: ToolCallContext): Promise<Decision> {
+  if (!decision.deny || !decision.ruleId) return decision;
+
+  if (decision.ruleId === "core.git:branch-force-delete" && isSafeBranchDelete(command)) {
+    // `git branch -d` performs its own merged-branch check and refuses otherwise.
+    return ALLOW;
+  }
+
+  if (!decision.ruleId.startsWith("core.git:") || !ctx.hasUI) return decision;
+
+  const approved = await ctx.ui.confirm("Allow destructive Git operation?", `${decision.reason}\n\nCommand:\n${command}`);
+  return approved ? ALLOW : { deny: true, reason: "Blocked by user." };
+}
+
 export default function dcgGuard(pi: ExtensionAPI): void {
-  pi.on("tool_call", async (event) => {
+  pi.on("tool_call", async (event, ctx) => {
     if (event.toolName !== "bash") return;
     const command = String(event.input?.command ?? "");
     if (!command.trim()) return;
@@ -129,6 +161,7 @@ export default function dcgGuard(pi: ExtensionAPI): void {
     } catch {
       decision = UNAVAILABLE;
     }
+    decision = await applyUserApproval(decision, command, ctx);
     if (decision.deny) return { block: true, reason: decision.reason };
   });
 }
