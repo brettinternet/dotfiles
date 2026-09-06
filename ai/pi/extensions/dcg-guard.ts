@@ -1,6 +1,5 @@
 // dotfiles-dcg-shell-guard
 import { spawn } from "node:child_process";
-import { randomUUID } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
 type ToolCallContext = {
@@ -152,17 +151,15 @@ export async function applyUserApproval(
 
   if (!decision.ruleId.startsWith("core.git:") || !ctx.hasUI) return decision;
 
-  const status = {
-    version: 1,
-    requestId: randomUUID(),
+  events?.emit("herdr:blocked", {
+    active: true,
     label: "Destructive Git approval required",
-  };
-  events?.emit("pi:approval-status:v1:started", status);
+  });
   try {
     const approved = await ctx.ui.confirm("Allow destructive Git operation?", `${decision.reason}\n\nCommand:\n${command}`);
     return approved ? ALLOW : { deny: true, reason: "Blocked by user." };
   } finally {
-    events?.emit("pi:approval-status:v1:finished", status);
+    events?.emit("herdr:blocked", { active: false });
   }
 }
 
