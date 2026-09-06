@@ -11,9 +11,9 @@ Every 15 minutes:
 
 1. Discover matching non-draft PRs. If a Linear project was supplied but unavailable, fall back to all matching PRs by the author.
 2. Skip PRs with no authored commits since the saved baseline. Do not post again on an unchanged PR already approved by the authenticated user.
-3. Read the current diff scope, linked intent, surrounding affected code, and all existing review discussion. Keep prior concerns in a private ledger and never post the same underlying concern again.
-4. Review only changes since the baseline on repeat passes. A finding requires a changed `path:line`, a concrete trigger, and observable breakage. Drop speculation, style, pre-existing problems, and cleanup suggestions.
-5. Choose `APPROVE` when no new finding exists and no prior material concern remains, `COMMENT` when a new finding clears the bar, or `WAIT` when only a prior concern remains unresolved. `WAIT` posts nothing.
+3. Read the current diff scope, linked intent, surrounding affected code, affected callers, and all existing review discussion. Establish the actual operating context from PR and repository evidence: trust boundaries, data sensitivity, expected inputs and scale, rollout or migration assumptions, and failure and recovery paths. Keep prior concerns in a private ledger and never post the same underlying concern again.
+4. Review only changes since the baseline on repeat passes. Judge whether the changed code is safe to ship in that operating context, spending scrutiny according to credible impact and blast radius rather than hypothetical uses. A finding requires a changed `path:line`, a concrete trigger, and observable breakage. Drop speculation, style, pre-existing problems, cleanup suggestions, and hardening for environments the code does not serve.
+5. Choose `APPROVE` only when the reviewed change is safe to ship for the established context, no new finding exists, and no prior material concern remains. Choose `COMMENT` when a new finding clears the bar, or `WAIT` when only a prior concern remains unresolved. `WAIT` posts nothing.
 6. For `COMMENT`, attach each finding to a changed line when possible and use one sentence naming trigger and breakage plus one direct question. For `APPROVE`, approve with no body. Apply `user-voice` to posted text.
 7. Update the saved authored-commit baseline and print one concise status line per PR.
 
