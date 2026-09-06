@@ -1,4 +1,13 @@
 {
-  "fast": ["openrouter/nvidia/nemotron-3.5-lightning", "low"],
-  "oracle": ["anthropic/claude-fable-5.1", "high"]
+  "fast": {
+    "model": "openrouter/nvidia/nemotron-3.5-lightning",
+    "thinking": "low"
+  },
+  "oracle": {
+    "model": "anthropic/claude-fable-5.1",
+    "thinking": "high"
+  },
+  "solo": {
+    "args": ["--exclude-tools", "subagent,subagent_wait,subagent_supervisor"]
+  }
 }

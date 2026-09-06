@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import shlex
 import sys
 from pathlib import Path
 
@@ -20,15 +21,24 @@ def main() -> int:
         return 2
 
     with LAUNCHERS_PATH.open() as source:
-        launchers: dict[str, list[str]] = json.load(source)
+        launchers: dict[str, dict[str, object]] = json.load(source)
 
     key = sys.argv[1]
     if key == "list":
         if len(sys.argv) != 2:
             usage()
             return 2
-        for name, (model, thinking) in launchers.items():
-            print(f"{name}\t{model}:{thinking}")
+        for name, launcher in launchers.items():
+            model = launcher.get("model")
+            thinking = launcher.get("thinking")
+            args = launcher.get("args", [])
+            summary = []
+            if model:
+                summary.append(f"{model}{f':{thinking}' if thinking else ''}")
+            elif thinking:
+                summary.extend(["--thinking", str(thinking)])
+            summary.extend(str(argument) for argument in args)
+            print(f"{name}\t{shlex.join(summary)}")
         return 0
 
     if key not in launchers:
@@ -36,10 +46,15 @@ def main() -> int:
         print(f"p: unknown launcher {key!r}; available: {available}", file=sys.stderr)
         return 2
 
-    model, thinking = launchers[key]
-    os.execvp(
-        "pi", ["pi", "--model", model, "--thinking", thinking, *sys.argv[2:]]
-    )
+    launcher = launchers[key]
+    arguments = ["pi"]
+    if model := launcher.get("model"):
+        arguments.extend(["--model", str(model)])
+    if thinking := launcher.get("thinking"):
+        arguments.extend(["--thinking", str(thinking)])
+    arguments.extend(str(argument) for argument in launcher.get("args", []))
+    arguments.extend(sys.argv[2:])
+    os.execvp("pi", arguments)
 
 
 if __name__ == "__main__":
