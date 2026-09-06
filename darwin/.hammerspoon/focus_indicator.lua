@@ -314,7 +314,6 @@ function focusIndicator.start(options)
       eventTypes.leftMouseDown,
       eventTypes.rightMouseDown,
       eventTypes.otherMouseDown,
-      eventTypes.scrollWheel,
       eventTypes.gesture,
     }, inputEvent)
     :start()

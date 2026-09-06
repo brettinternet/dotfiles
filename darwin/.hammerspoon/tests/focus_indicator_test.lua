@@ -48,7 +48,7 @@ _G.hs = {
     new = function(eventTypes, callback)
       eventtapCount = eventtapCount + 1
       inputCallback = callback
-      assert_equal(#eventTypes, 8, "all keyboard and pointer event kinds registered")
+      assert_equal(#eventTypes, 7, "keyboard and non-scroll pointer event kinds registered")
       return stoppable(callback)
     end,
   },
