@@ -25,12 +25,11 @@ const ALLOW = { deny: false, reason: "" };
 type Decision = { deny: boolean; reason: string; ruleId?: string };
 
 const BRANCH_COMMAND = /^\s*git(?:\s+-C\s+(?:"[^"]*"|'[^']*'|\S+))*\s+branch\s+([^;&|\n]+)\s*$/;
-const SAFE_DELETE_OPTION = /(?:^|\s)(?:-d|--delete)(?:\s|$)/;
-const FORCE_BRANCH_OPTION = /(?:^|\s)(?:-D|-M|-C|-f|--force)(?:\s|$)/;
+const DELETE_OPTION = /(?:^|\s)(?:-d|-D|--delete)(?:\s|$)/;
 
-export function isSafeBranchDelete(command: string): boolean {
+export function isBranchDelete(command: string): boolean {
   const branchArguments = command.match(BRANCH_COMMAND)?.[1];
-  return Boolean(branchArguments && SAFE_DELETE_OPTION.test(branchArguments) && !FORCE_BRANCH_OPTION.test(branchArguments));
+  return Boolean(branchArguments && DELETE_OPTION.test(branchArguments));
 }
 
 const VARIABLE_REFERENCE = /(^|[^\\])\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[^}]+\}|[0-9@*#?!$(-])/;
@@ -136,8 +135,7 @@ function dcgDecision(command: string): Promise<Decision> {
 export async function applyUserApproval(decision: Decision, command: string, ctx: ToolCallContext): Promise<Decision> {
   if (!decision.deny || !decision.ruleId) return decision;
 
-  if (decision.ruleId === "core.git:branch-force-delete" && isSafeBranchDelete(command)) {
-    // `git branch -d` performs its own merged-branch check and refuses otherwise.
+  if (decision.ruleId === "core.git:branch-force-delete" && isBranchDelete(command)) {
     return ALLOW;
   }
 

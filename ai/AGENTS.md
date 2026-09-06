@@ -53,5 +53,6 @@ If you are running as a subagent of any kind, ignore this section entirely and d
 - Never open PRs without explicit instruction.
 - A user-invoked command whose documented flow pushes or opens a PR counts as explicit instruction, scoped to that command's own branch.
 - When committing, do not add yourself as a co-author. Omit any `Co-Authored-By` trailer. Make commit messages as concise as possible.
-- Prefer `hwt create --branch <branch> --base <base> --json` for command-created Herdr worktrees when `hwt` and a Herdr server are available. Work from the returned path and remove a clean worktree with `hwt remove --workspace <workspace-id> --json`; this preserves repository `.herdr-worktree.yaml` setup and Herdr workspace tracking.
+- Prefer `hwt create --branch <branch> --base <base> --json` for command-created Herdr worktrees when `hwt` and a Herdr server are available. Work from the returned path and remove it with `hwt remove --workspace <workspace-id> --json`; this preserves repository `.herdr-worktree.yaml` setup and Herdr workspace tracking.
+- Agents may remove worktrees and local branches they created for the current task, including force-removing a dirty worktree or force-deleting its unmerged branch after verifying the exact path and ref. Never extend this permission to pre-existing or user-created worktrees and branches.
 - Use harness-provided isolation as-is. For exact-SHA detached checkouts or when HWT/Herdr is unavailable, use `git worktree` and place the checkout in `.worktrees` if no path is specified.

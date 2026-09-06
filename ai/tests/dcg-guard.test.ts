@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { applyUserApproval, isSafeBranchDelete, localDestructiveTargetDecision } from "../pi/extensions/dcg-guard";
+import { applyUserApproval, isBranchDelete, localDestructiveTargetDecision } from "../pi/extensions/dcg-guard";
 
 const home = "/Users/example";
 
@@ -42,17 +42,19 @@ describe("local destructive target policy", () => {
 });
 
 describe("dcg user approval", () => {
-  test.each(["git branch -d agent-work", "git branch --delete agent-work", "git -C ../repo branch -d agent-work"])(
-    "recognizes Git's merged-only branch deletion: %s",
-    (command: string) => {
-      expect(isSafeBranchDelete(command)).toBe(true);
-    },
-  );
+  test.each([
+    "git branch -d agent-work",
+    "git branch -D agent-work",
+    "git branch --delete --force agent-work",
+    "git -C ../repo branch -d agent-work",
+  ])("recognizes standalone branch deletion: %s", (command: string) => {
+    expect(isBranchDelete(command)).toBe(true);
+  });
 
-  test.each(["git branch -D agent-work", "git branch --delete --force agent-work", "git branch -d agent-work && git reset --hard"])(
-    "does not treat forced or compound branch operations as safe: %s",
+  test.each(["git branch -f existing new-tip", "git branch -M old new", "git branch -d agent-work && git reset --hard"])(
+    "does not treat other forced or compound branch operations as deletion: %s",
     (command: string) => {
-      expect(isSafeBranchDelete(command)).toBe(false);
+      expect(isBranchDelete(command)).toBe(false);
     },
   );
 
@@ -80,8 +82,7 @@ describe("dcg user approval", () => {
     expect(prompted).toBe(false);
   });
 
-  test("prompts for forced branch deletion", async () => {
-    let prompt = "";
+  test("allows forced branch deletion without UI", async () => {
     const decision = await applyUserApproval(
       {
         deny: true,
@@ -90,18 +91,12 @@ describe("dcg user approval", () => {
       },
       "git branch -D agent-work",
       {
-        hasUI: true,
-        ui: {
-          async confirm(_title, message) {
-            prompt = message;
-            return true;
-          },
-        },
+        hasUI: false,
+        ui: { confirm: async () => false },
       },
     );
 
     expect(decision.deny).toBe(false);
-    expect(prompt).toContain("git branch -D agent-work");
   });
 
   test("blocks destructive Git operations when approval is declined or unavailable", async () => {
