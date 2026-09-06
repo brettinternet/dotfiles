@@ -59,11 +59,30 @@ class Manifest:
         self.validate()
 
     def validate(self) -> None:
-        for name, route in self.pi_launchers.items():
+        for name, launcher in self.pi_launchers.items():
+            location = f"piLaunchers.{name}"
             if not re.fullmatch(r"[a-z][a-z0-9-]*", name) or name == "list":
                 raise SystemExit(f"{self.path}: invalid Pi launcher name {name!r}")
-            self.validate_route(route, f"piLaunchers.{name}")
-            self.model_id(route[0], "pi")
+            if not isinstance(launcher, dict) or not launcher:
+                raise SystemExit(f"{self.path}: {location} must be a non-empty mapping")
+            unknown = set(launcher) - {"model", "thinking", "args"}
+            if unknown:
+                raise SystemExit(
+                    f"{self.path}: unknown keys at {location}: {', '.join(sorted(unknown))}"
+                )
+            if "model" in launcher:
+                if not isinstance(launcher["model"], str):
+                    raise SystemExit(f"{self.path}: {location}.model must be a model alias")
+                self.model_id(launcher["model"], "pi")
+            if "thinking" in launcher:
+                if not isinstance(launcher["thinking"], str):
+                    raise SystemExit(f"{self.path}: {location}.thinking must be an effort")
+                self.validate_effort(launcher["thinking"], location)
+            args = launcher.get("args", [])
+            if not isinstance(args, list) or any(
+                not isinstance(argument, str) or not argument for argument in args
+            ):
+                raise SystemExit(f"{self.path}: {location}.args must be non-empty strings")
         for name, role in self.roles.items():
             if not isinstance(role, dict) or not role.get("route"):
                 raise SystemExit(f"{self.path}: role {name!r} requires route")
@@ -250,11 +269,29 @@ def render_outputs(manifest: Manifest) -> dict[Path, str]:
     omp_catalog = render_catalog(manifest, "omp")
     outputs[AI_ROOT / "omp/models.yml"] = yaml.safe_dump(omp_catalog, sort_keys=False)
     outputs[AI_ROOT / "pi/models.json"] = json.dumps(render_catalog(manifest, "pi"), indent=2) + "\n"
-    launcher_lines = [
-        f"  {json.dumps(name)}: {json.dumps([manifest.model_id(route[0], 'pi'), route[1]])}"
-        for name, route in manifest.pi_launchers.items()
-    ]
-    outputs[AI_ROOT / "pi/launchers.json"] = "{\n" + ",\n".join(launcher_lines) + "\n}\n"
+    launchers = {}
+    for name, launcher in manifest.pi_launchers.items():
+        launchers[name] = {
+            **(
+                {"model": manifest.model_id(launcher["model"], "pi")}
+                if "model" in launcher
+                else {}
+            ),
+            **({"thinking": launcher["thinking"]} if "thinking" in launcher else {}),
+            **({"args": launcher["args"]} if launcher.get("args") else {}),
+        }
+    launcher_blocks = []
+    for name, launcher in launchers.items():
+        fields = [
+            f"    {json.dumps(key)}: {json.dumps(value)}"
+            for key, value in launcher.items()
+        ]
+        launcher_blocks.append(
+            f"  {json.dumps(name)}: {{\n" + ",\n".join(fields) + "\n  }"
+        )
+    outputs[AI_ROOT / "pi/launchers.json"] = (
+        "{\n" + ",\n".join(launcher_blocks) + "\n}\n"
+    )
 
     opencode_common = deep_merge(
         load_jsonc(AI_ROOT / "opencode/common-base.jsonc"),

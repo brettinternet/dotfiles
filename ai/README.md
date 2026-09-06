@@ -29,11 +29,12 @@ ai-config generate --check
 
 The individual `pi-profile`, `omp-profile`, and `opencode-profile` commands remain available. Generated profile and model files under `pi/`, `omp/`, and `opencode/` should not be edited directly; change `manifest.yaml` and run `ai-config generate`.
 
-Use `p <launcher> [pi arguments...]` for a manifest-backed Pi model and thinking preset, or `p list` to show presets:
+Use `p <launcher> [pi arguments...]` for a manifest-backed Pi launch preset, or `p list` to show presets. Launchers can configure a model, thinking level, arbitrary Pi arguments, or any combination:
 
 ```sh
 p fast
 p oracle --no-session "Review this design"
+p solo --continue # use the active profile defaults without subagent tools
 ```
 
 - **Pi:** combines `pi/profiles/common.json` with the selected generated overlay. `codex` uses ChatGPT subscription models; `or` requires `OPENROUTER_API_KEY`.

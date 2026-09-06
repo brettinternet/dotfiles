@@ -277,6 +277,16 @@ path.write_text("// generated guard for test\\n")
             launched.stdout.splitlines(),
         )
 
+        solo = self.run_command("ai/.bin/p", "solo", "--continue")
+        self.assertEqual(
+            [
+                "--exclude-tools",
+                "subagent,subagent_wait,subagent_supervisor",
+                "--continue",
+            ],
+            solo.stdout.splitlines(),
+        )
+
     def test_unified_profile_preflights_every_target_before_writing(self) -> None:
         pi_settings = self.home / ".pi/agent/settings.json"
         pi_settings.parent.mkdir(parents=True)
