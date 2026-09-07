@@ -13,7 +13,6 @@ local eventtapCount = 0
 local subscriptionCount = 0
 local canvases = {}
 local timers = {}
-local periodicTimers = {}
 local canvasAllocationFails = false
 local currentFocusedWindow = nil
 local frontmostApplication = nil
@@ -48,7 +47,12 @@ _G.hs = {
     new = function(eventTypes, callback)
       eventtapCount = eventtapCount + 1
       inputCallback = callback
-      assert_equal(#eventTypes, 7, "keyboard and non-scroll pointer event kinds registered")
+      assert_equal(#eventTypes, 5, "only keyboard and mouse-button event kinds registered")
+      for _, eventType in ipairs(eventTypes) do
+        assert(eventType ~= types.mouseMoved, "mouse movement is not intercepted")
+        assert(eventType ~= types.scrollWheel, "scrolling is not intercepted")
+        assert(eventType ~= types.gesture, "gestures are not intercepted")
+      end
       return stoppable(callback)
     end,
   },
@@ -60,13 +64,6 @@ _G.hs = {
       local timer = stoppable(callback)
       timer.delay = delay
       table.insert(timers, timer)
-      return timer
-    end,
-    doEvery = function(interval, callback)
-      local timer = stoppable(callback)
-      timer.interval = interval
-      followCallback = callback
-      table.insert(periodicTimers, timer)
       return timer
     end,
   },
@@ -115,11 +112,16 @@ _G.hs = {
   window = {
     filter = {
       windowFocused = "windowFocused",
+      windowMoved = "windowMoved",
       default = {
         subscribe = function(_self, event, callback)
           subscriptionCount = subscriptionCount + 1
-          assert_equal(event, "windowFocused", "focused-window event subscribed")
-          focusCallback = callback
+          if event == "windowFocused" then
+            focusCallback = callback
+            return
+          end
+          assert_equal(event, "windowMoved", "move and resize event subscribed")
+          followCallback = callback
         end,
       },
     },
@@ -140,7 +142,7 @@ assert_equal(
 )
 assert_equal(focusIndicator.start(), focusIndicator, "repeated start returns module")
 assert_equal(eventtapCount, 1, "eventtap registered once")
-assert_equal(subscriptionCount, 1, "window filter registered once")
+assert_equal(subscriptionCount, 2, "focus and geometry window filters registered once")
 
 local function event(eventType, flags, keyCode)
   return {
@@ -212,7 +214,11 @@ end
 local function keyboardFocus(target, applicationName)
   now = now + 100
   assert_equal(inputCallback(event(types.keyDown)), false, "keyboard input propagates")
+  local timerCount = #timers
   focusCallback(target, applicationName)
+  assert_equal(#timers, timerCount + 1, "focus rendering is deferred")
+  assert_equal(timers[#timers].delay, 0, "focus rendering yields to the event loop")
+  timers[#timers].callback()
 end
 
 local firstWindow = window({ x = 10, y = 20, w = 800, h = 600 }, "README", "Ghostty")
@@ -223,46 +229,57 @@ assert(firstCanvas.shown, "recent keyboard focus should show canvas")
 assert_equal(firstCanvas[3].text, "Ghostty — README", "canvas label")
 firstTimer.callback()
 assert(firstCanvas.deleted, "dismissal deletes canvas")
-assert(periodicTimers[1].stopped, "dismissal stops follow polling")
 
 local beforeExplicitShow = #canvases
 focusIndicator.show(firstWindow, "Ghostty")
+assert_equal(#canvases, beforeExplicitShow, "explicit rendering is deferred")
+timers[#timers].callback()
 assert_equal(#canvases, beforeExplicitShow + 1, "explicit show renders without a focus event")
 assert_equal(canvases[#canvases][3].text, "Ghostty — README", "explicit show uses the supplied label")
 local movingCanvas = canvases[#canvases]
 local movingDismissalTimer = timers[#timers]
-local movingFollowTimer = periodicTimers[#periodicTimers]
 local canvasCountBeforeMove = #canvases
 firstWindow:setFrame({ x = 30, y = 40, w = 800, h = 600 })
-followCallback()
-assert_equal(#canvases, canvasCountBeforeMove, "follow tick reuses active canvas")
+followCallback(firstWindow)
+assert_equal(timers[#timers].delay, 0, "window movement handling is deferred")
+timers[#timers].callback()
+assert_equal(#canvases, canvasCountBeforeMove, "move event reuses active canvas")
 assert_equal(movingCanvas.sourceFrame.x, 30, "canvas follows window position")
-assert_equal(timers[#timers], movingDismissalTimer, "follow tick preserves dismissal timer")
-assert(not movingFollowTimer.stopped, "follow tick preserves polling timer")
+assert_equal(movingDismissalTimer.stopped, false, "move event preserves dismissal timer")
 
 firstWindow:setFrame({ x = 30, y = 40, w = 400, h = 300 })
-followCallback()
+followCallback(firstWindow)
+timers[#timers].callback()
 assert_equal(movingCanvas.sourceFrame.w, 400, "canvas follows window size")
 assert_equal(movingCanvas[1].frame.w, 394, "resize updates border width")
 assert_equal(movingCanvas[2].frame.w, 368, "resize updates label width")
 assert_equal(movingCanvas[3].text, "Ghostty — README", "resize preserves label")
 
 firstWindow:setFrame({ x = 30, y = 40, w = 150, h = 63 })
-followCallback()
+followCallback(firstWindow)
+timers[#timers].callback()
 assert_equal(movingCanvas[2], nil, "small resize removes label background")
 assert_equal(movingCanvas[3], nil, "small resize removes label")
 
 firstWindow:setFrame({ x = 30, y = 40, w = 400, h = 300 })
-followCallback()
+followCallback(firstWindow)
+timers[#timers].callback()
 assert_equal(movingCanvas[3].text, "Ghostty — README", "larger resize restores label")
 
-for _, pointerType in ipairs({ types.mouseMoved, types.leftMouseDown, types.gesture }) do
+for _, pointerType in ipairs({ types.leftMouseDown, types.rightMouseDown, types.otherMouseDown }) do
   local before = #canvases
   now = now + 100
   assert_equal(inputCallback(event(pointerType)), false, "pointer input propagates")
   focusCallback(firstWindow, "Ghostty")
   assert_equal(#canvases, before, "pointer focus remains silent")
 end
+
+now = now + 100
+inputCallback(event(types.keyDown))
+focusCallback(firstWindow, "Ghostty")
+local pendingKeyboardRender = timers[#timers]
+inputCallback(event(types.leftMouseDown))
+assert(pendingKeyboardRender.stopped, "pointer input cancels a pending keyboard-focus render")
 
 local beforeStale = #canvases
 now = now + 100
@@ -276,6 +293,7 @@ now = now + 100
 inputCallback(event(types.keyDown, { cmd = true }, hs.keycodes.map.w))
 now = now + 2000000000
 focusCallback(firstWindow, "Ghostty")
+timers[#timers].callback()
 assert_equal(#canvases, beforeDelayedClose + 1, "delayed Cmd-W focus shows indicator")
 
 local beforeConsumedClose = #canvases
@@ -287,12 +305,13 @@ now = now + 100
 inputCallback(event(types.keyDown, { cmd = true }, hs.keycodes.map.q))
 now = now + 2000000000
 focusCallback(firstWindow, "Ghostty")
+timers[#timers].callback()
 assert_equal(#canvases, beforeDelayedQuit + 1, "delayed Cmd-Q focus shows indicator")
 
 local beforePointerCancelledClose = #canvases
 now = now + 100
 inputCallback(event(types.keyDown, { cmd = true }, hs.keycodes.map.w))
-inputCallback(event(types.mouseMoved))
+inputCallback(event(types.leftMouseDown))
 focusCallback(firstWindow, "Ghostty")
 assert_equal(#canvases, beforePointerCancelledClose, "pointer input cancels close focus intent")
 
@@ -337,12 +356,13 @@ local beforeNilWindow = #canvases
 now = now + 100
 inputCallback(event(types.keyDown))
 focusCallback(nil, "App")
+timers[#timers].callback()
 assert_equal(#canvases, beforeNilWindow, "nil window ignored")
 
 local timersBeforeFailure = #timers
 canvasAllocationFails = true
 keyboardFocus(firstWindow, "Ghostty")
-assert_equal(#timers, timersBeforeFailure, "allocation failure creates no timer")
+assert_equal(#timers, timersBeforeFailure + 1, "allocation failure creates only the deferred render timer")
 canvasAllocationFails = false
 
 local ghosttyApplication = application("com.mitchellh.ghostty", "Ghostty")

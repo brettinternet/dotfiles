@@ -19,6 +19,7 @@ local function new_application(options)
     hide_calls = 0,
     unhide_calls = 0,
     activate_calls = 0,
+    main_window_calls = 0,
     last_activate_all_windows = nil,
   }
 
@@ -39,6 +40,7 @@ local function new_application(options)
   end
 
   function application:mainWindow()
+    self.main_window_calls = self.main_window_calls + 1
     return self.has_main_window and {} or nil
   end
 
@@ -77,6 +79,7 @@ local frontmost_application
 local launched_bundle_id
 local activation_callback
 local valid_icon = false
+local image_load_calls = 0
 _G.hs = {
   application = {
     get = function()
@@ -101,6 +104,7 @@ _G.hs = {
   },
   image = {
     imageFromAppBundle = function()
+      image_load_calls = image_load_calls + 1
       return {
         bitmapRepresentation = function()
           return {
@@ -148,12 +152,22 @@ assert_equal(launched_bundle_id, "com.example.TestApp", "windowless app should b
 assert_equal(windowless_application.hide_calls, 0, "windowless app should not be hidden")
 assert_equal(windowless_application.unhide_calls, 0, "windowless app should not be unhidden")
 
+local windowChecksBeforeAppearance = windowless_application.main_window_calls
 local windowless_appearance = action.appearance({ settings = { bundleID = "com.example.TestApp" } })
-assert_equal(windowless_appearance.state, "active", "windowless app should appear hidden")
+assert_equal(windowless_appearance.state, "inactive", "appearance should use the app's non-blocking hidden state")
+assert_equal(
+  windowless_application.main_window_calls,
+  windowChecksBeforeAppearance,
+  "appearance should not query Accessibility windows"
+)
 assert_equal(windowless_appearance.icon, nil, "invalid custom icon should be omitted")
 valid_icon = true
 local valid_icon_appearance = action.appearance({ settings = { bundleID = "com.example.TestApp" } })
 assert_true(valid_icon_appearance.icon ~= nil, "valid custom icon should be included")
+local imageLoadsBeforeCachedAppearance = image_load_calls
+local cached_icon_appearance = action.appearance({ settings = { bundleID = "com.example.TestApp" } })
+assert_equal(cached_icon_appearance.icon, valid_icon_appearance.icon, "valid custom icon should be cached")
+assert_equal(image_load_calls, imageLoadsBeforeCachedAppearance, "cached appearance should not reload its icon")
 
 local stopped_application =
   new_application({ frontmost = false, hidden = false, running = false, has_main_window = false })

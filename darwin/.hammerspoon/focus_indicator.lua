@@ -3,7 +3,6 @@ local focusIndicator = {}
 local keyboardFreshnessNanoseconds = 1000000000
 local closeFocusFreshnessNanoseconds = 10000000000
 local closeWindowCheckDelaySeconds = 0.15
-local followIntervalSeconds = 0.03
 local inputTap = nil
 local windowFilter = nil
 local lastInputKind = nil
@@ -11,17 +10,17 @@ local lastInputTime = nil
 local closeFocusPendingAt = nil
 local canvas = nil
 local highlightedWindow = nil
-local followTimer = nil
 local highlightedFrame = nil
 local highlightedLabel = nil
 local dismissalTimer = nil
+local pendingRenderTimer = nil
+local pendingFollowTimer = nil
 local closeFocusBundleIDs = {}
 local focusedApplication = nil
 local focusedWindow = nil
 local previousFocusedApplication = nil
 local previousFocusedWindow = nil
 local renderVersion = 0
-local followHighlightedWindow
 
 local eventTypes = hs.eventtap.event.types
 local keyboardEvents = {
@@ -34,9 +33,9 @@ local function dismissCurrent()
     dismissalTimer:stop()
     dismissalTimer = nil
   end
-  if followTimer then
-    followTimer:stop()
-    followTimer = nil
+  if pendingFollowTimer then
+    pendingFollowTimer:stop()
+    pendingFollowTimer = nil
   end
   if canvas then
     canvas:delete()
@@ -125,13 +124,12 @@ local function render(window, applicationName)
   end
 
   canvas:show()
-  followTimer = hs.timer.doEvery(followIntervalSeconds, followHighlightedWindow)
   dismissalTimer = hs.timer.doAfter(1.8, function()
     dismissalTimer = nil
     if canvas == newCanvas then
-      if followTimer then
-        followTimer:stop()
-        followTimer = nil
+      if pendingFollowTimer then
+        pendingFollowTimer:stop()
+        pendingFollowTimer = nil
       end
       canvas:delete(0.2)
       canvas = nil
@@ -143,12 +141,12 @@ local function render(window, applicationName)
   renderVersion = renderVersion + 1
 end
 
-followHighlightedWindow = function()
-  if not canvas or not highlightedWindow then
+local function followHighlightedWindow(window)
+  if not canvas or window ~= highlightedWindow then
     return
   end
 
-  local frame = highlightedWindow:frame()
+  local frame = window:frame()
   if not frame or not frame.w or not frame.h or frame.w <= 6 or frame.h <= 6 then
     dismissCurrent()
     return
@@ -194,6 +192,28 @@ followHighlightedWindow = function()
     canvas[2] = nil
   end
   highlightedFrame = frame
+end
+
+local function scheduleFollow(window)
+  if window ~= highlightedWindow or pendingFollowTimer then
+    return
+  end
+
+  pendingFollowTimer = hs.timer.doAfter(0, function()
+    pendingFollowTimer = nil
+    followHighlightedWindow(window)
+  end)
+end
+
+local function scheduleRender(window, applicationName)
+  if pendingRenderTimer then
+    pendingRenderTimer:stop()
+  end
+
+  pendingRenderTimer = hs.timer.doAfter(0, function()
+    pendingRenderTimer = nil
+    render(window, applicationName)
+  end)
 end
 
 local function applicationFor(window)
@@ -261,6 +281,10 @@ local function inputEvent(event)
 
   if not isKeyboard then
     closeFocusPendingAt = nil
+    if pendingRenderTimer then
+      pendingRenderTimer:stop()
+      pendingRenderTimer = nil
+    end
   elseif eventType == eventTypes.keyDown then
     local flags = event:getFlags()
     local keyCode = event:getKeyCode()
@@ -288,11 +312,11 @@ local function windowFocused(window, applicationName)
   if not recentKeyboard and not recentClose then
     return
   end
-  render(window, applicationName)
+  scheduleRender(window, applicationName)
 end
 
 function focusIndicator.show(window, applicationName)
-  render(window or hs.window.focusedWindow(), applicationName)
+  scheduleRender(window or hs.window.focusedWindow(), applicationName)
 end
 
 function focusIndicator.start(options)
@@ -310,16 +334,15 @@ function focusIndicator.start(options)
     .new({
       eventTypes.keyDown,
       eventTypes.flagsChanged,
-      eventTypes.mouseMoved,
       eventTypes.leftMouseDown,
       eventTypes.rightMouseDown,
       eventTypes.otherMouseDown,
-      eventTypes.gesture,
     }, inputEvent)
     :start()
 
   windowFilter = hs.window.filter.default
   windowFilter:subscribe(hs.window.filter.windowFocused, windowFocused)
+  windowFilter:subscribe(hs.window.filter.windowMoved, scheduleFollow)
   return focusIndicator
 end
 

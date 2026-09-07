@@ -3,6 +3,7 @@ local previous_application_by_instance = {}
 local last_activated_application
 local previous_activated_application
 local application_history_watcher
+local icon_by_bundle_id = {}
 
 local function settings_for(context)
   local settings = nil
@@ -100,6 +101,10 @@ local function application_icon(application, configured_bundle_id)
     return nil
   end
 
+  if icon_by_bundle_id[bundle_id] then
+    return icon_by_bundle_id[bundle_id]
+  end
+
   local ok, image = pcall(hs.image.imageFromAppBundle, bundle_id)
   if not ok or not image or type(image.bitmapRepresentation) ~= "function" then
     return nil
@@ -144,6 +149,7 @@ local function application_icon(application, configured_bundle_id)
   if not valid_ok or valid ~= true then
     return nil
   end
+  icon_by_bundle_id[bundle_id] = icon
   return icon
 end
 
@@ -208,14 +214,14 @@ local function application_is_actually_hidden(application)
   return hidden
 end
 
-local function application_is_hidden(application)
+local function application_is_hidden(application, inspect_windows)
   if not application_is_running(application) then
     return true
   end
   if application_is_actually_hidden(application) then
     return true
   end
-  return not application_has_main_window(application)
+  return inspect_windows == true and not application_has_main_window(application)
 end
 
 local function application_is_frontmost(application)
@@ -357,7 +363,7 @@ return {
     if application then
       appearance = {
         title = application_name(application),
-        state = application_is_hidden(application) and "active" or "inactive",
+        state = application_is_hidden(application, false) and "active" or "inactive",
       }
     else
       appearance = {
@@ -380,7 +386,7 @@ return {
       error("no frontmost application")
     elseif
       application
-      and not application_is_hidden(application)
+      and not application_is_hidden(application, true)
       and (bundle_id == nil or not focus_on_show or application_is_frontmost(application))
     then
       remember_previous_application(context, application)
