@@ -47,9 +47,20 @@ local relevantApplicationEvents = {
   [hs.application.watcher.terminated] = true,
 }
 
+local applicationRefreshTimer = nil
+local function scheduleApplicationRefresh()
+  if applicationRefreshTimer then
+    return
+  end
+  applicationRefreshTimer = hs.timer.doAfter(0, function()
+    applicationRefreshTimer = nil
+    streamdeck.refresh(applicationAction.id)
+  end)
+end
+
 local applicationWatcher = hs.application.watcher.new(function(_name, event, _application)
   if relevantApplicationEvents[event] then
-    streamdeck.refresh(applicationAction.id)
+    scheduleApplicationRefresh()
   end
 end)
 applicationWatcher:start()
