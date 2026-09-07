@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { applyUserApproval, isBranchDelete, localDestructiveTargetDecision } from "../pi/extensions/dcg-guard";
+import { applyUserApproval, localDestructiveTargetDecision } from "../pi/extensions/dcg-guard";
 
 const home = "/Users/example";
 
@@ -42,22 +42,56 @@ describe("local destructive target policy", () => {
 });
 
 describe("dcg user approval", () => {
-  test.each([
-    "git branch -d agent-work",
-    "git branch -D agent-work",
-    "git branch --delete --force agent-work",
-    "git -C ../repo branch -d agent-work",
-    "git branch -d agent-work && git status --short --branch && git log -3 --oneline --decorate && git branch --list 'agent-work'",
-  ])("recognizes branch deletion with optional inspection commands: %s", (command: string) => {
-    expect(isBranchDelete(command)).toBe(true);
+  test("allows branch deletion when every other command passes dcg", async () => {
+    const checked: string[] = [];
+    const command =
+      "cd /Users/example/dev/project && git branch -d agent-work && git worktree prune && git status --short --branch && git rev-parse HEAD &&\n git rev-parse origin/main && gh run view 123 --json status,conclusion";
+    const decision = await applyUserApproval(
+      {
+        deny: true,
+        reason: "git branch deletion requires explicit user approval.",
+        ruleId: "core.git:branch-force-delete",
+      },
+      command,
+      { hasUI: false, ui: { confirm: async () => false } },
+      undefined,
+      async (clause) => {
+        checked.push(clause);
+        return { deny: false, reason: "" };
+      },
+    );
+
+    expect(decision.deny).toBe(false);
+    expect(checked).toEqual([
+      "cd /Users/example/dev/project",
+      "git worktree prune",
+      "git status --short --branch",
+      "git rev-parse HEAD",
+      "git rev-parse origin/main",
+      "gh run view 123 --json status,conclusion",
+    ]);
   });
 
-  test.each(["git branch -f existing new-tip", "git branch -M old new", "git branch -d agent-work && git reset --hard"])(
-    "does not treat other forced or mutating compound branch operations as deletion: %s",
-    (command: string) => {
-      expect(isBranchDelete(command)).toBe(false);
-    },
-  );
+  test("does not let branch deletion hide another destructive command", async () => {
+    const resetDecision = {
+      deny: true,
+      reason: "hard reset requires explicit user approval.",
+      ruleId: "core.git:reset-hard",
+    };
+    const decision = await applyUserApproval(
+      {
+        deny: true,
+        reason: "git branch deletion requires explicit user approval.",
+        ruleId: "core.git:branch-force-delete",
+      },
+      "git branch -d agent-work && git reset --hard",
+      { hasUI: false, ui: { confirm: async () => false } },
+      undefined,
+      async () => resetDecision,
+    );
+
+    expect(decision).toEqual(resetDecision);
+  });
 
   test("allows merged-only branch deletion without prompting", async () => {
     let prompted = false;
