@@ -31,11 +31,11 @@
       },
       "executor": {
         "model": "openai-codex/gpt-5.6-luna",
-        "thinking": "max"
+        "thinking": "high"
       },
       "verifier": {
         "model": "openai-codex/gpt-5.6-luna",
-        "thinking": "max"
+        "thinking": "high"
       },
       "pr-watcher": {
         "model": "openai-codex/gpt-5.6-luna",

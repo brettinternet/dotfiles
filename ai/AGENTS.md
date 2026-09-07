@@ -31,15 +31,17 @@ Before introducing a new pattern, search for an existing implementation and reus
 
 If you are running as a subagent of any kind, ignore this section entirely and do the task you were given.
 
-- Keep the orchestrating context for decisions, synthesis, and shared-interface coordination; delegate volume work when the agents are available: `explore` (or the built-in Explore) for repo discovery and evidence gathering, `executor` for well-specified implementation, `verifier` for independent acceptance checks, `pr-watcher` for CI/review watching.
+- Work directly by default. Delegate only when a child materially improves at least one of: independent evidence, context isolation, specialist capability, parallel latency, or isolated execution. Task size alone is not a reason to delegate.
+- Keep the orchestrating context for decisions, synthesis, and shared-interface coordination. Use `explore` for substantial read-heavy discovery, `executor` for bounded implementation with settled requirements, `verifier` for independent acceptance checks, and `pr-watcher` for CI/review watching.
 - Delegate externally directed wording to `writer` whenever the `user-voice` or `draft-in-editor` skill applies. Give it the facts and constraints, then use its returned wording without rewriting it in the caller.
 - Spec delegated work in one shot: goal, constraints, done-criteria, relevant paths, and the why behind the request — not only the what.
-- Start with the cheapest agent that can plausibly succeed; after two failed attempts, escalate one tier or take over — don't retry the same tier a third time. Ad-hoc fan-outs should set a model explicitly rather than inherit the session model.
+- Start with the cheapest agent and lowest effort that can plausibly succeed; reserve strong high-effort agents for consequential uncertainty or risk. After two failed attempts, escalate one tier or take over — don't retry the same tier a third time.
+- Use one explorer by default. Fan out only across distinct evidence seams that can finish without each other's intermediate state; do not duplicate scouts for confidence.
 - Explore findings are inputs, not verified outputs: when a decision hinges on a single scouted fact, re-check it.
-- Use `verifier` for materially risky changes or when independent acceptance would catch a different class of mistake; skip it for small, directly exercised changes or when an independent review already covers acceptance.
-- Consult the `oracle` agent for judgment-dense calls: architecture tradeoffs, competing diagnoses, blockers that may be stale. The weaker the model you are running as, the earlier you should consult it.
-- Use `reviewer` for adversarial review, `verifier` for separate acceptance evidence when useful, and `thermo-nuclear-code-quality-review` only for an explicitly requested maintainability audit.
-- Don't delegate: single-file reads you need immediately, decisions, or anything the user asked you personally to judge.
+- For ordinary substantial changes, choose either `reviewer` for defect discovery or `verifier` for criteria-based executable checks. Use both only when the change is materially risky and they cover different failure classes. Skip both for small changes directly exercised by focused checks.
+- Use `oracle` only for consequential architecture tradeoffs, competing diagnoses after evidence gathering, suspected decision drift, or a blocker that may be stale. Do not use it as routine confirmation.
+- Use `thermo-nuclear-code-quality-review` only for an explicitly requested maintainability audit.
+- Don't delegate: single-file reads you need immediately, simple searches or commands, tightly coupled sequential work, decisions, or anything the user asked you personally to judge.
 
 ## Human-required blockers
 
