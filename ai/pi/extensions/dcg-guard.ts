@@ -31,35 +31,26 @@ type Decision = { deny: boolean; reason: string; ruleId?: string };
 
 const GIT_COMMAND = /^\s*git(?:\s+-C\s+(?:"[^"]*"|'[^']*'|\S+))*\s+([a-z-]+)(?:\s+([^;&|\n]*))?\s*$/;
 const DELETE_OPTION = /(?:^|\s)(?:-d|-D|--delete)(?:\s|$)/;
-const READ_ONLY_BRANCH_OPTION =
-  /^(?:--list|-l|--show-current|-v|-vv|--merged|--no-merged|--contains|--no-contains|--points-at)(?:\s|$)/;
 
-function isBranchDeleteClause(command: string): boolean {
-  const match = command.match(GIT_COMMAND);
-  return Boolean(match?.[1] === "branch" && match[2] && DELETE_OPTION.test(match[2]));
-}
+type CommandSequence = { branchDelete: boolean; remainder: string[] };
 
-function isReadOnlyGitInspection(command: string): boolean {
-  const match = command.match(GIT_COMMAND);
-  if (!match) return false;
+function parseCommandSequence(command: string): CommandSequence {
+  if (/\|/.test(command)) return { branchDelete: false, remainder: [] };
 
-  const [, subcommand, arguments_ = ""] = match;
-  if (["status", "log", "diff", "show", "rev-parse"].includes(subcommand)) return true;
-  if (subcommand === "worktree") return arguments_.startsWith("list");
-  return subcommand === "branch" && (!arguments_ || READ_ONLY_BRANCH_OPTION.test(arguments_));
-}
+  let branchDelete = false;
+  const remainder: string[] = [];
+  for (const clause of command.split(/&&|[;\n]/)) {
+    const trimmed = clause.trim();
+    if (!trimmed) continue;
 
-export function isBranchDelete(command: string): boolean {
-  if (/\|/.test(command)) return false;
-
-  const clauses = command
-    .split(/&&|[;\n]/)
-    .map((clause) => clause.trim())
-    .filter(Boolean);
-  return (
-    clauses.some(isBranchDeleteClause) &&
-    clauses.every((clause) => isBranchDeleteClause(clause) || isReadOnlyGitInspection(clause))
-  );
+    const match = trimmed.match(GIT_COMMAND);
+    if (match?.[1] === "branch" && match[2] && DELETE_OPTION.test(match[2])) {
+      branchDelete = true;
+    } else {
+      remainder.push(trimmed);
+    }
+  }
+  return { branchDelete, remainder };
 }
 
 const VARIABLE_REFERENCE = /(^|[^\\])\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[^}]+\}|[0-9@*#?!$(-])/;
@@ -167,14 +158,21 @@ export async function applyUserApproval(
   command: string,
   ctx: ToolCallContext,
   events?: ApprovalEvents,
+  recheck: (command: string) => Promise<Decision> = dcgDecision,
 ): Promise<Decision> {
   if (!decision.deny || !decision.ruleId) return decision;
 
-  if (decision.ruleId === "core.git:branch-force-delete" && isBranchDelete(command)) {
-    return ALLOW;
+  if (decision.ruleId === "core.git:branch-force-delete") {
+    const sequence = parseCommandSequence(command);
+    if (sequence.branchDelete) {
+      const remainderDecisions = await Promise.all(sequence.remainder.map(recheck));
+      const deniedRemainder = remainderDecisions.find((remainderDecision) => remainderDecision.deny);
+      if (!deniedRemainder) return ALLOW;
+      decision = deniedRemainder;
+    }
   }
 
-  if (!decision.ruleId.startsWith("core.git:") || !ctx.hasUI) return decision;
+  if (!decision.ruleId?.startsWith("core.git:") || !ctx.hasUI) return decision;
 
   events?.emit("herdr:blocked", {
     active: true,
