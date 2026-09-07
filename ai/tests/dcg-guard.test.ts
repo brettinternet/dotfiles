@@ -47,12 +47,13 @@ describe("dcg user approval", () => {
     "git branch -D agent-work",
     "git branch --delete --force agent-work",
     "git -C ../repo branch -d agent-work",
-  ])("recognizes standalone branch deletion: %s", (command: string) => {
+    "git branch -d agent-work && git status --short --branch && git log -3 --oneline --decorate && git branch --list 'agent-work'",
+  ])("recognizes branch deletion with optional inspection commands: %s", (command: string) => {
     expect(isBranchDelete(command)).toBe(true);
   });
 
   test.each(["git branch -f existing new-tip", "git branch -M old new", "git branch -d agent-work && git reset --hard"])(
-    "does not treat other forced or compound branch operations as deletion: %s",
+    "does not treat other forced or mutating compound branch operations as deletion: %s",
     (command: string) => {
       expect(isBranchDelete(command)).toBe(false);
     },
