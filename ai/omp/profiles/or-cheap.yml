@@ -5,7 +5,7 @@ modelRoles:
   slow: openrouter/z-ai/glm-5.3:max
   designer: openrouter/z-ai/glm-5.3:high
   vision: openrouter/deepseek/deepseek-v4-flash-vision-exp:high
-  task: openrouter/deepseek/deepseek-v4-pro-0813:max
+  task: openrouter/deepseek/deepseek-v4-pro-0813:high
   commit: openrouter/~deepseek/deepseek-v4-flash-latest:low
   plan: openrouter/z-ai/glm-5.3:high
   advisor: openrouter/z-ai/glm-5.3:max

@@ -1,5 +1,5 @@
 ---
-description: Independent acceptance checker on a cost-efficient model for materially risky changes or requirements that need separate executable evidence. Give it acceptance criteria plus the claimed implementation; it re-derives evidence and returns PASS/FAIL per criterion. Skip when focused parent checks or an adversarial review already provide equivalent evidence; never fixes code.
+description: Independent acceptance checker on a cost-efficient model for substantial changes whose acceptance criteria need separate executable evidence. Give it acceptance criteria plus the claimed implementation; it re-derives evidence and returns PASS/FAIL per criterion. Skip when focused parent checks or an adversarial review already provide equivalent evidence; never fixes code.
 tools: claude omp pi opencode codex
 pi-tools: read, grep, find, ls, bash
 claude-model: sonnet

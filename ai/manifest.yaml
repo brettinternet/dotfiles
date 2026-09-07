@@ -153,7 +153,7 @@ profiles:
       slow: [codex-sol, max]
       designer: [codex-sol, xhigh]
       vision: [codex-sol, high]
-      task: [codex-luna, max]
+      task: [codex-luna, high]
       commit: [codex-spark, high]
       plan: [codex-sol, high]
       advisor: [codex-luna, high]
@@ -196,7 +196,7 @@ profiles:
           oracle: max,
           pr-watcher: medium,
           thermo-nuclear-code-quality-review: max,
-          verifier: max,
+          verifier: high,
           writer: low,
         }
 
@@ -209,7 +209,7 @@ profiles:
       slow: [claude-opus, xhigh]
       designer: [claude-opus, xhigh]
       vision: [claude-sonnet, high]
-      task: [claude-sonnet, max]
+      task: [claude-sonnet, high]
       commit: [claude-haiku, high]
       plan: [claude-opus, high]
       advisor: [claude-opus, xhigh]
@@ -231,8 +231,8 @@ profiles:
           reviewer: xhigh,
           oracle: xhigh,
           explore: medium,
-          executor: max,
-          verifier: max,
+          executor: high,
+          verifier: high,
           pr-watcher: medium,
           thermo-nuclear-code-quality-review: xhigh,
           writer: medium,
@@ -260,7 +260,7 @@ profiles:
       slow: [claude-opus, xhigh]
       designer: [claude-opus, xhigh]
       vision: [codex-sol, high]
-      task: [codex-luna, max]
+      task: [codex-luna, high]
       commit: [codex-spark, high]
       plan: [claude-opus, high]
       title: [codex-spark, high]
@@ -277,7 +277,7 @@ profiles:
           oracle: xhigh,
           pr-watcher: medium,
           thermo-nuclear-code-quality-review: xhigh,
-          verifier: max,
+          verifier: high,
           writer: low,
         }
 
@@ -289,7 +289,7 @@ profiles:
       slow: [or-sol-pro, xhigh]
       designer: [or-sol-pro, high]
       vision: [or-gpt-latest, high]
-      task: [or-luna, max]
+      task: [or-luna, high]
       commit: [or-deepseek-flash, low]
       plan: [or-fable, high]
       advisor: [or-glm, max]
@@ -308,8 +308,8 @@ profiles:
           reviewer: xhigh,
           oracle: high,
           explore: low,
-          executor: max,
-          verifier: max,
+          executor: high,
+          verifier: high,
           pr-watcher: low,
           thermo-nuclear-code-quality-review: xhigh,
           writer: medium,
@@ -327,7 +327,7 @@ profiles:
           oracle: high,
           pr-watcher: low,
           thermo-nuclear-code-quality-review: medium,
-          verifier: max,
+          verifier: high,
           writer: medium,
         }
 
@@ -339,7 +339,7 @@ profiles:
       slow: [or-glm, max]
       designer: [or-glm, high]
       vision: [or-deepseek-vision, high]
-      task: [or-deepseek-pro, max]
+      task: [or-deepseek-pro, high]
       commit: [or-deepseek-flash-auto, low]
       plan: [or-glm, high]
       advisor: [or-glm, max]
@@ -350,12 +350,12 @@ profiles:
       efforts:
         {
           reviewer: max,
-          executor: max,
+          executor: high,
           explore: low,
           oracle: max,
           pr-watcher: low,
           thermo-nuclear-code-quality-review: high,
-          verifier: max,
+          verifier: high,
           writer: low,
         }
 
@@ -396,7 +396,7 @@ profiles:
       slow: [codex-sol, max]
       designer: [or-kimi, xhigh]
       vision: [codex-sol, high]
-      task: [codex-luna, max]
+      task: [codex-luna, high]
       commit: [codex-spark, high]
       plan: [codex-sol, high]
       advisor: [codex-luna, high]

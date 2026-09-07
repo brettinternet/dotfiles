@@ -6,7 +6,7 @@ modelRoles:
   slow: anthropic/claude-opus-5:xhigh
   designer: anthropic/claude-opus-5:xhigh
   vision: anthropic/claude-sonnet-5:high
-  task: anthropic/claude-sonnet-5:max
+  task: anthropic/claude-sonnet-5:high
   commit: anthropic/claude-haiku-4-5:high
   plan: anthropic/claude-opus-5:high
   advisor: anthropic/claude-opus-5:xhigh

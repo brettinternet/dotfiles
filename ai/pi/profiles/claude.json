@@ -32,11 +32,11 @@
       },
       "executor": {
         "model": "anthropic/claude-sonnet-5",
-        "thinking": "max"
+        "thinking": "high"
       },
       "verifier": {
         "model": "anthropic/claude-sonnet-5",
-        "thinking": "max"
+        "thinking": "high"
       },
       "pr-watcher": {
         "model": "anthropic/claude-haiku-4-5",
