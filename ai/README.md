@@ -56,7 +56,7 @@ Pi profile overlays route the active roster by task shape:
 | ------------------------------------ | ------------ | ----------------------- |
 | `explore`, `pr-watcher`              | Luna, low    | Luna, low               |
 | `researcher`                         | Luna, medium | Luna, medium            |
-| `executor`, `verifier`               | Luna, max    | Luna, max               |
+| `executor`, `verifier`               | Luna, high   | Luna, high              |
 | `reviewer`                           | Terra, max   | Claude Opus 4.8, xhigh  |
 | `oracle`                             | Sol, max     | Claude Fable, high      |
 | `thermo-nuclear-code-quality-review` | Sol, max     | Sol Pro, xhigh          |
