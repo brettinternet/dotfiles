@@ -32,25 +32,84 @@ type Decision = { deny: boolean; reason: string; ruleId?: string };
 const GIT_COMMAND = /^\s*git(?:\s+-C\s+(?:"[^"]*"|'[^']*'|\S+))*\s+([a-z-]+)(?:\s+([^;&|\n]*))?\s*$/;
 const DELETE_OPTION = /(?:^|\s)(?:-d|-D|--delete)(?:\s|$)/;
 
-type CommandSequence = { branchDelete: boolean; remainder: string[] };
+type CommandSequence = { exempted: boolean; remainder: string[] };
+type Quote = "single" | "double" | "ansi";
 
-function parseCommandSequence(command: string): CommandSequence {
-  if (/\|/.test(command)) return { branchDelete: false, remainder: [] };
+function splitShellSequence(command: string): string[] | undefined {
+  const clauses: string[] = [];
+  let start = 0;
+  let quote: Quote | undefined;
+  let escaped = false;
 
-  let branchDelete = false;
+  for (let index = 0; index < command.length; index += 1) {
+    const character = command[index];
+    if (escaped) {
+      escaped = false;
+      continue;
+    }
+    if (character === "\\" && quote !== "single") {
+      escaped = true;
+      continue;
+    }
+    if (quote) {
+      const closesDouble = quote === "double" && character === '"';
+      const closesSingle = (quote === "single" || quote === "ansi") && character === "'";
+      if (closesDouble || closesSingle) quote = undefined;
+      continue;
+    }
+    if (character === '"') {
+      quote = "double";
+      continue;
+    }
+    if (character === "'") {
+      quote = index > 0 && command[index - 1] === "$" ? "ansi" : "single";
+      continue;
+    }
+    if (character === "`" || (character === "$" && command[index + 1] === "(")) return undefined;
+    if (character === "|") return undefined;
+
+    const separatorLength =
+      character === "&" && command[index + 1] === "&" ? 2 : character === ";" || character === "\n" ? 1 : 0;
+    if (!separatorLength) continue;
+
+    clauses.push(command.slice(start, index).trim());
+    index += separatorLength - 1;
+    start = index + 1;
+  }
+
+  if (quote || escaped) return undefined;
+  clauses.push(command.slice(start).trim());
+  return clauses.filter(Boolean);
+}
+
+function isExemptedGitClause(ruleId: string, command: string): boolean {
+  const match = command.match(GIT_COMMAND);
+  if (!match) return false;
+
+  const [, subcommand, arguments_ = ""] = match;
+  if (ruleId === "core.git:branch-force-delete") {
+    return subcommand === "branch" && DELETE_OPTION.test(arguments_);
+  }
+  if (ruleId === "core.git:restore-worktree") {
+    return subcommand === "restore" && /^--\s+\S/.test(arguments_) && !VARIABLE_REFERENCE.test(arguments_);
+  }
+  return false;
+}
+
+function parseCommandSequence(command: string, ruleId: string): CommandSequence {
+  const clauses = splitShellSequence(command);
+  if (!clauses) return { exempted: false, remainder: [] };
+
+  let exempted = false;
   const remainder: string[] = [];
-  for (const clause of command.split(/&&|[;\n]/)) {
-    const trimmed = clause.trim();
-    if (!trimmed) continue;
-
-    const match = trimmed.match(GIT_COMMAND);
-    if (match?.[1] === "branch" && match[2] && DELETE_OPTION.test(match[2])) {
-      branchDelete = true;
+  for (const clause of clauses) {
+    if (isExemptedGitClause(ruleId, clause)) {
+      exempted = true;
     } else {
-      remainder.push(trimmed);
+      remainder.push(clause);
     }
   }
-  return { branchDelete, remainder };
+  return { exempted, remainder };
 }
 
 const VARIABLE_REFERENCE = /(^|[^\\])\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[^}]+\}|[0-9@*#?!$(-])/;
@@ -162,9 +221,9 @@ export async function applyUserApproval(
 ): Promise<Decision> {
   if (!decision.deny || !decision.ruleId) return decision;
 
-  if (decision.ruleId === "core.git:branch-force-delete") {
-    const sequence = parseCommandSequence(command);
-    if (sequence.branchDelete) {
+  if (["core.git:branch-force-delete", "core.git:restore-worktree"].includes(decision.ruleId)) {
+    const sequence = parseCommandSequence(command, decision.ruleId);
+    if (sequence.exempted) {
       const remainderDecisions = await Promise.all(sequence.remainder.map(recheck));
       const deniedRemainder = remainderDecisions.find((remainderDecision) => remainderDecision.deny);
       if (!deniedRemainder) return ALLOW;
