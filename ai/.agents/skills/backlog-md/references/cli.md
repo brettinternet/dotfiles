@@ -17,6 +17,7 @@ backlog task create "Outcome title" --plan "- [ ] T1 — ..."
 backlog task create "Outcome title" --ac "AC1 — ..." --dod "DOD1 — ..."
 backlog task create "Child outcome" --parent <id> --dep <id>
 
+backlog task edit <id> --status "In Progress" --plain
 backlog task edit <id> --plan "- [x] T1 — ..."
 backlog task edit <id> --append-notes "Progress evidence"
 backlog task edit <id> --append-final-summary "Completion summary"
@@ -30,5 +31,7 @@ backlog search "query" --plain
 backlog milestone list --plain
 backlog overview
 ```
+
+Run the status claim from the primary checkout on `main`, then reread the task with `backlog task <id> --plain` to confirm it before implementation begins. Do not claim a task already marked `In Progress` unless it was explicitly handed off.
 
 Use literal newlines for multiline fields; do not assume `\n` is converted. Quote shell metacharacters such as backticks. The CLI has no plan-checkbox command, so replace the complete plan while preserving every task and checkbox. Use narrow `backlog <command> --help` when this map does not cover an installed-version difference.
