@@ -72,6 +72,52 @@ describe("dcg user approval", () => {
     ]);
   });
 
+  test("allows literal worktree restore when every other command passes dcg", async () => {
+    const checked: string[] = [];
+    const command =
+      `git restore -- "docs/backlog/tasks/task-59 - Add-a-local-claim-history-ledger.md" && cd /Users/example/worktree && backlog task edit TASK-59 --plan $'1. Verify.\n2. Run checks.' --plain >/dev/null && printf '%s\\n' '--- WORKTREE ---' && git status --short --branch`;
+    const decision = await applyUserApproval(
+      {
+        deny: true,
+        reason: "git restore discards uncommitted changes.",
+        ruleId: "core.git:restore-worktree",
+      },
+      command,
+      { hasUI: false, ui: { confirm: async () => false } },
+      undefined,
+      async (clause) => {
+        checked.push(clause);
+        return { deny: false, reason: "" };
+      },
+    );
+
+    expect(decision.deny).toBe(false);
+    expect(checked).toHaveLength(4);
+    expect(checked[1]).toContain("$'1. Verify.\n2. Run checks.'");
+  });
+
+  test("does not exempt restore with a variable-derived path", async () => {
+    let rechecked = false;
+    const blocked = {
+      deny: true,
+      reason: "git restore discards uncommitted changes.",
+      ruleId: "core.git:restore-worktree",
+    };
+    const decision = await applyUserApproval(
+      blocked,
+      'git restore -- "$changed_file"',
+      { hasUI: false, ui: { confirm: async () => false } },
+      undefined,
+      async () => {
+        rechecked = true;
+        return { deny: false, reason: "" };
+      },
+    );
+
+    expect(decision).toEqual(blocked);
+    expect(rechecked).toBe(false);
+  });
+
   test("does not let branch deletion hide another destructive command", async () => {
     const resetDecision = {
       deny: true,
