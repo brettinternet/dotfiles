@@ -29,12 +29,37 @@ const ALLOW = { deny: false, reason: "" };
 
 type Decision = { deny: boolean; reason: string; ruleId?: string };
 
-const BRANCH_COMMAND = /^\s*git(?:\s+-C\s+(?:"[^"]*"|'[^']*'|\S+))*\s+branch\s+([^;&|\n]+)\s*$/;
+const GIT_COMMAND = /^\s*git(?:\s+-C\s+(?:"[^"]*"|'[^']*'|\S+))*\s+([a-z-]+)(?:\s+([^;&|\n]*))?\s*$/;
 const DELETE_OPTION = /(?:^|\s)(?:-d|-D|--delete)(?:\s|$)/;
+const READ_ONLY_BRANCH_OPTION =
+  /^(?:--list|-l|--show-current|-v|-vv|--merged|--no-merged|--contains|--no-contains|--points-at)(?:\s|$)/;
+
+function isBranchDeleteClause(command: string): boolean {
+  const match = command.match(GIT_COMMAND);
+  return Boolean(match?.[1] === "branch" && match[2] && DELETE_OPTION.test(match[2]));
+}
+
+function isReadOnlyGitInspection(command: string): boolean {
+  const match = command.match(GIT_COMMAND);
+  if (!match) return false;
+
+  const [, subcommand, arguments_ = ""] = match;
+  if (["status", "log", "diff", "show", "rev-parse"].includes(subcommand)) return true;
+  if (subcommand === "worktree") return arguments_.startsWith("list");
+  return subcommand === "branch" && (!arguments_ || READ_ONLY_BRANCH_OPTION.test(arguments_));
+}
 
 export function isBranchDelete(command: string): boolean {
-  const branchArguments = command.match(BRANCH_COMMAND)?.[1];
-  return Boolean(branchArguments && DELETE_OPTION.test(branchArguments));
+  if (/\|/.test(command)) return false;
+
+  const clauses = command
+    .split(/&&|[;\n]/)
+    .map((clause) => clause.trim())
+    .filter(Boolean);
+  return (
+    clauses.some(isBranchDeleteClause) &&
+    clauses.every((clause) => isBranchDeleteClause(clause) || isReadOnlyGitInspection(clause))
+  );
 }
 
 const VARIABLE_REFERENCE = /(^|[^\\])\$(?:[A-Za-z_][A-Za-z0-9_]*|\{[^}]+\}|[0-9@*#?!$(-])/;
