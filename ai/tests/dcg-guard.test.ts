@@ -209,6 +209,27 @@ describe("dcg user approval", () => {
     ]);
   });
 
+  test("allows literal restore through the rtk wrapper", async () => {
+    const checked: string[] = [];
+    const decision = await applyUserApproval(
+      {
+        deny: true,
+        reason: "git restore discards uncommitted changes.",
+        ruleId: "core.git:restore-worktree",
+      },
+      "rtk git diff -- .mcp.json && rtk git restore -- .mcp.json && rtk git status --short",
+      { hasUI: false, ui: { confirm: async () => false } },
+      undefined,
+      async (clause) => {
+        checked.push(clause);
+        return { deny: false, reason: "" };
+      },
+    );
+
+    expect(decision.deny).toBe(false);
+    expect(checked).toEqual(["rtk git diff -- .mcp.json", "rtk git status --short"]);
+  });
+
   test("does not exempt restore with a variable-derived path", async () => {
     let rechecked = false;
     const blocked = {
