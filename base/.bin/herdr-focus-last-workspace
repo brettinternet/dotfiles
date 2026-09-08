@@ -1,0 +1,9 @@
+#!/bin/sh
+set -eu
+
+herdr_bin=${HERDR_BIN_PATH:-herdr}
+workspace_id=$(
+  "$herdr_bin" workspace list |
+    jq -er '.result.workspaces | max_by(.number) | .workspace_id'
+)
+exec "$herdr_bin" workspace focus "$workspace_id"
