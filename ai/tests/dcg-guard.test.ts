@@ -1,6 +1,13 @@
 import { describe, expect, test } from "bun:test";
+import { mkdtempSync, rmdirSync, symlinkSync, unlinkSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
-import { applyUserApproval, localDestructiveTargetDecision } from "../pi/extensions/dcg-guard";
+import {
+  applyUserApproval,
+  localBashIntegrityDecision,
+  localDestructiveTargetDecision,
+} from "../pi/extensions/dcg-guard";
 
 const home = "/Users/example";
 
@@ -38,6 +45,83 @@ describe("local destructive target policy", () => {
     'printf "%s" "$dir"; trash /tmp/pi-progress.literal',
   ])("allows non-destructive or literal temp targets: %s", (command: string) => {
     expect(localDestructiveTargetDecision(command, home).deny).toBe(false);
+  });
+});
+
+describe("local Bash integrity policy", () => {
+  const cwd = process.cwd();
+
+  test("rejects unknown tool argument keys", () => {
+    const decision = localBashIntegrityDecision({ "command magnificence Fox": "cd /reit" }, cwd);
+
+    expect(decision).toEqual({
+      deny: true,
+      reason: "Blocked unknown Bash argument keys: command magnificence Fox.",
+    });
+  });
+
+  test.each(["cd / jokes", "cd /roch", "cd / yen", "cd /Users Blocks"])(
+    "rejects suspicious command-only directory changes: %s",
+    (command: string) => {
+      expect(localBashIntegrityDecision({ command }, cwd).deny).toBe(true);
+    },
+  );
+
+  test.each([
+    "rg -n 'stale_revision|revision_conflict' /Usersnergies",
+    "rg -n 'stale_revision|revision_conflict' /Users/brett/dev/FMresso",
+    "rg -n needle /Usersnergies | head -20",
+  ])("rejects searches outside the session root: %s", (command: string) => {
+    const decision = localBashIntegrityDecision({ command }, cwd);
+
+    expect(decision.deny).toBe(true);
+    expect(decision.reason).toContain("outside the session root");
+  });
+
+  test.each([
+    "rg -n secret ../outside",
+    "grep -r secret ../outside",
+    "rg -f ../outside/patterns .",
+    "LC_ALL=C rg -n secret /Usersnergies",
+    "$(printf 'rg -n secret ../outside')",
+    `rg "$(rg -n secret ../outside)" .`,
+    "true & rg -n secret ../outside",
+    "rg -n secret ~/outside",
+  ])("rejects alternate outside-root search forms: %s", (command: string) => {
+    expect(localBashIntegrityDecision({ command }, cwd).deny).toBe(true);
+  });
+
+  test("rejects a search through a symlink outside the session root", () => {
+    const root = mkdtempSync(join(tmpdir(), "dcg-guard-root-"));
+    const outside = mkdtempSync(join(tmpdir(), "dcg-guard-outside-"));
+    const link = join(root, "outside-link");
+    symlinkSync(outside, link);
+
+    try {
+      expect(localBashIntegrityDecision({ command: "rg -n secret outside-link" }, root).deny).toBe(true);
+    } finally {
+      unlinkSync(link);
+      rmdirSync(root);
+      rmdirSync(outside);
+    }
+  });
+
+  test("allows slash-prefixed patterns and paths within the session root", () => {
+    const commands = [`rg -n '/api/v1' ai`, `rg -e '/api/v1' ai`, `rg -n needle ${cwd}/ai`];
+
+    for (const command of commands) {
+      expect(localBashIntegrityDecision({ command, timeout: 30 }, cwd).deny).toBe(false);
+    }
+  });
+
+  test("allows a chained directory change and search within the session root", () => {
+    const command = `cd ${cwd}/ai && rg -n dcg-guard tests`;
+
+    expect(localBashIntegrityDecision({ command, timeout: 30 }, cwd).deny).toBe(false);
+  });
+
+  test("allows ordinary Bash commands without path-bearing searches", () => {
+    expect(localBashIntegrityDecision({ command: "git status --short && bun --version" }, cwd).deny).toBe(false);
   });
 });
 

@@ -1,11 +1,14 @@
 // dotfiles-dcg-shell-guard
 import { spawn } from "node:child_process";
+import { existsSync, realpathSync, statSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
-type ToolCallContext = {
+import { isAbsolute, join, relative, resolve } from "node:path";
+type ApprovalContext = {
   hasUI: boolean;
   ui: { confirm(title: string, message: string): Promise<boolean> };
 };
+
+type ToolCallContext = ApprovalContext & { cwd: string };
 
 type ApprovalEvents = {
   emit(event: string, value: unknown): void;
@@ -35,7 +38,7 @@ const DELETE_OPTION = /(?:^|\s)(?:-d|-D|--delete)(?:\s|$)/;
 type CommandSequence = { exempted: boolean; remainder: string[] };
 type Quote = "single" | "double" | "ansi";
 
-function splitShellSequence(command: string): string[] | undefined {
+function splitShellSequence(command: string, allowPipes = false): string[] | undefined {
   const clauses: string[] = [];
   let start = 0;
   let quote: Quote | undefined;
@@ -55,6 +58,8 @@ function splitShellSequence(command: string): string[] | undefined {
       const closesDouble = quote === "double" && character === '"';
       const closesSingle = (quote === "single" || quote === "ansi") && character === "'";
       if (closesDouble || closesSingle) quote = undefined;
+      else if (quote !== "single" && (character === "`" || (character === "$" && command[index + 1] === "(")))
+        return undefined;
       continue;
     }
     if (character === '"') {
@@ -66,10 +71,22 @@ function splitShellSequence(command: string): string[] | undefined {
       continue;
     }
     if (character === "`" || (character === "$" && command[index + 1] === "(")) return undefined;
-    if (character === "|") return undefined;
+    if (character === "|" && !allowPipes) return undefined;
 
     const separatorLength =
-      character === "&" && command[index + 1] === "&" ? 2 : character === ";" || character === "\n" ? 1 : 0;
+      character === "&"
+        ? command[index + 1] === "&"
+          ? 2
+          : allowPipes
+            ? 1
+            : 0
+        : character === "|"
+          ? command[index + 1] === "|" || command[index + 1] === "&"
+            ? 2
+            : 1
+          : character === ";" || character === "\n"
+            ? 1
+            : 0;
     if (!separatorLength) continue;
 
     clauses.push(command.slice(start, index).trim());
@@ -117,6 +134,248 @@ const RM_COMMAND =
   /(?:^|[|&(]\s*)(?:(?:command|builtin|sudo)\s+)*(?:\/[^\s]+\/)?rm\b|\bfind\b[^\n]*-exec\s+(?:\/[^\s]+\/)?rm\b|\bxargs\b[^\n]*(?:\/[^\s]+\/)?rm\b/;
 const DELETE_COMMAND =
   /(?:^|[|&(]\s*)(?:(?:command|builtin|sudo)\s+)*(?:\/[^\s]+\/)?(?:rm|trash)\b|\bfind\b[^\n]*(?:-delete|-exec\s+(?:\/[^\s]+\/)?(?:rm|trash)\b)|\bxargs\b[^\n]*(?:\/[^\s]+\/)?(?:rm|trash)\b/;
+const PATH_SCOPED_SEARCH_COMMANDS = new Set(["grep", "rg"]);
+type SearchOptionSpec = { values: Set<string>; patterns: Set<string>; files: Set<string> };
+const SEARCH_OPTION_SPECS: Record<string, SearchOptionSpec> = {
+  rg: {
+    values: new Set([
+      "-A",
+      "-B",
+      "-C",
+      "-E",
+      "-e",
+      "-f",
+      "-g",
+      "-j",
+      "-M",
+      "-m",
+      "-r",
+      "-t",
+      "-T",
+      "--after-context",
+      "--before-context",
+      "--context",
+      "--encoding",
+      "--file",
+      "--glob",
+      "--iglob",
+      "--max-columns",
+      "--max-count",
+      "--max-depth",
+      "--path-separator",
+      "--pre",
+      "--pre-glob",
+      "--regexp",
+      "--replace",
+      "--sort",
+      "--sortr",
+      "--threads",
+      "--type",
+      "--type-add",
+      "--type-clear",
+    ]),
+    patterns: new Set(["-e", "-f", "--file", "--regexp"]),
+    files: new Set(["-f", "--file"]),
+  },
+  grep: {
+    values: new Set([
+      "-A",
+      "-B",
+      "-C",
+      "-D",
+      "-d",
+      "-e",
+      "-f",
+      "-m",
+      "--after-context",
+      "--before-context",
+      "--binary-files",
+      "--color",
+      "--context",
+      "--devices",
+      "--directories",
+      "--exclude",
+      "--exclude-dir",
+      "--exclude-from",
+      "--file",
+      "--include",
+      "--label",
+      "--max-count",
+      "--regexp",
+    ]),
+    patterns: new Set(["-e", "-f", "--file", "--regexp"]),
+    files: new Set(["-f", "--exclude-from", "--file"]),
+  },
+};
+const BASH_ARGUMENT_KEYS = new Set(["command", "timeout"]);
+const ASSIGNMENT = /^[A-Za-z_][A-Za-z0-9_]*=/;
+const DYNAMIC_PATH = /(^|[^\\])\$|[*?\[{]/;
+
+function shellWords(command: string): string[] | undefined {
+  const words: string[] = [];
+  let word = "";
+  let quote: Quote | undefined;
+  let escaped = false;
+
+  for (let index = 0; index < command.length; index += 1) {
+    const character = command[index];
+    if (escaped) {
+      word += character;
+      escaped = false;
+      continue;
+    }
+    if (character === "\\" && quote !== "single") {
+      escaped = true;
+      continue;
+    }
+    if (quote) {
+      const closesDouble = quote === "double" && character === '"';
+      const closesSingle = (quote === "single" || quote === "ansi") && character === "'";
+      if (closesDouble || closesSingle) quote = undefined;
+      else if (quote !== "single" && (character === "`" || (character === "$" && command[index + 1] === "(")))
+        return undefined;
+      else word += character;
+      continue;
+    }
+    if (character === '"') {
+      quote = "double";
+      continue;
+    }
+    if (character === "'") {
+      quote = index > 0 && command[index - 1] === "$" ? "ansi" : "single";
+      continue;
+    }
+    if (/\s/.test(character)) {
+      if (word) words.push(word);
+      word = "";
+      continue;
+    }
+    if (character === "`" || (character === "$" && command[index + 1] === "(")) return undefined;
+    word += character;
+  }
+
+  if (quote || escaped) return undefined;
+  if (word) words.push(word);
+  return words;
+}
+
+function commandWords(words: string[]): string[] {
+  let index = 0;
+  while (ASSIGNMENT.test(words[index] ?? "")) index += 1;
+  if (words[index] === "command" || words[index] === "builtin") index += 1;
+  if (words[index] === "env") {
+    index += 1;
+    while ((words[index] ?? "").startsWith("-") || ASSIGNMENT.test(words[index] ?? "")) index += 1;
+  }
+  return words.slice(index);
+}
+
+function searchPathOperands(executable: string, words: string[]): string[] {
+  const spec = SEARCH_OPTION_SPECS[executable];
+  const positional: string[] = [];
+  const optionFiles: string[] = [];
+  let patternFromOption = false;
+  let filesMode = false;
+  let optionsEnded = false;
+
+  for (let index = 1; index < words.length; index += 1) {
+    const word = words[index];
+    if (!optionsEnded && word === "--") {
+      optionsEnded = true;
+      continue;
+    }
+    if (!optionsEnded && word.startsWith("-")) {
+      const equals = word.indexOf("=");
+      const option = equals === -1 ? word : word.slice(0, equals);
+      const shortOption = word.length > 2 && !word.startsWith("--") ? word.slice(0, 2) : option;
+      const matchedOption = spec.values.has(option) ? option : spec.values.has(shortOption) ? shortOption : undefined;
+      if (!matchedOption) {
+        if (option === "--files") filesMode = true;
+        continue;
+      }
+      if (spec.patterns.has(matchedOption)) patternFromOption = true;
+      let value = equals === -1 ? undefined : word.slice(equals + 1);
+      if (value === undefined && shortOption === matchedOption && word.length > 2) value = word.slice(2);
+      if (value === undefined) value = words[++index];
+      if (value !== undefined && spec.files.has(matchedOption)) optionFiles.push(value);
+      continue;
+    }
+    positional.push(word);
+  }
+
+  const pathOperands = patternFromOption || filesMode ? positional : positional.slice(1);
+  return [...optionFiles, ...pathOperands];
+}
+
+function canonicalPath(path: string): string {
+  return existsSync(path) ? realpathSync(path) : resolve(path);
+}
+
+function isWithinRoot(path: string, root: string): boolean {
+  const child = canonicalPath(path);
+  const parent = canonicalPath(root);
+  const relation = relative(parent, child);
+  return relation === "" || (!relation.startsWith("..") && !isAbsolute(relation));
+}
+
+export function localBashIntegrityDecision(input: unknown, cwd: string): Decision {
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    return { deny: true, reason: "Blocked malformed Bash arguments." };
+  }
+
+  const arguments_ = input as Record<string, unknown>;
+  const unknownKeys = Object.keys(arguments_).filter((key) => !BASH_ARGUMENT_KEYS.has(key));
+  if (unknownKeys.length > 0) {
+    return { deny: true, reason: `Blocked unknown Bash argument keys: ${unknownKeys.join(", ")}.` };
+  }
+  if (typeof arguments_.command !== "string" || !arguments_.command.trim()) {
+    return { deny: true, reason: "Blocked Bash call without a non-empty command." };
+  }
+
+  const clauses = splitShellSequence(arguments_.command, true);
+  if (!clauses) {
+    return { deny: true, reason: "Blocked Bash command containing unsupported dynamic shell syntax." };
+  }
+  let effectiveCwd = cwd;
+  for (const clause of clauses) {
+    const parsedWords = shellWords(clause);
+    if (!parsedWords || parsedWords.length === 0) continue;
+    const words = commandWords(parsedWords);
+    const executable = words[0]?.split("/").at(-1);
+
+    if (executable === "cd") {
+      if (clauses.length === 1) {
+        return { deny: true, reason: "Blocked command-only `cd`; Bash calls do not preserve directory changes." };
+      }
+      const operands = words.slice(1).filter((word) => word !== "--");
+      if (operands.length !== 1) {
+        return { deny: true, reason: "Blocked `cd` with a missing or ambiguous target." };
+      }
+      const target = resolve(effectiveCwd, operands[0]);
+      if (!isWithinRoot(target, cwd)) {
+        return { deny: true, reason: `Blocked \`cd\` outside the session root: ${operands[0]}.` };
+      }
+      if (!existsSync(target) || !statSync(target).isDirectory()) {
+        return { deny: true, reason: `Blocked \`cd\` to a nonexistent directory: ${operands[0]}.` };
+      }
+      effectiveCwd = target;
+      continue;
+    }
+
+    if (!executable || !PATH_SCOPED_SEARCH_COMMANDS.has(executable)) continue;
+    for (const word of searchPathOperands(executable, words)) {
+      if (word.startsWith("~") || DYNAMIC_PATH.test(word)) {
+        return { deny: true, reason: `Blocked dynamic ${executable} path: ${word}.` };
+      }
+      const target = resolve(effectiveCwd, word);
+      if (!isWithinRoot(target, cwd)) {
+        return { deny: true, reason: `Blocked ${executable} path outside the session root: ${word}.` };
+      }
+    }
+  }
+
+  return ALLOW;
+}
 
 export function localDestructiveTargetDecision(command: string, home = homedir()): Decision {
   for (const clause of command.split(/&&|\|\||[;\n]/)) {
@@ -215,7 +474,7 @@ function dcgDecision(command: string): Promise<Decision> {
 export async function applyUserApproval(
   decision: Decision,
   command: string,
-  ctx: ToolCallContext,
+  ctx: ApprovalContext,
   events?: ApprovalEvents,
   recheck: (command: string) => Promise<Decision> = dcgDecision,
 ): Promise<Decision> {
@@ -248,10 +507,11 @@ export async function applyUserApproval(
 export default function dcgGuard(pi: ExtensionAPI): void {
   pi.on("tool_call", async (event, ctx) => {
     if (event.toolName !== "bash") return;
-    const command = String(event.input?.command ?? "");
-    if (!command.trim()) return;
+    let decision: Decision = localBashIntegrityDecision(event.input, ctx.cwd);
+    if (decision.deny) return { block: true, reason: decision.reason };
 
-    let decision: Decision = localDestructiveTargetDecision(command);
+    const command = String(event.input?.command ?? "");
+    decision = localDestructiveTargetDecision(command);
     if (decision.deny) return { block: true, reason: decision.reason };
 
     try {
