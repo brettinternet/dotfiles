@@ -140,6 +140,27 @@
           zsh -ic ':'
         fi
       description: Install missing Zinit plugins
+    - command: |
+        set -eu
+
+        if [ -z "${ATUIN_SYNC_ADDRESS:-}" ]; then
+          exit 0
+        fi
+
+        if command -v atuin >/dev/null 2>&1; then
+          atuin config set --type string sync_address "$ATUIN_SYNC_ADDRESS"
+        elif command -v zsh >/dev/null 2>&1; then
+          zsh -ic 'command -v atuin >/dev/null 2>&1 && atuin config set --type string sync_address "$ATUIN_SYNC_ADDRESS"'
+        else
+          printf '%s\n' 'ATUIN_SYNC_ADDRESS is set, but atuin is unavailable' >&2
+          exit 1
+        fi
+
+        atuin_config="$HOME/.config/atuin/config.toml"
+        if [ -f "$atuin_config" ]; then
+          chmod 600 "$atuin_config"
+        fi
+      description: Configure private Atuin sync address
     # Allow direnv access to ~/.envrc
     - ['[ -f "$HOME/.zinit/plugins/direnv---direnv/direnv" ] && direnv allow "$HOME" || true']
     - ['[ -f "$HOME/.zinit/plugins/mise/mise" ] && chmod u+x "$HOME/.zinit/plugins/mise/mise" || true']
