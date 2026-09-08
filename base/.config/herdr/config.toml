@@ -245,9 +245,9 @@ description = "new configured worktree"
 
 [[keys.command]]
 key = "prefix+shift+r"
-type = "plugin_action"
-command = "hwt.worktrees.remove"
-description = "remove configured worktree"
+type = "shell"
+command = "herdr server reload-config >/dev/null && herdr notification show 'Herdr config reloaded'"
+description = "reload Herdr config"
 
 [worktrees]
 # Worktrees opened through Herdr are grouped beneath their source workspace.
