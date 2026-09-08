@@ -10,7 +10,7 @@
     },
     "explore": {
       "model": "openrouter/~deepseek/deepseek-v4-flash-latest",
-      "variant": "low"
+      "variant": "high"
     },
     "oracle": {
       "model": "openrouter/z-ai/glm-5.3",
@@ -18,7 +18,7 @@
     },
     "pr-watcher": {
       "model": "openrouter/~deepseek/deepseek-v4-flash-latest",
-      "variant": "low"
+      "variant": "high"
     },
     "thermo-nuclear-code-quality-review": {
       "model": "openrouter/z-ai/glm-5.3",
