@@ -37,7 +37,7 @@ open_worktree = "prefix+shift+t"
 [[keys.command]]
 key = "prefix+shift+,"
 type = "plugin_action"
-command = "brett.window-title.set-tab-title-from-pane"
+command = "brettinternet.window-title.set-tab-title-from-pane"
 description = "set tab title from focused pane title"
 
 [[keys.command]]
@@ -79,133 +79,133 @@ description = "split vertical before current pane"
 [[keys.command]]
 key = "prefix+shift+z"
 type = "plugin_action"
-command = "brett.pane-collapse.toggle"
+command = "brettinternet.pane-collapse.toggle"
 description = "toggle focused pane collapse"
 
 [[keys.command]]
 key = "prefix+plus"
 type = "plugin_action"
-command = "brett.pane-equalize.equalize"
+command = "brettinternet.pane-equalize.equalize"
 description = "equalize panes in focused tab"
 
 [[keys.command]]
 key = "prefix+shift+left"
 type = "plugin_action"
-command = "brett.pane-rotate.left"
+command = "brettinternet.pane-rotate.left"
 description = "rotate focused pane with direct left neighbor"
 
 [[keys.command]]
 key = "prefix+shift+right"
 type = "plugin_action"
-command = "brett.pane-rotate.right"
+command = "brettinternet.pane-rotate.right"
 description = "rotate focused pane with direct right neighbor"
 
 [[keys.command]]
 key = "prefix+shift+up"
 type = "plugin_action"
-command = "brett.pane-rotate.up"
+command = "brettinternet.pane-rotate.up"
 description = "rotate focused pane with direct upper neighbor"
 
 [[keys.command]]
 key = "prefix+shift+down"
 type = "plugin_action"
-command = "brett.pane-rotate.down"
+command = "brettinternet.pane-rotate.down"
 description = "rotate focused pane with direct lower neighbor"
 
 [[keys.command]]
 key = "prefix+`"
 type = "plugin_action"
-command = "brett.last-workspace.toggle"
+command = "brettinternet.last-workspace.toggle"
 description = "toggle last workspace"
 
 [[keys.command]]
 key = "prefix+space"
 type = "plugin_action"
-command = "brett.command-palette.open"
+command = "brettinternet.command-palette.open"
 description = "open command palette"
 
 [[keys.command]]
 key = "prefix+ctrl+o"
 type = "plugin_action"
-command = "brett.command-palette.open-workspace-picker"
+command = "brettinternet.command-palette.open-workspace-picker"
 description = "go to workspace with preview"
 
 [[keys.command]]
 key = "prefix+o"
 type = "plugin_action"
-command = "brett.command-palette.open-workspace-overview"
+command = "brettinternet.command-palette.open-workspace-overview"
 description = "open workspace overview"
 
 [[keys.command]]
 key = "prefix+ctrl+h"
 type = "plugin_action"
-command = "brett.seamless-navigation.navigate-left"
+command = "brettinternet.seamless-navigation.navigate-left"
 description = "navigate left"
 
 [[keys.command]]
 key = "prefix+ctrl+j"
 type = "plugin_action"
-command = "brett.seamless-navigation.navigate-down"
+command = "brettinternet.seamless-navigation.navigate-down"
 description = "navigate down"
 
 [[keys.command]]
 key = "prefix+ctrl+k"
 type = "plugin_action"
-command = "brett.seamless-navigation.navigate-up"
+command = "brettinternet.seamless-navigation.navigate-up"
 description = "navigate up"
 
 [[keys.command]]
 key = "prefix+ctrl+l"
 type = "plugin_action"
-command = "brett.seamless-navigation.navigate-right"
+command = "brettinternet.seamless-navigation.navigate-right"
 description = "navigate right"
 
 [[keys.command]]
 key = "ctrl+alt+h"
 type = "plugin_action"
-command = "brett.seamless-navigation.focus-left"
+command = "brettinternet.seamless-navigation.focus-left"
 description = "focus Herdr pane left"
 
 [[keys.command]]
 key = "ctrl+alt+j"
 type = "plugin_action"
-command = "brett.seamless-navigation.focus-down"
+command = "brettinternet.seamless-navigation.focus-down"
 description = "focus Herdr pane down"
 
 [[keys.command]]
 key = "ctrl+alt+k"
 type = "plugin_action"
-command = "brett.seamless-navigation.focus-up"
+command = "brettinternet.seamless-navigation.focus-up"
 description = "focus Herdr pane up"
 
 [[keys.command]]
 key = "ctrl+alt+l"
 type = "plugin_action"
-command = "brett.seamless-navigation.focus-right"
+command = "brettinternet.seamless-navigation.focus-right"
 description = "focus Herdr pane right"
 
 [[keys.command]]
 key = "alt+shift+h"
 type = "plugin_action"
-command = "brett.seamless-navigation.resize-left"
+command = "brettinternet.seamless-navigation.resize-left"
 description = "resize left"
 
 [[keys.command]]
 key = "alt+shift+j"
 type = "plugin_action"
-command = "brett.seamless-navigation.resize-down"
+command = "brettinternet.seamless-navigation.resize-down"
 description = "resize down"
 
 [[keys.command]]
 key = "alt+shift+k"
 type = "plugin_action"
-command = "brett.seamless-navigation.resize-up"
+command = "brettinternet.seamless-navigation.resize-up"
 description = "resize up"
 
 [[keys.command]]
 key = "alt+shift+l"
 type = "plugin_action"
-command = "brett.seamless-navigation.resize-right"
+command = "brettinternet.seamless-navigation.resize-right"
 description = "resize right"
 
 
