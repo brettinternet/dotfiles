@@ -13,7 +13,7 @@ slsa-verifier = "latest"
 cosign = "latest"
 gdu = "latest"
 herdr = { version = "latest", minimum_release_age = "0", postinstall = 'mkdir -p "$HOME/.local/bin" && ln -sf "$MISE_TOOL_INSTALL_PATH/herdr" "$HOME/.local/bin/herdr"' }
-"github:dkarter/hwt" = { version = "latest", minimum_release_age = "0" }
+"github:dkarter/hwt" = { version = "latest", minimum_release_age = "0", lazy = true }
 python = "latest"
 node = "latest"
 "aqua:nushell/nushell" = "latest"
