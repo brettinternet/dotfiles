@@ -45,12 +45,6 @@
       glob: true
       path: darwin/.config/mise/conf.d/*
       if: '[ -x "$(command -v mise)" ]'
-    ~/.dsh/profiles/dsh-tui/package.json:
-      path: darwin/.dsh/profiles/dsh-tui/package.json
-      force: true
-    ~/.dsh/profiles/dsh-tui/cordis.patch.yml:
-      path: darwin/.dsh/profiles/dsh-tui/cordis.patch.yml
-      force: true
     ~/.config/nix-darwin/:
       glob: true
       path: darwin/.config/nix-darwin/*
@@ -64,13 +58,6 @@
         if command -v mise >/dev/null 2>&1; then
           mise exec gh -- gh extension install github/gh-stack --force
         fi
-    - command: |
-        if command -v bun >/dev/null 2>&1; then
-          bun install --omit peer --cwd "$HOME/.dsh/profiles/dsh-tui"
-        fi
-      description: Install the dsh-tui profile with Bun
-      stdout: true
-      stderr: true
     - command: >-
         hidutil property --set
         '{"UserKeyMapping":[{"HIDKeyboardModifierMappingSrc":0x700000039,"HIDKeyboardModifierMappingDst":0x700000029}]}'

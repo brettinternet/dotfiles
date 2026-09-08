@@ -12,6 +12,22 @@ DOTFILES = Path(
     os.environ.get("DOTFILES", Path(__file__).resolve().parents[2])
 ).resolve()
 HOME = Path.home()
+
+
+def selected_tools() -> set[str]:
+    completed = subprocess.run(
+        [str(DOTFILES / "ai/.bin/ai-tool-enabled"), "--list"],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if completed.returncode:
+        raise SystemExit(completed.stderr.strip())
+    return set(completed.stdout.splitlines())
+
+
+SELECTION = selected_tools()
+
 DCG_BIN = Path(
     os.environ.get(
         "DCG_BIN",
@@ -91,21 +107,27 @@ def remove_legacy_link(destination: Path, legacy_source: Path) -> None:
 
 
 def main() -> int:
+    if not SELECTION.intersection({"claude", "codex", "omp", "opencode"}):
+        return 0
     if not DCG_BIN.is_file() or not os.access(DCG_BIN, os.X_OK):
         raise SystemExit(f"dcg executable not found: {DCG_BIN}")
 
-    install_hook(HOME / ".claude/settings.json", "Bash|PowerShell")
-    install_hook(HOME / ".codex/hooks.json", "Bash")
-    remove_legacy_link(
-        HOME / ".omp/agent/extensions/dcg-guard.ts",
-        DOTFILES / "ai/pi/extensions/dcg-guard.ts",
-    )
-    remove_legacy_link(
-        HOME / ".config/opencode/plugins/dcg-guard.js",
-        DOTFILES / "ai/opencode/dcg-guard.js",
-    )
-    subprocess.run([str(DCG_BIN), "install", "--omp", "--force"], check=True)
-    subprocess.run([str(DCG_BIN), "install", "--opencode", "--force"], check=True)
+    if "claude" in SELECTION:
+        install_hook(HOME / ".claude/settings.json", "Bash|PowerShell")
+    if "codex" in SELECTION:
+        install_hook(HOME / ".codex/hooks.json", "Bash")
+    if "omp" in SELECTION:
+        remove_legacy_link(
+            HOME / ".omp/agent/extensions/dcg-guard.ts",
+            DOTFILES / "ai/pi/extensions/dcg-guard.ts",
+        )
+        subprocess.run([str(DCG_BIN), "install", "--omp", "--force"], check=True)
+    if "opencode" in SELECTION:
+        remove_legacy_link(
+            HOME / ".config/opencode/plugins/dcg-guard.js",
+            DOTFILES / "ai/opencode/dcg-guard.js",
+        )
+        subprocess.run([str(DCG_BIN), "install", "--opencode", "--force"], check=True)
     return 0
 
 

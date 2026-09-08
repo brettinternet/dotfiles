@@ -9,6 +9,13 @@ opencode_dir=${4:-"$HOME/.config/opencode/agents"}
 codex_dir=${5:-"$HOME/.codex/agents"}
 codex_config=${6:-"$HOME/.codex/config.toml"}
 pi_dir=${7:-"$HOME/.pi/agent/agents"}
+dotfiles=${DOTFILES:-$(pwd -P)}
+
+tool_enabled() {
+  "$dotfiles/ai/.bin/ai-tool-enabled" "$1"
+}
+
+"$dotfiles/ai/.bin/ai-tool-enabled" --validate
 
 # Generated markdown definitions must stay byte-identical to the canonical body,
 # so ownership lives in a per-directory manifest instead of an in-file marker.
@@ -36,6 +43,7 @@ body() {
 }
 
 ships() {
+  tool_enabled "$2" || return 1
   case " $(field "$1" tools) " in
     *" $2 "*) return 0 ;;
   esac
@@ -118,19 +126,30 @@ retire_managed_directory() {
   rmdir "$directory" 2>/dev/null || true
 }
 
-for directory in "$claude_dir" "$omp_dir" "$pi_dir" "$opencode_dir" "$codex_dir"; do
+prepare_directory() {
+  tool=$1
+  directory=$2
+  tool_enabled "$tool" || return 0
   if [ -L "$directory" ]; then
     printf 'Refusing to use linked agent directory: %s\n' "$directory" >&2
     exit 1
   fi
   mkdir -p "$directory"
-done
-mkdir -p "$(dirname "$codex_config")"
-if [ -L "$codex_config" ]; then
-  printf 'Refusing to replace linked Codex config: %s\n' "$codex_config" >&2
-  exit 1
+}
+
+prepare_directory claude "$claude_dir"
+prepare_directory omp "$omp_dir"
+prepare_directory pi "$pi_dir"
+prepare_directory opencode "$opencode_dir"
+prepare_directory codex "$codex_dir"
+if tool_enabled codex; then
+  mkdir -p "$(dirname "$codex_config")"
+  if [ -L "$codex_config" ]; then
+    printf 'Refusing to replace linked Codex config: %s\n' "$codex_config" >&2
+    exit 1
+  fi
+  [ -e "$codex_config" ] || : > "$codex_config"
 fi
-[ -e "$codex_config" ] || : > "$codex_config"
 
 for source in "$source_dir"/*.md; do
   [ -f "$source" ] || continue
@@ -260,10 +279,10 @@ config_file = \"$escaped_target\""
   fi
 done
 
-reconcile "$claude_dir" "$claude_names"
-reconcile "$omp_dir" "$omp_names"
-reconcile "$pi_dir" "$pi_names"
-reconcile "$opencode_dir" "$opencode_names"
+if tool_enabled claude; then reconcile "$claude_dir" "$claude_names"; else retire_managed_directory "$claude_dir"; fi
+if tool_enabled omp; then reconcile "$omp_dir" "$omp_names"; else retire_managed_directory "$omp_dir"; fi
+if tool_enabled pi; then reconcile "$pi_dir" "$pi_names"; else retire_managed_directory "$pi_dir"; fi
+if tool_enabled opencode; then reconcile "$opencode_dir" "$opencode_names"; else retire_managed_directory "$opencode_dir"; fi
 
 if [ "$omp_dir" = "$HOME/.omp/agent/agents" ]; then
   retire_managed_directory "$HOME/.omp/agents"
@@ -279,6 +298,21 @@ for target in "$codex_dir"/*.toml; do
   grep -Fqx "$codex_marker" "$target" || continue
   trash "$target"
 done
+
+if [ ! -e "$codex_config" ] && [ ! -L "$codex_config" ]; then
+  rmdir "$codex_dir" 2>/dev/null || true
+  exit 0
+fi
+if [ -L "$codex_config" ]; then
+  printf 'Refusing to replace linked Codex config: %s\n' "$codex_config" >&2
+  exit 1
+fi
+if ! tool_enabled codex &&
+  ! grep -Fqx "$codex_begin" "$codex_config" &&
+  ! grep -Fqx "$codex_keybindings_begin" "$codex_config"; then
+  rmdir "$codex_dir" 2>/dev/null || true
+  exit 0
+fi
 
 tmp=$(mktemp "$codex_config.tmp.XXXXXX")
 awk \
@@ -303,13 +337,15 @@ awk \
   $0 == "" { blanks++; next }
   { flush_blanks(); print }
 ' "$codex_config" > "$tmp"
-{
-  printf '\n%s\n' "$codex_keybindings_begin"
-  printf '%s\n' '[tui.keymap.composer]'
-  printf '%s\n' 'queue = "ctrl-q"'
-  printf '%s\n' "$codex_keybindings_end"
-  printf '\n%s\n' "$codex_begin"
-  printf '%s\n' "$codex_roles"
-  printf '%s\n' "$codex_end"
-} >> "$tmp"
+if tool_enabled codex; then
+  {
+    printf '\n%s\n' "$codex_keybindings_begin"
+    printf '%s\n' '[tui.keymap.composer]'
+    printf '%s\n' 'queue = "ctrl-q"'
+    printf '%s\n' "$codex_keybindings_end"
+    printf '\n%s\n' "$codex_begin"
+    printf '%s\n' "$codex_roles"
+    printf '%s\n' "$codex_end"
+  } >> "$tmp"
+fi
 mv "$tmp" "$codex_config"

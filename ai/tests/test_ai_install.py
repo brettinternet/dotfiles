@@ -19,6 +19,7 @@ class AiInstallTests(unittest.TestCase):
         self.environment = {
             **os.environ,
             "DOTFILES": str(ROOT),
+            "DOTFILES_AI_TOOLS": "all",
             "HOME": str(self.home),
         }
 
@@ -58,6 +59,16 @@ class AiInstallTests(unittest.TestCase):
             return yaml.safe_load(text)
         finally:
             sys.path.remove(yaml_path)
+
+    def install_fake_mise(self) -> Path:
+        fake_bin = self.home / "fake-bin"
+        fake_bin.mkdir(exist_ok=True)
+        log = self.home / "mise.log"
+        mise = fake_bin / "mise"
+        mise.write_text('#!/bin/sh\nprintf \'%s\\n\' "$*" >> "$HOME/mise.log"\n')
+        mise.chmod(0o755)
+        self.environment["MISE_BIN"] = str(mise)
+        return log
 
     def install_fake_dcg(self) -> Path:
         dcg = self.home / "bin/dcg"
@@ -360,8 +371,67 @@ path.write_text("// generated guard for test\\n")
                 self.assertEqual("user state\n", external.read_text())
                 active.unlink()
 
+    def test_ai_tool_selection_defaults_to_none_and_rejects_unknown_values(
+        self,
+    ) -> None:
+        self.environment.pop("DOTFILES_AI_TOOLS")
+        listed = self.run_command("ai/.bin/ai-tool-enabled", "--list")
+        self.assertEqual("", listed.stdout)
+
+        self.environment["DOTFILES_AI_TOOLS"] = "pi,wat"
+        completed = self.run_command(
+            "ai/.bin/ai-tool-enabled", "--validate", expected_code=2
+        )
+        self.assertIn("unknown tool: wat", completed.stderr)
+
+    def test_ai_tool_configuration_refuses_dangling_managed_paths(self) -> None:
+        config = self.home / ".config/mise/conf.d/40-ai.toml"
+        config.parent.mkdir(parents=True)
+        external = self.home / "missing-ai.toml"
+        config.symlink_to(external)
+        self.install_fake_mise()
+
+        completed = self.run_command("ai/.bin/configure-ai-tools", expected_code=1)
+
+        self.assertIn("Refusing to overwrite linked AI Mise config", completed.stderr)
+        self.assertFalse(external.exists())
+
+    def test_disabled_codex_preserves_unmanaged_config(self) -> None:
+        self.environment["DOTFILES_AI_TOOLS"] = "none"
+        config = self.home / ".codex/config.toml"
+        config.parent.mkdir(parents=True)
+        config.write_text("unmanaged = true\n")
+
+        self.run_command("ai/.bin/install-agents")
+
+        self.assertEqual("unmanaged = true\n", config.read_text())
+
+    def test_pi_only_selection_installs_pi_and_uninstalls_other_ai_tools(self) -> None:
+        log = self.install_fake_mise()
+        self.run_command("ai/.bin/configure-ai-tools")
+        log.write_text("")
+        self.environment["DOTFILES_AI_TOOLS"] = "pi"
+
+        self.run_command("ai/.bin/configure-ai-tools")
+
+        config = self.home / ".config/mise/conf.d/40-ai.toml"
+        text = config.read_text()
+        self.assertIn("npm:@earendil-works/pi-coding-agent", text)
+        self.assertNotIn("@anthropic-ai/claude-code", text)
+        commands = log.read_text().splitlines()
+        self.assertIn("install --yes npm:@earendil-works/pi-coding-agent", commands)
+        self.assertTrue(
+            any(line.startswith("uninstall --all --yes ") for line in commands)
+        )
+
+        self.run_command("ai/.bin/install-agents")
+        self.assertTrue((self.home / ".pi/agent/agents/explore.md").is_file())
+        self.assertFalse((self.home / ".claude/agents/executor.md").exists())
+        self.assertFalse((self.home / ".codex/agents/executor.toml").exists())
+
     def test_make_ai_is_idempotent_and_checkout_pure(self) -> None:
         before = self.repository_status()
+        self.install_fake_mise()
         self.install_fake_dcg()
         repository_envrc = ROOT / "base/.envrc"
         if not (repository_envrc.exists() or repository_envrc.is_symlink()):
@@ -382,6 +452,14 @@ path.write_text("// generated guard for test\\n")
             self.home / ".codex/agents/executor.toml",
         ):
             self.assertTrue(path.is_file(), path)
+
+        self.environment["DOTFILES_AI_TOOLS"] = "pi"
+        self.run_command("make", "ai")
+        self.assertTrue((self.home / ".pi/agent/AGENTS.md").is_symlink())
+        self.assertFalse((self.home / ".claude/CLAUDE.md").exists())
+        self.assertFalse((self.home / ".claude/agents/executor.md").exists())
+        self.assertFalse((self.home / ".codex/agents/executor.toml").exists())
+        self.assertEqual(before, self.repository_status())
 
 
 if __name__ == "__main__":
