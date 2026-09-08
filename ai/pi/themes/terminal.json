@@ -37,7 +37,7 @@
     "scrollbarThumb": "white",
     "searchMatchBg": "yellow",
     "searchMatchText": "black",
-    "userMessageBg": "",
+    "userMessageBg": 236,
     "userMessageText": "",
     "customMessageBg": "",
     "customMessageText": "",
