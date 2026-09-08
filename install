@@ -11,6 +11,48 @@ readonly REPO_ENVRC="${BASEDIR}/base/.envrc"
 
 cd "${BASEDIR}"
 
+# If not set, install the base group and include x11 when an X server is active.
+if [ -z "${DOTFILE_GROUPS:-}" ]; then
+  DOTFILE_GROUPS="base"
+
+  if command -v xset >/dev/null 2>&1 && xset q >/dev/null 2>&1; then
+    DOTFILE_GROUPS="${DOTFILE_GROUPS},x11"
+  fi
+fi
+
+printf 'Using groups: %s\n' "${DOTFILE_GROUPS}"
+
+configs=()
+IFS=',' read -r -a dotfile_groups <<< "${DOTFILE_GROUPS}"
+for group in "${dotfile_groups[@]}"; do
+  group="${group#"${group%%[![:space:]]*}"}"
+  group="${group%"${group##*[![:space:]]}"}"
+  [ -n "${group}" ] || continue
+
+  config="${group}.yaml"
+  if [ ! -f "${BASEDIR}/${config}" ]; then
+    printf 'Cannot find %s\n' "${config}" >&2
+    exit 1
+  fi
+
+  case "${group}" in
+    darwin)
+      if [ "$(uname -s)" != "Darwin" ]; then
+        printf 'Cannot install %s: this group requires macOS\n' "${config}" >&2
+        exit 1
+      fi
+      ;;
+    i3 | thinkpad)
+      if [ "$(uname -s)" != "Linux" ]; then
+        printf 'Cannot install %s: this group requires Linux\n' "${config}" >&2
+        exit 1
+      fi
+      ;;
+  esac
+
+  configs+=("${config}")
+done
+
 # Migrate .envrc from the previous in-repo location to the local home file.
 if [ -f "${REPO_ENVRC}" ] && [ ! -L "${REPO_ENVRC}" ]; then
   if [ -L "${LOCAL_ENVRC}" ]; then
@@ -31,29 +73,7 @@ fi
 # Initialize the pinned Dotbot revision and its nested submodules.
 git -C "${BASEDIR}" submodule update --init --recursive
 
-# If not set, install the base group and include x11 when an X server is active.
-if [ -z "${DOTFILE_GROUPS:-}" ]; then
-  DOTFILE_GROUPS="base"
-
-  if command -v xset >/dev/null 2>&1 && xset q >/dev/null 2>&1; then
-    DOTFILE_GROUPS="${DOTFILE_GROUPS},x11"
-  fi
-fi
-
-printf 'Using groups: %s\n' "${DOTFILE_GROUPS}"
-
-IFS=',' read -r -a dotfile_groups <<< "${DOTFILE_GROUPS}"
-for group in "${dotfile_groups[@]}"; do
-  group="${group#"${group%%[![:space:]]*}"}"
-  group="${group%"${group##*[![:space:]]}"}"
-  [ -n "${group}" ] || continue
-
-  config="${group}.yaml"
-  if [ ! -f "${BASEDIR}/${config}" ]; then
-    printf 'Cannot find %s\n' "${config}" >&2
-    exit 1
-  fi
-
+for config in "${configs[@]}"; do
   printf 'Configuring %s\n' "${config}"
   "${BASEDIR}/${DOTBOT_DIR}/${DOTBOT_BIN}" -d "${BASEDIR}" -c "${config}" "$@"
 done
