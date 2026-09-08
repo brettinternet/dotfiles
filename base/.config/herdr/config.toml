@@ -119,6 +119,12 @@ command = "brettinternet.last-workspace.toggle"
 description = "toggle last workspace"
 
 [[keys.command]]
+key = "prefix+shift+0"
+type = "shell"
+command = "herdr-focus-last-workspace"
+description = "focus last workspace"
+
+[[keys.command]]
 key = "prefix+space"
 type = "plugin_action"
 command = "brettinternet.command-palette.open"
