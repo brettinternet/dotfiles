@@ -294,8 +294,7 @@ rows = [
 
 
 [ui.toast]
-# Let the outer terminal own notifications; this also works over `herdr --remote`.
-delivery = "terminal"
+delivery = "herdr"
 
 [experimental]
 kitty_graphics = true
