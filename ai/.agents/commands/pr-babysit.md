@@ -13,19 +13,21 @@ Resolve the repository and PR with `gh`. Retain the PR's source repository, head
 
 For one PR, use the current checkout only when it is clean and exactly at the PR head. Otherwise use an isolated worktree. In batch mode, create one isolated worktree and one worker per PR; never share a checkout between PRs. Preserve any dirty or conflicted worktree for the user rather than discarding it.
 
-## Clear CI and feedback
+## Clear merge conflicts, CI, and feedback
 
-Loop over CI and unresolved review threads together:
+Resolve merge conflicts before spending or requesting review attention: updating the PR head can clear approvals and make earlier review work stale. Check mergeability against the latest target branch before processing feedback, after target-branch changes, and before declaring the PR ready. When conflicted, merge the target branch into the PR head (never the PR head into the target), resolve only the conflicts, run focused validation, commit, and push. Do not rebase or force-push.
+
+Once the PR is mergeable, loop over CI and unresolved review threads together:
 
 - Inspect every gating check. Reproduce relevant failures locally, fix their source, run the repository's focused validation, commit, and push.
 - Verify every review finding against current code. Apply the smallest valid fix and behavioral coverage when warranted. Reply briefly when a finding is stale or incorrect. Resolve a thread only after its fix lands or the discussion establishes it as resolved.
-- After each push, refresh the expected head SHA and recheck CI and feedback. Stop rather than overwrite external changes.
+- After each push, refresh the expected head SHA and recheck mergeability, CI, and feedback. Stop rather than overwrite external changes.
 - Apply `user-voice` to every GitHub message. Use `pr-watcher` for bounded waits when available; otherwise wait at least five minutes for CI and fifteen minutes for human review.
 
 Do not weaken tests, suppress symptoms, make unrelated changes, or argue repeatedly. When a valid finding depends on a product or architecture decision, ask the user with the evidence and viable choices.
 
 ## Reviewer and finish
 
-Once current feedback is clear and CI has no known failure, request the named reviewer if supplied and confirm the request landed. Continue processing their feedback until that exact reviewer approves the current head. If no reviewer was supplied, finish when feedback is clear and gating CI is green.
+Once the PR is mergeable, current feedback is clear, and CI has no known failure, request the named reviewer if supplied and confirm the request landed. Continue processing their feedback until that exact reviewer approves the current head. If no reviewer was supplied, finish when feedback is clear and gating CI is green.
 
 Stop a PR after eight hours without a head, CI, review, comment, or thread-state change. Report it as timed out, not ready. Finish with each PR's head SHA, CI and review state, unresolved findings, blocker, and worktree status. Say ready to merge only when every required condition is satisfied; do not merge.
