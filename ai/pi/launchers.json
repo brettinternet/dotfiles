@@ -1,6 +1,6 @@
 {
   "fast": {
-    "model": "openrouter/deepseek/deepseek-v4-flash",
+    "model": "openrouter/google/gemini-2.5-flash-lite",
     "thinking": "high"
   },
   "oracle": {

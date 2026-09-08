@@ -61,7 +61,7 @@
         "anthropic/claude-opus-4.6": {
           "contextWindow": 256000
         },
-        "deepseek/deepseek-v4-flash": {
+        "google/gemini-2.5-flash-lite": {
           "contextWindow": 256000
         },
         "z-ai/glm-5.3": {

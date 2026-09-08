@@ -264,7 +264,7 @@ def render_pi_profile(manifest: Manifest, profile: dict[str, Any]) -> dict[str, 
         "model": f"{manifest.model_id(progress_alias, 'pi')}:{progress_effort}",
         "maxInputChars": 12000,
         "maxTokens": 180,
-        "timeoutMs": 15000,
+        "timeoutMs": 60000,
     }
     return deep_merge(rendered, config.get("settings", {}))
 
