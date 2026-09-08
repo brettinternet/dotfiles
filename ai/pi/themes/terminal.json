@@ -30,7 +30,7 @@
     "muted": "brightBlack",
     "dim": "brightBlack",
     "text": "",
-    "thinkingText": "brightBlack",
+    "thinkingText": 245,
 
     "selectedBg": "brightBlack",
     "scrollbarTrack": "brightBlack",
@@ -46,7 +46,7 @@
     "toolSuccessBg": "",
     "toolErrorBg": "",
     "toolTitle": "cyan",
-    "toolOutput": "",
+    "toolOutput": 245,
 
     "mdHeading": "yellow",
     "mdLink": "blue",
