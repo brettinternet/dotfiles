@@ -1,7 +1,7 @@
 {
   "fast": {
     "model": "openrouter/deepseek/deepseek-v4-flash-latest",
-    "thinking": "low"
+    "thinking": "high"
   },
   "oracle": {
     "model": "anthropic/claude-fable-5.1",

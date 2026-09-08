@@ -68,7 +68,7 @@
     "maxLength": 60
   },
   "progressConfig": {
-    "model": "openrouter/deepseek/deepseek-v4-flash-latest:low",
+    "model": "openrouter/deepseek/deepseek-v4-flash-latest:high",
     "maxInputChars": 12000,
     "maxTokens": 180,
     "timeoutMs": 15000
