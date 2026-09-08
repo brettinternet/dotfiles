@@ -40,7 +40,7 @@
     "userMessageBg": 236,
     "userMessageText": "",
     "customMessageBg": "",
-    "customMessageText": "",
+    "customMessageText": 245,
     "customMessageLabel": "magenta",
     "toolPendingBg": "",
     "toolSuccessBg": "",
