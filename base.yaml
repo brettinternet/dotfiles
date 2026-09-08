@@ -148,13 +148,16 @@
         fi
 
         if command -v atuin >/dev/null 2>&1; then
-          atuin config set --type string sync_address "$ATUIN_SYNC_ADDRESS"
-        elif command -v zsh >/dev/null 2>&1; then
-          zsh -ic 'command -v atuin >/dev/null 2>&1 && atuin config set --type string sync_address "$ATUIN_SYNC_ADDRESS"'
+          atuin_bin="$(command -v atuin)"
+        elif [ -x "$HOME/.zinit/plugins/atuinsh---atuin/atuin" ]; then
+          atuin_bin="$HOME/.zinit/plugins/atuinsh---atuin/atuin"
         else
           printf '%s\n' 'ATUIN_SYNC_ADDRESS is set, but atuin is unavailable' >&2
           exit 1
         fi
+
+        "$atuin_bin" config set --type string sync_address "$ATUIN_SYNC_ADDRESS"
+        env -u ATUIN_SYNC_ADDRESS "$atuin_bin" config get sync_address >/dev/null
 
         atuin_config="$HOME/.config/atuin/config.toml"
         if [ -f "$atuin_config" ]; then
