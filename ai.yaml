@@ -14,8 +14,6 @@
     - ~/.pi/agent/agents
     - ~/.config/opencode/agents
     - ~/.config/opencode/commands
-    - ~/.dsh/AGENTS.md
-    - ~/.dsh/cordis.patch.yml
 - shell:
     - command: ai/.bin/configure-ai-tools
       description: Install the selected AI tools and remove deselected managed tools
@@ -170,24 +168,6 @@
       stderr: true
     - command: |
         set -eu
-        ai/.bin/ai-tool-enabled dsh || exit 0
-        mkdir -p "$HOME/.dsh"
-        target="$HOME/.dsh/settings.yaml"
-        if [ -L "$target" ]; then
-          rm "$target"
-        fi
-        if [ -e "$target" ] && [ ! -f "$target" ]; then
-          printf 'DSH settings target exists but is not a regular file: %s\n' "$target" >&2
-          exit 1
-        fi
-        if [ ! -e "$target" ]; then
-          cp ai/dsh/settings.yaml "$target"
-        fi
-      description: Seed DSH settings as a local copy
-      stdout: true
-      stderr: true
-    - command: |
-        set -eu
         if ! command -v herdr >/dev/null 2>&1; then
           echo 'herdr not on PATH; skipping integrations (mise install herdr)'
           exit 0
@@ -283,24 +263,6 @@
       relink: false
       path: ai/.agents/skills/*
       if: ai/.bin/ai-tool-enabled pi || ai/.bin/ai-tool-enabled omp || ai/.bin/ai-tool-enabled codex
-    # DeepSeek Harness
-    ~/.dsh/AGENTS.md:
-      path: ai/AGENTS.md
-      if: ai/.bin/ai-tool-enabled dsh
-    ~/.dsh/cordis.patch.yml:
-      path: ai/dsh/cordis.patch.yml
-      if: ai/.bin/ai-tool-enabled dsh
-    ~/.dsh/.agent-presets:
-      path: ai/dsh/presets
-      if: ai/.bin/ai-tool-enabled dsh
-    ~/.dsh/profiles/dsh-tui/package.json:
-      path: darwin/.dsh/profiles/dsh-tui/package.json
-      force: true
-      if: '[ "$(uname)" = Darwin ] && ai/.bin/ai-tool-enabled dsh'
-    ~/.dsh/profiles/dsh-tui/cordis.patch.yml:
-      path: darwin/.dsh/profiles/dsh-tui/cordis.patch.yml
-      force: true
-      if: '[ "$(uname)" = Darwin ] && ai/.bin/ai-tool-enabled dsh'
     # Amp CLI
     ~/.config/amp/settings.json:
       path: ai/amp/settings.json
@@ -315,17 +277,3 @@
     ~/.config/opencode/tui.jsonc:
       path: ai/opencode/tui.jsonc
       if: ai/.bin/ai-tool-enabled opencode
-
-- shell:
-    - command: |
-        set -eu
-        ai/.bin/ai-tool-enabled dsh || exit 0
-        [ "$(uname)" = Darwin ] || exit 0
-        mise_bin=${MISE_BIN:-}
-        if [ -z "$mise_bin" ]; then
-          mise_bin=$(command -v mise) || exit 0
-        fi
-        "$mise_bin" exec -- bun install --omit peer --cwd "$HOME/.dsh/profiles/dsh-tui"
-      description: Install the dsh-tui profile with Bun
-      stdout: true
-      stderr: true

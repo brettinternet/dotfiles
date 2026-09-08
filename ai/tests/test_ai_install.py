@@ -378,11 +378,11 @@ path.write_text("// generated guard for test\\n")
         listed = self.run_command("ai/.bin/ai-tool-enabled", "--list")
         self.assertEqual("", listed.stdout)
 
-        self.environment["DOTFILES_AI_TOOLS"] = "pi,wat"
+        self.environment["DOTFILES_AI_TOOLS"] = "pi,dsh"
         completed = self.run_command(
             "ai/.bin/ai-tool-enabled", "--validate", expected_code=2
         )
-        self.assertIn("unknown tool: wat", completed.stderr)
+        self.assertIn("unknown tool: dsh", completed.stderr)
 
     def test_ai_tool_configuration_refuses_dangling_managed_paths(self) -> None:
         config = self.home / ".config/mise/conf.d/40-ai.toml"

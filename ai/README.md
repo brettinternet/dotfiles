@@ -1,12 +1,12 @@
 # AI agent setup
 
-Shared configuration for Claude Code, Pi, Oh My Pi (OMP), Codex, Amp, OpenCode, and the DeepSeek Harness (dsh).
+Shared configuration for Claude Code, Pi, Oh My Pi (OMP), Codex, Amp, and OpenCode.
 
 AI tools are disabled by default. Select them per machine in `~/.envrc`, then install or refresh them:
 
 ```sh
 export DOTFILES_AI_TOOLS=all
-# Or select a subset: pi,omp,opencode,claude,codex,amp,dsh
+# Or select a subset: pi,omp,opencode,claude,codex,amp
 make ai
 ```
 
@@ -20,7 +20,7 @@ The comma-separated selector also accepts `none`. Any non-empty selection instal
 - `agents/` — shared subagent prompts; `install-agents` renders harness-specific definitions
 - `.agents/skills/` — reusable skills discovered through `~/.agents/skills/`
 - `.agents/commands/` — shared workflows rendered as skills by `install-agent-commands`
-- `pi/`, `omp/`, `opencode/`, `claude/`, `amp/`, and `dsh/` — harness-specific configuration
+- `pi/`, `omp/`, `opencode/`, `claude/`, and `amp/` — harness-specific configuration
 - `project/` — project-level defaults
 
 Generated files under `$HOME` should not be edited directly. Change their source here and rerun `make ai`.
@@ -46,7 +46,6 @@ p solo --continue # use the active profile defaults without subagent tools
 - **Pi:** combines `pi/profiles/common.json` with the selected generated overlay. `codex` uses ChatGPT subscription models; `or` requires `OPENROUTER_API_KEY`.
 - **OMP:** remains independently configured under `omp/`.
 - **OpenCode:** combines `opencode/profiles/common.jsonc` with an overlay. Run `opencode-profile list` for available profiles.
-- **dsh:** links global instructions, presets, and a settings template. API keys come from environment variables; OAuth credentials remain machine-local in `~/.dsh/.credentials.yaml`.
 
 `manifest.yaml` owns model metadata and role-to-model routing. OMP's richer `modelRoles` vocabulary is canonical: shared agents map through it (for example, `oracle` maps to `slow`), while Pi-specific `title` and `progress` routes render their model configs. OMP-only roles remain OMP-only. Harness profile names are mapped by the manifest, such as central `codex` to OpenCode `gpt`.
 

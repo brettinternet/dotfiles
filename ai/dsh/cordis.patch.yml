@@ -1,8 +1,0 @@
-# Home-level patch layer for every dsh profile (web, dsh-tui, headless),
-# applied after each profile's own bundle and patch layers. Symlinked to
-# ~/.dsh/cordis.patch.yml.
-#
-# Keep mutable settings local so model changes do not dirty the dotfiles repo.
-- id: settings
-  config:
-    path: !!js (process.env.HOME ?? '') + '/.dsh/settings.yaml'
