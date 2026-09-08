@@ -61,7 +61,7 @@
         "anthropic/claude-opus-4.6": {
           "contextWindow": 256000
         },
-        "deepseek/deepseek-v4-flash-latest": {
+        "deepseek/deepseek-v4-flash": {
           "contextWindow": 256000
         },
         "z-ai/glm-5.3": {

@@ -105,9 +105,9 @@ models:
   or-flash:
     ids:
       {
-        omp: openrouter/deepseek/deepseek-v4-flash-latest,
-        pi: openrouter/deepseek/deepseek-v4-flash-latest,
-        opencode: openrouter/deepseek/deepseek-v4-flash-latest,
+        omp: openrouter/deepseek/deepseek-v4-flash,
+        pi: openrouter/deepseek/deepseek-v4-flash,
+        opencode: openrouter/deepseek/deepseek-v4-flash,
       }
     context: conservative
   or-flash-auto:

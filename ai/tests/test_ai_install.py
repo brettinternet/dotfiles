@@ -271,7 +271,7 @@ path.write_text("// generated guard for test\\n")
 
         listed = self.run_command("ai/.bin/p", "list")
         self.assertIn(
-            "fast\topenrouter/deepseek/deepseek-v4-flash-latest:high\n",
+            "fast\topenrouter/deepseek/deepseek-v4-flash:high\n",
             listed.stdout,
         )
 
@@ -279,7 +279,7 @@ path.write_text("// generated guard for test\\n")
         self.assertEqual(
             [
                 "--model",
-                "openrouter/deepseek/deepseek-v4-flash-latest",
+                "openrouter/deepseek/deepseek-v4-flash",
                 "--thinking",
                 "high",
                 "--no-session",
