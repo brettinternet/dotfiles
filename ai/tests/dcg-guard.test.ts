@@ -180,6 +180,35 @@ describe("dcg user approval", () => {
     expect(checked[1]).toContain("$'1. Verify.\n2. Run checks.'");
   });
 
+  test("allows literal restore without a path separator in a compound command", async () => {
+    const checked: string[] = [];
+    const command =
+      "cp /Users/example/project/docs/allowlist.tsv /Users/example/project/.worktrees/agent-task/docs/allowlist.tsv && git -C /Users/example/project restore docs/allowlist.tsv && cd /Users/example/project/.worktrees/agent-task && mise exec go -- gofmt -w internal/identity_guard_test.go && git status --short && git diff --check";
+    const decision = await applyUserApproval(
+      {
+        deny: true,
+        reason: "git restore discards uncommitted changes.",
+        ruleId: "core.git:restore-worktree",
+      },
+      command,
+      { hasUI: false, ui: { confirm: async () => false } },
+      undefined,
+      async (clause) => {
+        checked.push(clause);
+        return { deny: false, reason: "" };
+      },
+    );
+
+    expect(decision.deny).toBe(false);
+    expect(checked).toEqual([
+      "cp /Users/example/project/docs/allowlist.tsv /Users/example/project/.worktrees/agent-task/docs/allowlist.tsv",
+      "cd /Users/example/project/.worktrees/agent-task",
+      "mise exec go -- gofmt -w internal/identity_guard_test.go",
+      "git status --short",
+      "git diff --check",
+    ]);
+  });
+
   test("does not exempt restore with a variable-derived path", async () => {
     let rechecked = false;
     const blocked = {
