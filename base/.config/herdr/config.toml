@@ -83,7 +83,7 @@ command = "brettinternet.pane-collapse.toggle"
 description = "toggle focused pane collapse"
 
 [[keys.command]]
-key = "prefix+plus"
+key = "prefix+="
 type = "plugin_action"
 command = "brettinternet.pane-equalize.equalize"
 description = "equalize panes in focused tab"
