@@ -69,6 +69,6 @@
     "model": "anthropic/claude-haiku-4-5:low",
     "maxInputChars": 12000,
     "maxTokens": 180,
-    "timeoutMs": 15000
+    "timeoutMs": 60000
   }
 }

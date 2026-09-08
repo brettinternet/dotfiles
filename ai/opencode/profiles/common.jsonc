@@ -176,7 +176,7 @@
             "output": 128000
           }
         },
-        "deepseek/deepseek-v4-flash": {
+        "google/gemini-2.5-flash-lite": {
           "limit": {
             "context": 256000,
             "input": 128000,
