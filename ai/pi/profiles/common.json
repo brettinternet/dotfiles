@@ -1,7 +1,7 @@
 {
   "quietStartup": true,
   "hideThinkingBlock": true,
-  "theme": "dark",
+  "theme": "terminal",
   "outputPad": 0,
   "editorPaddingX": 0,
   "collapseChangelog": true,
