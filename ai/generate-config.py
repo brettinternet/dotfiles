@@ -17,6 +17,22 @@ sys.path.insert(0, str(ROOT / "dotbot/lib/pyyaml/lib"))
 import yaml  # type: ignore[import-untyped]  # noqa: E402
 
 EFFORTS = {"off", "minimal", "low", "medium", "high", "xhigh", "max"}
+
+
+class ManifestLoader(yaml.SafeLoader):
+    """Load YAML 1.2 booleans without treating `off` as false."""
+
+
+ManifestLoader.yaml_implicit_resolvers = {
+    key: [resolver for resolver in resolvers if resolver[0] != "tag:yaml.org,2002:bool"]
+    for key, resolvers in yaml.SafeLoader.yaml_implicit_resolvers.items()
+}
+ManifestLoader.add_implicit_resolver(
+    "tag:yaml.org,2002:bool",
+    re.compile(r"^(?:true|True|TRUE|false|False|FALSE)$"),
+    list("tTfF"),
+)
+
 ROLE_ORDER = (
     "reviewer",
     "executor",
@@ -48,7 +64,7 @@ def load_jsonc(path: Path) -> dict[str, Any]:
 
 class Manifest:
     def __init__(self, path: Path) -> None:
-        data = yaml.safe_load(path.read_text())
+        data = yaml.load(path.read_text(), Loader=ManifestLoader)
         if not isinstance(data, dict) or data.get("version") != 1:
             raise SystemExit(f"{path}: expected manifest version 1")
         self.path = path

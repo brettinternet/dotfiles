@@ -63,12 +63,12 @@
   },
   "titleConfig": {
     "enabled": true,
-    "model": "openrouter/deepseek/deepseek-v4-flash-latest:low",
+    "model": "openrouter/deepseek/deepseek-v4-flash-latest:high",
     "maxTokens": 30,
     "maxLength": 60
   },
   "progressConfig": {
-    "model": "openrouter/nvidia/nemotron-3.5-lightning:low",
+    "model": "openrouter/deepseek/deepseek-v4-flash-latest:low",
     "maxInputChars": 12000,
     "maxTokens": 180,
     "timeoutMs": 15000

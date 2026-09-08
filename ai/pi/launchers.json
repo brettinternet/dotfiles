@@ -1,6 +1,6 @@
 {
   "fast": {
-    "model": "openrouter/nvidia/nemotron-3.5-lightning",
+    "model": "openrouter/deepseek/deepseek-v4-flash-latest",
     "thinking": "low"
   },
   "oracle": {
