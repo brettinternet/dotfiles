@@ -176,7 +176,7 @@
             "output": 128000
           }
         },
-        "deepseek/deepseek-v4-flash-latest": {
+        "deepseek/deepseek-v4-flash": {
           "limit": {
             "context": 256000,
             "input": 128000,

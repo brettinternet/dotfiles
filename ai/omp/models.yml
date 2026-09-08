@@ -45,7 +45,7 @@ providers:
         contextWindow: 256000
       moonshotai/kimi-k3:
         contextWindow: 256000
-      deepseek/deepseek-v4-flash-latest:
+      deepseek/deepseek-v4-flash:
         contextWindow: 256000
       ~deepseek/deepseek-v4-flash-latest:
         contextWindow: 256000
