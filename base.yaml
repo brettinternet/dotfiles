@@ -153,6 +153,10 @@
           env -u HERDR_SOCKET_PATH herdr plugin install "AVGVSTVS96/herdr-drovr" --yes
           echo 'herdr plugin: drovr'
         fi
+        if [ ! -d "$HOME/.config/herdr/plugins/config/heeler" ]; then
+          env -u HERDR_SOCKET_PATH herdr plugin install "ZingerLittleBee/Heeler/plugin" --ref main --yes
+          echo 'herdr plugin: heeler'
+        fi
         if command -v hwt >/dev/null 2>&1; then
           if [ ! -d "$HOME/.config/herdr/plugins/config/hwt.worktrees" ]; then
             env -u HERDR_SOCKET_PATH hwt plugin install
