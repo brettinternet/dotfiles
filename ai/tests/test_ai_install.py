@@ -271,7 +271,7 @@ path.write_text("// generated guard for test\\n")
 
         listed = self.run_command("ai/.bin/p", "list")
         self.assertIn(
-            "fast\topenrouter/nvidia/nemotron-3.5-lightning:low\n",
+            "fast\topenrouter/deepseek/deepseek-v4-flash-latest:low\n",
             listed.stdout,
         )
 
@@ -279,7 +279,7 @@ path.write_text("// generated guard for test\\n")
         self.assertEqual(
             [
                 "--model",
-                "openrouter/nvidia/nemotron-3.5-lightning",
+                "openrouter/deepseek/deepseek-v4-flash-latest",
                 "--thinking",
                 "low",
                 "--no-session",

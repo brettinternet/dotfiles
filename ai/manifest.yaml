@@ -110,7 +110,7 @@ models:
         opencode: openrouter/deepseek/deepseek-v4-flash-latest,
       }
     context: conservative
-  or-deepseek-flash-auto:
+  or-flash-auto:
     ids: { omp: openrouter/~deepseek/deepseek-v4-flash-latest, opencode: openrouter/~deepseek/deepseek-v4-flash-latest }
     context: conservative
   or-deepseek-pro:
@@ -333,15 +333,15 @@ profiles:
     outputs: { omp: or-cheap, opencode: or-cheap }
     ompRoles:
       default: [or-deepseek-pro, high]
-      smol: [or-deepseek-flash-auto, high]
+      smol: [or-flash-auto, high]
       slow: [or-glm, max]
       designer: [or-glm, high]
       vision: [or-deepseek-vision, high]
       task: [or-deepseek-pro, high]
-      commit: [or-deepseek-flash-auto, off]
+      commit: [or-flash-auto, off]
       plan: [or-glm, high]
       advisor: [or-glm, max]
-      title: [or-deepseek-flash-auto, high]
+      title: [or-flash-auto, high]
       reviewer: [or-glm, max]
       writer: [or-deepseek-pro, low]
     opencode:
