@@ -271,7 +271,6 @@ rows = [
   [
     "branch",
     "git_status",
-    "state_text",
   ],
 ]
 
@@ -279,6 +278,7 @@ rows = [
 rows = [
   [
     "state_icon",
+    "machine",
     { token = "workspace", bold = true },
     "tab",
   ],
