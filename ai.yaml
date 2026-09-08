@@ -17,12 +17,17 @@
     - ~/.dsh/AGENTS.md
     - ~/.dsh/cordis.patch.yml
 - shell:
+    - command: ai/.bin/configure-ai-tools
+      description: Install the selected AI tools and remove deselected managed tools
+      stdout: true
+      stderr: true
     - command: python3 ai/generate-config.py
       description: Generate harness model catalogs and profiles from the central manifest
       stdout: true
       stderr: true
     - command: |
         set -eu
+        ai/.bin/ai-tool-enabled omp || exit 0
         profile="$(ai/.bin/omp-profile show | cut -f1)"
         ai/.bin/omp-profile use "$profile"
       description: Regenerate active OMP profile config from common + overlay
@@ -30,6 +35,7 @@
       stderr: true
     - command: |
         set -eu
+        ai/.bin/ai-tool-enabled pi || exit 0
         profile="$(ai/.bin/pi-profile show | cut -f1)"
         ai/.bin/pi-profile use "$profile"
       description: Regenerate active Pi profile settings from common + overlay
@@ -37,6 +43,7 @@
       stderr: true
     - command: |
         set -eu
+        ai/.bin/ai-tool-enabled opencode || exit 0
         profile="$(ai/.bin/opencode-profile show | cut -f1)"
         ai/.bin/opencode-profile use "$profile"
       description: Generate the active OpenCode config from its selected profile
@@ -44,6 +51,7 @@
       stderr: true
     - command: |
         set -eu
+        ai/.bin/ai-tool-enabled opencode || exit 0
         for name in ocx.jsonc oh-my-openagent.jsonc; do
           target="$HOME/.config/opencode/$name"
           if [ -e "$target" ] || [ -L "$target" ]; then
@@ -55,7 +63,7 @@
       stderr: true
 
     - command: |
-        if command -v claude >/dev/null 2>&1; then
+        if ai/.bin/ai-tool-enabled claude && command -v claude >/dev/null 2>&1; then
           for name in time chrome-devtools git; do
             claude mcp remove "$name" --scope user >/dev/null 2>&1 || true
           done
@@ -66,6 +74,7 @@
 
     - command: |
         set -eu
+        ai/.bin/ai-tool-enabled omp || exit 0
         DOTFILES="$(pwd -P)"
         common="$DOTFILES/ai/omp/profiles/common.yml"
         link_shared() {
@@ -143,6 +152,7 @@
 
     - command: |
         set -eu
+        ai/.bin/ai-tool-enabled claude || exit 0
         mkdir -p "$HOME/.claude"
         target="$HOME/.claude/settings.json"
         if [ -L "$target" ]; then
@@ -160,6 +170,7 @@
       stderr: true
     - command: |
         set -eu
+        ai/.bin/ai-tool-enabled dsh || exit 0
         mkdir -p "$HOME/.dsh"
         target="$HOME/.dsh/settings.yaml"
         if [ -L "$target" ]; then
@@ -185,6 +196,7 @@
         # directory is absent, so skip those instead of failing the whole run.
         # Reinstalling is byte-idempotent: hook entries are replaced, not appended.
         for name in pi omp opencode claude codex; do
+          ai/.bin/ai-tool-enabled "$name" || continue
           if [ "$name" = opencode ] && [ ! -L "$HOME/.config/opencode/tui.jsonc" ]; then
             echo "herdr integration: opencode deferred until managed links exist"
             continue
@@ -218,57 +230,102 @@
     # Claude
     ~/.claude/CLAUDE.md:
       path: ai/AGENTS.md
+      if: ai/.bin/ai-tool-enabled claude
     ~/.claude/statusline-command.sh:
       path: ai/claude/statusline-command.sh
+      if: ai/.bin/ai-tool-enabled claude
     ~/.claude/keybindings.json:
       path: ai/claude/keybindings.json
+      if: ai/.bin/ai-tool-enabled claude
     ~/.claude/skills/:
       glob: true
       relink: false
       path: ai/.agents/skills/*
+      if: ai/.bin/ai-tool-enabled claude
     # Pi
     ~/.pi/agent/AGENTS.md:
       path: ai/AGENTS.md
+      if: ai/.bin/ai-tool-enabled pi
     ~/.pi/agent/models.json:
       path: ai/pi/models.json
+      if: ai/.bin/ai-tool-enabled pi
     ~/.pi/agent/keybindings.json:
       path: ai/pi/keybindings.json
+      if: ai/.bin/ai-tool-enabled pi
     ~/.pi/agent/lsp.json:
       path: ai/pi/lsp.json
+      if: ai/.bin/ai-tool-enabled pi
     ~/.pi/agent/extensions/subagent/config.json:
       path: ai/pi/subagent-config.json
+      if: ai/.bin/ai-tool-enabled pi
     # Oh My Pi
     ~/.omp/agent/AGENTS.md:
       path: ai/AGENTS.md
+      if: ai/.bin/ai-tool-enabled omp
     ~/.omp/agent/models.yml:
       path: ai/omp/models.yml
+      if: ai/.bin/ai-tool-enabled omp
     ~/.omp/agent/keybindings.yml:
       path: ai/omp/keybindings.yml
+      if: ai/.bin/ai-tool-enabled omp
     ~/.omp/agent/mcp.json:
       path: ai/omp/mcp.json
+      if: ai/.bin/ai-tool-enabled omp
     ~/.omp/agent/WATCHDOG.md:
       path: ai/WATCHDOG.md
+      if: ai/.bin/ai-tool-enabled omp
     # Codex
     ~/.codex/AGENTS.md:
       path: ai/AGENTS.md
+      if: ai/.bin/ai-tool-enabled codex
     ~/.agents/skills/:
       glob: true
       relink: false
       path: ai/.agents/skills/*
+      if: ai/.bin/ai-tool-enabled pi || ai/.bin/ai-tool-enabled omp || ai/.bin/ai-tool-enabled codex
     # DeepSeek Harness
     ~/.dsh/AGENTS.md:
       path: ai/AGENTS.md
+      if: ai/.bin/ai-tool-enabled dsh
     ~/.dsh/cordis.patch.yml:
       path: ai/dsh/cordis.patch.yml
+      if: ai/.bin/ai-tool-enabled dsh
     ~/.dsh/.agent-presets:
       path: ai/dsh/presets
+      if: ai/.bin/ai-tool-enabled dsh
+    ~/.dsh/profiles/dsh-tui/package.json:
+      path: darwin/.dsh/profiles/dsh-tui/package.json
+      force: true
+      if: '[ "$(uname)" = Darwin ] && ai/.bin/ai-tool-enabled dsh'
+    ~/.dsh/profiles/dsh-tui/cordis.patch.yml:
+      path: darwin/.dsh/profiles/dsh-tui/cordis.patch.yml
+      force: true
+      if: '[ "$(uname)" = Darwin ] && ai/.bin/ai-tool-enabled dsh'
     # Amp CLI
     ~/.config/amp/settings.json:
       path: ai/amp/settings.json
+      if: ai/.bin/ai-tool-enabled amp
     ~/.config/amp/AGENTS.md:
       path: ai/AGENTS.md
+      if: ai/.bin/ai-tool-enabled amp
     # OpenCode
     ~/.config/opencode/AGENTS.md:
       path: ai/AGENTS.md
+      if: ai/.bin/ai-tool-enabled opencode
     ~/.config/opencode/tui.jsonc:
       path: ai/opencode/tui.jsonc
+      if: ai/.bin/ai-tool-enabled opencode
+
+- shell:
+    - command: |
+        set -eu
+        ai/.bin/ai-tool-enabled dsh || exit 0
+        [ "$(uname)" = Darwin ] || exit 0
+        mise_bin=${MISE_BIN:-}
+        if [ -z "$mise_bin" ]; then
+          mise_bin=$(command -v mise) || exit 0
+        fi
+        "$mise_bin" exec -- bun install --omit peer --cwd "$HOME/.dsh/profiles/dsh-tui"
+      description: Install the dsh-tui profile with Bun
+      stdout: true
+      stderr: true

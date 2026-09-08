@@ -1,0 +1,70 @@
+#!/bin/sh
+
+set -eu
+
+known='pi omp opencode claude codex amp dsh'
+selection=${DOTFILES_AI_TOOLS:-none}
+
+normalize() {
+  printf '%s\n' "$selection" | tr ',' '\n' | while IFS= read -r item; do
+    item=$(printf '%s' "$item" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+    [ -n "$item" ] && printf '%s\n' "$item"
+  done
+}
+
+validate() {
+  values=$(normalize)
+  [ -n "$values" ] || values=none
+  case " $values " in
+    *' all '* )
+      [ "$values" = all ] || {
+        printf 'DOTFILES_AI_TOOLS: all cannot be combined with other values\n' >&2
+        return 2
+      }
+      ;;
+    *' none '* )
+      [ "$values" = none ] || {
+        printf 'DOTFILES_AI_TOOLS: none cannot be combined with other values\n' >&2
+        return 2
+      }
+      ;;
+  esac
+  for value in $values; do
+    case " $known all none " in
+      *" $value "*) ;;
+      *)
+        printf 'DOTFILES_AI_TOOLS: unknown tool: %s\n' "$value" >&2
+        return 2
+        ;;
+    esac
+  done
+}
+
+validate
+values=$(normalize)
+[ -n "$values" ] || values=none
+
+case ${1:-} in
+  --validate) exit 0 ;;
+  --list)
+    if [ "$values" = all ]; then
+      for value in $known; do
+        printf '%s\n' "$value"
+      done
+    elif [ "$values" != none ]; then
+      printf '%s\n' "$values" | awk '!seen[$0]++'
+    fi
+    ;;
+  '')
+    printf 'usage: ai-tool-enabled TOOL | --list | --validate\n' >&2
+    exit 2
+    ;;
+  *)
+    case " $known " in
+      *" $1 "*) ;;
+      *) printf 'unknown AI tool: %s\n' "$1" >&2; exit 2 ;;
+    esac
+    [ "$values" = all ] && exit 0
+    printf '%s\n' "$values" | grep -Fqx "$1"
+    ;;
+esac

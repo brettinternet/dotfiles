@@ -18,15 +18,6 @@ biome = "latest"
 "vfox:jdx/vfox-eza" = "latest"
 "gem:vimgolf" = { version = "latest", depends = ["ruby"] }
 
-# ai
-"npm:@anthropic-ai/claude-code" = { version = "latest", minimum_release_age = "0" }
-opencode = "latest"
-codex = "latest"
-"npm:@earendil-works/pi-coding-agent" = { version = "latest", minimum_release_age = "0" }
-"github:can1357/oh-my-pi" = "latest"
-# dsh is prerelease-only, so mise cannot resolve its `latest` selector yet.
-"npm:@deepseek-ai/dsh" = "0.1.1-rc.2"
-amp = { version = "latest", depends = ["bun"], minimum_release_age = "0", postinstall = 'cd "$MISE_TOOL_INSTALL_PATH" && "${MISE_DATA_DIR:-$HOME/.local/share/mise}/installs/bun/latest/bin/bun" pm trust @ampcode/cli' }
 ast-grep = "latest"
 
 # lsp
@@ -49,11 +40,6 @@ elixir = "latest"
 lima = "latest"
 colima = "latest"
 docker-cli = "latest"
-[tools."npm:@deepseek-harness-tui/dsh-tui"]
-# 0.10.0-beta.5 was published with unresolved workspace: and link: dependencies.
-version = "0.9.3"
-depends = ["bun", "npm:@deepseek-ai/dsh"]
-
 [tools.docker-compose]
 version = "latest"
 postinstall = '''

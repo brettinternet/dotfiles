@@ -1,12 +1,18 @@
 # AI agent setup
 
-Shared configuration for Claude Code, Pi, Oh My Pi (OMP), Codex, Amp, OpenCode, and the DeepSeek Harness (dsh). Install or refresh it with:
+Shared configuration for Claude Code, Pi, Oh My Pi (OMP), Codex, Amp, OpenCode, and the DeepSeek Harness (dsh).
+
+AI tools are disabled by default. Select them per machine in `~/.envrc`, then install or refresh them:
 
 ```sh
+export DOTFILES_AI_TOOLS=all
+# Or select a subset: pi,omp,opencode,claude,codex,amp,dsh
 make ai
 ```
 
-[`ai.yaml`](../ai.yaml) links configuration into each tool's home directory. [`AGENTS.md`](AGENTS.md) provides shared instructions.
+The comma-separated selector also accepts `none`. Removing a tool from the selector removes managed links and generated agent definitions, then uninstalls its Mise package; mutable local settings are preserved.
+
+[`ai.yaml`](../ai.yaml) links configuration into each selected tool's home directory. [`AGENTS.md`](AGENTS.md) provides shared instructions.
 
 ## Sources
 
