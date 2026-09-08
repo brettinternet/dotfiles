@@ -417,9 +417,13 @@ path.write_text("// generated guard for test\\n")
         config = self.home / ".config/mise/conf.d/40-ai.toml"
         text = config.read_text()
         self.assertIn("npm:@earendil-works/pi-coding-agent", text)
+        self.assertIn("github:Dicklesworthstone/destructive_command_guard", text)
         self.assertNotIn("@anthropic-ai/claude-code", text)
         commands = log.read_text().splitlines()
-        self.assertIn("install --yes npm:@earendil-works/pi-coding-agent", commands)
+        self.assertIn(
+            "install --yes github:Dicklesworthstone/destructive_command_guard npm:@earendil-works/pi-coding-agent",
+            commands,
+        )
         self.assertTrue(
             any(line.startswith("uninstall --all --yes ") for line in commands)
         )
