@@ -99,6 +99,13 @@ function splitShellSequence(command: string, allowPipes = false): string[] | und
   return clauses.filter(Boolean);
 }
 
+function isLiteralRestore(arguments_: string): boolean {
+  const trimmed = arguments_.trim();
+  if (!trimmed || VARIABLE_REFERENCE.test(trimmed)) return false;
+  if (trimmed.startsWith("--")) return /^--\s+\S/.test(trimmed);
+  return !trimmed.startsWith("-");
+}
+
 function isExemptedGitClause(ruleId: string, command: string): boolean {
   const match = command.match(GIT_COMMAND);
   if (!match) return false;
@@ -108,7 +115,7 @@ function isExemptedGitClause(ruleId: string, command: string): boolean {
     return subcommand === "branch" && DELETE_OPTION.test(arguments_);
   }
   if (ruleId === "core.git:restore-worktree") {
-    return subcommand === "restore" && /^--\s+\S/.test(arguments_) && !VARIABLE_REFERENCE.test(arguments_);
+    return subcommand === "restore" && isLiteralRestore(arguments_);
   }
   return false;
 }
