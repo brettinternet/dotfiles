@@ -1,7 +1,7 @@
 version: 1
 
 piLaunchers:
-  fast: { model: or-nemotron-lightning, thinking: low }
+  fast: { model: or-flash, thinking: low }
   oracle: { model: claude-fable, thinking: high }
   solo: { args: [--exclude-tools, "subagent,subagent_wait,subagent_supervisor"] }
 
@@ -51,8 +51,6 @@ models:
     ids: { omp: anthropic/claude-opus-4.6, pi: anthropic/claude-opus-4.6, opencode: anthropic/claude-opus-4.6 }
     context: conservative
 
-  or-nemotron-lightning:
-    ids: { pi: openrouter/nvidia/nemotron-3.5-lightning }
   or-sol:
     ids: { omp: openrouter/openai/gpt-5.6-sol, pi: openrouter/openai/gpt-5.6-sol, opencode: openrouter/openai/gpt-5.6-sol }
     context: codex
@@ -104,7 +102,7 @@ models:
   or-kimi:
     ids: { omp: openrouter/moonshotai/kimi-k3, opencode: openrouter/moonshotai/kimi-k3 }
     context: conservative
-  or-deepseek-flash:
+  or-flash:
     ids:
       {
         omp: openrouter/deepseek/deepseek-v4-flash-latest,
@@ -290,10 +288,10 @@ profiles:
       designer: [or-sol-pro, high]
       vision: [or-gpt-latest, high]
       task: [or-luna, high]
-      commit: [or-deepseek-flash, off]
+      commit: [or-flash, off]
       plan: [or-fable, high]
       advisor: [or-glm, max]
-      title: [or-deepseek-flash, high]
+      title: [or-flash, high]
       reviewer: [or-reviewer, xhigh]
       writer: [or-writer, medium]
     ompSettings: { providers: { webSearchOrder: [perplexity] } }
@@ -302,7 +300,7 @@ profiles:
       enabled: [or-sol, or-luna, or-sol-pro, or-fable-auto, or-glm, or-reviewer, or-writer]
       defaultAgent: [or-luna, high]
       researcher: [or-luna, medium]
-      progress: [or-nemotron-lightning, low]
+      progress: [or-flash, low]
       efforts:
         {
           reviewer: xhigh,
