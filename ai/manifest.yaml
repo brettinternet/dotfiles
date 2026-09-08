@@ -290,10 +290,10 @@ profiles:
       designer: [or-sol-pro, high]
       vision: [or-gpt-latest, high]
       task: [or-luna, high]
-      commit: [or-deepseek-flash, low]
+      commit: [or-deepseek-flash, off]
       plan: [or-fable, high]
       advisor: [or-glm, max]
-      title: [or-deepseek-flash, low]
+      title: [or-deepseek-flash, high]
       reviewer: [or-reviewer, xhigh]
       writer: [or-writer, medium]
     ompSettings: { providers: { webSearchOrder: [perplexity] } }
@@ -335,15 +335,15 @@ profiles:
     outputs: { omp: or-cheap, opencode: or-cheap }
     ompRoles:
       default: [or-deepseek-pro, high]
-      smol: [or-deepseek-flash-auto, low]
+      smol: [or-deepseek-flash-auto, high]
       slow: [or-glm, max]
       designer: [or-glm, high]
       vision: [or-deepseek-vision, high]
       task: [or-deepseek-pro, high]
-      commit: [or-deepseek-flash-auto, low]
+      commit: [or-deepseek-flash-auto, off]
       plan: [or-glm, high]
       advisor: [or-glm, max]
-      title: [or-deepseek-flash-auto, low]
+      title: [or-deepseek-flash-auto, high]
       reviewer: [or-glm, max]
       writer: [or-deepseek-pro, low]
     opencode:
