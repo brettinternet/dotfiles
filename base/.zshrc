@@ -148,6 +148,20 @@ for DOTFILES_ZSH_FUNCTION_FILE in "$HOME/.functions/"*.(sh|zsh)(N); do
 done
 unset DOTFILES_ZSH_FUNCTION_FILE
 
+function clear {
+  command clear "$@"
+  local exit_status=$?
+  title
+  return "$exit_status"
+}
+
+function clear-screen-and-title {
+  zle clear-screen
+  title
+}
+zle -N clear-screen-and-title
+bindkey '^L' clear-screen-and-title
+
 # -- Plugins via zinit ----------------------------------------
 # Helpful plugin list: https://github.com/zdharma/Zsh-100-Commits-Club
 
