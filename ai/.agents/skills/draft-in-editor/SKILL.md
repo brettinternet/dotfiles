@@ -9,7 +9,7 @@ Use this only for a non-empty draft the user is expected to review. It does not 
 
 Put the draft under `$(git rev-parse --git-dir)/drafts/<slug>.md`, or a temporary directory outside a repository. Reuse the same path for the same artifact. Apply `user-voice` before writing externally directed text, print the draft in chat, and open it without waiting.
 
-Prefer `$HOME/.bin/context-editor --no-terminal <path>`. If unavailable, use a non-blocking graphical `$VISUAL` or `$EDITOR`. Never launch a terminal editor or wait inside a tool call. If no safe editor is available, print the path.
+Always open the draft directly with `$HOME/.bin/context-editor --no-terminal <path>`. Run the CLI without waiting; do not use the workbench skill or tool. If `context-editor` fails, print the path and report the failure rather than falling back to another editor.
 
 Stop after handoff. When the user later authorizes the external action, reread the file immediately beforehand and use its contents exactly. Do not reconcile it with the original draft or apply another writing pass. An empty file cancels the action; a missing file means it was discarded.
 
