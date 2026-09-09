@@ -29,6 +29,13 @@ return {
   },
 
   {
+    "kylechui/nvim-surround",
+    version = "*",
+    event = "VeryLazy",
+    opts = {},
+  },
+
+  {
     "AstroNvim/astrocore",
     opts = function(_, opts)
       opts.mappings.n["<Leader>tu"] = vim.fn.executable "mise" == 1
