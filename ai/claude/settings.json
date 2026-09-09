@@ -14,5 +14,6 @@
   "effortLevel": "high",
   "skipDangerousModePermissionPrompt": true,
   "theme": "dark-ansi",
-  "skipAutoPermissionPrompt": true
+  "skipAutoPermissionPrompt": true,
+  "includeCoAuthoredBy": false
 }
