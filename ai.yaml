@@ -172,10 +172,16 @@
           echo 'herdr not on PATH; skipping integrations (mise install herdr)'
           exit 0
         fi
+        # Pi lifecycle state is owned by the pi-extensions Herdr bridge so async
+        # subagents remain working after the parent turn settles.
+        if ai/.bin/ai-tool-enabled pi; then
+          herdr integration uninstall pi >/dev/null 2>&1 || true
+          echo "herdr integration: pi lifecycle provided by pi-extensions"
+        fi
         # Each integration refuses with a nonzero status when its agent's config
         # directory is absent, so skip those instead of failing the whole run.
         # Reinstalling is byte-idempotent: hook entries are replaced, not appended.
-        for name in pi omp opencode claude codex; do
+        for name in omp opencode claude codex; do
           ai/.bin/ai-tool-enabled "$name" || continue
           if [ "$name" = opencode ] && [ ! -L "$HOME/.config/opencode/tui.jsonc" ]; then
             echo "herdr integration: opencode deferred until managed links exist"
@@ -187,7 +193,7 @@
             echo "herdr integration: $name skipped (agent not installed)"
           fi
         done
-      description: Install herdr agent integrations for locally installed agents
+      description: Install Herdr agent integrations and select the Pi lifecycle provider
       stdout: true
       stderr: true
     - command: ai/.bin/install-dcg-guards
