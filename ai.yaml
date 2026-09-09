@@ -19,6 +19,41 @@
       description: Install the selected AI tools and remove deselected managed tools
       stdout: true
       stderr: true
+    - command: |
+        set -eu
+        shim_dir="$HOME/.local/share/mise/shims"
+        bin_dir="$HOME/.local/bin"
+        link_shim() {
+          name=$1
+          source="$shim_dir/$name"
+          destination="$bin_dir/$name"
+          if ai/.bin/ai-tool-enabled "$name"; then
+            if [ ! -x "$source" ]; then
+              if [ -L "$destination" ] && [ "$(readlink "$destination")" = "$source" ]; then
+                trash "$destination"
+              fi
+              return 0
+            fi
+            if [ -L "$destination" ]; then
+              [ "$(readlink "$destination")" = "$source" ] && return 0
+              printf 'Refusing to replace unmanaged AI tool link: %s\n' "$destination" >&2
+              exit 1
+            elif [ -e "$destination" ]; then
+              printf 'Refusing to overwrite unmanaged AI tool path: %s\n' "$destination" >&2
+              exit 1
+            fi
+            mkdir -p "$bin_dir"
+            ln -s "$source" "$destination"
+          elif [ -L "$destination" ] && [ "$(readlink "$destination")" = "$source" ]; then
+            trash "$destination"
+          fi
+        }
+        for name in pi omp codex; do
+          link_shim "$name"
+        done
+      description: Link enabled AI tools to stable Mise shims
+      stdout: true
+      stderr: true
     - command: python3 ai/generate-config.py
       description: Generate harness model catalogs and profiles from the central manifest
       stdout: true
