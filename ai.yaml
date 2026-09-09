@@ -12,6 +12,7 @@
     - ~/.claude/agents
     - ~/.omp/agent/agents
     - ~/.pi/agent/agents
+    - ~/.pi/agent/themes
     - ~/.config/opencode/agents
     - ~/.config/opencode/commands
 - shell:
@@ -275,9 +276,6 @@
       if: ai/.bin/ai-tool-enabled pi
     ~/.pi/agent/lsp.json:
       path: ai/pi/lsp.json
-      if: ai/.bin/ai-tool-enabled pi
-    ~/.pi/agent/themes/terminal.json:
-      path: ai/pi/themes/terminal.json
       if: ai/.bin/ai-tool-enabled pi
     ~/.pi/agent/extensions/subagent/config.json:
       path: ai/pi/subagent-config.json
