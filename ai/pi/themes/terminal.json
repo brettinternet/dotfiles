@@ -61,7 +61,7 @@
 
     "toolDiffAdded": "green",
     "toolDiffRemoved": "red",
-    "toolDiffContext": "brightBlack",
+    "toolDiffContext": 245,
 
     "syntaxComment": "brightBlack",
     "syntaxKeyword": "magenta",
