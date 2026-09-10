@@ -63,12 +63,12 @@
   },
   "titleConfig": {
     "enabled": true,
-    "model": "openrouter/google/gemini-2.5-flash-lite:off",
+    "model": "openrouter/deepseek/deepseek-v4.1-flash:off",
     "maxTokens": 30,
     "maxLength": 60
   },
   "progressConfig": {
-    "model": "openrouter/google/gemini-2.5-flash-lite:off",
+    "model": "openrouter/deepseek/deepseek-v4.1-flash:off",
     "maxInputChars": 12000,
     "maxTokens": 180,
     "timeoutMs": 60000

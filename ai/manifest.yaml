@@ -105,9 +105,9 @@ models:
   or-flash:
     ids:
       {
-        omp: openrouter/google/gemini-2.5-flash-lite,
-        pi: openrouter/google/gemini-2.5-flash-lite,
-        opencode: openrouter/google/gemini-2.5-flash-lite,
+        omp: openrouter/deepseek/deepseek-v4.1-flash,
+        pi: openrouter/deepseek/deepseek-v4.1-flash,
+        opencode: openrouter/deepseek/deepseek-v4.1-flash,
       }
     context: conservative
   or-flash-auto:
