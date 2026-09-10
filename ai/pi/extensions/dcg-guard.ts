@@ -32,7 +32,8 @@ const ALLOW = { deny: false, reason: "" };
 
 type Decision = { deny: boolean; reason: string; ruleId?: string };
 
-const GIT_COMMAND = /^\s*(?:rtk\s+)?git(?:\s+-C\s+(?:"[^"]*"|'[^']*'|\S+))*\s+([a-z-]+)(?:\s+([^;&|\n]*))?\s*$/;
+const GIT_COMMAND =
+  /^\s*(?:(?:then|do|else)\s+)?(?:rtk\s+)?git(?:\s+-C\s+(?:"[^"]*"|'[^']*'|\S+))*\s+([a-z-]+)(?:\s+([^;&|\n]*))?\s*$/;
 const DELETE_OPTION = /(?:^|\s)(?:-d|-D|--delete)(?:\s|$)/;
 
 type CommandSequence = { exempted: boolean; remainder: string[] };
