@@ -63,12 +63,12 @@
   },
   "titleConfig": {
     "enabled": true,
-    "model": "openrouter/deepseek/deepseek-v4.1-flash:off",
+    "model": "openrouter/deepseek/deepseek-v4-flash-0731:off",
     "maxTokens": 30,
     "maxLength": 60
   },
   "progressConfig": {
-    "model": "openrouter/deepseek/deepseek-v4.1-flash:off",
+    "model": "openrouter/deepseek/deepseek-v4-flash-0731:off",
     "maxInputChars": 12000,
     "maxTokens": 180,
     "timeoutMs": 60000
