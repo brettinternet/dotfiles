@@ -117,6 +117,9 @@ function isExemptedGitClause(ruleId: string, command: string): boolean {
   if (ruleId === "core.git:restore-worktree") {
     return subcommand === "restore" && isLiteralRestore(arguments_);
   }
+  if (ruleId === "core.git:checkout-discard") {
+    return subcommand === "checkout" && /^--\s+\S/.test(arguments_) && !VARIABLE_REFERENCE.test(arguments_);
+  }
   return false;
 }
 
@@ -487,7 +490,8 @@ export async function applyUserApproval(
 ): Promise<Decision> {
   if (!decision.deny || !decision.ruleId) return decision;
 
-  if (["core.git:branch-force-delete", "core.git:restore-worktree"].includes(decision.ruleId)) {
+  const exemptedRules = ["core.git:branch-force-delete", "core.git:restore-worktree", "core.git:checkout-discard"];
+  if (exemptedRules.includes(decision.ruleId)) {
     const sequence = parseCommandSequence(command, decision.ruleId);
     if (sequence.exempted) {
       const remainderDecisions = await Promise.all(sequence.remainder.map(recheck));
