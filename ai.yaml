@@ -196,10 +196,8 @@
           printf 'Claude settings target exists but is not a regular file: %s\n' "$target" >&2
           exit 1
         fi
-        if [ ! -e "$target" ]; then
-          cp ai/claude/settings.json "$target"
-        fi
-      description: Seed Claude Code settings as a local copy
+        python3 ai/claude/merge-settings.py ai/claude/settings.json "$target"
+      description: Merge managed preferences into Claude Code settings
       stdout: true
       stderr: true
     - command: |

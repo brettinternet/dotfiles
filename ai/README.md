@@ -23,7 +23,7 @@ The comma-separated selector also accepts `none`. Any non-empty selection instal
 - `pi/`, `omp/`, `opencode/`, `claude/`, and `amp/` — harness-specific configuration
 - `project/` — project-level defaults
 
-Generated files under `$HOME` should not be edited directly. Change their source here and rerun `make ai`.
+Generated files under `$HOME` should not be edited directly. Change their source here and rerun `make ai`. Claude preferences from `claude/settings.json` are merged into the mutable user settings on each run, preserving local-only keys such as integration hooks.
 
 ## Profiles
 

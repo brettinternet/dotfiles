@@ -226,6 +226,38 @@ path.write_text("// generated guard for test\\n")
             self.assertFalse(retired.exists())
         self.assertEqual("Handwritten\n", unmanaged.read_text())
 
+    def test_claude_preferences_merge_into_mutable_user_settings(self) -> None:
+        settings = self.home / ".claude/settings.json"
+        settings.parent.mkdir(parents=True)
+        settings.write_text(
+            json.dumps(
+                {
+                    "permissions": {"defaultMode": "plan", "allow": ["Read"]},
+                    "effortLevel": "low",
+                    "hooks": {"PreToolUse": [{"matcher": "preserve"}]},
+                }
+            )
+        )
+        arguments = (
+            "python3",
+            "ai/claude/merge-settings.py",
+            "ai/claude/settings.json",
+            str(settings),
+        )
+
+        self.run_command(*arguments)
+        self.run_command(*arguments)
+
+        merged = json.loads(settings.read_text())
+        preferred = json.loads((ROOT / "ai/claude/settings.json").read_text())
+        self.assertEqual("auto", merged["permissions"]["defaultMode"])
+        self.assertEqual(preferred["permissions"]["deny"], merged["permissions"]["deny"])
+        self.assertEqual(["Read"], merged["permissions"]["allow"])
+        self.assertEqual("high", merged["effortLevel"])
+        self.assertEqual(
+            {"PreToolUse": [{"matcher": "preserve"}]}, merged["hooks"]
+        )
+
     def test_destructive_command_guards_are_installed_idempotently(self) -> None:
         dcg = self.install_fake_dcg()
         settings = self.home / ".claude/settings.json"
