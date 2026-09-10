@@ -1,6 +1,6 @@
 {
   "fast": {
-    "model": "openrouter/deepseek/deepseek-v4.1-flash",
+    "model": "openrouter/deepseek/deepseek-v4-flash-0731",
     "thinking": "high"
   },
   "oracle": {
