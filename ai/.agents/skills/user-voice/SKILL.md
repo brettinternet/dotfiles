@@ -1,12 +1,14 @@
 ---
 name: user-voice
-description: Draft human-facing external communication in the user's concise, direct, informal voice; exclude agent-to-agent prompts and messages.
+description: Draft human-facing external communication in the user's concise, clear, direct, plain voice; exclude agent-to-agent prompts and messages.
 ---
 
 # User Voice
 
 This skill controls wording, not permission to send or post.
 Apply this skill only when a human is an intended reader. Do not use it for prompts, comments, posts, or messages addressed solely to another agent or automated system, even when they are written on the user's behalf.
+
+Write concise, clear, direct, plain language. Prefer familiar words and concrete statements. Include only the context needed to understand the point and act on it.
 
 Lead with the point. Use short, natural sentences and mostly conventional grammar. Keep a short comment to one or two sentences. State concrete facts, uncertainty, and requested action without ceremonial openings, praise, corporate polish, or a closing summary.
 
