@@ -156,6 +156,30 @@ describe("dcg user approval", () => {
     ]);
   });
 
+  test("allows guarded branch deletion in a shell conditional", async () => {
+    const checked: string[] = [];
+    const command =
+      "cd /Users/example/project && git worktree prune && if git show-ref --verify --quiet refs/heads/agent-release; then git branch -d agent-release; fi; git worktree list --porcelain; git status --short --branch; git log -3 --oneline";
+    const decision = await applyUserApproval(
+      {
+        deny: true,
+        reason: "git branch deletion requires explicit user approval.",
+        ruleId: "core.git:branch-force-delete",
+      },
+      command,
+      { hasUI: false, ui: { confirm: async () => false } },
+      undefined,
+      async (clause) => {
+        checked.push(clause);
+        return { deny: false, reason: "" };
+      },
+    );
+
+    expect(decision.deny).toBe(false);
+    expect(checked).not.toContain("then git branch -d agent-release");
+    expect(checked).toContain("if git show-ref --verify --quiet refs/heads/agent-release");
+  });
+
   test("allows literal worktree restore when every other command passes dcg", async () => {
     const checked: string[] = [];
     const command =
