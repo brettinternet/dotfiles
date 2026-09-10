@@ -10,7 +10,7 @@ modelRoles:
   commit: anthropic/claude-haiku-4-5:high
   plan: anthropic/claude-opus-5:high
   advisor: anthropic/claude-opus-5:xhigh
-  title: anthropic/claude-haiku-4-5:high
+  title: anthropic/claude-haiku-4-5:off
   tiny: anthropic/claude-haiku-4-5:medium
   writer: anthropic/claude-opus-4.6:medium
 commands:
