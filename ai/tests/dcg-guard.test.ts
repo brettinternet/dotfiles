@@ -230,6 +230,27 @@ describe("dcg user approval", () => {
     expect(checked).toEqual(["rtk git diff -- .mcp.json", "rtk git status --short"]);
   });
 
+  test("allows literal checkout discard when every other command passes dcg", async () => {
+    const checked: string[] = [];
+    const decision = await applyUserApproval(
+      {
+        deny: true,
+        reason: "git checkout -- discards uncommitted changes permanently.",
+        ruleId: "core.git:checkout-discard",
+      },
+      "git checkout -- server/server.go && mise exec go -- go test ./server -run '^TestBack265' -count=1",
+      { hasUI: false, ui: { confirm: async () => false } },
+      undefined,
+      async (clause) => {
+        checked.push(clause);
+        return { deny: false, reason: "" };
+      },
+    );
+
+    expect(decision.deny).toBe(false);
+    expect(checked).toEqual(["mise exec go -- go test ./server -run '^TestBack265' -count=1"]);
+  });
+
   test("does not exempt restore with a variable-derived path", async () => {
     let rechecked = false;
     const blocked = {
