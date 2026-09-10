@@ -61,12 +61,12 @@
   },
   "titleConfig": {
     "enabled": true,
-    "model": "anthropic/claude-haiku-4-5:high",
+    "model": "anthropic/claude-haiku-4-5:off",
     "maxTokens": 30,
     "maxLength": 60
   },
   "progressConfig": {
-    "model": "anthropic/claude-haiku-4-5:low",
+    "model": "anthropic/claude-haiku-4-5:off",
     "maxInputChars": 12000,
     "maxTokens": 180,
     "timeoutMs": 60000

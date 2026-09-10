@@ -211,7 +211,7 @@ profiles:
       commit: [claude-haiku, high]
       plan: [claude-opus, high]
       advisor: [claude-opus, xhigh]
-      title: [claude-haiku, high]
+      title: [claude-haiku, off]
       tiny: [claude-haiku, medium]
       writer: [claude-writer, medium]
     ompSettings:
@@ -223,7 +223,7 @@ profiles:
       enabled: [claude-sonnet, claude-reviewer, claude-haiku, claude-opus, claude-writer]
       defaultAgent: [claude-haiku, medium]
       researcher: [claude-haiku, medium]
-      progress: [claude-haiku, low]
+      progress: [claude-haiku, off]
       efforts:
         {
           reviewer: xhigh,
