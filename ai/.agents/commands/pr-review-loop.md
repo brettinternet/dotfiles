@@ -15,7 +15,7 @@ Every 15 minutes:
 4. Review only changes since the baseline on repeat passes. Judge whether the changed code is safe to ship in that operating context, spending scrutiny according to credible impact and blast radius rather than hypothetical uses. A finding requires a changed `path:line`, a concrete trigger, and observable breakage. Drop speculation, style, pre-existing problems, cleanup suggestions, and hardening for environments the code does not serve.
 5. Choose `APPROVE` only when the reviewed change is safe to ship for the established context, no new finding exists, and no prior material concern remains. Choose `COMMENT` when a new finding clears the bar, or `WAIT` when only a prior concern remains unresolved. `WAIT` posts nothing.
 6. For `COMMENT`, attach each finding to a changed line when possible and use one sentence naming trigger and breakage plus one direct question. For `APPROVE`, approve with no body. Apply `user-voice` to posted text.
-7. Update the saved authored-commit baseline and print one concise status line per PR.
+7. Update the saved authored-commit baseline and print a Markdown progress table on every pass with one row per PR and columns for repository, linked PR number and title, author, action (`APPROVE`, `COMMENT`, `WAIT`, or `SKIP`), and concise status. Print the table headers even when no PRs match.
 
 Use `gh` for every GitHub operation. A reviewer or `pr-watcher` may help with genuinely substantial review or change detection, but the loop owns scope, deduplication, and posting.
 
