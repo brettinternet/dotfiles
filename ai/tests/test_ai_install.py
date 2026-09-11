@@ -5,6 +5,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import tomllib
 import unittest
 from pathlib import Path
 
@@ -225,6 +226,35 @@ path.write_text("// generated guard for test\\n")
         ):
             self.assertFalse(retired.exists())
         self.assertEqual("Handwritten\n", unmanaged.read_text())
+
+    def test_codex_tui_preferences_merge_into_mutable_config(self) -> None:
+        config = self.home / ".codex/config.toml"
+        config.parent.mkdir(parents=True)
+        config.write_text(
+            'model = "preserve"\n\n'
+            "[tui]\n"
+            'status_line = ["model"]\n'
+            "show_tooltips = true\n\n"
+            "[notice]\n"
+            "hide_rate_limit_model_nudge = true\n"
+        )
+
+        self.run_command("ai/.bin/install-agents")
+        self.run_command("ai/.bin/install-agents")
+
+        text = config.read_text()
+        merged = tomllib.loads(text)
+        self.assertEqual("preserve", merged["model"])
+        self.assertEqual(["model"], merged["tui"]["status_line"])
+        self.assertFalse(merged["tui"]["show_tooltips"])
+        self.assertTrue(merged["notice"]["hide_rate_limit_model_nudge"])
+        self.assertEqual(1, text.count("# BEGIN generated Codex TUI preferences"))
+
+        config.write_text('[tui.keymap.global]\nquit = "ctrl-c"\n')
+        self.run_command("ai/.bin/install-agents")
+        merged = tomllib.loads(config.read_text())
+        self.assertFalse(merged["tui"]["show_tooltips"])
+        self.assertEqual("ctrl-c", merged["tui"]["keymap"]["global"]["quit"])
 
     def test_claude_preferences_merge_into_mutable_user_settings(self) -> None:
         settings = self.home / ".claude/settings.json"
