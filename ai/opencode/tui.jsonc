@@ -1,5 +1,8 @@
 {
   "$schema": "https://opencode.ai/tui.json",
   "theme": "system",
+  "keybinds": {
+    "app_exit": "ctrl+d",
+  },
   "plugin": ["./herdr-tui-session.js"],
 }
