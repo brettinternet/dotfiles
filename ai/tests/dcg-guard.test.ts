@@ -156,6 +156,32 @@ describe("dcg user approval", () => {
     ]);
   });
 
+  test("allows branch deletion followed by piped inspection commands", async () => {
+    const checked: string[] = [];
+    const decision = await applyUserApproval(
+      {
+        deny: true,
+        reason: "git branch deletion requires explicit user approval.",
+        ruleId: "core.git:branch-force-delete",
+      },
+      "git branch -d agent-work && worklease checkpoint --help | head -80 && worklease release --help | head -80",
+      { hasUI: false, ui: { confirm: async () => false } },
+      undefined,
+      async (clause) => {
+        checked.push(clause);
+        return { deny: false, reason: "" };
+      },
+    );
+
+    expect(decision.deny).toBe(false);
+    expect(checked).toEqual([
+      "worklease checkpoint --help",
+      "head -80",
+      "worklease release --help",
+      "head -80",
+    ]);
+  });
+
   test("allows guarded branch deletion in a shell conditional", async () => {
     const checked: string[] = [];
     const command =

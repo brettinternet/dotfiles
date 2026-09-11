@@ -125,7 +125,7 @@ function isExemptedGitClause(ruleId: string, command: string): boolean {
 }
 
 function parseCommandSequence(command: string, ruleId: string): CommandSequence {
-  const clauses = splitShellSequence(command);
+  const clauses = splitShellSequence(command, true);
   if (!clauses) return { exempted: false, remainder: [] };
 
   let exempted = false;
