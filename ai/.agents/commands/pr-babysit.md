@@ -22,7 +22,7 @@ Once the PR is mergeable, loop over CI and unresolved review threads together:
 - Inspect every gating check. Reproduce relevant failures locally, fix their source, run the repository's focused validation, commit, and push.
 - Verify every review finding against current code. Apply the smallest valid fix and behavioral coverage when warranted. Reply briefly when a finding is stale or incorrect. Resolve a thread only after its fix lands or the discussion establishes it as resolved.
 - After each push, refresh the expected head SHA and recheck mergeability, CI, and feedback. Stop rather than overwrite external changes.
-- Apply `user-voice` to every GitHub message. Use `pr-watcher` for bounded waits when available; otherwise wait at least five minutes for CI and fifteen minutes for human review.
+- Apply `user-voice` to every GitHub message. Use `pr-watcher` for bounded waits when available; otherwise wait at least five minutes for CI and fifteen minutes for human review. Between polling passes, prefer an available deferred-continuation mechanism that releases active execution while preserving the session; in a standalone Pi session, use `wait_then_continue`. Otherwise use a bounded wait with an explicit deadline. Do not defer when the host cannot resume the same session or while running inside `/loop`.
 
 Do not weaken tests, suppress symptoms, make unrelated changes, or argue repeatedly. When a valid finding depends on a product or architecture decision, ask the user with the evidence and viable choices.
 
