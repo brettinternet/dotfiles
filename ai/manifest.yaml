@@ -99,9 +99,6 @@ models:
         opencode: openrouter/anthropic/claude-opus-4.6,
       }
     context: conservative
-  or-kimi:
-    ids: { omp: openrouter/moonshotai/kimi-k3, opencode: openrouter/moonshotai/kimi-k3 }
-    context: conservative
   or-flash:
     ids:
       {
@@ -392,7 +389,7 @@ profiles:
       default: [codex-sol, medium]
       smol: [codex-luna, medium]
       slow: [codex-sol, max]
-      designer: [or-kimi, xhigh]
+      designer: [or-fable, xhigh]
       vision: [codex-sol, high]
       task: [codex-luna, max]
       commit: [codex-spark, high]

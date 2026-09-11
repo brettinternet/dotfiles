@@ -169,13 +169,6 @@
             "output": 128000
           }
         },
-        "moonshotai/kimi-k3": {
-          "limit": {
-            "context": 256000,
-            "input": 128000,
-            "output": 128000
-          }
-        },
         "deepseek/deepseek-v4-flash-0731": {
           "limit": {
             "context": 256000,
