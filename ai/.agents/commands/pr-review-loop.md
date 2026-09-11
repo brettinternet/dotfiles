@@ -19,4 +19,6 @@ Every 15 minutes:
 
 Use `gh` for every GitHub operation. A reviewer or `pr-watcher` may help with genuinely substantial review or change detection, but the loop owns scope, deduplication, and posting.
 
+Between polling passes, prefer an available deferred-continuation mechanism that releases active execution while preserving the session; in a standalone Pi session, use `wait_then_continue`. Otherwise use a bounded wait with an explicit deadline. Do not defer when the host cannot resume the same session or while running inside `/loop`.
+
 Stop when interrupted or after eight hours without a new candidate, authored commit, review, comment, thread change, or CI transition. Unchanged polling and rebases do not reset the idle timer.
