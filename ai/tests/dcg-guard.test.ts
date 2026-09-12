@@ -156,6 +156,31 @@ describe("dcg user approval", () => {
     ]);
   });
 
+  test("allows forced branch update alongside other literal cleanup commands", async () => {
+    const checked: string[] = [];
+    const command =
+      "cd /Users/example/project/.worktrees/agent-task && git restore -- tracked && git diff old new -- file.go > /tmp/agent-recovery.patch && git switch --detach new && git branch -f agent-task new && git switch agent-task && git apply /tmp/agent-recovery.patch && git status --short --branch && git diff --check";
+    const decision = await applyUserApproval(
+      {
+        deny: true,
+        reason: "git branch deletion or forced ref updates require explicit user approval.",
+        ruleId: "core.git:branch-force-delete",
+      },
+      command,
+      { hasUI: false, ui: { confirm: async () => false } },
+      undefined,
+      async (clause) => {
+        checked.push(clause);
+        return { deny: false, reason: "" };
+      },
+    );
+
+    expect(decision.deny).toBe(false);
+    expect(checked).not.toContain("git restore -- tracked");
+    expect(checked).not.toContain("git branch -f agent-task new");
+    expect(checked).toContain("git apply /tmp/agent-recovery.patch");
+  });
+
   test("allows branch deletion followed by piped inspection commands", async () => {
     const checked: string[] = [];
     const decision = await applyUserApproval(
@@ -359,10 +384,10 @@ describe("dcg user approval", () => {
   });
 
   test("does not let branch deletion hide another destructive command", async () => {
-    const resetDecision = {
+    const forcePushDecision = {
       deny: true,
-      reason: "hard reset requires explicit user approval.",
-      ruleId: "core.git:reset-hard",
+      reason: "force push requires explicit user approval.",
+      ruleId: "core.git:force-push",
     };
     const decision = await applyUserApproval(
       {
@@ -370,13 +395,13 @@ describe("dcg user approval", () => {
         reason: "git branch deletion requires explicit user approval.",
         ruleId: "core.git:branch-force-delete",
       },
-      "git branch -d agent-work && git reset --hard",
+      "git branch -d agent-work && git push --force",
       { hasUI: false, ui: { confirm: async () => false } },
       undefined,
-      async () => resetDecision,
+      async () => forcePushDecision,
     );
 
-    expect(decision).toEqual(resetDecision);
+    expect(decision).toEqual(forcePushDecision);
   });
 
   test("allows merged-only branch deletion without prompting", async () => {
