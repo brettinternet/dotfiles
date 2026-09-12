@@ -162,6 +162,15 @@ function clear-screen-and-title {
 zle -N clear-screen-and-title
 bindkey '^L' clear-screen-and-title
 
+function hard-clear-screen-and-title {
+  zle -I
+  printf '\e[2J\e[3J\e[H'
+  title
+  zle reset-prompt
+}
+zle -N hard-clear-screen-and-title
+bindkey '\e^L' hard-clear-screen-and-title
+
 # -- Plugins via zinit ----------------------------------------
 # Helpful plugin list: https://github.com/zdharma/Zsh-100-Commits-Club
 

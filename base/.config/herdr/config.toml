@@ -65,6 +65,12 @@ width = 140
 height = 60
 
 [[keys.command]]
+key = "ctrl+shift+l"
+type = "shell"
+command = "herdr pane send-keys \"$HERDR_ACTIVE_PANE_ID\" esc ctrl+l"
+description = "hard clear focused pane and title"
+
+[[keys.command]]
 key = "prefix+shift+s"
 type = "shell"
 command = "herdr-split-before horizontal"
