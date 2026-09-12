@@ -3,11 +3,11 @@
   "defaultModel": "claude-sonnet-5",
   "defaultThinkingLevel": "medium",
   "enabledModels": [
-    "claude-sonnet-5",
-    "claude-opus-4.8",
-    "claude-haiku-4-5",
-    "claude-opus-5",
-    "claude-opus-4.6"
+    "anthropic/claude-sonnet-5",
+    "anthropic/claude-opus-4.8",
+    "anthropic/claude-haiku-4-5",
+    "anthropic/claude-opus-5",
+    "anthropic/claude-opus-4.6"
   ],
   "subagents": {
     "defaultModel": "anthropic/claude-haiku-4-5",

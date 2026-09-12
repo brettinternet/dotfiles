@@ -243,7 +243,7 @@ def render_pi_profile(manifest: Manifest, profile: dict[str, Any]) -> dict[str, 
         "defaultProvider": provider,
         "defaultModel": parent_model,
         "defaultThinkingLevel": parent_effort,
-        "enabledModels": [split_model_id(manifest.model_id(alias, "pi"))[1] for alias in config["enabled"]],
+        "enabledModels": [manifest.model_id(alias, "pi") for alias in config["enabled"]],
         "subagents": {
             "defaultModel": manifest.model_id(default_alias, "pi"),
             "defaultProvider": split_model_id(manifest.model_id(default_alias, "pi"))[0],

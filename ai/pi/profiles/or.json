@@ -3,13 +3,13 @@
   "defaultModel": "openai/gpt-5.6-sol",
   "defaultThinkingLevel": "medium",
   "enabledModels": [
-    "openai/gpt-5.6-sol",
-    "openai/gpt-5.6-luna",
-    "openai/gpt-5.6-sol-pro",
-    "~anthropic/claude-fable-latest",
-    "z-ai/glm-5.3",
-    "anthropic/claude-opus-4.8",
-    "anthropic/claude-opus-4.6"
+    "openrouter/openai/gpt-5.6-sol",
+    "openrouter/openai/gpt-5.6-luna",
+    "openrouter/openai/gpt-5.6-sol-pro",
+    "openrouter/~anthropic/claude-fable-latest",
+    "openrouter/z-ai/glm-5.3",
+    "openrouter/anthropic/claude-opus-4.8",
+    "openrouter/anthropic/claude-opus-4.6"
   ],
   "subagents": {
     "defaultModel": "openrouter/openai/gpt-5.6-luna",

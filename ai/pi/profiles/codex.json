@@ -3,10 +3,10 @@
   "defaultModel": "gpt-5.6-sol",
   "defaultThinkingLevel": "medium",
   "enabledModels": [
-    "gpt-5.6-luna",
-    "gpt-5.6-sol",
-    "gpt-5.6-terra",
-    "gpt-6-astra"
+    "openai-codex/gpt-5.6-luna",
+    "openai-codex/gpt-5.6-sol",
+    "openai-codex/gpt-5.6-terra",
+    "openai-codex/gpt-6-astra"
   ],
   "subagents": {
     "defaultModel": "openai-codex/gpt-5.6-luna",
