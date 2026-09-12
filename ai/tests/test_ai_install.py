@@ -323,6 +323,17 @@ path.write_text("// generated guard for test\\n")
         self.run_command("python3", "ai/generate-config.py", "--check")
         self.run_command("ai/.bin/ai-config", "check")
 
+    def test_pi_profile_scoped_models_are_provider_qualified(self) -> None:
+        for profile_path in (ROOT / "ai/pi/profiles").glob("*.json"):
+            if profile_path.name == "common.json":
+                continue
+            profile = json.loads(profile_path.read_text())
+            for model in profile["enabledModels"]:
+                self.assertTrue(
+                    model.startswith(f'{profile["defaultProvider"]}/'),
+                    f"{profile_path}: {model}",
+                )
+
     def test_pi_launcher_resolves_preset_and_forwards_arguments(self) -> None:
         fake_bin = self.home / "bin"
         fake_bin.mkdir()
