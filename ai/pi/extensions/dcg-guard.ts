@@ -121,6 +121,9 @@ function isExemptedGitClause(ruleId: string, command: string): boolean {
   if (ruleId === "core.git:checkout-discard") {
     return subcommand === "checkout" && /^--\s+\S/.test(arguments_) && !VARIABLE_REFERENCE.test(arguments_);
   }
+  if (ruleId === "core.git:reset-hard") {
+    return subcommand === "reset" && /^--hard(?:\s+\S+)?$/.test(arguments_) && !VARIABLE_REFERENCE.test(arguments_);
+  }
   return false;
 }
 
@@ -491,7 +494,12 @@ export async function applyUserApproval(
 ): Promise<Decision> {
   if (!decision.deny || !decision.ruleId) return decision;
 
-  const exemptedRules = ["core.git:branch-force-delete", "core.git:restore-worktree", "core.git:checkout-discard"];
+  const exemptedRules = [
+    "core.git:branch-force-delete",
+    "core.git:restore-worktree",
+    "core.git:checkout-discard",
+    "core.git:reset-hard",
+  ];
   if (exemptedRules.includes(decision.ruleId)) {
     const sequence = parseCommandSequence(command, decision.ruleId);
     if (sequence.exempted) {

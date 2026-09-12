@@ -301,6 +301,41 @@ describe("dcg user approval", () => {
     expect(checked).toEqual(["mise exec go -- go test ./server -run '^TestBack265' -count=1"]);
   });
 
+  test("allows hard reset to a literal revision when every other command passes dcg", async () => {
+    const checked: string[] = [];
+    const decision = await applyUserApproval(
+      {
+        deny: true,
+        reason: "git reset --hard destroys uncommitted changes.",
+        ruleId: "core.git:reset-hard",
+      },
+      "git reset --hard 6a92441 && git status --short --branch && git log -1 --oneline",
+      { hasUI: false, ui: { confirm: async () => false } },
+      undefined,
+      async (clause) => {
+        checked.push(clause);
+        return { deny: false, reason: "" };
+      },
+    );
+
+    expect(decision.deny).toBe(false);
+    expect(checked).toEqual(["git status --short --branch", "git log -1 --oneline"]);
+  });
+
+  test("does not exempt reset to a variable-derived revision", async () => {
+    const blocked = {
+      deny: true,
+      reason: "git reset --hard destroys uncommitted changes.",
+      ruleId: "core.git:reset-hard",
+    };
+    const decision = await applyUserApproval(blocked, 'git reset --hard "$revision"', {
+      hasUI: false,
+      ui: { confirm: async () => false },
+    });
+
+    expect(decision).toEqual(blocked);
+  });
+
   test("does not exempt restore with a variable-derived path", async () => {
     let rechecked = false;
     const blocked = {
@@ -390,10 +425,10 @@ describe("dcg user approval", () => {
     const decision = await applyUserApproval(
       {
         deny: true,
-        reason: "hard reset requires explicit user approval.",
-        ruleId: "core.git:reset-hard",
+        reason: "force push requires explicit user approval.",
+        ruleId: "core.git:force-push",
       },
-      "git reset --hard",
+      "git push --force",
       {
         hasUI: true,
         ui: { confirm: async () => true },
@@ -414,14 +449,14 @@ describe("dcg user approval", () => {
   test("blocks destructive Git operations when approval is declined or unavailable", async () => {
     const blocked = {
       deny: true,
-      reason: "hard reset requires explicit user approval.",
-      ruleId: "core.git:reset-hard",
+      reason: "force push requires explicit user approval.",
+      ruleId: "core.git:force-push",
     };
-    const declined = await applyUserApproval(blocked, "git reset --hard", {
+    const declined = await applyUserApproval(blocked, "git push --force", {
       hasUI: true,
       ui: { confirm: async () => false },
     });
-    const headless = await applyUserApproval(blocked, "git reset --hard", {
+    const headless = await applyUserApproval(blocked, "git push --force", {
       hasUI: false,
       ui: { confirm: async () => true },
     });
