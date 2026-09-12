@@ -12,6 +12,14 @@ make ai
 
 The comma-separated selector also accepts `none`. Any non-empty selection installs the fail-closed destructive-command guard (`dcg`). Removing a tool from the selector removes managed links and generated agent definitions, then uninstalls its Mise package; mutable local settings are preserved.
 
+To completely remove the AI group, including its helper links, generated profiles, guards, integrations, Mise configuration, and installed packages, run:
+
+```sh
+make uninstall-ai
+```
+
+Unmanaged files and mutable local settings are preserved.
+
 [`ai.yaml`](../ai.yaml) links configuration into each selected tool's home directory. [`AGENTS.md`](AGENTS.md) provides shared instructions.
 
 ## Sources

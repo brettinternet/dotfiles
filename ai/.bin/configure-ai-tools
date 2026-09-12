@@ -51,8 +51,9 @@ def previous_tools(path: Path) -> tuple[str, ...]:
     if path.read_text().splitlines()[:1] != [MARKER]:
         raise SystemExit(f"Refusing to overwrite unmanaged AI tool state: {path}")
     for line in path.read_text().splitlines():
-        if line.startswith("DOTFILES_AI_TOOLS="):
-            value = line.partition("=")[2]
+        metadata = line.removeprefix("# ")
+        if metadata.startswith("DOTFILES_AI_TOOLS="):
+            value = metadata.partition("=")[2]
             return tuple(item for item in value.split(",") if item)
     raise SystemExit(f"Managed AI tool state is missing selection metadata: {path}")
 
@@ -130,11 +131,12 @@ def main() -> int:
     config = Path.home() / ".config/mise/conf.d/40-ai.toml"
     state = Path.home() / ".local/state/dotfiles/ai-tools"
     config.parent.mkdir(parents=True, exist_ok=True)
-    previous = previous_tools(state)
     if config.is_symlink():
         raise SystemExit(f"Refusing to overwrite linked AI Mise config: {config}")
     if config.exists() and config.read_text().splitlines()[:1] != [MARKER]:
         raise SystemExit(f"Refusing to overwrite unmanaged AI Mise config: {config}")
+    previous_path = state if state.exists() or state.is_symlink() else config
+    previous = previous_tools(previous_path)
 
     lines = [MARKER, f"# DOTFILES_AI_TOOLS={','.join(selected)}", "", "[tools]"]
     if selected:
@@ -158,8 +160,6 @@ def main() -> int:
         tool for tool in previous if tool in TOOLS and tool not in selected_set
     ]
     uninstall = [mise_name(tool) for tool in deselected]
-    if previous and not selected:
-        uninstall.append(DCG_MISE_NAME)
     if uninstall:
         subprocess.run([mise, "uninstall", "--all", "--yes", *uninstall], check=True)
     if selected:

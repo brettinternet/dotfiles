@@ -2,7 +2,7 @@ INSTALL := ./install
 ALL_GROUPS := base,darwin,x11,thinkpad,i3,ai
 
 .DEFAULT_GOAL := help
-.PHONY: help install update up update-zinit update-mise update-pi update-herdr update-brew update-gh update-nvim update-vim update-doom update-tmux update-mas update-dotbot update_dotbot uninstall base server darwin mac thinkpad i3 ai
+.PHONY: help install update up update-zinit update-mise update-pi update-herdr update-brew update-gh update-nvim update-vim update-doom update-tmux update-mas update-dotbot update_dotbot uninstall uninstall-ai base server darwin mac thinkpad i3 ai
 
 help:
 	@printf '%s\n' \
@@ -12,7 +12,8 @@ help:
 		'  make darwin     install base + darwin dotfiles' \
 		'  make thinkpad   install base + x11 + thinkpad dotfiles' \
 		'  make i3         install i3 dotfiles' \
-		'  make ai         install AI tool dotfiles' \
+		'  make ai           install AI tool dotfiles' \
+		'  make uninstall-ai remove all managed AI tools and dotfiles' \
 		'  make update        update user-managed dependencies' \
 		'  make update-zinit  update Zinit and Zinit-managed plugins' \
 		'  make update-mise   update tools installed by mise' \
@@ -150,6 +151,9 @@ update_dotbot: update-dotbot
 uninstall: export DOTFILE_GROUPS = $(ALL_GROUPS)
 uninstall:
 	@./uninstall.py
+
+uninstall-ai:
+	@ai/.bin/uninstall-ai
 
 base: export DOTFILE_GROUPS = base
 base: install
