@@ -144,8 +144,9 @@ tasks:
   test:
     desc: Run tests
     cmds:
-      - git submodule update --init dotbot
+      - git submodule update --init --recursive dotbot
       - task: test-dotbot
+      - PYTHONPATH="$(pwd -P)/dotbot/lib/pyyaml/lib" python3 -m unittest discover -s ai/tests
 
   test-dotbot:
     internal: true
