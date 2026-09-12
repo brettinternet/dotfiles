@@ -35,6 +35,13 @@ type Decision = { deny: boolean; reason: string; ruleId?: string };
 const GIT_COMMAND =
   /^\s*(?:(?:then|do|else)\s+)?(?:rtk\s+)?git(?:\s+-C\s+(?:"[^"]*"|'[^']*'|\S+))*\s+([a-z-]+)(?:\s+([^;&|\n]*))?\s*$/;
 const DELETE_OPTION = /(?:^|\s)(?:-d|-D|--delete)(?:\s|$)/;
+const FORCE_BRANCH_UPDATE = /^(?:-f|--force)\s+\S+(?:\s+\S+)?$/;
+const EXEMPTED_GIT_RULES = new Set([
+  "core.git:branch-force-delete",
+  "core.git:restore-worktree",
+  "core.git:checkout-discard",
+  "core.git:reset-hard",
+]);
 
 type CommandSequence = { exempted: boolean; remainder: string[] };
 type Quote = "single" | "double" | "ansi";
@@ -107,34 +114,33 @@ function isLiteralRestore(arguments_: string): boolean {
   return !trimmed.startsWith("-");
 }
 
-function isExemptedGitClause(ruleId: string, command: string): boolean {
+function isExemptedGitClause(command: string): boolean {
   const match = command.match(GIT_COMMAND);
   if (!match) return false;
 
   const [, subcommand, arguments_ = ""] = match;
-  if (ruleId === "core.git:branch-force-delete") {
-    return subcommand === "branch" && DELETE_OPTION.test(arguments_);
+  if (subcommand === "branch") {
+    return (
+      DELETE_OPTION.test(arguments_) ||
+      (FORCE_BRANCH_UPDATE.test(arguments_) && !VARIABLE_REFERENCE.test(arguments_))
+    );
   }
-  if (ruleId === "core.git:restore-worktree") {
-    return subcommand === "restore" && isLiteralRestore(arguments_);
-  }
-  if (ruleId === "core.git:checkout-discard") {
-    return subcommand === "checkout" && /^--\s+\S/.test(arguments_) && !VARIABLE_REFERENCE.test(arguments_);
-  }
-  if (ruleId === "core.git:reset-hard") {
-    return subcommand === "reset" && /^--hard(?:\s+\S+)?$/.test(arguments_) && !VARIABLE_REFERENCE.test(arguments_);
+  if (subcommand === "restore") return isLiteralRestore(arguments_);
+  if (subcommand === "checkout") return /^--\s+\S/.test(arguments_) && !VARIABLE_REFERENCE.test(arguments_);
+  if (subcommand === "reset") {
+    return /^--hard(?:\s+\S+)?$/.test(arguments_) && !VARIABLE_REFERENCE.test(arguments_);
   }
   return false;
 }
 
-function parseCommandSequence(command: string, ruleId: string): CommandSequence {
+function parseCommandSequence(command: string): CommandSequence {
   const clauses = splitShellSequence(command, true);
   if (!clauses) return { exempted: false, remainder: [] };
 
   let exempted = false;
   const remainder: string[] = [];
   for (const clause of clauses) {
-    if (isExemptedGitClause(ruleId, clause)) {
+    if (isExemptedGitClause(clause)) {
       exempted = true;
     } else {
       remainder.push(clause);
@@ -494,14 +500,8 @@ export async function applyUserApproval(
 ): Promise<Decision> {
   if (!decision.deny || !decision.ruleId) return decision;
 
-  const exemptedRules = [
-    "core.git:branch-force-delete",
-    "core.git:restore-worktree",
-    "core.git:checkout-discard",
-    "core.git:reset-hard",
-  ];
-  if (exemptedRules.includes(decision.ruleId)) {
-    const sequence = parseCommandSequence(command, decision.ruleId);
+  if (EXEMPTED_GIT_RULES.has(decision.ruleId)) {
+    const sequence = parseCommandSequence(command);
     if (sequence.exempted) {
       const remainderDecisions = await Promise.all(sequence.remainder.map(recheck));
       const deniedRemainder = remainderDecisions.find((remainderDecision) => remainderDecision.deny);
