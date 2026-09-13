@@ -463,7 +463,8 @@ describe("dcg user approval", () => {
       resolveTestCheckout,
     );
 
-    expect(decision).toEqual(blocked);
+    expect(decision.deny).toBe(true);
+    expect(decision.reason).toContain("Ownership could not be verified");
   });
 
   test.each([
@@ -486,7 +487,8 @@ describe("dcg user approval", () => {
       resolveTestCheckout,
     );
 
-    expect(decision).toEqual(blocked);
+    expect(decision.deny).toBe(true);
+    expect(decision.reason).toContain("Ownership could not be verified");
   });
 
   test.each([
@@ -528,7 +530,8 @@ describe("dcg user approval", () => {
       resolveTestCheckout,
     );
 
-    expect(decision).toEqual(blocked);
+    expect(decision.deny).toBe(true);
+    expect(decision.reason).toContain("Ownership could not be verified");
   });
 
   test("does not exempt cleanup in an unknown linked checkout", async () => {

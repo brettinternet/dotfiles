@@ -46,6 +46,8 @@ const EXEMPTED_GIT_RULES = new Set([
 ]);
 const WORKTREE_LIFECYCLE_COMMAND = /\b(?:hwt\s+(?:remove|rm)|git\s+worktree\s+remove|worklease\s+release)\b/;
 const PROTECTED_WORKSPACE_LABEL = /(?:^|[-_\s])(?:keep|user-owned)(?:$|[-_\s])/i;
+const BRANCH_OWNERSHIP_GUIDANCE =
+  "Ownership could not be verified. For managed cleanup, run `hwt list --cwd <repository-path>`, then combine `hwt remove ... && git branch -D ...` in one Bash call before the worktree disappears.";
 
 export type GitOwnership = {
   managedRoots: Map<string, string>;
@@ -708,13 +710,16 @@ export async function applyUserApproval(
 ): Promise<Decision> {
   if (!decision.deny || !decision.ruleId) return decision;
 
+  const originalRuleId = decision.ruleId;
+  let ownershipVerified = false;
   if (EXEMPTED_GIT_RULES.has(decision.ruleId) && ctx.cwd && ownership) {
     const sequence = parseCommandSequence(command, ctx.cwd);
     if (sequence.valid) {
       const ownershipChecks = await Promise.all(
         sequence.clauses.map((clause) => isOwnedCleanup(clause.command, clause.cwd, ownership, resolveCheckout)),
       );
-      if (ownershipChecks.some(Boolean)) {
+      ownershipVerified = ownershipChecks.some(Boolean);
+      if (ownershipVerified) {
         const remainder = sequence.clauses.filter((_clause, index) => !ownershipChecks[index]);
         const remainderDecisions = await Promise.all(remainder.map((clause) => recheck(clause.command)));
         const deniedRemainder = remainderDecisions.find((remainderDecision) => remainderDecision.deny);
@@ -722,6 +727,10 @@ export async function applyUserApproval(
         decision = deniedRemainder;
       }
     }
+  }
+
+  if (originalRuleId === "core.git:branch-force-delete" && !ownershipVerified) {
+    decision = { ...decision, reason: `${decision.reason}\n\n${BRANCH_OWNERSHIP_GUIDANCE}` };
   }
 
   if (!decision.ruleId?.startsWith("core.git:") || !ctx.hasUI) return decision;
