@@ -1,15 +1,68 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtempSync, rmdirSync, symlinkSync, unlinkSync } from "node:fs";
+import { mkdtempSync, realpathSync, rmdirSync, symlinkSync, unlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import {
   applyUserApproval,
+  type GitOwnership,
+  isLinkedGitCheckout,
   localBashIntegrityDecision,
   localDestructiveTargetDecision,
+  resetGitOwnership,
 } from "../pi/extensions/dcg-guard";
 
 const home = "/Users/example";
+const repoKey = "/Users/example/project/.git";
+const managedCwd = "/Users/example/worktree";
+const ownership: GitOwnership = {
+  managedRoots: new Map([
+    [managedCwd, repoKey],
+    ["/Users/example/project/.worktrees/agent-task", repoKey],
+  ]),
+  repoRoots: new Map([
+    ["/Users/example/project", repoKey],
+    [managedCwd, repoKey],
+    ["/Users/example/project/.worktrees/agent-task", repoKey],
+  ]),
+  managedBranches: new Set([
+    `${repoKey}\0agent-work`,
+    `${repoKey}\0agent-release`,
+    `${repoKey}\0agent-task`,
+  ]),
+  protectedBranches: new Set([`${repoKey}\0main`]),
+};
+
+type TestDecision = { deny: boolean; reason: string; ruleId?: string };
+type TestContext = { hasUI: boolean; ui: { confirm(title: string, message: string): Promise<boolean> } };
+
+async function resolveTestCheckout(
+  path: string,
+): Promise<{ branch?: string; repoKey: string; root: string } | undefined> {
+  const root = [...ownership.repoRoots.entries()]
+    .map(([candidate, key]) => ({ candidate, key }))
+    .filter(({ candidate }) => path === candidate || path.startsWith(`${candidate}/`))
+    .sort((left, right) => right.candidate.length - left.candidate.length)[0];
+  return root ? { repoKey: root.key, root: root.candidate } : undefined;
+}
+
+function applyManagedCleanup(
+  decision: TestDecision,
+  command: string,
+  ctx: TestContext,
+  events?: { emit(event: string, value: unknown): void },
+  recheck?: (command: string) => Promise<TestDecision>,
+): Promise<TestDecision> {
+  return applyUserApproval(
+    decision,
+    command,
+    { ...ctx, cwd: managedCwd },
+    events,
+    recheck,
+    ownership,
+    resolveTestCheckout,
+  );
+}
 
 describe("local destructive target policy", () => {
   test.each(['trash "$dir"', 'command trash -- "${target}"', 'find "$path" -delete', 'printf "%s\\0" "$tmp" | xargs -0 trash'])(
@@ -125,12 +178,35 @@ describe("local Bash integrity policy", () => {
   });
 });
 
+describe("Git ownership discovery", () => {
+  test("distinguishes a linked worktree from a primary checkout with a separate Git directory", () => {
+    expect(isLinkedGitCheckout({ gitDir: "/repo/.git/worktrees/task", repoKey: "/repo/.git" })).toBe(true);
+    expect(isLinkedGitCheckout({ gitDir: "/external/repo.git", repoKey: "/external/repo.git" })).toBe(false);
+  });
+
+  test("clears stale managed branches when ownership is refreshed", () => {
+    const stale: GitOwnership = {
+      managedRoots: new Map([[managedCwd, repoKey]]),
+      repoRoots: new Map([["/Users/example/project", repoKey]]),
+      managedBranches: new Set([`${repoKey}\0agent-work`]),
+      protectedBranches: new Set([`${repoKey}\0main`]),
+    };
+
+    resetGitOwnership(stale);
+
+    expect(stale.managedRoots.size).toBe(0);
+    expect(stale.repoRoots.size).toBe(0);
+    expect(stale.managedBranches.size).toBe(0);
+    expect(stale.protectedBranches.size).toBe(0);
+  });
+});
+
 describe("dcg user approval", () => {
   test("allows branch deletion when every other command passes dcg", async () => {
     const checked: string[] = [];
     const command =
-      "cd /Users/example/dev/project && git branch -d agent-work && git worktree prune && git status --short --branch && git rev-parse HEAD &&\n git rev-parse origin/main && gh run view 123 --json status,conclusion";
-    const decision = await applyUserApproval(
+      "cd /Users/example/project && git branch -d agent-work && git worktree prune && git status --short --branch && git rev-parse HEAD &&\n git rev-parse origin/main && gh run view 123 --json status,conclusion";
+    const decision = await applyManagedCleanup(
       {
         deny: true,
         reason: "git branch deletion requires explicit user approval.",
@@ -147,7 +223,7 @@ describe("dcg user approval", () => {
 
     expect(decision.deny).toBe(false);
     expect(checked).toEqual([
-      "cd /Users/example/dev/project",
+      "cd /Users/example/project",
       "git worktree prune",
       "git status --short --branch",
       "git rev-parse HEAD",
@@ -160,7 +236,7 @@ describe("dcg user approval", () => {
     const checked: string[] = [];
     const command =
       "cd /Users/example/project/.worktrees/agent-task && git restore -- tracked && git diff old new -- file.go > /tmp/agent-recovery.patch && git switch --detach new && git branch -f agent-task new && git switch agent-task && git apply /tmp/agent-recovery.patch && git status --short --branch && git diff --check";
-    const decision = await applyUserApproval(
+    const decision = await applyManagedCleanup(
       {
         deny: true,
         reason: "git branch deletion or forced ref updates require explicit user approval.",
@@ -183,7 +259,7 @@ describe("dcg user approval", () => {
 
   test("allows branch deletion followed by piped inspection commands", async () => {
     const checked: string[] = [];
-    const decision = await applyUserApproval(
+    const decision = await applyManagedCleanup(
       {
         deny: true,
         reason: "git branch deletion requires explicit user approval.",
@@ -211,7 +287,7 @@ describe("dcg user approval", () => {
     const checked: string[] = [];
     const command =
       "cd /Users/example/project && git worktree prune && if git show-ref --verify --quiet refs/heads/agent-release; then git branch -d agent-release; fi; git worktree list --porcelain; git status --short --branch; git log -3 --oneline";
-    const decision = await applyUserApproval(
+    const decision = await applyManagedCleanup(
       {
         deny: true,
         reason: "git branch deletion requires explicit user approval.",
@@ -235,7 +311,7 @@ describe("dcg user approval", () => {
     const checked: string[] = [];
     const command =
       `git restore -- "docs/backlog/tasks/task-59 - Add-a-local-claim-history-ledger.md" && cd /Users/example/worktree && backlog task edit TASK-59 --plan $'1. Verify.\n2. Run checks.' --plain >/dev/null && printf '%s\\n' '--- WORKTREE ---' && git status --short --branch`;
-    const decision = await applyUserApproval(
+    const decision = await applyManagedCleanup(
       {
         deny: true,
         reason: "git restore discards uncommitted changes.",
@@ -255,38 +331,24 @@ describe("dcg user approval", () => {
     expect(checked[1]).toContain("$'1. Verify.\n2. Run checks.'");
   });
 
-  test("allows literal restore without a path separator in a compound command", async () => {
-    const checked: string[] = [];
-    const command =
-      "cp /Users/example/project/docs/allowlist.tsv /Users/example/project/.worktrees/agent-task/docs/allowlist.tsv && git -C /Users/example/project restore docs/allowlist.tsv && cd /Users/example/project/.worktrees/agent-task && mise exec go -- gofmt -w internal/identity_guard_test.go && git status --short && git diff --check";
-    const decision = await applyUserApproval(
-      {
-        deny: true,
-        reason: "git restore discards uncommitted changes.",
-        ruleId: "core.git:restore-worktree",
-      },
-      command,
+  test("does not exempt restore targeting the primary checkout through git -C", async () => {
+    const blocked = {
+      deny: true,
+      reason: "git restore discards uncommitted changes.",
+      ruleId: "core.git:restore-worktree",
+    };
+    const decision = await applyManagedCleanup(
+      blocked,
+      "git -C /Users/example/project restore docs/allowlist.tsv",
       { hasUI: false, ui: { confirm: async () => false } },
-      undefined,
-      async (clause) => {
-        checked.push(clause);
-        return { deny: false, reason: "" };
-      },
     );
 
-    expect(decision.deny).toBe(false);
-    expect(checked).toEqual([
-      "cp /Users/example/project/docs/allowlist.tsv /Users/example/project/.worktrees/agent-task/docs/allowlist.tsv",
-      "cd /Users/example/project/.worktrees/agent-task",
-      "mise exec go -- gofmt -w internal/identity_guard_test.go",
-      "git status --short",
-      "git diff --check",
-    ]);
+    expect(decision).toEqual(blocked);
   });
 
   test("allows literal restore through the rtk wrapper", async () => {
     const checked: string[] = [];
-    const decision = await applyUserApproval(
+    const decision = await applyManagedCleanup(
       {
         deny: true,
         reason: "git restore discards uncommitted changes.",
@@ -307,7 +369,7 @@ describe("dcg user approval", () => {
 
   test("allows literal checkout discard when every other command passes dcg", async () => {
     const checked: string[] = [];
-    const decision = await applyUserApproval(
+    const decision = await applyManagedCleanup(
       {
         deny: true,
         reason: "git checkout -- discards uncommitted changes permanently.",
@@ -328,7 +390,7 @@ describe("dcg user approval", () => {
 
   test("allows hard reset to a literal revision when every other command passes dcg", async () => {
     const checked: string[] = [];
-    const decision = await applyUserApproval(
+    const decision = await applyManagedCleanup(
       {
         deny: true,
         reason: "git reset --hard destroys uncommitted changes.",
@@ -347,22 +409,26 @@ describe("dcg user approval", () => {
     expect(checked).toEqual(["git status --short --branch", "git log -1 --oneline"]);
   });
 
-  test("does not exempt reset to a variable-derived revision", async () => {
+  test("does not exempt reset in the primary checkout", async () => {
     const blocked = {
       deny: true,
       reason: "git reset --hard destroys uncommitted changes.",
       ruleId: "core.git:reset-hard",
     };
-    const decision = await applyUserApproval(blocked, 'git reset --hard "$revision"', {
-      hasUI: false,
-      ui: { confirm: async () => false },
-    });
+    const decision = await applyUserApproval(
+      blocked,
+      "git reset --hard HEAD",
+      { hasUI: false, ui: { confirm: async () => false }, cwd: "/Users/example/project" },
+      undefined,
+      undefined,
+      ownership,
+      resolveTestCheckout,
+    );
 
     expect(decision).toEqual(blocked);
   });
 
-  test("does not exempt restore with a variable-derived path", async () => {
-    let rechecked = false;
+  test("does not exempt restore in the primary checkout", async () => {
     const blocked = {
       deny: true,
       reason: "git restore discards uncommitted changes.",
@@ -370,17 +436,172 @@ describe("dcg user approval", () => {
     };
     const decision = await applyUserApproval(
       blocked,
-      'git restore -- "$changed_file"',
-      { hasUI: false, ui: { confirm: async () => false } },
+      "git restore -- tracked-file",
+      { hasUI: false, ui: { confirm: async () => false }, cwd: "/Users/example/project" },
       undefined,
-      async () => {
-        rechecked = true;
-        return { deny: false, reason: "" };
-      },
+      undefined,
+      ownership,
+      resolveTestCheckout,
     );
 
     expect(decision).toEqual(blocked);
-    expect(rechecked).toBe(false);
+  });
+
+  test("does not exempt deletion of a protected branch", async () => {
+    const blocked = {
+      deny: true,
+      reason: "git branch deletion requires explicit user approval.",
+      ruleId: "core.git:branch-force-delete",
+    };
+    const decision = await applyUserApproval(
+      blocked,
+      "git branch -D main",
+      { hasUI: false, ui: { confirm: async () => false }, cwd: managedCwd },
+      undefined,
+      undefined,
+      ownership,
+      resolveTestCheckout,
+    );
+
+    expect(decision).toEqual(blocked);
+  });
+
+  test.each([
+    "git branch -D user-feature",
+    "git branch -r -D origin/main",
+    "git branch -f main HEAD~1",
+  ])("does not exempt an unowned, remote, or default branch: %s", async (command) => {
+    const blocked = {
+      deny: true,
+      reason: "git branch deletion or forced ref updates require explicit user approval.",
+      ruleId: "core.git:branch-force-delete",
+    };
+    const decision = await applyUserApproval(
+      blocked,
+      command,
+      { hasUI: false, ui: { confirm: async () => false }, cwd: managedCwd },
+      undefined,
+      undefined,
+      ownership,
+      resolveTestCheckout,
+    );
+
+    expect(decision).toEqual(blocked);
+  });
+
+  test.each([
+    'git -C "$HOME/.dotfiles" reset --hard HEAD',
+    "pushd /Users/example/project && git reset --hard HEAD",
+    "move_to_primary() { cd /Users/example/project; }; move_to_primary; git reset --hard HEAD",
+  ])("does not exempt cleanup after a dynamic target or unmodelled cwd change: %s", async (command) => {
+    const blocked = {
+      deny: true,
+      reason: "git reset --hard destroys uncommitted changes.",
+      ruleId: "core.git:reset-hard",
+    };
+    const decision = await applyUserApproval(
+      blocked,
+      command,
+      { hasUI: false, ui: { confirm: async () => false }, cwd: managedCwd },
+      undefined,
+      undefined,
+      ownership,
+      resolveTestCheckout,
+    );
+
+    expect(decision).toEqual(blocked);
+  });
+
+  test("validates branch names after the option terminator", async () => {
+    const blocked = {
+      deny: true,
+      reason: "git branch deletion requires explicit user approval.",
+      ruleId: "core.git:branch-force-delete",
+    };
+    const decision = await applyUserApproval(
+      blocked,
+      "git branch -D agent-work -- -user-owned",
+      { hasUI: false, ui: { confirm: async () => false }, cwd: managedCwd },
+      undefined,
+      undefined,
+      ownership,
+      resolveTestCheckout,
+    );
+
+    expect(decision).toEqual(blocked);
+  });
+
+  test("does not exempt cleanup in an unknown linked checkout", async () => {
+    const blocked = {
+      deny: true,
+      reason: "git restore discards uncommitted changes.",
+      ruleId: "core.git:restore-worktree",
+    };
+    const decision = await applyUserApproval(
+      blocked,
+      "git restore -- .",
+      { hasUI: false, ui: { confirm: async () => false }, cwd: "/Users/example/unknown-worktree" },
+      undefined,
+      undefined,
+      ownership,
+      resolveTestCheckout,
+    );
+
+    expect(decision).toEqual(blocked);
+  });
+
+  test("does not exempt cleanup in a nested unowned repository", async () => {
+    const blocked = {
+      deny: true,
+      reason: "git reset --hard destroys uncommitted changes.",
+      ruleId: "core.git:reset-hard",
+    };
+    const decision = await applyUserApproval(
+      blocked,
+      "git -C nested-repo reset --hard HEAD",
+      { hasUI: false, ui: { confirm: async () => false }, cwd: managedCwd },
+      undefined,
+      undefined,
+      ownership,
+      async () => ({ repoKey: "/nested/.git", root: `${managedCwd}/nested-repo` }),
+    );
+
+    expect(decision).toEqual(blocked);
+  });
+
+  test("does not exempt cleanup through a symlink to an unowned checkout", async () => {
+    const managedRoot = mkdtempSync(join(tmpdir(), "dcg-owned-worktree-"));
+    const outsideRoot = mkdtempSync(join(tmpdir(), "dcg-unowned-worktree-"));
+    const link = join(managedRoot, "outside-link");
+    symlinkSync(outsideRoot, link);
+    const temporaryOwnership: GitOwnership = {
+      managedRoots: new Map([[managedRoot, repoKey]]),
+      repoRoots: new Map([[outsideRoot, "/outside/.git"]]),
+      managedBranches: new Set(),
+      protectedBranches: new Set(),
+    };
+    const blocked = {
+      deny: true,
+      reason: "git restore discards uncommitted changes.",
+      ruleId: "core.git:restore-worktree",
+    };
+
+    try {
+      const decision = await applyUserApproval(
+        blocked,
+        `git -C ${link} restore -- .`,
+        { hasUI: false, ui: { confirm: async () => false }, cwd: managedRoot },
+        undefined,
+        undefined,
+        temporaryOwnership,
+        async (path) => ({ repoKey: "/outside/.git", root: realpathSync(path) }),
+      );
+      expect(decision).toEqual(blocked);
+    } finally {
+      unlinkSync(link);
+      rmdirSync(managedRoot);
+      rmdirSync(outsideRoot);
+    }
   });
 
   test("does not let branch deletion hide another destructive command", async () => {
@@ -389,7 +610,7 @@ describe("dcg user approval", () => {
       reason: "force push requires explicit user approval.",
       ruleId: "core.git:force-push",
     };
-    const decision = await applyUserApproval(
+    const decision = await applyManagedCleanup(
       {
         deny: true,
         reason: "git branch deletion requires explicit user approval.",
@@ -406,7 +627,7 @@ describe("dcg user approval", () => {
 
   test("allows merged-only branch deletion without prompting", async () => {
     let prompted = false;
-    const decision = await applyUserApproval(
+    const decision = await applyManagedCleanup(
       {
         deny: true,
         reason: "git branch deletion requires explicit user approval.",
@@ -429,7 +650,7 @@ describe("dcg user approval", () => {
   });
 
   test("allows forced branch deletion without UI", async () => {
-    const decision = await applyUserApproval(
+    const decision = await applyManagedCleanup(
       {
         deny: true,
         reason: "git branch deletion requires explicit user approval.",
