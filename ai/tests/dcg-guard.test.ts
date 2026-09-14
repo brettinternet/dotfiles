@@ -428,6 +428,26 @@ describe("dcg user approval", () => {
     expect(decision).toEqual(blocked);
   });
 
+  test("explains destructive command text embedded in a heredoc", async () => {
+    const decision = await applyUserApproval(
+      {
+        deny: true,
+        reason: "git reset --hard destroys uncommitted changes.",
+        ruleId: "core.git:reset-hard",
+      },
+      `python3 - <<'PY'\nfixture = {"shell": "command git reset --hard HEAD"}\nPY`,
+      { hasUI: false, ui: { confirm: async () => false }, cwd: "/Users/example/project" },
+      undefined,
+      undefined,
+      ownership,
+      resolveTestCheckout,
+    );
+
+    expect(decision.deny).toBe(true);
+    expect(decision.reason).toContain("Destructive command text inside a heredoc may have triggered this rule");
+    expect(decision.reason).toContain("`edit` or `write`");
+  });
+
   test("does not exempt restore in the primary checkout", async () => {
     const blocked = {
       deny: true,

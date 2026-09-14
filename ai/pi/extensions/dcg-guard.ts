@@ -46,8 +46,11 @@ const EXEMPTED_GIT_RULES = new Set([
 ]);
 const WORKTREE_LIFECYCLE_COMMAND = /\b(?:hwt\s+(?:remove|rm)|git\s+worktree\s+remove|worklease\s+release)\b/;
 const PROTECTED_WORKSPACE_LABEL = /(?:^|[-_\s])(?:keep|user-owned)(?:$|[-_\s])/i;
+const HEREDOC = /<<-?\s*(?:'[^'\n]+'|"[^"\n]+"|[A-Za-z_][A-Za-z0-9_]*)/;
 const BRANCH_OWNERSHIP_GUIDANCE =
   "Ownership could not be verified. For managed cleanup, run `hwt list --cwd <repository-path>`, then combine `hwt remove ... && git branch -D ...` in one Bash call before the worktree disappears.";
+const HEREDOC_GUIDANCE =
+  "Destructive command text inside a heredoc may have triggered this rule. If it is fixture or documentation data rather than executable code, use the `edit` or `write` tool and run validation separately.";
 
 export type GitOwnership = {
   managedRoots: Map<string, string>;
@@ -731,6 +734,9 @@ export async function applyUserApproval(
 
   if (originalRuleId === "core.git:branch-force-delete" && !ownershipVerified) {
     decision = { ...decision, reason: `${decision.reason}\n\n${BRANCH_OWNERSHIP_GUIDANCE}` };
+  }
+  if (EXEMPTED_GIT_RULES.has(originalRuleId) && HEREDOC.test(command) && !ownershipVerified) {
+    decision = { ...decision, reason: `${decision.reason}\n\n${HEREDOC_GUIDANCE}` };
   }
 
   if (!decision.ruleId?.startsWith("core.git:") || !ctx.hasUI) return decision;
