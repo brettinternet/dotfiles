@@ -88,10 +88,7 @@ if [ -x "$(command -v kubecolor)" ]; then
 fi
 alias k='kubectl'
 
-profile_bun_bin="$HOME/.bun/bin"
-if [ -d "$profile_bun_bin" ]; then
-  export PATH="$profile_bun_bin:$PATH"
-fi
+export PATH="$HOME/.bun/bin:$PATH"
 
 unset profile_workspace_only_env profile_rust_env_file profile_ten_minutes \
-  profile_dircolors profile_bun_bin
+  profile_dircolors
