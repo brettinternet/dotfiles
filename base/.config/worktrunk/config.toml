@@ -11,3 +11,8 @@ if [ "${HERDR_ENV:-}" = "1" ]; then
   herdr worktree open --cwd {{ repo_path }} --path {{ worktree_path }} --label {{ worktree_name }} "$herdr_focus_flag"
 fi
 '''
+
+[post-remove]
+herdr = '''
+python3 "$HOME/.config/herdr/plugins/local/worktrunk/close.py" {{ worktree_path }}
+'''
