@@ -78,11 +78,7 @@ update-herdr:
 			printf '%s\n' 'Skipping Herdr plugin update: no GitHub plugins installed'; \
 		else \
 			printf '%s\n' "$$sources" | while IFS= read -r source; do \
-				if [ "$$source" = dkarter/hwt/plugins/herdr ] && command -v hwt >/dev/null 2>&1; then \
-					hwt plugin update || exit; \
-				else \
-					herdr plugin install "$$source" --yes || exit; \
-				fi; \
+				herdr plugin install "$$source" --yes || exit; \
 			done; \
 		fi; \
 	fi

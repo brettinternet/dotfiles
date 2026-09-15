@@ -374,3 +374,5 @@ for DOTFILES_ZSH_CONFIG in "$DOTFILES_ZSH_PLATFORM_CONFIG" "$HOME/.zshrc.x11" "$
 done
 
 unset DOTFILES_ZSH_CONFIG DOTFILES_ZSH_PLATFORM_CONFIG
+
+if command -v wt >/dev/null 2>&1; then eval "$(command wt config shell init zsh)"; fi
