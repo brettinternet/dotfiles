@@ -3,6 +3,7 @@ Taskfile.yaml
 mise.local.toml
 .trees
 .worktrees
+.hum.yaml
 
 # AI
 .rtk
