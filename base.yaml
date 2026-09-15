@@ -77,8 +77,8 @@
     ~/.config/herdr/config.toml:
       path: base/.config/herdr/config.toml
       backup: true
-    ~/.config/hwt/config.yaml:
-      path: base/.config/hwt/config.yaml
+    ~/.config/worktrunk/config.toml:
+      path: base/.config/worktrunk/config.toml
       backup: true
     ~/.config/nvim:
       path: base/.config/nvim
@@ -180,10 +180,6 @@
         if [ ! -d "$HOME/.config/herdr/plugins/config/heeler" ]; then
           env -u HERDR_SOCKET_PATH herdr plugin install "ZingerLittleBee/Heeler/plugin" --ref main --yes
           echo 'herdr plugin: heeler'
-        fi
-        if [ ! -d "$HOME/.config/herdr/plugins/config/hwt.worktrees" ]; then
-          env -u HERDR_SOCKET_PATH herdr plugin install "dkarter/hwt/plugins/herdr" --yes
-          echo 'herdr plugin: hwt.worktrees'
         fi
         installed="$(herdr plugin list --json)"
         for plugin in \

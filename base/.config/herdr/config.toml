@@ -250,12 +250,6 @@ command = "drovr.move-tab"
 description = "move tab to workspace"
 
 [[keys.command]]
-key = "prefix+shift+g"
-type = "plugin_action"
-command = "hwt.worktrees.new"
-description = "new configured worktree"
-
-[[keys.command]]
 key = "prefix+shift+r"
 type = "shell"
 command = "herdr server reload-config >/dev/null && herdr notification show 'Herdr config reloaded'"

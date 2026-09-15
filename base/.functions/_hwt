@@ -1,6 +1,0 @@
-#compdef hwt
-
-_hwt() {
-  (( $+commands[hwt] )) || return 1
-  eval "$(hwt completion zsh)"
-}
