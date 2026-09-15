@@ -152,7 +152,7 @@ profiles:
       commit: [codex-spark, high]
       plan: [codex-sol, high]
       advisor: [codex-luna, max]
-      title: [codex-spark, low]
+      title: [codex-luna, low]
       tiny: [codex-spark, high]
       writer: [codex-writer, medium]
     ompSettings:
@@ -258,7 +258,7 @@ profiles:
       task: [codex-luna, max]
       commit: [codex-spark, high]
       plan: [claude-opus, high]
-      title: [codex-spark, high]
+      title: [codex-luna, high]
       tiny: [codex-spark, high]
       writer: [claude-sonnet, low]
     ompSettings:
@@ -395,6 +395,6 @@ profiles:
       commit: [codex-spark, high]
       plan: [codex-sol, high]
       advisor: [codex-luna, max]
-      title: [codex-spark, high]
+      title: [codex-luna, high]
       tiny: [personal-tiny, medium]
       writer: [or-writer, medium]
