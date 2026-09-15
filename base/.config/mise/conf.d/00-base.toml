@@ -22,6 +22,7 @@ direnv = "latest"
 usage = "latest"
 
 # search
+bat = "latest"
 fd = "latest"
 fzf = "latest"
 rg = "latest"
