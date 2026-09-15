@@ -4,6 +4,10 @@ worktree-path = "{{ repo_path }}/.worktrees/{{ branch | sanitize }}"
 [post-start]
 herdr = '''
 if [ "${HERDR_ENV:-}" = "1" ]; then
-  herdr worktree open --cwd {{ repo_path }} --path {{ worktree_path }} --label {{ worktree_name }} --no-focus
+  herdr_focus_flag=--no-focus
+  if [ "${WORKTRUNK_HERDR_FOCUS:-}" = "1" ]; then
+    herdr_focus_flag=--focus
+  fi
+  herdr worktree open --cwd {{ repo_path }} --path {{ worktree_path }} --label {{ worktree_name }} "$herdr_focus_flag"
 fi
 '''

@@ -27,6 +27,8 @@ previous_agent = ["prefix+alt+p", "prefix+alt+["]
 next_agent = ["prefix+alt+n", "prefix+alt+]"]
 focus_agent = "prefix+alt+1..9"
 new_workspace = "prefix+shift+c"
+# Worktrunk owns creation so project hooks run and checkouts stay under .worktrees.
+new_worktree = []
 switch_workspace = "prefix+shift+1..9"
 previous_workspace = ["prefix+shift+p", "prefix+shift+["]
 next_workspace = ["prefix+shift+n", "prefix+shift+]"]
@@ -47,6 +49,12 @@ command = "exec \"${SHELL:-sh}\""
 description = "open terminal"
 width = 80
 height = 30
+
+[[keys.command]]
+key = "prefix+shift+g"
+type = "shell"
+command = "herdr plugin pane open --plugin brett.worktrunk --entrypoint create --focus"
+description = "create worktree with Worktrunk"
 
 [[keys.command]]
 key = "prefix+g"
