@@ -77,6 +77,8 @@
     ~/.config/herdr/config.toml:
       path: base/.config/herdr/config.toml
       backup: true
+    ~/.config/herdr/plugins/local/worktrunk:
+      path: base/.config/herdr/plugins/worktrunk
     ~/.config/worktrunk/config.toml:
       path: base/.config/worktrunk/config.toml
       backup: true
@@ -182,6 +184,17 @@
           echo 'herdr plugin: heeler'
         fi
         installed="$(herdr plugin list --json)"
+        if ! printf '%s' "$installed" | jq -e \
+          '.result.plugins[] | select(.plugin_id == "brett.worktrunk" and .source.kind == "local")' \
+          >/dev/null; then
+          if printf '%s' "$installed" | jq -e \
+            '.result.plugins[] | select(.plugin_id == "brett.worktrunk")' \
+            >/dev/null; then
+            herdr plugin unlink brett.worktrunk
+          fi
+          herdr plugin link "$HOME/.config/herdr/plugins/local/worktrunk"
+          echo 'herdr plugin: brett.worktrunk'
+        fi
         for plugin in \
           command-palette \
           last-workspace \
