@@ -3,7 +3,6 @@ Taskfile.yaml
 mise.local.toml
 .trees
 .worktrees
-.herdr-worktree.yaml
 
 # AI
 .rtk
