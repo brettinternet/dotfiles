@@ -7,7 +7,7 @@
 "github:brettinternet/hum" = { version = "latest", minimum_release_age = "0" }
 
 # dev
-go = "latest"
+go = { version = "latest", postinstall = 'go env -w GOPATH="$HOME/.go"' }
 rust = "latest"
 ruby = "latest"
 uv = "latest"
