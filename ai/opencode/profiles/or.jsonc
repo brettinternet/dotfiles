@@ -29,7 +29,7 @@
       "variant": "high"
     },
     "writer": {
-      "model": "openrouter/anthropic/claude-opus-4.6",
+      "model": "openrouter/google/gemini-3.8-flash",
       "variant": "medium"
     }
   }

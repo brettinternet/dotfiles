@@ -43,6 +43,8 @@ providers:
         contextWindow: 256000
       anthropic/claude-opus-4.6:
         contextWindow: 256000
+      google/gemini-3.8-flash:
+        contextWindow: 256000
       deepseek/deepseek-v4-flash-0731:
         contextWindow: 256000
       ~deepseek/deepseek-v4-flash-latest:

@@ -99,6 +99,9 @@ models:
         opencode: openrouter/anthropic/claude-opus-4.6,
       }
     context: conservative
+  or-gemini-writer:
+    ids: { omp: openrouter/google/gemini-3.8-flash, pi: openrouter/google/gemini-3.8-flash, opencode: openrouter/google/gemini-3.8-flash }
+    context: conservative
   or-flash:
     ids:
       {
@@ -290,11 +293,11 @@ profiles:
       advisor: [or-glm, max]
       title: [or-flash, off]
       reviewer: [or-reviewer, xhigh]
-      writer: [or-writer, medium]
+      writer: [or-gemini-writer, medium]
     ompSettings: { providers: { webSearchOrder: [perplexity] } }
     pi:
       parent: [or-sol, medium]
-      enabled: [or-sol, or-luna, or-sol-pro, or-fable-auto, or-glm, or-reviewer, or-writer]
+      enabled: [or-sol, or-luna, or-sol-pro, or-fable-auto, or-glm, or-reviewer, or-gemini-writer, or-writer]
       defaultAgent: [or-luna, max]
       researcher: [or-luna, medium]
       progress: [or-flash, off]
@@ -312,6 +315,10 @@ profiles:
       modelScope: [openrouter/*]
       settings:
         extensions: [$DOTFILES/ai/pi/extensions/dcg-guard.ts, $DOTFILES/ai/pi/extensions/openrouter-web-search.ts]
+        subagents:
+          agentOverrides:
+            writer:
+              fallbackModels: [openrouter/anthropic/claude-opus-4.6:medium]
         webSearchConfig: { tools: { webSearch: { enabled: false } } }
     opencode:
       efforts:
