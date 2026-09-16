@@ -206,15 +206,20 @@
           seamless-navigation \
           window-title
         do
-          plugin_id="brett.$plugin"
+          legacy_plugin_id="brett.$plugin"
+          plugin_id="brettinternet.$plugin"
           source="brettinternet/herdr-plugins/$plugin"
-          if printf '%s' "$installed" | jq -e --arg id "$plugin_id" \
+          if printf '%s' "$installed" | jq -e --arg id "$legacy_plugin_id" \
+            '.result.plugins[] | select(.plugin_id == $id and .source.kind == "github")' \
+            >/dev/null; then
+            herdr plugin uninstall "$legacy_plugin_id"
+          elif printf '%s' "$installed" | jq -e --arg id "$legacy_plugin_id" \
             '.result.plugins[] | select(.plugin_id == $id and .source.kind == "local")' \
             >/dev/null; then
-            herdr plugin unlink "$plugin_id"
+            herdr plugin unlink "$legacy_plugin_id"
           fi
-          if ! printf '%s' "$installed" | jq -e --arg id "$plugin_id" --arg subdir "$plugin" \
-            '.result.plugins[] | select(.plugin_id == $id and .source.kind == "github" and .source.owner == "brettinternet" and .source.repo == "herdr-plugins" and .source.subdir == $subdir)' \
+          if ! printf '%s' "$installed" | jq -e --arg id "$plugin_id" \
+            '.result.plugins[] | select(.plugin_id == $id)' \
             >/dev/null; then
             herdr plugin install "$source" --yes
             echo "herdr plugin: $plugin_id"

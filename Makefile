@@ -73,7 +73,7 @@ update-herdr:
 	elif ! command -v jq >/dev/null 2>&1; then \
 		printf '%s\n' 'Skipping Herdr plugin update: jq is not installed'; \
 	else \
-		sources=$$(herdr plugin list --json | jq -r '.result.plugins[].source | select(.kind == "github") | .owner + "/" + .repo + (if (.subdir // "") == "" then "" else "/" + .subdir end)'); \
+		sources=$$(herdr plugin list --json | jq -r '.result.plugins[].source | select(.kind == "github") | .owner + "/" + .repo + (if (.subdir // "") == "" then "" else "/" + .subdir end)' | sort -u); \
 		if [ -z "$$sources" ]; then \
 			printf '%s\n' 'Skipping Herdr plugin update: no GitHub plugins installed'; \
 		else \
