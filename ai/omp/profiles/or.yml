@@ -11,7 +11,7 @@ modelRoles:
   advisor: openrouter/z-ai/glm-5.3:max
   title: openrouter/deepseek/deepseek-v4-flash-0731:off
   reviewer: openrouter/anthropic/claude-opus-4.8:xhigh
-  writer: openrouter/anthropic/claude-opus-4.6:medium
+  writer: openrouter/google/gemini-3.8-flash:medium
 providers:
   webSearchOrder:
   - perplexity

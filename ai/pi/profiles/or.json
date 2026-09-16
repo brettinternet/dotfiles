@@ -9,6 +9,7 @@
     "openrouter/~anthropic/claude-fable-latest",
     "openrouter/z-ai/glm-5.3",
     "openrouter/anthropic/claude-opus-4.8",
+    "openrouter/google/gemini-3.8-flash",
     "openrouter/anthropic/claude-opus-4.6"
   ],
   "subagents": {
@@ -49,8 +50,11 @@
         "thinking": "xhigh"
       },
       "writer": {
-        "model": "openrouter/anthropic/claude-opus-4.6",
-        "thinking": "medium"
+        "model": "openrouter/google/gemini-3.8-flash",
+        "thinking": "medium",
+        "fallbackModels": [
+          "openrouter/anthropic/claude-opus-4.6:medium"
+        ]
       }
     },
     "modelScope": {

@@ -1,4 +1,7 @@
 {
   "fleetView": true,
-  "fleetViewPlacement": "aboveEditor"
+  "fleetViewPlacement": "aboveEditor",
+  "modelExclusions": {
+    "defaultTtlMs": 300000
+  }
 }
