@@ -170,6 +170,7 @@ function hard-clear-screen-and-title {
 }
 zle -N hard-clear-screen-and-title
 bindkey '\e^L' hard-clear-screen-and-title
+bindkey '\e[108;6u' hard-clear-screen-and-title
 
 # -- Plugins via zinit ----------------------------------------
 # Helpful plugin list: https://github.com/zdharma/Zsh-100-Commits-Club
