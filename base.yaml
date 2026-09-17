@@ -133,6 +133,8 @@
           trap - EXIT HUP INT TERM
         fi
       description: Include managed SSH configuration
+    - command: ~/.bin/configure-atuin-sync
+      description: Configure private Atuin sync address
     # Initializing Zsh installs missing Zinit plugins without updating existing
     # checkouts. Version updates are explicit through `make update-zinit`.
     - command: |
@@ -142,30 +144,6 @@
           zsh -ic ':'
         fi
       description: Install missing Zinit plugins
-    - command: |
-        set -eu
-
-        if [ -z "${ATUIN_SYNC_ADDRESS:-}" ]; then
-          exit 0
-        fi
-
-        if command -v atuin >/dev/null 2>&1; then
-          atuin_bin="$(command -v atuin)"
-        elif [ -x "$HOME/.zinit/plugins/atuinsh---atuin/atuin" ]; then
-          atuin_bin="$HOME/.zinit/plugins/atuinsh---atuin/atuin"
-        else
-          printf '%s\n' 'ATUIN_SYNC_ADDRESS is set, but atuin is unavailable' >&2
-          exit 1
-        fi
-
-        "$atuin_bin" config set --type string sync_address "$ATUIN_SYNC_ADDRESS"
-        env -u ATUIN_SYNC_ADDRESS "$atuin_bin" config get sync_address >/dev/null
-
-        atuin_config="$HOME/.config/atuin/config.toml"
-        if [ -f "$atuin_config" ]; then
-          chmod 600 "$atuin_config"
-        fi
-      description: Configure private Atuin sync address
     # Allow direnv access to ~/.envrc
     - ['[ -f "$HOME/.zinit/plugins/direnv---direnv/direnv" ] && direnv allow "$HOME" || true']
     - ['[ -f "$HOME/.zinit/plugins/mise/mise" ] && chmod u+x "$HOME/.zinit/plugins/mise/mise" || true']
