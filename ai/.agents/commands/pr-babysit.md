@@ -1,9 +1,9 @@
 ---
 description: Keep selected PRs green and address feedback until ready to merge
-argument-hint: '[pr-number | gh-search-qualifiers...] [--reviewer login]'
+argument-hint: '[pr-number | gh-search-qualifiers...] [--reviewer login]...'
 ---
 
-Babysit either one PR identified by a single bare PR number in the current repository, or every open PR matching the supplied `gh search prs` qualifiers. With no selection arguments, match open PRs authored by the authenticated user. Pass search qualifiers through unchanged, including repository and organization scopes such as `repo:pdq/houston` and `org:pdq`. An optional `--reviewer LOGIN` names the reviewer and is not part of the search. Reject a PR number combined with qualifiers, duplicate reviewer options, a missing reviewer login, or otherwise ambiguous arguments.
+Babysit either one PR identified by a single bare PR number in the current repository, or every open PR matching the supplied `gh search prs` qualifiers. With no selection arguments, match open PRs authored by the authenticated user. Pass search qualifiers through unchanged, including repository and organization scopes such as `repo:pdq/houston` and `org:pdq`. Repeat the optional `--reviewer LOGIN` argument to name one or more reviewers; reviewer arguments are not part of the search. Deduplicate repeated reviewer logins. Reject a PR number combined with qualifiers, a missing reviewer login, or otherwise ambiguous arguments.
 
 This command authorizes comments, reviewer requests, item-scoped fixes, commits, and pushes to each selected PR's existing head branch. Never merge, approve on another person's behalf, dismiss reviews, request changes, force-push, or touch another branch.
 
@@ -26,8 +26,8 @@ Once the PR is mergeable, loop over CI and unresolved review threads together:
 
 Do not weaken tests, suppress symptoms, make unrelated changes, or argue repeatedly. When a valid finding depends on a product or architecture decision, ask the user with the evidence and viable choices.
 
-## Reviewer and finish
+## Reviewers and finish
 
-Once the PR is mergeable, current feedback is clear, and CI has no known failure, request the named reviewer if supplied and confirm the request landed. Continue processing their feedback until that exact reviewer approves the current head. If no reviewer was supplied, finish when feedback is clear and gating CI is green.
+Once the PR is mergeable, current feedback is clear, and CI has no known failure, request every named reviewer if supplied and confirm each request landed. Continue processing their feedback until every named reviewer approves the current head. If no reviewer was supplied, finish when feedback is clear and gating CI is green.
 
 Stop a PR after eight hours without a head, CI, review, comment, or thread-state change. Report it as timed out, not ready. Finish with each PR's head SHA, CI and review state, unresolved findings, blocker, and worktree status. Say ready to merge only when every required condition is satisfied; do not merge.
