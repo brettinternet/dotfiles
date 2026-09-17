@@ -41,8 +41,6 @@ shell-integration-features = no-cursor,ssh-env,ssh-terminfo
 # Keyboard
 keybind = alt+backspace=text:\x1b\x7f
 keybind = shift+enter=text:\n
-# Match Herdr's hard-clear sequence (Escape, then Ctrl+L).
-keybind = ctrl+shift+l=text:\x1b\x0c
 # required for copying inside herdr
 keybind = super+c=copy_to_clipboard
 keybind = super+v=paste_from_clipboard
