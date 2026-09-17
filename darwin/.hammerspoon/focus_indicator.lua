@@ -21,6 +21,7 @@ local focusedWindow = nil
 local previousFocusedApplication = nil
 local previousFocusedWindow = nil
 local renderVersion = 0
+local borderWidth = 6
 
 local eventTypes = hs.eventtap.event.types
 local keyboardEvents = {
@@ -67,44 +68,46 @@ local function labelFor(window, applicationName)
   return title or "Focused window"
 end
 
-local function render(window, applicationName)
-  dismissCurrent()
+local function canvasGeometry(window, frame)
+  local screen = window:screen()
+  local screenFrame = screen and screen:fullFrame() or nil
+  local borderFitsOutside = screenFrame
+    and frame.x >= screenFrame.x + borderWidth
+    and frame.y >= screenFrame.y + borderWidth
+    and frame.x + frame.w <= screenFrame.x + screenFrame.w - borderWidth
+    and frame.y + frame.h <= screenFrame.y + screenFrame.h - borderWidth
 
-  if not window then
-    return
-  end
-  local frame = window:frame()
-  if not frame or not frame.w or not frame.h or frame.w <= 6 or frame.h <= 6 then
-    return
+  if borderFitsOutside then
+    return {
+      frame = {
+        x = frame.x - borderWidth,
+        y = frame.y - borderWidth,
+        w = frame.w + borderWidth * 2,
+        h = frame.h + borderWidth * 2,
+      },
+      border = { x = borderWidth / 2, y = borderWidth / 2, w = frame.w + borderWidth, h = frame.h + borderWidth },
+      contentOffset = borderWidth,
+    }
   end
 
-  local newCanvas = hs.canvas.new(frame)
-  if not newCanvas then
-    return
-  end
-  canvas = newCanvas
-  highlightedWindow = window
-  highlightedFrame = frame
-  highlightedLabel = labelFor(window, applicationName)
-  canvas:level("overlay")
-  canvas:behavior({
-    "canJoinAllSpaces",
-    "fullScreenAuxiliary",
-    "ignoresCycle",
-  })
-  canvas[1] = {
-    type = "rectangle",
-    action = "stroke",
-    frame = { x = 3, y = 3, w = frame.w - 6, h = frame.h - 6 },
-    strokeWidth = 6,
-    roundedRectRadii = { xRadius = 10, yRadius = 10 },
-    strokeColor = { red = 0.04, green = 0.52, blue = 1, alpha = 0.95 },
+  return {
+    frame = frame,
+    border = {
+      x = borderWidth / 2,
+      y = borderWidth / 2,
+      w = frame.w - borderWidth,
+      h = frame.h - borderWidth,
+    },
+    contentOffset = 0,
   }
+end
 
+local function updateCanvasElements(frame, geometry)
+  canvas[1].frame = geometry.border
   if frame.w >= 160 and frame.h >= 64 then
     local labelWidth = math.min(520, frame.w - 32)
-    local labelX = (frame.w - labelWidth) / 2
-    local labelY = frame.h - 46
+    local labelX = geometry.contentOffset + (frame.w - labelWidth) / 2
+    local labelY = geometry.contentOffset + frame.h - 46
     canvas[2] = {
       type = "rectangle",
       action = "fill",
@@ -121,7 +124,48 @@ local function render(window, applicationName)
       textAlignment = "center",
       textLineBreak = "truncateTail",
     }
+  else
+    canvas[3] = nil
+    canvas[2] = nil
   end
+end
+
+local function render(window, applicationName)
+  dismissCurrent()
+
+  if not window then
+    return
+  end
+  local frame = window:frame()
+  if not frame or not frame.w or not frame.h or frame.w <= 6 or frame.h <= 6 then
+    return
+  end
+
+  local geometry = canvasGeometry(window, frame)
+  local newCanvas = hs.canvas.new(geometry.frame)
+  if not newCanvas then
+    return
+  end
+  canvas = newCanvas
+  highlightedWindow = window
+  highlightedFrame = frame
+  highlightedLabel = labelFor(window, applicationName)
+  canvas:level("overlay")
+  canvas:behavior({
+    "canJoinAllSpaces",
+    "fullScreenAuxiliary",
+    "ignoresCycle",
+  })
+  canvas[1] = {
+    type = "rectangle",
+    action = "stroke",
+    frame = geometry.border,
+    strokeWidth = borderWidth,
+    roundedRectRadii = { xRadius = 10, yRadius = 10 },
+    strokeColor = { red = 0.04, green = 0.52, blue = 1, alpha = 0.95 },
+  }
+
+  updateCanvasElements(frame, geometry)
 
   canvas:show()
   dismissalTimer = hs.timer.doAfter(1.8, function()
@@ -161,36 +205,9 @@ local function followHighlightedWindow(window)
     return
   end
 
-  canvas:frame(frame)
-  if frame.w == highlightedFrame.w and frame.h == highlightedFrame.h then
-    highlightedFrame = frame
-    return
-  end
-  canvas[1].frame = { x = 3, y = 3, w = frame.w - 6, h = frame.h - 6 }
-  if frame.w >= 160 and frame.h >= 64 then
-    local labelWidth = math.min(520, frame.w - 32)
-    local labelX = (frame.w - labelWidth) / 2
-    local labelY = frame.h - 46
-    canvas[2] = {
-      type = "rectangle",
-      action = "fill",
-      frame = { x = labelX, y = labelY, w = labelWidth, h = 34 },
-      roundedRectRadii = { xRadius = 8, yRadius = 8 },
-      fillColor = { white = 0.08, alpha = 0.88 },
-    }
-    canvas[3] = {
-      type = "text",
-      text = highlightedLabel,
-      frame = { x = labelX + 12, y = labelY + 8, w = labelWidth - 24, h = 18 },
-      textColor = { white = 1, alpha = 1 },
-      textSize = 14,
-      textAlignment = "center",
-      textLineBreak = "truncateTail",
-    }
-  else
-    canvas[3] = nil
-    canvas[2] = nil
-  end
+  local geometry = canvasGeometry(window, frame)
+  canvas:frame(geometry.frame)
+  updateCanvasElements(frame, geometry)
   highlightedFrame = frame
 end
 
