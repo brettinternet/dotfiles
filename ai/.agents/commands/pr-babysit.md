@@ -11,7 +11,7 @@ This command authorizes comments, reviewer requests, item-scoped fixes, commits,
 
 Resolve a bare PR number in the current repository with `gh`. Otherwise discover matching PRs with `gh search prs`, requiring them to be open and passing every supplied qualifier through unchanged; searches may span repositories or an organization through qualifiers such as `repo:` and `org:`. Resolve each result in its own repository. Retain the PR's source repository, head branch, and head SHA. Before every edit or push, require the PR to remain open and its source ref and expected head SHA to remain unchanged. Push explicitly to that source repository and branch.
 
-For a single selected PR, use the current checkout only when it belongs to that PR's repository, is clean, and is exactly at the PR head. Otherwise use an isolated worktree. For multiple selected PRs, create one isolated worktree and one worker per PR; never share a checkout between PRs. Preserve any dirty or conflicted worktree for the user rather than discarding it.
+For a single selected PR, use the current checkout only when it belongs to that PR's repository, is clean, and is exactly at the PR head. Otherwise use an isolated worktree. For multiple selected PRs, sort them by ascending PR number regardless of discovery order, then process them sequentially so the lowest-numbered PR finishes or stops before starting the next. Create a separate isolated worktree and worker for each PR; never share a checkout between PRs. Preserve any dirty or conflicted worktree for the user rather than discarding it.
 
 ## Clear merge conflicts, CI, and feedback
 
