@@ -182,7 +182,7 @@ local function application(bundleID, name)
   return app
 end
 
-local function window(frame, title, fallbackApplication)
+local function window(frame, title, fallbackApplication, fallbackScreen)
   if type(fallbackApplication) == "string" then
     fallbackApplication = application(nil, fallbackApplication)
   end
@@ -197,6 +197,9 @@ local function window(frame, title, fallbackApplication)
     end,
     application = function()
       return fallbackApplication
+    end,
+    screen = function()
+      return fallbackScreen
     end,
   }
   function target:setFrame(newFrame)
@@ -346,6 +349,29 @@ local smallCanvas = canvases[#canvases]
 assert(smallCanvas[1], "small valid window has border")
 assert_equal(smallCanvas[2], nil, "small valid window has no label background")
 assert_equal(smallCanvas[3], nil, "small valid window has no label")
+
+local display = {
+  fullFrame = function()
+    return { x = 0, y = 0, w = 1200, h = 800 }
+  end,
+}
+local popupWindow = window({ x = 100, y = 100, w = 300, h = 200 }, "Popup", "App", display)
+keyboardFocus(popupWindow, "App")
+local popupCanvas = canvases[#canvases]
+assert_equal(popupCanvas.sourceFrame.x, 94, "outside border expands canvas to the left")
+assert_equal(popupCanvas.sourceFrame.y, 94, "outside border expands canvas above")
+assert_equal(popupCanvas.sourceFrame.w, 312, "outside border expands canvas width")
+assert_equal(popupCanvas.sourceFrame.h, 212, "outside border expands canvas height")
+assert_equal(popupCanvas[1].frame.w, 306, "outside stroke ends at the window edge")
+assert_equal(popupCanvas[2].frame.y, 160, "outside canvas keeps the label inside the window")
+
+popupWindow:setFrame({ x = 0, y = 100, w = 300, h = 200 })
+followCallback(popupWindow)
+timers[#timers].callback()
+assert_equal(popupCanvas.sourceFrame.x, 0, "border moves inside when there is no room outside")
+assert_equal(popupCanvas.sourceFrame.w, 300, "inside border uses the window-sized canvas")
+assert_equal(popupCanvas[1].frame.w, 294, "inside border remains within the window")
+assert_equal(popupCanvas[2].frame.y, 154, "inside canvas keeps the label aligned to the window")
 
 for _, invalidFrame in ipairs({ false, { x = 0, y = 0, w = 4, h = 100 }, { x = 0, y = 0, w = 100, h = 4 } }) do
   local before = #canvases
