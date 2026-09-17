@@ -1,17 +1,17 @@
 ---
 description: Keep selected PRs green and address feedback until ready to merge
-argument-hint: '[pr-number] [reviewer]'
+argument-hint: '[pr-number | gh-search-qualifiers...] [--reviewer login]'
 ---
 
-Babysit one PR, or every open PR authored by the authenticated user when no number is supplied. An optional nonnumeric argument names the reviewer. Reject ambiguous arguments.
+Babysit either one PR identified by a single bare PR number in the current repository, or every open PR matching the supplied `gh search prs` qualifiers. With no selection arguments, match open PRs authored by the authenticated user. Pass search qualifiers through unchanged, including repository and organization scopes such as `repo:pdq/houston` and `org:pdq`. An optional `--reviewer LOGIN` names the reviewer and is not part of the search. Reject a PR number combined with qualifiers, duplicate reviewer options, a missing reviewer login, or otherwise ambiguous arguments.
 
 This command authorizes comments, reviewer requests, item-scoped fixes, commits, and pushes to each selected PR's existing head branch. Never merge, approve on another person's behalf, dismiss reviews, request changes, force-push, or touch another branch.
 
 ## Select safely
 
-Resolve the repository and PR with `gh`. Retain the PR's source repository, head branch, and head SHA. Before every edit or push, require the PR to remain open and its source ref and expected head SHA to remain unchanged. Push explicitly to that source repository and branch.
+Resolve a bare PR number in the current repository with `gh`. Otherwise discover matching PRs with `gh search prs`, requiring them to be open and passing every supplied qualifier through unchanged; searches may span repositories or an organization through qualifiers such as `repo:` and `org:`. Resolve each result in its own repository. Retain the PR's source repository, head branch, and head SHA. Before every edit or push, require the PR to remain open and its source ref and expected head SHA to remain unchanged. Push explicitly to that source repository and branch.
 
-For one PR, use the current checkout only when it is clean and exactly at the PR head. Otherwise use an isolated worktree. In batch mode, create one isolated worktree and one worker per PR; never share a checkout between PRs. Preserve any dirty or conflicted worktree for the user rather than discarding it.
+For a single selected PR, use the current checkout only when it belongs to that PR's repository, is clean, and is exactly at the PR head. Otherwise use an isolated worktree. For multiple selected PRs, create one isolated worktree and one worker per PR; never share a checkout between PRs. Preserve any dirty or conflicted worktree for the user rather than discarding it.
 
 ## Clear merge conflicts, CI, and feedback
 
