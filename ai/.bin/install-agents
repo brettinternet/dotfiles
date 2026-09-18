@@ -157,6 +157,8 @@ for source in "$source_dir"/*.md; do
   [ -f "$source" ] || continue
 
   role=$(basename "$source" .md)
+  claude_name=$(field "$source" claude-name)
+  [ -n "$claude_name" ] || claude_name=$role
   if [ -z "$(field "$source" description)" ]; then
     printf 'Missing agent description in: %s\n' "$source" >&2
     exit 1
@@ -170,7 +172,7 @@ for source in "$source_dir"/*.md; do
     exit 1
   fi
 
-  if ships "$source" claude; then require_managed "$claude_dir/$role.md"; fi
+  if ships "$source" claude; then require_managed "$claude_dir/$claude_name.md"; fi
   if ships "$source" omp; then require_managed "$omp_dir/$role.md"; fi
   if ships "$source" pi; then require_managed "$pi_dir/$role.md"; fi
   if ships "$source" opencode; then require_managed "$opencode_dir/$role.md"; fi
@@ -198,18 +200,20 @@ for source in "$source_dir"/*.md; do
 
   role=$(basename "$source" .md)
   description=$(field "$source" description)
+  claude_name=$(field "$source" claude-name)
+  [ -n "$claude_name" ] || claude_name=$role
 
   if ships "$source" claude; then
     {
       printf '%s\n' '---'
-      printf 'name: %s\n' "$role"
+      printf 'name: %s\n' "$claude_name"
       printf 'description: %s\n' "$description"
       printf 'model: %s\n' "$(field "$source" claude-model)"
       printf 'effort: %s\n' "$(field "$source" claude-effort)"
       printf '%s\n\n' '---'
       body "$source"
-    } > "$claude_dir/$role.md"
-    claude_names="$claude_names$role.md
+    } > "$claude_dir/$claude_name.md"
+    claude_names="$claude_names$claude_name.md
 "
   fi
 

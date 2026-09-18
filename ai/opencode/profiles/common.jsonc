@@ -87,13 +87,6 @@
             "input": 128000,
             "output": 128000
           }
-        },
-        "claude-opus-4.6": {
-          "limit": {
-            "context": 256000,
-            "input": 128000,
-            "output": 128000
-          }
         }
       }
     },

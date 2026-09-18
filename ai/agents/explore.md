@@ -1,7 +1,10 @@
 ---
 description: Read-only codebase scout on a cheap model for substantial discovery that would otherwise pollute the parent context. Finds files, traces callsites, maps data flow, gathers evidence, and summarizes conventions with exact path:line references. Use one by default; fan out only across distinct independent evidence seams.
-tools: omp pi opencode
+tools: claude omp pi opencode
 pi-tools: read, grep, find, ls
+claude-name: Explore
+claude-model: haiku
+claude-effort: low
 omp-model: pi/smol
 omp-effort: low
 ---

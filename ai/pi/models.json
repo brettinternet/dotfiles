@@ -29,9 +29,6 @@
         },
         "claude-haiku-4-5": {
           "contextWindow": 256000
-        },
-        "claude-opus-4.6": {
-          "contextWindow": 256000
         }
       }
     },

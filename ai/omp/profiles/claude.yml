@@ -12,7 +12,7 @@ modelRoles:
   advisor: anthropic/claude-opus-5:xhigh
   title: anthropic/claude-haiku-4-5:off
   tiny: anthropic/claude-haiku-4-5:medium
-  writer: anthropic/claude-opus-4.6:medium
+  writer: anthropic/claude-sonnet-5:low
 commands:
   enableOpencodeUser: false
   enableOpencodeProject: false

@@ -171,7 +171,12 @@ path.write_text("// generated guard for test\\n")
 
         self.assertTrue((self.home / ".codex/agents/executor.toml").is_file())
         self.assertTrue((self.home / ".omp/agent/agents/explore.md").is_file())
-        self.assertFalse((self.home / ".claude/agents/explore.md").exists())
+        claude_explore = self.home / ".claude/agents/Explore.md"
+        self.assertTrue(claude_explore.is_file())
+        metadata = self.load_yaml(claude_explore.read_text().split("---\n", 2)[1])
+        self.assertEqual("Explore", metadata["name"])
+        self.assertEqual("haiku", metadata["model"])
+        self.assertEqual("low", metadata["effort"])
         self.assertEqual(before, self.repository_status())
 
     def test_agent_definitions_preserve_unmanaged_output_paths(self) -> None:
@@ -283,7 +288,7 @@ path.write_text("// generated guard for test\\n")
         self.assertEqual("auto", merged["permissions"]["defaultMode"])
         self.assertEqual(preferred["permissions"]["deny"], merged["permissions"]["deny"])
         self.assertEqual(["Read"], merged["permissions"]["allow"])
-        self.assertEqual("high", merged["effortLevel"])
+        self.assertEqual(preferred["effortLevel"], merged["effortLevel"])
         self.assertEqual(
             {"PreToolUse": [{"matcher": "preserve"}]}, merged["hooks"]
         )
