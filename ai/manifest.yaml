@@ -47,10 +47,6 @@ models:
   claude-haiku:
     ids: { omp: anthropic/claude-haiku-4-5, pi: anthropic/claude-haiku-4-5, opencode: anthropic/claude-haiku-4-5 }
     context: conservative
-  claude-writer:
-    ids: { omp: anthropic/claude-opus-4.6, pi: anthropic/claude-opus-4.6, opencode: anthropic/claude-opus-4.6 }
-    context: conservative
-
   or-sol:
     ids: { omp: openrouter/openai/gpt-5.6-sol, pi: openrouter/openai/gpt-5.6-sol, opencode: openrouter/openai/gpt-5.6-sol }
     context: codex
@@ -213,14 +209,14 @@ profiles:
       advisor: [claude-opus, xhigh]
       title: [claude-haiku, off]
       tiny: [claude-haiku, medium]
-      writer: [claude-writer, medium]
+      writer: [claude-sonnet, low]
     ompSettings:
       commands: { enableOpencodeUser: false, enableOpencodeProject: false, enableClaudeProject: true, enableClaudeUser: true }
       providers: { webSearchOrder: [anthropic] }
       advisor: { enabled: false }
     pi:
       parent: [claude-sonnet, medium]
-      enabled: [claude-sonnet, claude-reviewer, claude-haiku, claude-opus, claude-writer]
+      enabled: [claude-sonnet, claude-reviewer, claude-haiku, claude-opus]
       defaultAgent: [claude-haiku, medium]
       researcher: [claude-haiku, medium]
       progress: [claude-haiku, off]
@@ -233,7 +229,7 @@ profiles:
           verifier: high,
           pr-watcher: medium,
           thermo-nuclear-code-quality-review: xhigh,
-          writer: medium,
+          writer: low,
         }
       modelScope: [anthropic/*]
     opencode:

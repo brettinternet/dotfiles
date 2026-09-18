@@ -25,7 +25,7 @@
       "model": "anthropic/claude-sonnet-5"
     },
     "writer": {
-      "model": "anthropic/claude-opus-4.6",
+      "model": "anthropic/claude-sonnet-5",
       "variant": "low"
     }
   }
