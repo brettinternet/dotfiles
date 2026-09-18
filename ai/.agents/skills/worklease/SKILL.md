@@ -7,7 +7,7 @@ description: Coordinate explicitly requested concurrent work with Worklease.
 
 Use this skill only when the user explicitly requests Worklease.
 
-Run `worklease instructions safety` before acquiring or managing a claim and treat its output as authoritative. When running inside a repeated autonomous loop such as Pi `/loop` or a Ralph loop, also run `worklease instructions loop` and follow its output. Do not load the loop instructions for ordinary one-shot work.
+Run `worklease instructions safety` before acquiring or managing a claim and treat its output as authoritative. When running inside a repeated autonomous loop also run `worklease instructions loop` and follow its output. Do not load the loop instructions for ordinary one-shot work.
 
 Use one shared Worklease authority and the same exact canonical resource for every contender. Keep provider state authoritative for eligibility and progress; a Worklease claim only coordinates callers using that authority and resource.
 
