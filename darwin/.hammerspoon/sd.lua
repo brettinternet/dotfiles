@@ -66,4 +66,5 @@ end)
 applicationWatcher:start()
 
 actionCatalog.registerAll(streamdeck)
+actionCatalog.register(streamdeck, { "command" })
 streamdeck.start()
