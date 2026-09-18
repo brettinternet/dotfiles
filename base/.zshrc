@@ -190,8 +190,18 @@ ZSH_COMPDUMP="$ZSH_CACHE_DIR/zcompdump-$ZSH_VERSION"
 if [[ -n $ZSH_COMPDUMP(#qN.mh-24) ]]; then
   compinit -C -d "$ZSH_COMPDUMP"
 else
-  compinit -d "$ZSH_COMPDUMP"
-  zcompile "$ZSH_COMPDUMP"
+  # Only one concurrently starting shell may refresh the shared dump.
+  zmodload zsh/system
+  : > "$ZSH_COMPDUMP.lock"
+  zsystem flock -f ZSH_COMPDUMP_LOCK_FD "$ZSH_COMPDUMP.lock"
+  if [[ -n $ZSH_COMPDUMP(#qN.mh-24) ]]; then
+    compinit -C -d "$ZSH_COMPDUMP"
+  else
+    compinit -d "$ZSH_COMPDUMP"
+    zcompile "$ZSH_COMPDUMP"
+  fi
+  zsystem flock -u "$ZSH_COMPDUMP_LOCK_FD"
+  unset ZSH_COMPDUMP_LOCK_FD
 fi
 compdef _zinit zinit
 
