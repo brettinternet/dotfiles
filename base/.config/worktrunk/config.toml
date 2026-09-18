@@ -14,5 +14,5 @@ fi
 
 [post-remove]
 herdr = '''
-python3 "$HOME/.config/herdr/plugins/local/worktrunk/close.py" {{ worktree_path }}
+python3 "$HOME/.config/worktrunk/close-herdr-workspace.py" {{ worktree_path }}
 '''

@@ -52,9 +52,15 @@ height = 30
 
 [[keys.command]]
 key = "prefix+shift+g"
-type = "shell"
-command = "herdr plugin pane open --plugin brett.worktrunk --entrypoint create --focus"
+type = "plugin_action"
+command = "brettinternet.worktrunk.create"
 description = "create worktree with Worktrunk"
+
+[[keys.command]]
+key = "prefix+y"
+type = "plugin_action"
+command = "brettinternet.worktrunk.open"
+description = "open Worktrunk worktree picker"
 
 [[keys.command]]
 key = "prefix+g"
