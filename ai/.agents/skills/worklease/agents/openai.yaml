@@ -1,0 +1,6 @@
+interface:
+  display_name: "Worklease"
+  short_description: "Coordinate explicitly requested concurrent work safely"
+  default_prompt: "Use $worklease to coordinate this work with Worklease."
+policy:
+  allow_implicit_invocation: true
