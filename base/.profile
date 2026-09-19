@@ -54,6 +54,7 @@ fi
 # Set custom gopath because I prefer it to be a hidden folder
 export GOPATH="$HOME/.go"
 export PATH="$HOME/.npm-global/bin:$HOME/.local/bin:$GOPATH/bin:$HOME/.cargo/bin:$PATH:$HOME/.config/emacs/bin"
+export PATH="$HOME/.bun/bin:$PATH"
 
 # Don't timeout in terminal multiplexers
 if [ "${TERM#screen}" = "$TERM" ] && [ -z "$TMUX" ] && [ -z "${HERDR_ENV:-}" ] && [ -z "$DISPLAY" ] && [ "$(uname)" != "Darwin" ]; then
@@ -88,7 +89,8 @@ if [ -x "$(command -v kubecolor)" ]; then
 fi
 alias k='kubectl'
 
-export PATH="$HOME/.bun/bin:$PATH"
+export AGENT_ID="${HERDR_PANE_ID:-$(uuidgen | tr '[:upper:]''[:lower:]')}"
+export WORKLEASE_SESSION_ID="${AGENT_ID}"
 
 unset profile_workspace_only_env profile_rust_env_file profile_ten_minutes \
   profile_dircolors
