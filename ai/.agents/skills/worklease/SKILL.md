@@ -13,7 +13,7 @@ Run `worklease instructions safety` before acquiring or managing a claim and tre
 
 Choose one full, collision-resistant identifier for each independent worker or repeated loop. Never truncate an identifier or derive one from a prefix.
 
-- When `PI_LOOP_RUN_ID` is non-empty, use its exact value as the contextual handle selector for the entire Pi loop. Pass `--session "$PI_LOOP_RUN_ID"` to every CLI lifecycle command, or set `WORKLEASE_SESSION_ID="$PI_LOOP_RUN_ID"` for that invocation. Pass the same exact value as `sessionId` to MCP `acquire`, then use the returned opaque `lease` for later MCP lifecycle calls. Never substitute `PI_SESSION_ID` while `PI_LOOP_RUN_ID` is available.
+- When `PI_LOOP_RUN_ID` is non-empty, use its exact value as the contextual handle selector for the entire Pi loop. Pass `--session "$PI_LOOP_RUN_ID"` to every CLI lifecycle command, or set `WORKLEASE_SESSION_ID="$PI_LOOP_RUN_ID"` for that invocation. Pass the same exact value as `sessionId` to MCP `acquire`, then use the returned opaque `lease` for later MCP lifecycle calls. Never substitute `PI_SESSION_ID` while `PI_LOOP_RUN_ID` is available. If the loop's claim expires, reacquire the same item only after proving every delegated executor and command has stopped, confirming there is no active conflicting claim, and revalidating provider eligibility. Expiry alone is insufficient.
 - Otherwise, use an existing non-empty `WORKLEASE_SESSION_ID`.
 - For one-shot work, a full harness-provided session ID is suitable; in Pi, use `PI_SESSION_ID`.
 - For a repeated workflow in another harness, use its stable workflow or loop ID, not an iteration, turn, or replacement-session ID. If none is available, create one full UUID before acquire and preserve it for the complete claim lifecycle.
