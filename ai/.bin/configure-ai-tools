@@ -20,7 +20,7 @@ TOOLS = {
     "codex": ("codex", '"latest"'),
     "amp": (
         "amp",
-        '{ version = "latest", depends = ["bun"], minimum_release_age = "0", postinstall = \'cd "$MISE_TOOL_INSTALL_PATH" && "${MISE_DATA_DIR:-$HOME/.local/share/mise}/installs/bun/latest/bin/bun" pm trust @ampcode/cli\' }',
+        '{ version = "latest", depends = ["bun"], minimum_release_age = "0", postinstall = \'cd "$MISE_TOOL_INSTALL_PATH" && "${MISE_DATA_DIR:-$HOME/.local/share/mise}/installs/bun/latest/bin/bun" pm trust @ampcode/cli && ln -sfn "$MISE_TOOL_INSTALL_PATH" "$(dirname "$MISE_TOOL_INSTALL_PATH")/latest"\' }',
     ),
 }
 DCG_MISE_NAME = "github:Dicklesworthstone/destructive_command_guard"
