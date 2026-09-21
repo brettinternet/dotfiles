@@ -60,6 +60,14 @@
         if command -v mise >/dev/null 2>&1; then
           mise exec gh -- gh extension install github/gh-stack --force
         fi
+    - command: |
+        if command -v hunk >/dev/null 2>&1 && \
+          ! hunk extension list | awk '$1 == "hunk-guide" { found = 1 } END { exit !found }'; then
+          hunk extension install git@github.com:brettinternet/hunk-guide.git --yes
+        fi
+      description: Install Hunk extensions
+      stdout: true
+      stderr: true
     - command: >-
         hidutil property --set
         '{"UserKeyMapping":[{"HIDKeyboardModifierMappingSrc":0x700000039,"HIDKeyboardModifierMappingDst":0x700000029}]}'
