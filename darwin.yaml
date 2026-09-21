@@ -45,6 +45,8 @@
       glob: true
       path: darwin/.config/mise/conf.d/*
       if: '[ -x "$(command -v mise)" ]'
+    ~/.config/hunk/config.toml:
+      path: darwin/.config/hunk/config.toml
     ~/.config/nix-darwin/:
       glob: true
       path: darwin/.config/nix-darwin/*

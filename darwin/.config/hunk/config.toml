@@ -1,0 +1,5 @@
+watch = true
+menu_bar = false
+animations = false
+agent_notes = true
+prompt_save_view_preferences = false
