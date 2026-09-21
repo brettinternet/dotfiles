@@ -13,6 +13,7 @@ ruby = "latest"
 uv = "latest"
 bun = "latest"
 k9s = "latest"
+"github:umputun/revdiff" = "latest"
 gh = { version = "latest", postinstall = "gh extension install github/gh-stack --force" }
 biome = "latest"
 "vfox:jdx/vfox-eza" = "latest"
