@@ -89,7 +89,7 @@ if [ -x "$(command -v kubecolor)" ]; then
 fi
 alias k='kubectl'
 
-export AGENT_ID="${HERDR_PANE_ID:-$(uuidgen | tr '[:upper:]''[:lower:]')}"
+export AGENT_ID="${HERDR_PANE_ID:-$(uuidgen | tr '[:upper:]' '[:lower:]')}"
 export WORKLEASE_SESSION_ID="${AGENT_ID}"
 
 unset profile_workspace_only_env profile_rust_env_file profile_ten_minutes \
