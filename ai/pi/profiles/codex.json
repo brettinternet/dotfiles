@@ -3,18 +3,18 @@
   "defaultModel": "gpt-6-sol",
   "defaultThinkingLevel": "medium",
   "enabledModels": [
-    "openai-codex/gpt-5.6-luna",
+    "openai-codex/gpt-6-luna",
     "openai-codex/gpt-6-sol",
     "openai-codex/gpt-6-astra",
     "anthropic/claude-opus-5-5"
   ],
   "subagents": {
-    "defaultModel": "openai-codex/gpt-5.6-luna",
+    "defaultModel": "openai-codex/gpt-6-luna",
     "defaultProvider": "openai-codex",
     "defaultThinking": "max",
     "agentOverrides": {
       "researcher": {
-        "model": "openai-codex/gpt-5.6-luna",
+        "model": "openai-codex/gpt-6-luna",
         "thinking": "medium"
       },
       "reviewer": {
@@ -26,19 +26,19 @@
         "thinking": "max"
       },
       "explore": {
-        "model": "openai-codex/gpt-5.6-luna",
+        "model": "openai-codex/gpt-6-luna",
         "thinking": "low"
       },
       "executor": {
-        "model": "openai-codex/gpt-5.6-luna",
+        "model": "openai-codex/gpt-6-luna",
         "thinking": "high"
       },
       "verifier": {
-        "model": "openai-codex/gpt-5.6-luna",
+        "model": "openai-codex/gpt-6-luna",
         "thinking": "high"
       },
       "pr-watcher": {
-        "model": "openai-codex/gpt-5.6-luna",
+        "model": "openai-codex/gpt-6-luna",
         "thinking": "low"
       },
       "thermo-nuclear-code-quality-review": {
@@ -54,19 +54,18 @@
       "enforce": true,
       "strict": true,
       "allow": [
-        "openai-codex/gpt-6-*",
-        "openai-codex/gpt-6-astra"
+        "openai-codex/gpt-6-*"
       ]
     }
   },
   "titleConfig": {
     "enabled": true,
-    "model": "openai-codex/gpt-5.6-luna:low",
+    "model": "openai-codex/gpt-6-luna:low",
     "maxTokens": 30,
     "maxLength": 60
   },
   "progressConfig": {
-    "model": "openai-codex/gpt-5.6-luna:low",
+    "model": "openai-codex/gpt-6-luna:low",
     "maxInputChars": 12000,
     "maxTokens": 180,
     "timeoutMs": 60000
