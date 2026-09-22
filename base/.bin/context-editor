@@ -18,7 +18,7 @@ Modes:
   tmux-pane    Neovim in a new pane beside the current tmux pane
   ghostty      Neovim in a new Ghostty window (macOS)
   code         VS Code using --wait
-  terminal     Neovim in the current terminal
+  terminal     Neovim (or Vim fallback) in the current terminal
 
 CONTEXT_EDITOR_MODE sets the default mode (default: auto).
 CONTEXT_EDITOR_NVIM and CONTEXT_EDITOR_CODE override the nvim/code executables.
@@ -334,8 +334,13 @@ fi
 nvim=''
 case "$mode" in
   herdr-pane|herdr-tab|tmux-pane|ghostty|terminal)
-    nvim="$(command -v "${CONTEXT_EDITOR_NVIM:-nvim}")" ||
-      die "Neovim executable not found: ${CONTEXT_EDITOR_NVIM:-nvim}"
+    if [[ -n "${CONTEXT_EDITOR_NVIM:-}" ]]; then
+      nvim="$(command -v "$CONTEXT_EDITOR_NVIM")" ||
+        die "editor executable not found: $CONTEXT_EDITOR_NVIM"
+    else
+      nvim="$(command -v nvim 2>/dev/null || command -v vim 2>/dev/null)" ||
+        die "Neovim and Vim executables not found"
+    fi
     ;;
 esac
 

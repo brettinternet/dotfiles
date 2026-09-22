@@ -35,13 +35,6 @@ return {
         TabLineSel = { bg = "none" },
         TabLineFill = { bg = "none" },
 
-        NeoTreeNormal = { bg = "none" },
-        NeoTreeNormalNC = { bg = "none" },
-        NeoTreeTabInactive = { bg = "none" },
-        NeoTreeTabSeperatorActive = { bg = "none" },
-        NeoTreeTabSeperatorInactive = { bg = "none" },
-        NvimTreeTabSeperatorActive = { bg = "none" },
-        NvimTreeTabSeperatorInactive = { bg = "none" },
         MiniTabLineFill = { bg = "none" },
       },
       kaile = { -- a table of overrides/changes when applying the kaile theme
@@ -67,13 +60,6 @@ return {
         TabLineSel = { bg = "#121212" },
         TabLineFill = { bg = "#202020" },
 
-        NeoTreeNormal = { bg = "#121212" },
-        NeoTreeNormalNC = { bg = "#121212" },
-        NeoTreeTabInactive = { bg = "#202020" },
-        NeoTreeTabSeperatorActive = { bg = "#202020" },
-        NeoTreeTabSeperatorInactive = { bg = "#202020" },
-        NvimTreeTabSeperatorActive = { bg = "#202020" },
-        NvimTreeTabSeperatorInactive = { bg = "#202020" },
         MiniTabLineFill = { bg = "#202020" },
       },
     },

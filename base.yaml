@@ -35,10 +35,10 @@
     ~/.vimrc:
       path: base/.vimrc
       force: true
-      if: '[ -x "$(command -v vim)" ]'
+      if: "! command -v nvim >/dev/null 2>&1 && command -v vim >/dev/null 2>&1"
     ~/.vimrc.bundles:
       path: base/.vimrc.bundles
-      if: '[ -x "$(command -v vim)" ]'
+      if: "! command -v nvim >/dev/null 2>&1 && command -v vim >/dev/null 2>&1"
     ~/.tmux.conf:
       path: base/.tmux.conf
       if: '[ -x "$(command -v tmux)" ]'

@@ -13,14 +13,25 @@ fi
 # Personal binaries
 export PATH="$HOME/.bin:/opt/bin:$PATH"
 
-# Prefer the context-aware launcher when installed.
+# Prefer the context-aware launcher, then Neovim. Vim is the fallback for
+# machines where Neovim is not available yet.
 if [ -x "$HOME/.bin/context-editor" ]; then
   export VISUAL="$HOME/.bin/context-editor"
+elif command -v nvim >/dev/null 2>&1; then
+  export VISUAL=nvim
 else
   export VISUAL=vim
 fi
 export EDITOR="$VISUAL"
 export SYSTEMD_EDITOR="$EDITOR"
+
+vim() {
+  if command -v nvim >/dev/null 2>&1; then
+    command nvim "$@"
+  else
+    command vim "$@"
+  fi
+}
 
 # https://wiki.archlinux.org/index.php/Environment_variables#Default_programs
 if [ -z "$DISPLAY" ]; then

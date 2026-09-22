@@ -97,6 +97,13 @@ alias l = less
 def lh [] { ls -alt | first 10 }
 
 alias e = emacs
+def --wrapped vim [...rest] {
+    if not (which nvim | is-empty) {
+        ^nvim ...$rest
+    } else {
+        ^vim ...$rest
+    }
+}
 alias vi = vim
 alias v = vim
 alias gz = tar -zcvf
