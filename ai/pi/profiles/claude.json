@@ -6,7 +6,7 @@
     "anthropic/claude-sonnet-5",
     "anthropic/claude-opus-4.8",
     "anthropic/claude-haiku-4-5",
-    "anthropic/claude-opus-5"
+    "anthropic/claude-opus-5.5"
   ],
   "subagents": {
     "defaultModel": "anthropic/claude-haiku-4-5",
@@ -22,7 +22,7 @@
         "thinking": "xhigh"
       },
       "oracle": {
-        "model": "anthropic/claude-opus-5",
+        "model": "anthropic/claude-opus-5.5",
         "thinking": "xhigh"
       },
       "explore": {
@@ -42,7 +42,7 @@
         "thinking": "medium"
       },
       "thermo-nuclear-code-quality-review": {
-        "model": "anthropic/claude-opus-5",
+        "model": "anthropic/claude-opus-5.5",
         "thinking": "xhigh"
       },
       "writer": {

@@ -17,13 +17,10 @@ roles:
 
 models:
   codex-sol:
-    ids: { omp: openai-codex/gpt-5.6-sol, pi: openai-codex/gpt-5.6-sol, opencode: openai/gpt-5.6-sol }
-    context: codex
-  codex-terra:
-    ids: { omp: openai-codex/gpt-5.6-terra, pi: openai-codex/gpt-5.6-terra, opencode: openai/gpt-5.6-terra }
+    ids: { omp: openai-codex/gpt-6-sol, pi: openai-codex/gpt-6-sol, opencode: openai/gpt-6-sol }
     context: codex
   codex-luna:
-    ids: { omp: openai-codex/gpt-5.6-luna, pi: openai-codex/gpt-5.6-luna, opencode: openai/gpt-5.6-luna }
+    ids: { omp: openai-codex/gpt-6-luna, pi: openai-codex/gpt-5.6-luna, opencode: openai/gpt-5.6-luna }
     context: codex
   codex-astra:
     ids: { pi: openai-codex/gpt-6-astra }
@@ -36,7 +33,7 @@ models:
     ids: { omp: anthropic/claude-fable-5.1, pi: anthropic/claude-fable-5.1, opencode: anthropic/claude-fable-5.1 }
     context: conservative
   claude-opus:
-    ids: { omp: anthropic/claude-opus-5, pi: anthropic/claude-opus-5, opencode: anthropic/claude-opus-5 }
+    ids: { omp: anthropic/claude-opus-5.5, pi: anthropic/claude-opus-5.5, opencode: anthropic/claude-opus-5.5 }
     context: conservative
   claude-reviewer:
     ids: { omp: anthropic/claude-opus-4.8, pi: anthropic/claude-opus-4.8, opencode: anthropic/claude-opus-4.8 }
@@ -48,16 +45,13 @@ models:
     ids: { omp: anthropic/claude-haiku-4-5, pi: anthropic/claude-haiku-4-5, opencode: anthropic/claude-haiku-4-5 }
     context: conservative
   or-sol:
-    ids: { omp: openrouter/openai/gpt-5.6-sol, pi: openrouter/openai/gpt-5.6-sol, opencode: openrouter/openai/gpt-5.6-sol }
-    context: codex
-  or-terra:
-    ids: { omp: openrouter/openai/gpt-5.6-terra, pi: openrouter/openai/gpt-5.6-terra, opencode: openrouter/openai/gpt-5.6-terra }
+    ids: { omp: openrouter/openai/gpt-6-sol, pi: openrouter/openai/gpt-5.6-sol, opencode: openrouter/openai/gpt-5.6-sol }
     context: codex
   or-luna:
-    ids: { omp: openrouter/openai/gpt-5.6-luna, pi: openrouter/openai/gpt-5.6-luna, opencode: openrouter/openai/gpt-5.6-luna }
+    ids: { omp: openrouter/openai/gpt-6-luna, pi: openrouter/openai/gpt-5.6-luna, opencode: openrouter/openai/gpt-5.6-luna }
     context: codex
   or-sol-pro:
-    ids: { omp: openrouter/openai/gpt-5.6-sol-pro, pi: openrouter/openai/gpt-5.6-sol-pro, opencode: openrouter/openai/gpt-5.6-sol-pro }
+    ids: { omp: openrouter/openai/gpt-6-sol-pro, pi: openrouter/openai/gpt-5.6-sol-pro, opencode: openrouter/openai/gpt-5.6-sol-pro }
     context: codex
   or-gpt-latest:
     ids: { omp: openrouter/openai/gpt-latest, opencode: openrouter/openai/gpt-latest }
@@ -131,9 +125,9 @@ models:
   copilot-fable:
     ids: { omp: github-copilot/claude-fable-5, opencode: github-copilot/claude-fable-5 }
   copilot-sol:
-    ids: { omp: github-copilot/gpt-5.6-sol, opencode: github-copilot/gpt-5.6-sol }
+    ids: { omp: github-copilot/gpt-6-sol, opencode: github-copilot/gpt-5.6-sol }
   copilot-luna:
-    ids: { omp: github-copilot/gpt-5.6-luna, opencode: github-copilot/gpt-5.6-luna }
+    ids: { omp: github-copilot/gpt-6-luna, opencode: github-copilot/gpt-5.6-luna }
   copilot-mini:
     ids: { omp: github-copilot/gpt-5.4-mini, opencode: github-copilot/gpt-5.4-mini }
 
@@ -141,7 +135,7 @@ profiles:
   codex:
     outputs: { omp: codex, pi: codex, opencode: gpt }
     ompRoles:
-      reviewer: [codex-terra, max]
+      reviewer: [codex-sol, high]
       default: [codex-sol, medium]
       smol: [codex-luna, max]
       slow: [codex-sol, max]
@@ -159,7 +153,7 @@ profiles:
       advisor: { enabled: false }
     pi:
       parent: [codex-sol, medium]
-      enabled: [codex-luna, codex-sol, codex-terra, codex-astra]
+      enabled: [codex-luna, codex-sol, codex-astra, claude-opus]
       defaultAgent: [codex-luna, max]
       researcher: [codex-luna, medium]
       progress: [codex-luna, low]
@@ -174,7 +168,7 @@ profiles:
           thermo-nuclear-code-quality-review: max,
           writer: low,
         }
-      modelScope: [openai-codex/gpt-5.6-*, openai-codex/gpt-6-astra]
+      modelScope: [openai-codex/gpt-6-*, openai-codex/gpt-6-astra]
       settings:
         webSearchConfig:
           searchRouting:

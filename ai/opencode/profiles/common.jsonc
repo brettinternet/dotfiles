@@ -28,14 +28,7 @@
   "provider": {
     "openai": {
       "models": {
-        "gpt-5.6-sol": {
-          "limit": {
-            "context": 256000,
-            "input": 128000,
-            "output": 128000
-          }
-        },
-        "gpt-5.6-terra": {
+        "gpt-6-sol": {
           "limit": {
             "context": 256000,
             "input": 128000,
@@ -60,7 +53,7 @@
             "output": 128000
           }
         },
-        "claude-opus-5": {
+        "claude-opus-5.5": {
           "limit": {
             "context": 256000,
             "input": 128000,
@@ -93,13 +86,6 @@
     "openrouter": {
       "models": {
         "openai/gpt-5.6-sol": {
-          "limit": {
-            "context": 256000,
-            "input": 128000,
-            "output": 128000
-          }
-        },
-        "openai/gpt-5.6-terra": {
           "limit": {
             "context": 256000,
             "input": 128000,

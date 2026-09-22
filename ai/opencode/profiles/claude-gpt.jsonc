@@ -1,7 +1,7 @@
 {
   "agent": {
     "reviewer": {
-      "model": "anthropic/claude-opus-5",
+      "model": "anthropic/claude-opus-5.5",
       "variant": "xhigh"
     },
     "executor": {
@@ -13,7 +13,7 @@
       "variant": "medium"
     },
     "oracle": {
-      "model": "anthropic/claude-opus-5",
+      "model": "anthropic/claude-opus-5.5",
       "variant": "xhigh"
     },
     "pr-watcher": {
@@ -21,7 +21,7 @@
       "variant": "medium"
     },
     "thermo-nuclear-code-quality-review": {
-      "model": "anthropic/claude-opus-5",
+      "model": "anthropic/claude-opus-5.5",
       "variant": "xhigh"
     },
     "verifier": {
