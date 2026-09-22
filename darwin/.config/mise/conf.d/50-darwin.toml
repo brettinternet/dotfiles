@@ -1,5 +1,8 @@
 #:schema https://mise.en.dev/schema/mise.json
 
+[tool_alias]
+hunk = "github:brettinternet/hunk"
+
 [tools]
 # personal
 "github:brettinternet/worklease" = { version = "latest", minimum_release_age = "0" }
@@ -13,7 +16,7 @@ ruby = "latest"
 uv = "latest"
 bun = "latest"
 k9s = "latest"
-hunk = "latest"
+hunk = { version = "v0.22.0-hunk-guide.1", matching_regex = '^hunkdiff-darwin-arm64\.tar\.gz$', strip_components = 1, checksum = "sha256:88108c1f072e1d7c1705ecb21656aea4c9fa117f969839ea53ad53dd51f3590c" }
 gh = { version = "latest", postinstall = "gh extension install github/gh-stack --force" }
 biome = "latest"
 "vfox:jdx/vfox-eza" = "latest"
