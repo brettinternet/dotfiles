@@ -67,30 +67,24 @@ return {
     end,
   },
 
-  {
-    "nvim-neo-tree/neo-tree.nvim",
-    opts = {
-      filesystem = {
-        commands = {
-          open_keep_focus = function(state)
-            local tree_win = state.winid
-            require("neo-tree.sources.filesystem.commands").open(state)
+  { "nvim-neo-tree/neo-tree.nvim", enabled = false },
 
-            if vim.api.nvim_win_is_valid(tree_win) then vim.api.nvim_set_current_win(tree_win) end
-          end,
-        },
-        window = {
-          mappings = {
-            ["go"] = "open_keep_focus",
-          },
-        },
-        filtered_items = {
-          visible = true,
-          hide_dotfiles = false,
-          hide_gitignored = false,
-        },
-      },
+  {
+    "mikavilpas/yazi.nvim",
+    version = "*",
+    event = "VeryLazy",
+    dependencies = {
+      { "nvim-lua/plenary.nvim", lazy = true },
     },
+    keys = {
+      { "<Leader>e", "<Cmd>Yazi<CR>", mode = { "n", "v" }, desc = "Open Yazi at current file" },
+      { "<Leader>E", "<Cmd>Yazi cwd<CR>", desc = "Open Yazi in working directory" },
+      { "<C-Up>", "<Cmd>Yazi toggle<CR>", desc = "Resume last Yazi session" },
+    },
+    opts = {
+      open_for_directories = true,
+    },
+    init = function() vim.g.loaded_netrwPlugin = 1 end,
   },
 
   {

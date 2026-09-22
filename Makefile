@@ -114,7 +114,9 @@ update-nvim:
 	fi
 
 update-vim:
-	@if ! command -v vim >/dev/null 2>&1; then \
+	@if command -v nvim >/dev/null 2>&1; then \
+		printf '%s\n' 'Skipping Vim plugin update: Neovim is installed'; \
+	elif ! command -v vim >/dev/null 2>&1; then \
 		printf '%s\n' 'Skipping Vim plugin update: vim is not installed'; \
 	elif [ ! -r "$$HOME/.vimrc" ] || [ ! -r "$$HOME/.vimrc.bundles" ] || [ ! -r "$$HOME/.vim/autoload/plug.vim" ]; then \
 		printf '%s\n' 'Skipping Vim plugin update: vim-plug is not installed'; \

@@ -16,8 +16,6 @@ def flush_dns [] {
     ^sudo killall -HUP mDNSResponder
 }
 
-alias vim = nvim
-
 def mix_test [file_match?: string] {
     if $file_match == null {
         print "No file match provided, running all tests."

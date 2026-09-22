@@ -85,7 +85,7 @@ class ContextEditorTests(unittest.TestCase):
     def calls(self) -> list[str]:
         return self.log.read_text().splitlines() if self.log.exists() else []
 
-    def test_profile_selects_dispatcher_with_vim_fallback(self) -> None:
+    def test_profile_selects_dispatcher_then_nvim(self) -> None:
         for installed in (False, True):
             with self.subTest(installed=installed):
                 home = self.root / f"home-{installed}"
@@ -114,7 +114,7 @@ class ContextEditorTests(unittest.TestCase):
                     timeout=10,
                 )
                 self.assertEqual(0, completed.returncode, completed.stderr)
-                expected = str(editor) if installed else "vim"
+                expected = str(editor) if installed else "nvim"
                 self.assertEqual(
                     [expected, expected, expected], completed.stdout.splitlines()
                 )
