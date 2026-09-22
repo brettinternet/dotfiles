@@ -6,7 +6,7 @@
     "openai-codex/gpt-5.6-luna",
     "openai-codex/gpt-6-sol",
     "openai-codex/gpt-6-astra",
-    "anthropic/claude-opus-5.5"
+    "anthropic/claude-opus-5-5"
   ],
   "subagents": {
     "defaultModel": "openai-codex/gpt-5.6-luna",

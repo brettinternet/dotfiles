@@ -4,7 +4,7 @@
     "thinking": "high"
   },
   "oracle": {
-    "model": "anthropic/claude-fable-5.1",
+    "model": "anthropic/claude-fable-5-1",
     "thinking": "high"
   },
   "solo": {

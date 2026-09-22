@@ -333,11 +333,13 @@ path.write_text("// generated guard for test\\n")
             if profile_path.name == "common.json":
                 continue
             profile = json.loads(profile_path.read_text())
+            self.assertIn(
+                f'{profile["defaultProvider"]}/{profile["defaultModel"]}',
+                profile["enabledModels"],
+            )
             for model in profile["enabledModels"]:
-                self.assertTrue(
-                    model.startswith(f'{profile["defaultProvider"]}/'),
-                    f"{profile_path}: {model}",
-                )
+                provider, separator, model_name = model.partition("/")
+                self.assertTrue(provider and separator and model_name, f"{profile_path}: {model}")
 
     def test_pi_launcher_resolves_preset_and_forwards_arguments(self) -> None:
         fake_bin = self.home / "bin"
