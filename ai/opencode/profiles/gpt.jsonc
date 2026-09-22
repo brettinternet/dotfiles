@@ -5,11 +5,11 @@
       "variant": "max"
     },
     "executor": {
-      "model": "openai/gpt-5.6-luna",
+      "model": "openai/gpt-6-luna",
       "variant": "high"
     },
     "explore": {
-      "model": "openai/gpt-5.6-luna",
+      "model": "openai/gpt-6-luna",
       "variant": "medium"
     },
     "oracle": {
@@ -17,7 +17,7 @@
       "variant": "max"
     },
     "pr-watcher": {
-      "model": "openai/gpt-5.6-luna",
+      "model": "openai/gpt-6-luna",
       "variant": "medium"
     },
     "thermo-nuclear-code-quality-review": {
@@ -25,7 +25,7 @@
       "variant": "max"
     },
     "verifier": {
-      "model": "openai/gpt-5.6-luna",
+      "model": "openai/gpt-6-luna",
       "variant": "high"
     },
     "writer": {

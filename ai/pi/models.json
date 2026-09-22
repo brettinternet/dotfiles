@@ -5,7 +5,7 @@
         "gpt-6-sol": {
           "contextWindow": 272000
         },
-        "gpt-5.6-luna": {
+        "gpt-6-luna": {
           "contextWindow": 272000
         }
       }
@@ -31,13 +31,13 @@
     },
     "openrouter": {
       "modelOverrides": {
-        "openai/gpt-5.6-sol": {
+        "openai/gpt-6-sol": {
           "contextWindow": 272000
         },
-        "openai/gpt-5.6-luna": {
+        "openai/gpt-6-luna": {
           "contextWindow": 272000
         },
-        "openai/gpt-5.6-sol-pro": {
+        "openai/gpt-6-sol-pro": {
           "contextWindow": 272000
         },
         "anthropic/claude-fable-latest": {

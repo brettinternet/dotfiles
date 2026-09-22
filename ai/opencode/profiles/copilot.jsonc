@@ -4,7 +4,7 @@
       "model": "github-copilot/claude-opus-4.8"
     },
     "executor": {
-      "model": "github-copilot/gpt-5.6-luna"
+      "model": "github-copilot/gpt-6-luna"
     },
     "explore": {
       "model": "github-copilot/claude-haiku-4.5"
@@ -19,7 +19,7 @@
       "model": "github-copilot/claude-opus-4.8"
     },
     "verifier": {
-      "model": "github-copilot/gpt-5.6-luna"
+      "model": "github-copilot/gpt-6-luna"
     },
     "writer": {
       "model": "github-copilot/claude-sonnet-5"
