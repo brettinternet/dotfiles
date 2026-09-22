@@ -2,10 +2,7 @@
   "providers": {
     "openai-codex": {
       "modelOverrides": {
-        "gpt-5.6-sol": {
-          "contextWindow": 272000
-        },
-        "gpt-5.6-terra": {
+        "gpt-6-sol": {
           "contextWindow": 272000
         },
         "gpt-5.6-luna": {
@@ -18,7 +15,7 @@
         "claude-fable-5.1": {
           "contextWindow": 256000
         },
-        "claude-opus-5": {
+        "claude-opus-5.5": {
           "contextWindow": 256000
         },
         "claude-opus-4.8": {
@@ -35,9 +32,6 @@
     "openrouter": {
       "modelOverrides": {
         "openai/gpt-5.6-sol": {
-          "contextWindow": 272000
-        },
-        "openai/gpt-5.6-terra": {
           "contextWindow": 272000
         },
         "openai/gpt-5.6-luna": {
