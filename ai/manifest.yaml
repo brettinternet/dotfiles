@@ -36,7 +36,7 @@ models:
     ids: { omp: anthropic/claude-opus-5.5, pi: anthropic/claude-opus-5-5, opencode: anthropic/claude-opus-5.5 }
     context: conservative
   claude-reviewer:
-    ids: { omp: anthropic/claude-opus-4.8, pi: anthropic/claude-opus-4-8, opencode: anthropic/claude-opus-4.8 }
+    ids: { omp: anthropic/claude-opus-5.5, pi: anthropic/claude-opus-5-5, opencode: anthropic/claude-opus-5.5 }
     context: conservative
   claude-sonnet:
     ids: { omp: anthropic/claude-sonnet-5, pi: anthropic/claude-sonnet-5, opencode: anthropic/claude-sonnet-5 }
@@ -68,14 +68,19 @@ models:
     ids: { pi: openrouter/~anthropic/claude-fable-latest }
     context: conservative
   or-opus:
-    ids: { omp: openrouter/anthropic/claude-opus-latest, opencode: openrouter/anthropic/claude-opus-latest }
+    ids:
+      {
+        omp: openrouter/anthropic/claude-opus-5.5,
+        pi: openrouter/anthropic/claude-opus-5.5,
+        opencode: openrouter/anthropic/claude-opus-5.5,
+      }
     context: conservative
   or-reviewer:
     ids:
       {
-        omp: openrouter/anthropic/claude-opus-4.8,
-        pi: openrouter/anthropic/claude-opus-4.8,
-        opencode: openrouter/anthropic/claude-opus-4.8,
+        omp: openrouter/anthropic/claude-opus-5.5,
+        pi: openrouter/anthropic/claude-opus-5.5,
+        opencode: openrouter/anthropic/claude-opus-5.5,
       }
     context: conservative
   or-sonnet:
@@ -84,9 +89,9 @@ models:
   or-writer:
     ids:
       {
-        omp: openrouter/anthropic/claude-opus-4.6,
-        pi: openrouter/anthropic/claude-opus-4.6,
-        opencode: openrouter/anthropic/claude-opus-4.6,
+        omp: openrouter/anthropic/claude-opus-5.5,
+        pi: openrouter/anthropic/claude-opus-5.5,
+        opencode: openrouter/anthropic/claude-opus-5.5,
       }
     context: conservative
   or-gemini-writer:
@@ -275,7 +280,7 @@ profiles:
     ompRoles:
       default: [or-sol, medium]
       smol: [or-luna, max]
-      slow: [or-sol-pro, xhigh]
+      slow: [or-opus, xhigh]
       designer: [or-sol-pro, high]
       vision: [or-gpt-latest, high]
       task: [or-luna, max]
@@ -288,7 +293,7 @@ profiles:
     ompSettings: { providers: { webSearchOrder: [perplexity] } }
     pi:
       parent: [or-sol, medium]
-      enabled: [or-sol, or-luna, or-sol-pro, or-fable-auto, or-glm, or-reviewer, or-gemini-writer, or-writer]
+      enabled: [or-sol, or-luna, or-sol-pro, or-fable-auto, or-opus, or-glm, or-reviewer, or-gemini-writer, or-writer]
       defaultAgent: [or-luna, max]
       researcher: [or-luna, medium]
       progress: [or-flash, off]
@@ -309,7 +314,7 @@ profiles:
         subagents:
           agentOverrides:
             writer:
-              fallbackModels: [openrouter/anthropic/claude-opus-4.6:medium]
+              fallbackModels: [openrouter/anthropic/claude-opus-5.5:medium]
         webSearchConfig: { tools: { webSearch: { enabled: false } } }
     opencode:
       efforts:
