@@ -126,6 +126,14 @@ class Manifest:
                 config = profile.get(harness)
                 if config is None:
                     continue
+                if harness == "opencode":
+                    for route_name, route in config.get("routes", {}).items():
+                        if route_name not in omp_roles:
+                            raise SystemExit(
+                                f"{self.path}: unknown OpenCode route {route_name!r}"
+                            )
+                        self.validate_route(route, f"profiles.{profile_name}.opencode.routes.{route_name}")
+                        self.model_id(route[0], "opencode")
                 for role_name in config.get("efforts", {}):
                     if role_name not in self.roles:
                         raise SystemExit(f"{self.path}: unknown agent role {role_name!r}")
@@ -273,7 +281,10 @@ def render_opencode_profile(manifest: Manifest, profile: dict[str, Any]) -> dict
     agents: dict[str, Any] = {}
     for role_name in ROLE_ORDER:
         effort = profile["opencode"]["efforts"][role_name]
-        route = manifest.route_for_agent(profile, role_name)
+        route_name = manifest.roles[role_name]["route"]
+        route = profile["opencode"].get("routes", {}).get(
+            route_name, manifest.route_for_agent(profile, role_name)
+        )
         agents[role_name] = {"model": manifest.model_id(route[0], "opencode")}
         if effort:
             agents[role_name]["variant"] = effort

@@ -23,7 +23,7 @@ models:
     ids: { omp: openai-codex/gpt-6-luna, pi: openai-codex/gpt-6-luna, opencode: openai/gpt-6-luna }
     context: codex
   codex-astra:
-    ids: { pi: openai-codex/gpt-6-astra }
+    ids: { omp: openai-codex/gpt-6-astra, pi: openai-codex/gpt-6-astra }
   codex-spark:
     ids: { omp: openai-codex/gpt-5.3-codex-spark, pi: openai-codex/gpt-5.3-codex-spark }
   codex-writer:
@@ -138,7 +138,7 @@ profiles:
       reviewer: [codex-sol, high]
       default: [codex-sol, medium]
       smol: [codex-luna, max]
-      slow: [codex-sol, max]
+      slow: [codex-astra, max]
       designer: [codex-sol, xhigh]
       vision: [codex-sol, high]
       task: [codex-luna, max]
@@ -176,6 +176,7 @@ profiles:
             useCurrentModel: true
             fallbackOn: [unsupported, transient, quota, network, invalid-response]
     opencode:
+      routes: { slow: [codex-sol, max] }
       efforts:
         {
           reviewer: max,
