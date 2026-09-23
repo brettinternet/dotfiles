@@ -60,13 +60,6 @@
             "output": 128000
           }
         },
-        "claude-opus-4.8": {
-          "limit": {
-            "context": 256000,
-            "input": 128000,
-            "output": 128000
-          }
-        },
         "claude-sonnet-5": {
           "limit": {
             "context": 256000,
@@ -120,14 +113,7 @@
             "output": 128000
           }
         },
-        "anthropic/claude-opus-latest": {
-          "limit": {
-            "context": 256000,
-            "input": 128000,
-            "output": 128000
-          }
-        },
-        "anthropic/claude-opus-4.8": {
+        "anthropic/claude-opus-5.5": {
           "limit": {
             "context": 256000,
             "input": 128000,
@@ -135,13 +121,6 @@
           }
         },
         "anthropic/claude-sonnet-latest": {
-          "limit": {
-            "context": 256000,
-            "input": 128000,
-            "output": 128000
-          }
-        },
-        "anthropic/claude-opus-4.6": {
           "limit": {
             "context": 256000,
             "input": 128000,

@@ -1,6 +1,6 @@
 ---
 modelRoles:
-  reviewer: openrouter/anthropic/claude-opus-4.8:xhigh
+  reviewer: openrouter/anthropic/claude-opus-5.5:xhigh
   default: openai-codex/gpt-6-sol:medium
   smol: openai-codex/gpt-6-luna:medium
   slow: openai-codex/gpt-6-sol:max
@@ -12,4 +12,4 @@ modelRoles:
   advisor: openai-codex/gpt-6-luna:max
   title: openai-codex/gpt-6-luna:high
   tiny: nvidia/nvidia/nemotron-3-ultra-550b-a55b:medium
-  writer: openrouter/anthropic/claude-opus-4.6:medium
+  writer: openrouter/anthropic/claude-opus-5.5:medium
