@@ -22,6 +22,6 @@ A successful `verify` proves access to the selected private handle, not that the
 
 Use one shared Worklease authority and the same exact canonical resource for every contender. Keep provider state authoritative for eligibility and progress; a Worklease claim only coordinates callers using that authority and resource.
 
-Acquire before delegation or edits. On contention, wait or select other ready work. Before attempting to take over previously claimed work, inspect the authoritative claim state and lifecycle history and verify that the prior claim was released; expiration alone is not a release. If release cannot be verified, do not acquire the resource.
+Acquire immediately after choosing an item, before reading its full intent, planning, delegation, or edits. Skip items already shown as claimed. On contention, do not wait: select the next ready item. Hold at most one claim while selecting. Before attempting to take over previously claimed work, inspect the authoritative claim state and lifecycle history and verify that the prior claim was released; expiration alone is not a release. If release cannot be verified, do not acquire the resource.
 
 Maintain and revalidate ownership as directed by the live instructions, especially around long work and before durable writes. Persist provider-visible progress, release the claim when finished, and verify the release before reporting completion. Never expose private handles, credentials, or bearer tokens.
