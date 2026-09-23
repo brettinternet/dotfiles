@@ -6,6 +6,7 @@
   "tui.input.newLine": ["shift+enter", "ctrl+j", "alt+enter"],
   "app.message.followUp": "ctrl+q",
   "app.model.select": "alt+p",
+  "app.session.rename": "alt+r",
   "app.model.cycleForward": [],
   "app.tree.filter.labeledOnly": "ctrl+shift+l"
 }
