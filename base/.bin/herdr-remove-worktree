@@ -1,0 +1,65 @@
+#!/usr/bin/env python3
+"""Remove the selected Herdr worktree through Worktrunk, not workspace close."""
+
+import json
+import os
+import subprocess
+import sys
+
+
+def main() -> int:
+    workspace_id = os.environ.get("HERDR_ACTIVE_WORKSPACE_ID")
+    if not workspace_id:
+        print("No active Herdr workspace.", file=sys.stderr)
+        return 1
+
+    herdr = os.environ.get("HERDR_BIN_PATH", "herdr")
+    workspace = json.loads(
+        subprocess.check_output([herdr, "workspace", "get", workspace_id])
+    )["result"]["workspace"]
+    worktree = workspace.get("worktree") or {}
+    if not worktree.get("is_linked_worktree"):
+        print("The selected workspace is not a linked worktree.", file=sys.stderr)
+        return 1
+
+    checkout = worktree["checkout_path"]
+    repo = worktree["repo_root"]
+    wt = os.environ.get("WORKTRUNK_BIN_PATH", "wt")
+    listing = json.loads(
+        subprocess.check_output([wt, "-C", repo, "list", "--format=json"])
+    )
+    matches = [
+        item
+        for item in listing["items"]
+        if item.get("worktree", {}).get("path") == checkout
+        and not item["worktree"].get("main")
+    ]
+    if len(matches) != 1:
+        print(
+            "Worktrunk cannot uniquely identify this checkout; nothing removed.",
+            file=sys.stderr,
+        )
+        return 1
+
+    branch = matches[0]["branch"]
+    print(f"Remove checkout {checkout} (branch {branch})?", flush=True)
+    print(
+        "Worktrunk may also delete the branch if merged; uncommitted work is protected.",
+        flush=True,
+    )
+    if input(f"Type {branch} to confirm: ") != branch:
+        print("Cancelled.")
+        return 0
+
+    return subprocess.run(
+        [wt, "-C", repo, "remove", checkout, "--foreground", "--format=json"],
+        check=False,
+    ).returncode
+
+
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main())
+    except (KeyError, ValueError, subprocess.CalledProcessError) as error:
+        print(f"Could not verify worktree: {error}", file=sys.stderr)
+        raise SystemExit(1) from error

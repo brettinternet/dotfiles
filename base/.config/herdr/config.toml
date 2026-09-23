@@ -63,6 +63,14 @@ command = "brettinternet.worktrunk.open"
 description = "open Worktrunk worktree picker"
 
 [[keys.command]]
+key = "prefix+shift+y"
+type = "popup"
+command = "\"$HOME/.bin/herdr-remove-worktree\""
+description = "remove selected Worktrunk checkout (not just its workspace)"
+width = 100
+height = 12
+
+[[keys.command]]
 key = "prefix+g"
 type = "popup"
 command = "lazygit"
