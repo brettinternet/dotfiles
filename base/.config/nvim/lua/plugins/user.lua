@@ -83,6 +83,14 @@ return {
     },
     opts = {
       open_for_directories = true,
+      integrations = {
+        bufdelete_implementation = function(bufnr)
+          -- Yazi can schedule multiple deletion events for the same buffer.
+          if vim.api.nvim_buf_is_valid(bufnr) then
+            require("snacks.bufdelete").delete { buf = bufnr, force = true, wipe = true }
+          end
+        end,
+      },
     },
     init = function() vim.g.loaded_netrwPlugin = 1 end,
   },
