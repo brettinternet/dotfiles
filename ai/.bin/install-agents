@@ -204,12 +204,15 @@ for source in "$source_dir"/*.md; do
   [ -n "$claude_name" ] || claude_name=$role
 
   if ships "$source" claude; then
+    route=$(python3 "$dotfiles/ai/generate-config.py" --agent-route "$role" claude)
+    model=${route%% *}
+    effort=${route#* }
     {
       printf '%s\n' '---'
       printf 'name: %s\n' "$claude_name"
       printf 'description: %s\n' "$description"
-      printf 'model: %s\n' "$(field "$source" claude-model)"
-      printf 'effort: %s\n' "$(field "$source" claude-effort)"
+      printf 'model: %s\n' "$model"
+      printf 'effort: %s\n' "$effort"
       printf '%s\n\n' '---'
       body "$source"
     } > "$claude_dir/$claude_name.md"
@@ -218,12 +221,12 @@ for source in "$source_dir"/*.md; do
   fi
 
   if ships "$source" omp; then
+    route=$(python3 "$dotfiles/ai/generate-config.py" --agent-route "$role" omp)
     {
       printf '%s\n' '---'
       printf 'name: %s\n' "$role"
       printf 'description: %s\n' "$description"
-      printf 'model: %s\n' "$(field "$source" omp-model)"
-      printf 'thinking-level: %s\n' "$(field "$source" omp-effort)"
+      printf 'model: %s\n' "$route"
       printf '%s\n\n' '---'
       body "$source"
     } > "$omp_dir/$role.md"
@@ -267,10 +270,13 @@ for source in "$source_dir"/*.md; do
 
   if ships "$source" codex; then
     target="$codex_dir/$role.toml"
+    route=$(python3 "$dotfiles/ai/generate-config.py" --agent-route "$role" codex)
+    model=${route%% *}
+    effort=${route#* }
     {
       printf '%s\n' "$codex_marker"
-      printf 'model = "%s"\n' "$(field "$source" codex-model)"
-      printf 'model_reasoning_effort = "%s"\n' "$(field "$source" codex-effort)"
+      printf 'model = "%s"\n' "$model"
+      printf 'model_reasoning_effort = "%s"\n' "$effort"
       printf '%s\n\n' 'developer_instructions = """'
       body "$source"
       printf '%s\n' '"""'

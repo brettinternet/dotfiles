@@ -55,7 +55,7 @@ p solo --continue # use the active profile defaults without subagent tools
 - **OMP:** remains independently configured under `omp/`.
 - **OpenCode:** combines `opencode/profiles/common.jsonc` with an overlay. Run `opencode-profile list` for available profiles.
 
-`manifest.yaml` owns model metadata and role-to-model routing. OMP's richer `modelRoles` vocabulary is canonical: shared agents map through it (for example, `oracle` maps to `slow`), while Pi-specific `title` and `progress` routes render their model configs. OMP-only roles remain OMP-only. Harness profile names are mapped by the manifest, such as central `codex` to OpenCode `gpt`.
+`manifest.yaml` owns model metadata, effort, and role-to-model routing. OMP's richer `modelRoles` vocabulary is canonical: shared agents map through it (for example, `oracle` maps to `slow`), while Pi-specific `title` and `progress` routes render their model configs. OMP agent definitions omit thinking levels so the active profile's role suffix takes effect. Claude and Codex agent defaults live in `roles` because those harnesses do not switch profiles; `agents/` holds prompts and non-model metadata only. OMP-only roles remain OMP-only. Harness profile names are mapped by the manifest, such as central `codex` to OpenCode `gpt`.
 
 ## Shared agents
 

@@ -2,8 +2,6 @@
 description: Explicitly requested maintainability audit for structural complexity, spaghetti growth, and missed code-judo simplifications. Applies the thermo-nuclear-code-quality-review skill as its rubric. Read-only - reports findings, never edits, commits, or posts.
 tools: omp pi opencode
 pi-tools: read, grep, find, ls
-omp-model: pi/slow
-omp-effort: xhigh
 ---
 
 You run an extremely strict maintainability audit and report findings. You never edit files, commit, push, or post.

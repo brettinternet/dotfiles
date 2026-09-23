@@ -100,16 +100,30 @@ class Manifest:
             ):
                 raise SystemExit(f"{self.path}: {location}.args must be non-empty strings")
         for name, role in self.roles.items():
-            if not isinstance(role, dict) or not role.get("route"):
+            if not isinstance(role, dict) or not isinstance(role.get("route"), str):
                 raise SystemExit(f"{self.path}: role {name!r} requires route")
             source = AI_ROOT / f"agents/{name}.md"
             if not source.is_file():
                 raise SystemExit(f"{self.path}: missing agent prompt {source}")
-            match = re.search(r"^omp-model: pi/(\S+)$", source.read_text(), re.MULTILINE)
-            if not match or match.group(1) != role["route"]:
-                raise SystemExit(
-                    f"{self.path}: role {name!r} route does not match {source}'s omp-model"
-                )
+            source_text = source.read_text()
+            if re.search(r"^(?:omp|claude|codex)-(?:model|effort):", source_text, re.MULTILINE):
+                raise SystemExit(f"{self.path}: model and effort belong in manifest roles, not {source}")
+            match = re.search(r"^tools: (.+)$", source_text, re.MULTILINE)
+            if not match:
+                raise SystemExit(f"{self.path}: missing tools in {source}")
+            tools = match.group(1).split()
+            for harness in ("claude", "codex"):
+                if (harness in tools) != (harness in role):
+                    raise SystemExit(f"{self.path}: {name} requires {harness} routing exactly when enabled")
+                if harness in role:
+                    route = role[harness]
+                    if not isinstance(route, list) or len(route) != 2:
+                        raise SystemExit(f"{self.path}: roles.{name}.{harness} must be [model, effort]")
+                    self.validate_effort(route[1], f"roles.{name}.{harness}")
+                    if not isinstance(route[0], str) or not re.fullmatch(r"[a-zA-Z0-9.-]+", route[0]):
+                        raise SystemExit(f"{self.path}: invalid {harness} model for {name}")
+                    if not isinstance(route[1], str):
+                        raise SystemExit(f"{self.path}: roles.{name}.{harness} requires effort")
         outputs: set[tuple[str, str]] = set()
         for profile_name, profile in self.profiles.items():
             omp_roles = profile.get("ompRoles", {})
@@ -150,6 +164,13 @@ class Manifest:
                     self.validate_route(pi[key], f"profiles.{profile_name}.pi.{key}")
                 for model in pi.get("enabled", []):
                     self.model_id(model, "pi")
+
+    def agent_route(self, name: str, harness: str) -> str:
+        role = self.roles[name]
+        if harness == "omp":
+            return f"pi/{role['route']}"
+        model, effort = role[harness]
+        return f"{model} {effort}"
 
     def validate_route(self, route: Any, location: str) -> None:
         if not isinstance(route, list) or len(route) != 2:
@@ -347,8 +368,15 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--profile-output", nargs=2, metavar=("PROFILE", "HARNESS"))
+    parser.add_argument("--agent-route", nargs=2, metavar=("ROLE", "HARNESS"))
     args = parser.parse_args()
     manifest = Manifest(AI_ROOT / "manifest.yaml")
+    if args.agent_route:
+        role, harness = args.agent_route
+        if role not in manifest.roles or harness not in {"omp", "claude", "codex"}:
+            raise SystemExit(f"unknown agent route: {role}/{harness}")
+        print(manifest.agent_route(role, harness))
+        return 0
     if args.profile_output:
         profile_name, harness = args.profile_output
         try:
