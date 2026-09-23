@@ -35,7 +35,7 @@
       },
       "executor": {
         "model": "openrouter/openai/gpt-6-luna",
-        "thinking": "high"
+        "thinking": "max"
       },
       "verifier": {
         "model": "openrouter/openai/gpt-6-luna",

@@ -6,7 +6,7 @@
     },
     "executor": {
       "model": "openai/gpt-6-luna",
-      "variant": "medium"
+      "variant": "max"
     },
     "explore": {
       "model": "openai/gpt-6-luna",
