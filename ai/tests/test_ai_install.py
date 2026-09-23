@@ -171,6 +171,25 @@ path.write_text("// generated guard for test\\n")
 
         self.assertTrue((self.home / ".codex/agents/executor.toml").is_file())
         self.assertTrue((self.home / ".omp/agent/agents/explore.md").is_file())
+        omp_executor = self.load_yaml(
+            (self.home / ".omp/agent/agents/executor.md").read_text().split("---\n", 2)[1]
+        )
+        manifest = self.load_yaml((ROOT / "ai/manifest.yaml").read_text())
+        executor = manifest["roles"]["executor"]
+        self.assertEqual(f"pi/{executor['route']}", omp_executor["model"])
+        self.assertNotIn("thinking-level", omp_executor)
+        for profile in ("codex", "openrouter"):
+            config = manifest["profiles"][profile]
+            output = config["outputs"]["omp"]
+            roles = self.load_yaml((ROOT / f"ai/omp/profiles/{output}.yml").read_text())["modelRoles"]
+            alias, effort = config["ompRoles"][executor["route"]]
+            self.assertEqual(f"{manifest['models'][alias]['ids']['omp']}:{effort}", roles[executor["route"]])
+        codex_executor = tomllib.loads((self.home / ".codex/agents/executor.toml").read_text())
+        self.assertEqual(executor["codex"], [codex_executor["model"], codex_executor["model_reasoning_effort"]])
+        claude_executor = self.load_yaml(
+            (self.home / ".claude/agents/executor.md").read_text().split("---\n", 2)[1]
+        )
+        self.assertEqual(executor["claude"], [claude_executor["model"], claude_executor["effort"]])
         claude_explore = self.home / ".claude/agents/Explore.md"
         self.assertTrue(claude_explore.is_file())
         metadata = self.load_yaml(claude_explore.read_text().split("---\n", 2)[1])
@@ -206,7 +225,6 @@ path.write_text("// generated guard for test\\n")
         source.mkdir()
         for definition in (ROOT / "ai/agents").glob("*.md"):
             (source / definition.name).write_text(definition.read_text())
-        (source / "retired.md").write_text((ROOT / "ai/agents/oracle.md").read_text())
         arguments = (
             "ai/.bin/install-agents",
             str(source),
@@ -221,13 +239,13 @@ path.write_text("// generated guard for test\\n")
         self.run_command(*arguments)
         unmanaged = self.home / ".claude/agents/handwritten.md"
         unmanaged.write_text("Handwritten\n")
-        (source / "retired.md").unlink()
+        (source / "oracle.md").unlink()
         self.run_command(*arguments)
 
         for retired in (
-            self.home / ".claude/agents/retired.md",
-            self.home / ".codex/agents/retired.toml",
-            self.home / ".pi/agent/agents/retired.md",
+            self.home / ".claude/agents/oracle.md",
+            self.home / ".codex/agents/oracle.toml",
+            self.home / ".pi/agent/agents/oracle.md",
         ):
             self.assertFalse(retired.exists())
         self.assertEqual("Handwritten\n", unmanaged.read_text())

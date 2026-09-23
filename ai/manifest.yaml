@@ -6,14 +6,14 @@ piLaunchers:
   solo: { args: [--exclude-tools, "subagent,subagent_wait,subagent_supervisor"] }
 
 roles:
-  explore: { route: smol }
-  executor: { route: task }
-  oracle: { route: slow }
-  pr-watcher: { route: smol }
-  reviewer: { route: reviewer }
+  explore: { route: smol, claude: [haiku, low] }
+  executor: { route: task, claude: [sonnet, medium], codex: [gpt-5.6-luna, max] }
+  oracle: { route: slow, claude: [opus, xhigh], codex: [gpt-5.6-sol, xhigh] }
+  pr-watcher: { route: smol, claude: [haiku, low], codex: [gpt-5.6-luna, low] }
+  reviewer: { route: reviewer, claude: [claude-opus-4-8, xhigh], codex: [gpt-5.6-terra, xhigh] }
   thermo-nuclear-code-quality-review: { route: slow }
-  verifier: { route: task }
-  writer: { route: writer }
+  verifier: { route: task, claude: [sonnet, medium], codex: [gpt-5.6-luna, high] }
+  writer: { route: writer, claude: [sonnet, low], codex: [gpt-5.4, medium] }
 
 models:
   codex-sol:
