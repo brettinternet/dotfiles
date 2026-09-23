@@ -31,7 +31,7 @@
       },
       "executor": {
         "model": "openai-codex/gpt-6-luna",
-        "thinking": "high"
+        "thinking": "max"
       },
       "verifier": {
         "model": "openai-codex/gpt-6-luna",

@@ -162,7 +162,7 @@ profiles:
           reviewer: max,
           oracle: max,
           explore: low,
-          executor: high,
+          executor: max,
           verifier: high,
           pr-watcher: low,
           thermo-nuclear-code-quality-review: max,
@@ -180,7 +180,7 @@ profiles:
       efforts:
         {
           reviewer: max,
-          executor: high,
+          executor: max,
           explore: medium,
           oracle: max,
           pr-watcher: medium,
@@ -261,7 +261,7 @@ profiles:
       efforts:
         {
           reviewer: xhigh,
-          executor: medium,
+          executor: max,
           explore: medium,
           oracle: xhigh,
           pr-watcher: medium,
@@ -297,7 +297,7 @@ profiles:
           reviewer: xhigh,
           oracle: high,
           explore: low,
-          executor: high,
+          executor: max,
           verifier: high,
           pr-watcher: low,
           thermo-nuclear-code-quality-review: xhigh,
@@ -315,7 +315,7 @@ profiles:
       efforts:
         {
           reviewer: xhigh,
-          executor: high,
+          executor: max,
           explore: low,
           oracle: high,
           pr-watcher: low,
