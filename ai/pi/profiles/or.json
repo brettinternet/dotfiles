@@ -7,10 +7,11 @@
     "openrouter/openai/gpt-6-luna",
     "openrouter/openai/gpt-6-sol-pro",
     "openrouter/~anthropic/claude-fable-latest",
+    "openrouter/anthropic/claude-opus-5.5",
     "openrouter/z-ai/glm-5.3",
-    "openrouter/anthropic/claude-opus-4.8",
+    "openrouter/anthropic/claude-opus-5.5",
     "openrouter/google/gemini-3.8-flash",
-    "openrouter/anthropic/claude-opus-4.6"
+    "openrouter/anthropic/claude-opus-5.5"
   ],
   "subagents": {
     "defaultModel": "openrouter/openai/gpt-6-luna",
@@ -22,11 +23,11 @@
         "thinking": "medium"
       },
       "reviewer": {
-        "model": "openrouter/anthropic/claude-opus-4.8",
+        "model": "openrouter/anthropic/claude-opus-5.5",
         "thinking": "xhigh"
       },
       "oracle": {
-        "model": "openrouter/openai/gpt-6-sol-pro",
+        "model": "openrouter/anthropic/claude-opus-5.5",
         "thinking": "high"
       },
       "explore": {
@@ -46,14 +47,14 @@
         "thinking": "low"
       },
       "thermo-nuclear-code-quality-review": {
-        "model": "openrouter/openai/gpt-6-sol-pro",
+        "model": "openrouter/anthropic/claude-opus-5.5",
         "thinking": "xhigh"
       },
       "writer": {
         "model": "openrouter/google/gemini-3.8-flash",
         "thinking": "medium",
         "fallbackModels": [
-          "openrouter/anthropic/claude-opus-4.6:medium"
+          "openrouter/anthropic/claude-opus-5.5:medium"
         ]
       }
     },

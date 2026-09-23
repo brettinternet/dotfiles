@@ -1,7 +1,7 @@
 {
   "agent": {
     "reviewer": {
-      "model": "openrouter/anthropic/claude-opus-4.8",
+      "model": "openrouter/anthropic/claude-opus-5.5",
       "variant": "xhigh"
     },
     "executor": {
@@ -13,7 +13,7 @@
       "variant": "low"
     },
     "oracle": {
-      "model": "openrouter/openai/gpt-6-sol-pro",
+      "model": "openrouter/anthropic/claude-opus-5.5",
       "variant": "high"
     },
     "pr-watcher": {
@@ -21,7 +21,7 @@
       "variant": "low"
     },
     "thermo-nuclear-code-quality-review": {
-      "model": "openrouter/openai/gpt-6-sol-pro",
+      "model": "openrouter/anthropic/claude-opus-5.5",
       "variant": "medium"
     },
     "verifier": {

@@ -18,9 +18,6 @@
         "claude-opus-5-5": {
           "contextWindow": 256000
         },
-        "claude-opus-4-8": {
-          "contextWindow": 256000
-        },
         "claude-sonnet-5": {
           "contextWindow": 256000
         },
@@ -46,10 +43,7 @@
         "~anthropic/claude-fable-latest": {
           "contextWindow": 256000
         },
-        "anthropic/claude-opus-4.8": {
-          "contextWindow": 256000
-        },
-        "anthropic/claude-opus-4.6": {
+        "anthropic/claude-opus-5.5": {
           "contextWindow": 256000
         },
         "google/gemini-3.8-flash": {

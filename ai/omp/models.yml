@@ -11,8 +11,6 @@ providers:
         contextWindow: 256000
       claude-opus-5.5:
         contextWindow: 256000
-      claude-opus-4.8:
-        contextWindow: 256000
       claude-sonnet-5:
         contextWindow: 256000
       claude-haiku-4-5:
@@ -29,13 +27,9 @@ providers:
         contextWindow: 256000
       anthropic/claude-fable-latest:
         contextWindow: 256000
-      anthropic/claude-opus-latest:
-        contextWindow: 256000
-      anthropic/claude-opus-4.8:
+      anthropic/claude-opus-5.5:
         contextWindow: 256000
       anthropic/claude-sonnet-latest:
-        contextWindow: 256000
-      anthropic/claude-opus-4.6:
         contextWindow: 256000
       google/gemini-3.8-flash:
         contextWindow: 256000
