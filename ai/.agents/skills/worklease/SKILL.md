@@ -18,7 +18,7 @@ Choose one full, collision-resistant identifier for each independent worker or r
 - For one-shot work, a full harness-provided session ID is suitable; in Pi, use `PI_SESSION_ID`.
 - For a repeated workflow in another harness, use its stable workflow or loop ID, not an iteration, turn, or replacement-session ID. If none is available, create one full UUID before acquire and preserve it for the complete claim lifecycle.
 
-A successful `verify` proves access to the selected private handle, not that the current worker created it. Do not adopt an existing claim based only on successful verification, matching agent identity, or a similar session label.
+A successful `verify` proves access to the selected private handle, not that the current worker created it. It does not establish checkout ownership or authorize discarding uncommitted changes. Do not adopt an existing claim based only on successful verification, matching agent identity, or a similar session label.
 
 Use one shared Worklease authority and the same exact canonical resource for every contender. Keep provider state authoritative for eligibility and progress; a Worklease claim only coordinates callers using that authority and resource.
 
