@@ -22,7 +22,7 @@
         "thinking": "max"
       },
       "oracle": {
-        "model": "openai-codex/gpt-6-sol",
+        "model": "openai-codex/gpt-6-astra",
         "thinking": "max"
       },
       "explore": {
@@ -42,7 +42,7 @@
         "thinking": "low"
       },
       "thermo-nuclear-code-quality-review": {
-        "model": "openai-codex/gpt-6-sol",
+        "model": "openai-codex/gpt-6-astra",
         "thinking": "max"
       },
       "writer": {

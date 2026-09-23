@@ -3,7 +3,7 @@ modelRoles:
   reviewer: openai-codex/gpt-6-sol:high
   default: openai-codex/gpt-6-sol:medium
   smol: openai-codex/gpt-6-luna:max
-  slow: openai-codex/gpt-6-sol:max
+  slow: openai-codex/gpt-6-astra:max
   designer: openai-codex/gpt-6-sol:xhigh
   vision: openai-codex/gpt-6-sol:high
   task: openai-codex/gpt-6-luna:max
