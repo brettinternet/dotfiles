@@ -1,5 +1,18 @@
 {
   "providers": {
+    "openai-codex": {
+      "modelOverrides": {
+        "gpt-6-sol": {
+          "contextWindow": 272000
+        },
+        "gpt-6-luna": {
+          "contextWindow": 272000
+        },
+        "gpt-6-astra": {
+          "contextWindow": 272000
+        }
+      }
+    },
     "anthropic": {
       "modelOverrides": {
         "claude-fable-5-1": {
