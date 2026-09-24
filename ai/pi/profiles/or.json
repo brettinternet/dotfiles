@@ -1,6 +1,6 @@
 {
   "defaultProvider": "openrouter",
-  "defaultModel": "openai/gpt-6-sol",
+  "defaultModel": "anthropic/claude-opus-5.5",
   "defaultThinkingLevel": "medium",
   "enabledModels": [
     "openrouter/openai/gpt-6-sol",
@@ -20,7 +20,7 @@
     "agentOverrides": {
       "researcher": {
         "model": "openrouter/openai/gpt-6-luna",
-        "thinking": "medium"
+        "thinking": "max"
       },
       "reviewer": {
         "model": "openrouter/anthropic/claude-opus-5.5",

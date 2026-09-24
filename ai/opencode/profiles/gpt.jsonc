@@ -1,7 +1,7 @@
 {
   "agent": {
     "reviewer": {
-      "model": "openai/gpt-6-sol",
+      "model": "openai/gpt-5.6-sol",
       "variant": "max"
     },
     "executor": {
@@ -13,7 +13,7 @@
       "variant": "medium"
     },
     "oracle": {
-      "model": "openai/gpt-6-sol",
+      "model": "openai/gpt-5.6-sol",
       "variant": "max"
     },
     "pr-watcher": {
@@ -21,7 +21,7 @@
       "variant": "medium"
     },
     "thermo-nuclear-code-quality-review": {
-      "model": "openai/gpt-6-sol",
+      "model": "openai/gpt-5.6-sol",
       "variant": "max"
     },
     "verifier": {
