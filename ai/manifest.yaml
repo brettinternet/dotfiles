@@ -2,7 +2,7 @@ version: 1
 
 piLaunchers:
   fast: { model: or-flash, thinking: high }
-  oracle: { model: claude-fable, thinking: high }
+  oracle: { model: claude-opus, thinking: xhigh }
   solo: { args: [--exclude-tools, "subagent,subagent_wait,subagent_supervisor"] }
 
 # Pi model IDs; aliases keep profiles concise. `context: conservative` keeps context small by
