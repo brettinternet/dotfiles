@@ -49,15 +49,6 @@ require_managed_skill() {
   fi
 }
 
-require_managed_command() {
-  command=$1
-
-  if [ -e "$command" ] && ! grep -Fqx "$opencode_command_marker" "$command" && ! grep -Fqx "$skill_marker" "$command"; then
-    printf 'Refusing to overwrite unmanaged OpenCode command: %s\n' "$command" >&2
-    exit 1
-  fi
-}
-
 write_skill() {
   command=$1
   name=$2
@@ -81,20 +72,6 @@ write_skill() {
   } > "$skill_dir/SKILL.md"
 }
 
-write_opencode_command() {
-  command=$1
-  description=$2
-  destination=$3
-
-  mkdir -p "$(dirname "$destination")"
-  {
-    printf '%s\n' '---' "$opencode_command_marker"
-    printf 'description: %s\n' "$description"
-    printf '%s\n' '---' ''
-    command_body "$command"
-  } > "$destination"
-}
-
 for command in "$commands_dir"/*.md; do
   [ -f "$command" ] || continue
 
@@ -111,7 +88,6 @@ for command in "$commands_dir"/*.md; do
 
   if shared_enabled; then require_managed_skill "$agents_skill_dir"; fi
   if tool_enabled claude; then require_managed_skill "$claude_skill_dir"; fi
-  if tool_enabled opencode; then require_managed_command "$opencode_commands_dir/$name.md"; fi
   if shared_enabled && [ -e "$agent" ] && ! grep -Fqx "$agent_marker" "$agent"; then
     printf 'Refusing to overwrite unmanaged skill metadata: %s\n' "$agent" >&2
     exit 1
@@ -143,10 +119,6 @@ for command in "$commands_dir"/*.md; do
   if tool_enabled claude; then
     write_skill "$command" "$name" "$description" "$argument_hint" "$claude_skill_dir"
   fi
-  if tool_enabled opencode; then
-    write_opencode_command "$command" "$description" "$opencode_commands_dir/$name.md"
-  fi
-
 done
 
 cleanup_generated_skills() {
@@ -174,15 +146,13 @@ cleanup_generated_skills() {
 # Reconcile only generated resources after every current command is valid.
 if shared_enabled; then shared=true; else shared=false; fi
 if tool_enabled claude; then claude=true; else claude=false; fi
-if tool_enabled opencode; then opencode=true; else opencode=false; fi
 cleanup_generated_skills "$agents_skills_dir" true "$shared"
 cleanup_generated_skills "$claude_skills_dir" false "$claude"
 
 for command in "$opencode_commands_dir"/*.md; do
-  [ -f "$command" ] || continue
+  [ -f "$command" ] && [ ! -L "$command" ] || continue
 
   name=$(basename "$command" .md)
-  [ "$opencode" = false ] || [ ! -f "$commands_dir/$name.md" ] || continue
   grep -Fqx "$opencode_command_marker" "$command" || grep -Fqx "$skill_marker" "$command" || continue
   trash "$command"
 done

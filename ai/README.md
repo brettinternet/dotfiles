@@ -1,12 +1,12 @@
 # AI agent setup
 
-Shared configuration for Claude Code, Pi, Codex, Amp, and OpenCode.
+Shared configuration for Claude Code, Pi, Codex, and Amp.
 
 AI tools are disabled by default. Select them per machine in `~/.envrc`, then install or refresh them:
 
 ```sh
 export DOTFILES_AI_TOOLS=all
-# Or select a subset: pi,opencode,claude,codex,amp
+# Or select a subset: pi,claude,codex,amp
 make ai
 ```
 
@@ -28,7 +28,7 @@ Unmanaged files and mutable local settings are preserved.
 - `agents/` — shared subagent prompts; `install-agents` renders harness-specific definitions
 - `.agents/skills/` — reusable skills discovered through `~/.agents/skills/`
 - `.agents/commands/` — shared workflows rendered as skills by `install-agent-commands`
-- `pi/`, `opencode/`, `claude/`, and `amp/` — harness-specific configuration
+- `pi/`, `claude/`, and `amp/` — harness-specific configuration
 - `project/` — project-level defaults
 
 Generated files under `$HOME` should not be edited directly. Change their source here and rerun `make ai`. Claude preferences from `claude/settings.json` are merged into the mutable user settings on each run, preserving local-only keys such as integration hooks.
@@ -36,12 +36,12 @@ Generated files under `$HOME` should not be edited directly. Change their source
 ## Profiles
 
 ```sh
-ai-config use codex       # all supported harnesses
-ai-config use openrouter  # or: claude, codex-claude, openrouter-cheap, copilot, personal
+ai-config use codex       # Pi profile
+ai-config use openrouter  # or: claude, personal
 ai-config generate --check
 ```
 
-The individual `pi-profile` and `opencode-profile` commands remain available. Generated profile and model files under `pi/` and `opencode/` should not be edited directly; change `manifest.yaml` and run `ai-config generate`.
+The `pi-profile` command remains available. Generated profile and model files under `pi/` should not be edited directly; change `manifest.yaml` and run `ai-config generate`.
 
 Use `p <launcher> [pi arguments...]` for a manifest-backed Pi launch preset, or `p list` to show presets. Launchers can configure a model, thinking level, arbitrary Pi arguments, or any combination:
 
@@ -52,9 +52,7 @@ p solo --continue # use the active profile defaults without subagent tools
 ```
 
 - **Pi:** combines `pi/profiles/common.json` with the selected generated overlay. `codex` uses ChatGPT subscription models; `or` requires `OPENROUTER_API_KEY`.
-- **OpenCode:** combines `opencode/profiles/common.jsonc` with an overlay. Run `opencode-profile list` for available profiles.
-
-`manifest.yaml` owns model metadata, effort, and role-to-model routing. Shared `modelRoutes` map agent roles to model aliases (for example, `oracle` maps to `slow`); Pi-specific `title` and `progress` routes render their model configs. Claude and Codex agent defaults live in `roles` because those harnesses do not switch profiles; `agents/` holds prompts and non-model metadata only. Harness profile names are mapped by the manifest, such as central `codex` to OpenCode `gpt`.
+`manifest.yaml` owns model metadata, effort, and role-to-model routing. Shared `modelRoutes` map agent roles to model aliases (for example, `oracle` maps to `slow`); Pi-specific `title` and `progress` routes render their model configs. Claude and Codex agent defaults live in `roles` because those harnesses do not switch profiles; `agents/` holds prompts and non-model metadata only. Pi profile names are mapped by the manifest.
 
 ## Shared agents
 

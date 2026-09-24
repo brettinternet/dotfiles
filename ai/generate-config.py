@@ -33,18 +33,6 @@ ManifestLoader.add_implicit_resolver(
     list("tTfF"),
 )
 
-ROLE_ORDER = (
-    "reviewer",
-    "executor",
-    "explore",
-    "oracle",
-    "pr-watcher",
-    "thermo-nuclear-code-quality-review",
-    "verifier",
-    "writer",
-)
-
-
 def deep_merge(base: Mapping[str, Any], overlay: Mapping[str, Any]) -> dict[str, Any]:
     merged = dict(base)
     for key, value in overlay.items():
@@ -53,13 +41,6 @@ def deep_merge(base: Mapping[str, Any], overlay: Mapping[str, Any]) -> dict[str,
         else:
             merged[key] = value
     return merged
-
-
-def load_jsonc(path: Path) -> dict[str, Any]:
-    # The base contains only line comments and trailing commas.
-    lines = [line for line in path.read_text().splitlines() if not line.lstrip().startswith("//")]
-    text = "\n".join(lines)
-    return json.loads(re.sub(r",(\s*[}\]])", r"\1", text))
 
 
 class Manifest:
@@ -130,34 +111,24 @@ class Manifest:
             for role_name, route in routes.items():
                 self.validate_route(route, f"profiles.{profile_name}.modelRoutes.{role_name}")
             for harness, output in profile.get("outputs", {}).items():
-                if harness not in {"pi", "opencode"}:
+                if harness != "pi":
                     raise SystemExit(f"{self.path}: unknown harness {harness!r}")
                 key = (harness, output)
                 if key in outputs:
                     raise SystemExit(f"{self.path}: duplicate output {harness}/{output}")
                 outputs.add(key)
-            for harness in ("pi", "opencode"):
-                config = profile.get(harness)
-                if config is None:
-                    continue
-                if harness == "opencode":
-                    for route_name, route in config.get("routes", {}).items():
-                        if route_name not in routes:
-                            raise SystemExit(
-                                f"{self.path}: unknown OpenCode route {route_name!r}"
-                            )
-                        self.validate_route(route, f"profiles.{profile_name}.opencode.routes.{route_name}")
-                        self.model_id(route[0], "opencode")
+            config = profile.get("pi")
+            if config is not None:
                 for role_name in config.get("efforts", {}):
                     if role_name not in self.roles:
                         raise SystemExit(f"{self.path}: unknown agent role {role_name!r}")
                     route_name = self.roles[role_name]["route"]
                     if route_name not in routes:
                         raise SystemExit(
-                            f"{self.path}: {profile_name}/{harness}/{role_name} maps to missing model route {route_name!r}"
+                            f"{self.path}: {profile_name}/pi/{role_name} maps to missing model route {route_name!r}"
                         )
                 for effort in config.get("efforts", {}).values():
-                    self.validate_effort(effort, f"profiles.{profile_name}.{harness}.efforts")
+                    self.validate_effort(effort, f"profiles.{profile_name}.pi.efforts")
             pi = profile.get("pi")
             if pi:
                 for key in ("parent", "defaultAgent", "researcher", "progress"):
@@ -229,12 +200,8 @@ def render_catalog(manifest: Manifest, harness: str) -> dict[str, Any]:
             continue
         provider, name = split_model_id(model_id)
         context_window = 272000 if context == "codex" and provider in {"openai-codex", "openrouter"} else 256000
-        if harness == "opencode":
-            override = {"limit": {"context": 256000, "input": 128000, "output": 128000}}
-            providers.setdefault(provider, {}).setdefault("models", {})[name] = override
-        else:
-            override = {"contextWindow": context_window}
-            providers.setdefault(provider, {}).setdefault("modelOverrides", {})[name] = override
+        override = {"contextWindow": context_window}
+        providers.setdefault(provider, {}).setdefault("modelOverrides", {})[name] = override
     return {"providers": providers}
 
 
@@ -287,20 +254,6 @@ def render_pi_profile(manifest: Manifest, profile: dict[str, Any]) -> dict[str, 
     return deep_merge(rendered, config.get("settings", {}))
 
 
-def render_opencode_profile(manifest: Manifest, profile: dict[str, Any]) -> dict[str, Any]:
-    agents: dict[str, Any] = {}
-    for role_name in ROLE_ORDER:
-        effort = profile["opencode"]["efforts"][role_name]
-        route_name = manifest.roles[role_name]["route"]
-        route = profile["opencode"].get("routes", {}).get(
-            route_name, manifest.route_for_agent(profile, role_name)
-        )
-        agents[role_name] = {"model": manifest.model_id(route[0], "opencode")}
-        if effort:
-            agents[role_name]["variant"] = effort
-    return {"agent": agents}
-
-
 def render_outputs(manifest: Manifest) -> dict[Path, str]:
     outputs: dict[Path, str] = {}
     outputs[AI_ROOT / "pi/models.json"] = json.dumps(render_catalog(manifest, "pi"), indent=2) + "\n"
@@ -328,21 +281,11 @@ def render_outputs(manifest: Manifest) -> dict[Path, str]:
         "{\n" + ",\n".join(launcher_blocks) + "\n}\n"
     )
 
-    opencode_common = deep_merge(
-        load_jsonc(AI_ROOT / "opencode/common-base.jsonc"),
-        {"provider": render_catalog(manifest, "opencode")["providers"]},
-    )
-    outputs[AI_ROOT / "opencode/profiles/common.jsonc"] = json.dumps(opencode_common, indent=2) + "\n"
-
     for profile in manifest.profiles.values():
         names = profile["outputs"]
         if "pi" in names:
             outputs[AI_ROOT / f"pi/profiles/{names['pi']}.json"] = (
                 json.dumps(render_pi_profile(manifest, profile), indent=2) + "\n"
-            )
-        if "opencode" in names:
-            outputs[AI_ROOT / f"opencode/profiles/{names['opencode']}.jsonc"] = (
-                json.dumps(render_opencode_profile(manifest, profile), indent=2) + "\n"
             )
     return outputs
 

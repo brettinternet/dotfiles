@@ -17,83 +17,68 @@ roles:
 
 models:
   codex-sol:
-    ids: { pi: openai-codex/gpt-6-sol, opencode: openai/gpt-6-sol }
+    ids: { pi: openai-codex/gpt-6-sol }
     context: codex
   codex-luna:
-    ids: { pi: openai-codex/gpt-6-luna, opencode: openai/gpt-6-luna }
+    ids: { pi: openai-codex/gpt-6-luna }
     context: codex
   codex-astra:
     ids: { pi: openai-codex/gpt-6-astra }
   codex-writer:
-    ids: { pi: openai-codex/gpt-5.4, opencode: openai/gpt-5.4 }
+    ids: { pi: openai-codex/gpt-5.4 }
 
   claude-fable:
-    ids: { pi: anthropic/claude-fable-5-1, opencode: anthropic/claude-fable-5.1 }
+    ids: { pi: anthropic/claude-fable-5-1 }
     context: conservative
   claude-opus:
-    ids: { pi: anthropic/claude-opus-5-5, opencode: anthropic/claude-opus-5.5 }
+    ids: { pi: anthropic/claude-opus-5-5 }
     context: conservative
   claude-reviewer:
-    ids: { pi: anthropic/claude-opus-5-5, opencode: anthropic/claude-opus-5.5 }
+    ids: { pi: anthropic/claude-opus-5-5 }
     context: conservative
   claude-sonnet:
-    ids: { pi: anthropic/claude-sonnet-5, opencode: anthropic/claude-sonnet-5 }
+    ids: { pi: anthropic/claude-sonnet-5 }
     context: conservative
   claude-haiku:
-    ids: { pi: anthropic/claude-haiku-4-5, opencode: anthropic/claude-haiku-4-5 }
+    ids: { pi: anthropic/claude-haiku-4-5 }
     context: conservative
   or-sol:
-    ids: { pi: openrouter/openai/gpt-6-sol, opencode: openrouter/openai/gpt-6-sol }
+    ids: { pi: openrouter/openai/gpt-6-sol }
     context: codex
   or-luna:
-    ids: { pi: openrouter/openai/gpt-6-luna, opencode: openrouter/openai/gpt-6-luna }
+    ids: { pi: openrouter/openai/gpt-6-luna }
     context: codex
   or-sol-pro:
-    ids: { pi: openrouter/openai/gpt-6-sol-pro, opencode: openrouter/openai/gpt-6-sol-pro }
+    ids: { pi: openrouter/openai/gpt-6-sol-pro }
     context: codex
   or-fable:
-    ids: { pi: openrouter/anthropic/claude-fable-latest, opencode: openrouter/anthropic/claude-fable-latest }
+    ids: { pi: openrouter/anthropic/claude-fable-latest }
     context: conservative
   or-fable-auto:
     ids: { pi: openrouter/~anthropic/claude-fable-latest }
     context: conservative
   or-opus:
-    ids: { pi: openrouter/anthropic/claude-opus-5.5, opencode: openrouter/anthropic/claude-opus-5.5 }
+    ids: { pi: openrouter/anthropic/claude-opus-5.5 }
     context: conservative
   or-reviewer:
-    ids: { pi: openrouter/anthropic/claude-opus-5.5, opencode: openrouter/anthropic/claude-opus-5.5 }
+    ids: { pi: openrouter/anthropic/claude-opus-5.5 }
     context: conservative
   or-writer:
-    ids: { pi: openrouter/anthropic/claude-opus-5.5, opencode: openrouter/anthropic/claude-opus-5.5 }
+    ids: { pi: openrouter/anthropic/claude-opus-5.5 }
     context: conservative
   or-gemini-writer:
-    ids: { pi: openrouter/google/gemini-3.8-flash, opencode: openrouter/google/gemini-3.8-flash }
+    ids: { pi: openrouter/google/gemini-3.8-flash }
     context: conservative
   or-flash:
-    ids: { pi: openrouter/deepseek/deepseek-v4-flash-0731, opencode: openrouter/deepseek/deepseek-v4-flash-0731 }
-    context: conservative
-  or-flash-auto:
-    ids: { opencode: openrouter/~deepseek/deepseek-v4-flash-latest }
-    context: conservative
-  or-deepseek-pro:
-    ids: { opencode: openrouter/deepseek/deepseek-v4-pro-0813 }
+    ids: { pi: openrouter/deepseek/deepseek-v4-flash-0731 }
     context: conservative
   or-glm:
-    ids: { pi: openrouter/z-ai/glm-5.3, opencode: openrouter/z-ai/glm-5.3 }
+    ids: { pi: openrouter/z-ai/glm-5.3 }
     context: conservative
-
-  copilot-reviewer:
-    ids: { opencode: github-copilot/claude-opus-4.8 }
-  copilot-sonnet:
-    ids: { opencode: github-copilot/claude-sonnet-5 }
-  copilot-haiku:
-    ids: { opencode: github-copilot/claude-haiku-4.5 }
-  copilot-luna:
-    ids: { opencode: github-copilot/gpt-6-luna }
 
 profiles:
   codex:
-    outputs: { pi: codex, opencode: gpt }
+    outputs: { pi: codex }
     modelRoutes:
       reviewer: [codex-sol, high]
       smol: [codex-luna, max]
@@ -125,22 +110,8 @@ profiles:
             providers: [openai]
             useCurrentModel: true
             fallbackOn: [unsupported, transient, quota, network, invalid-response]
-    opencode:
-      routes: { slow: [codex-sol, max] }
-      efforts:
-        {
-          reviewer: max,
-          executor: max,
-          explore: medium,
-          oracle: max,
-          pr-watcher: medium,
-          thermo-nuclear-code-quality-review: max,
-          verifier: high,
-          writer: low,
-        }
-
   claude:
-    outputs: { pi: claude, opencode: claude }
+    outputs: { pi: claude }
     modelRoutes:
       reviewer: [claude-reviewer, xhigh]
       smol: [claude-haiku, medium]
@@ -166,42 +137,8 @@ profiles:
           writer: low,
         }
       modelScope: [anthropic/*]
-    opencode:
-      efforts:
-        {
-          reviewer: max,
-          executor: null,
-          explore: null,
-          oracle: max,
-          pr-watcher: null,
-          thermo-nuclear-code-quality-review: max,
-          verifier: null,
-          writer: low,
-        }
-
-  codex-claude:
-    outputs: { opencode: claude-gpt }
-    modelRoutes:
-      reviewer: [claude-opus, xhigh]
-      smol: [codex-luna, medium]
-      slow: [claude-opus, xhigh]
-      task: [codex-luna, max]
-      writer: [claude-sonnet, low]
-    opencode:
-      efforts:
-        {
-          reviewer: xhigh,
-          executor: max,
-          explore: medium,
-          oracle: xhigh,
-          pr-watcher: medium,
-          thermo-nuclear-code-quality-review: xhigh,
-          verifier: high,
-          writer: low,
-        }
-
   openrouter:
-    outputs: { pi: or, opencode: or }
+    outputs: { pi: or }
     modelRoutes:
       smol: [or-luna, max]
       slow: [or-opus, xhigh]
@@ -234,57 +171,3 @@ profiles:
             writer:
               fallbackModels: [openrouter/anthropic/claude-opus-5.5:medium]
         webSearchConfig: { tools: { webSearch: { enabled: false } } }
-    opencode:
-      efforts:
-        {
-          reviewer: xhigh,
-          executor: max,
-          explore: low,
-          oracle: high,
-          pr-watcher: low,
-          thermo-nuclear-code-quality-review: medium,
-          verifier: high,
-          writer: medium,
-        }
-
-  openrouter-cheap:
-    outputs: { opencode: or-cheap }
-    modelRoutes:
-      smol: [or-flash-auto, high]
-      slow: [or-glm, max]
-      task: [or-deepseek-pro, high]
-      reviewer: [or-glm, max]
-      writer: [or-deepseek-pro, low]
-    opencode:
-      efforts:
-        {
-          reviewer: max,
-          executor: high,
-          explore: high,
-          oracle: max,
-          pr-watcher: high,
-          thermo-nuclear-code-quality-review: high,
-          verifier: high,
-          writer: low,
-        }
-
-  copilot:
-    outputs: { opencode: copilot }
-    modelRoutes:
-      reviewer: [copilot-reviewer, null]
-      smol: [copilot-haiku, null]
-      slow: [copilot-reviewer, null]
-      task: [copilot-luna, null]
-      writer: [copilot-sonnet, null]
-    opencode:
-      efforts:
-        {
-          reviewer: null,
-          executor: null,
-          explore: null,
-          oracle: null,
-          pr-watcher: null,
-          thermo-nuclear-code-quality-review: null,
-          verifier: null,
-          writer: null,
-        }

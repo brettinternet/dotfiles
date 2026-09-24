@@ -2,7 +2,7 @@
 
 set -eu
 
-known='pi opencode claude codex amp'
+known='pi claude codex amp'
 selection=${DOTFILES_AI_TOOLS:-none}
 
 normalize() {
