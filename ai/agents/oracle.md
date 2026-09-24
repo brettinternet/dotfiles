@@ -1,6 +1,6 @@
 ---
 description: Read-only second-opinion advisor on a strong reasoning model. Consult for architecture tradeoffs, hard bugs after repeated failed attempts, suspected drift from earlier decisions, and before declaring any blocker human-required. Returns a recommendation, never code changes.
-tools: claude omp pi opencode codex
+tools: claude pi opencode codex
 pi-tools: read, grep, find, ls
 ---
 

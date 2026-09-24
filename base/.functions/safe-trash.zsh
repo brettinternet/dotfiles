@@ -13,7 +13,6 @@ trash() {
     "${HOME:A}/.gnupg"
     "${HOME:A}/.local"
     "${HOME:A}/.pi"
-    "${HOME:A}/.omp"
     "${HOME:A}/.claude"
     "${HOME:A}/.codex"
     "${HOME:A}/.Trash"

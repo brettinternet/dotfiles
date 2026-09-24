@@ -83,8 +83,6 @@ from pathlib import Path
 target = sys.argv[2]
 if target == "--opencode":
     path = Path(os.environ["HOME"]) / ".config/opencode/plugins/dcg-guard.js"
-elif target == "--omp":
-    path = Path(os.environ["HOME"]) / ".omp/agent/extensions/dcg-guard.ts"
 else:
     raise SystemExit(f"unexpected arguments: {sys.argv[1:]}")
 path.parent.mkdir(parents=True, exist_ok=True)
@@ -159,7 +157,6 @@ path.write_text("// generated guard for test\\n")
 
         shared_harnesses = (
             ".claude/agents",
-            ".omp/agent/agents",
             ".pi/agent/agents",
             ".config/opencode/agents",
         )
@@ -170,20 +167,17 @@ path.write_text("// generated guard for test\\n")
             self.assertTrue(all(body == bodies[0] for body in bodies[1:]), role)
 
         self.assertTrue((self.home / ".codex/agents/executor.toml").is_file())
-        self.assertTrue((self.home / ".omp/agent/agents/explore.md").is_file())
-        omp_executor = self.load_yaml(
-            (self.home / ".omp/agent/agents/executor.md").read_text().split("---\n", 2)[1]
-        )
         manifest = self.load_yaml((ROOT / "ai/manifest.yaml").read_text())
         executor = manifest["roles"]["executor"]
-        self.assertEqual(f"pi/{executor['route']}", omp_executor["model"])
-        self.assertNotIn("thinking-level", omp_executor)
         for profile in ("codex", "openrouter"):
             config = manifest["profiles"][profile]
-            output = config["outputs"]["omp"]
-            roles = self.load_yaml((ROOT / f"ai/omp/profiles/{output}.yml").read_text())["modelRoles"]
-            alias, effort = config["ompRoles"][executor["route"]]
-            self.assertEqual(f"{manifest['models'][alias]['ids']['omp']}:{effort}", roles[executor["route"]])
+            output = config["outputs"]["pi"]
+            generated = json.loads((ROOT / f"ai/pi/profiles/{output}.json").read_text())
+            alias, _ = config["modelRoutes"][executor["route"]]
+            self.assertEqual(
+                manifest["models"][alias]["ids"]["pi"],
+                generated["subagents"]["agentOverrides"]["executor"]["model"],
+            )
         codex_executor = tomllib.loads((self.home / ".codex/agents/executor.toml").read_text())
         self.assertEqual(executor["codex"], [codex_executor["model"], codex_executor["model_reasoning_effort"]])
         claude_executor = self.load_yaml(
@@ -229,7 +223,6 @@ path.write_text("// generated guard for test\\n")
             "ai/.bin/install-agents",
             str(source),
             str(self.home / ".claude/agents"),
-            str(self.home / ".omp/agent/agents"),
             str(self.home / ".config/opencode/agents"),
             str(self.home / ".codex/agents"),
             str(self.home / ".codex/config.toml"),
@@ -340,7 +333,6 @@ path.write_text("// generated guard for test\\n")
         self.assertTrue(
             (self.home / ".config/opencode/plugins/dcg-guard.js").is_file()
         )
-        self.assertTrue((self.home / ".omp/agent/extensions/dcg-guard.ts").is_file())
 
     def test_generated_config_is_current(self) -> None:
         self.run_command("python3", "ai/generate-config.py", "--check")
@@ -406,13 +398,11 @@ path.write_text("// generated guard for test\\n")
         )
 
         self.assertIn("refusing to overwrite unmanaged settings", completed.stderr)
-        self.assertFalse((self.home / ".omp/agent/.active").exists())
         self.assertFalse((self.home / ".config/opencode/.active").exists())
 
     def test_profile_rendering_is_checkout_pure_and_replaces_managed_links(self) -> None:
         before = self.repository_status()
         legacy_links = {
-            self.home / ".omp/agent/config.yml": ROOT / "ai/pi/config.yml",
             self.home / ".config/opencode/opencode.jsonc": ROOT
             / "ai/opencode/opencode.jsonc",
         }
@@ -420,7 +410,6 @@ path.write_text("// generated guard for test\\n")
             link.parent.mkdir(parents=True, exist_ok=True)
             link.symlink_to(target)
 
-        self.run_command("ai/.bin/omp-profile", "use", "codex")
         self.run_command("ai/.bin/opencode-profile", "use", "gpt")
 
         for path in legacy_links:
@@ -430,12 +419,6 @@ path.write_text("// generated guard for test\\n")
 
     def test_profiles_preserve_unmanaged_config_and_state(self) -> None:
         profiles = (
-            (
-                "ai/.bin/omp-profile",
-                "codex",
-                self.home / ".omp/agent/config.yml",
-                self.home / ".omp/agent/.active",
-            ),
             (
                 "ai/.bin/opencode-profile",
                 "gpt",
@@ -481,6 +464,11 @@ path.write_text("// generated guard for test\\n")
             "ai/.bin/ai-tool-enabled", "--validate", expected_code=2
         )
         self.assertIn("unknown tool: dsh", completed.stderr)
+        self.environment["DOTFILES_AI_TOOLS"] = "omp"
+        completed = self.run_command(
+            "ai/.bin/ai-tool-enabled", "--validate", expected_code=2
+        )
+        self.assertIn("unknown tool: omp", completed.stderr)
 
     def test_ai_tool_configuration_refuses_dangling_managed_paths(self) -> None:
         config = self.home / ".config/mise/conf.d/40-ai.toml"
@@ -531,6 +519,47 @@ path.write_text("// generated guard for test\\n")
         self.assertFalse((self.home / ".claude/agents/executor.md").exists())
         self.assertFalse((self.home / ".codex/agents/executor.toml").exists())
 
+    def test_previous_omp_selection_is_uninstalled_without_touching_pi(self) -> None:
+        log = self.install_fake_mise()
+        self.environment["DOTFILES_AI_TOOLS"] = "pi"
+        state = self.home / ".local/state/dotfiles/ai-tools"
+        state.parent.mkdir(parents=True)
+        state.write_text("# Generated by configure-ai-tools.\nDOTFILES_AI_TOOLS=pi,omp\n")
+        pi_settings = self.home / ".pi/agent/settings.json"
+        pi_settings.parent.mkdir(parents=True)
+        pi_settings.write_text('{"preserve": true}\n')
+        retired = self.home / ".bin/omp-profile"
+        retired.parent.mkdir(parents=True)
+        retired.symlink_to(ROOT / "ai/.bin/omp-profile")
+        managed_config = self.home / ".omp/agent/models.yml"
+        managed_config.parent.mkdir(parents=True)
+        managed_config.symlink_to(ROOT / "ai/omp/models.yml")
+        unmanaged = self.home / ".omp/agent/personal.yml"
+        unmanaged.write_text("keep\n")
+        shortcut = self.home / ".local/bin/omp"
+        shortcut.parent.mkdir(parents=True)
+        shortcut.symlink_to(self.home / ".local/share/mise/shims/omp")
+
+        self.run_command("ai/.bin/configure-ai-tools")
+
+        self.assertFalse(retired.is_symlink())
+        self.assertFalse(managed_config.is_symlink())
+        self.assertFalse(shortcut.is_symlink())
+        self.assertEqual("keep\n", unmanaged.read_text())
+        self.assertIn("uninstall --all --yes github:can1357/oh-my-pi", log.read_text())
+        self.assertIn("npm:@earendil-works/pi-coding-agent", log.read_text())
+        self.assertEqual('{"preserve": true}\n', pi_settings.read_text())
+        self.assertEqual(
+            "# Generated by configure-ai-tools.\nDOTFILES_AI_TOOLS=pi\n",
+            state.read_text(),
+        )
+        external = self.home / "custom-omp-profile"
+        external.write_text("keep\n")
+        retired.symlink_to(external)
+        self.run_command("ai/.bin/configure-ai-tools")
+        self.assertTrue(retired.is_symlink())
+        self.assertEqual("keep\n", external.read_text())
+
     def test_uninstall_ai_removes_managed_resources_and_preserves_user_state(
         self,
     ) -> None:
@@ -540,7 +569,6 @@ path.write_text("// generated guard for test\\n")
         self.run_command("ai/.bin/install-agent-commands")
         self.run_command("ai/.bin/install-agents")
         self.run_command("ai/.bin/pi-profile", "use", "codex")
-        self.run_command("ai/.bin/omp-profile", "use", "codex")
         self.run_command("ai/.bin/opencode-profile", "use", "gpt")
 
         helper = self.home / ".bin/ai-config"
@@ -574,7 +602,6 @@ path.write_text("// generated guard for test\\n")
         self.assertFalse((self.home / ".agents/skills/pr-review-draft").exists())
         self.assertFalse((self.home / ".pi/agent/agents/explore.md").exists())
         self.assertFalse((self.home / ".pi/agent/settings.json").exists())
-        self.assertFalse((self.home / ".omp/agent/config.yml").exists())
         self.assertFalse((self.home / ".config/opencode/opencode.jsonc").exists())
         self.assertFalse(
             (self.home / ".config/opencode/plugins/dcg-guard.js").exists()
@@ -615,15 +642,11 @@ path.write_text("// generated guard for test\\n")
         custom_guard = self.home / ".config/opencode/plugins/dcg-guard.js"
         custom_guard.parent.mkdir(parents=True)
         custom_guard.write_text("// custom guard\n")
-        omp_config = self.home / ".omp/agent/config.yml"
-        omp_config.parent.mkdir(parents=True)
-        omp_config.write_text("# Generated by omp-profile from ai/omp/test\n")
         mise_log.write_text("")
 
         self.run_command("make", "uninstall-ai")
 
         self.assertEqual('{"unmanaged": true}\n', pi_settings.read_text())
-        self.assertFalse(omp_config.exists())
         self.assertEqual("// custom guard\n", custom_guard.read_text())
         uninstall = "\n".join(
             line
@@ -648,10 +671,10 @@ path.write_text("// generated guard for test\\n")
         self.run_command("make", "ai")
         self.run_command("make", "ai")
 
+        self.assertFalse((self.home / ".omp").exists())
         self.assertEqual(before, self.repository_status())
         for path in (
             self.home / ".claude/agents/executor.md",
-            self.home / ".omp/agent/agents/explore.md",
             self.home / ".pi/agent/agents/explore.md",
             self.home / ".config/opencode/agents/explore.md",
             self.home / ".codex/agents/executor.toml",

@@ -11,7 +11,6 @@ TOOLS = {
         '"npm:@earendil-works/pi-coding-agent"',
         '{ version = "latest", minimum_release_age = "0" }',
     ),
-    "omp": ('"github:can1357/oh-my-pi"', '"latest"'),
     "opencode": ("opencode", '"latest"'),
     "claude": (
         '"npm:@anthropic-ai/claude-code"',
@@ -87,13 +86,6 @@ def remove_managed_links(selected: set[str]) -> None:
             home / ".pi/agent/lsp.json",
             home / ".pi/agent/extensions/subagent/config.json",
         ],
-        "omp": [
-            home / ".omp/agent/AGENTS.md",
-            home / ".omp/agent/models.yml",
-            home / ".omp/agent/keybindings.yml",
-            home / ".omp/agent/mcp.json",
-            home / ".omp/agent/WATCHDOG.md",
-        ],
         "codex": [home / ".codex/AGENTS.md"],
         "amp": [home / ".config/amp/settings.json", home / ".config/amp/AGENTS.md"],
         "opencode": [
@@ -117,10 +109,25 @@ def remove_managed_links(selected: set[str]) -> None:
         for path in paths:
             remove_if_managed(path)
 
+    # Retire links from installations that still had OMP selected.
+    for path in (
+        home / ".bin/omp-profile",
+        home / ".omp/agent/AGENTS.md",
+        home / ".omp/agent/models.yml",
+        home / ".omp/agent/keybindings.yml",
+        home / ".omp/agent/mcp.json",
+        home / ".omp/agent/WATCHDOG.md",
+    ):
+        remove_if_managed(path)
+    shim = home / ".local/share/mise/shims/omp"
+    shortcut = home / ".local/bin/omp"
+    if shortcut.is_symlink() and shortcut.readlink() == shim:
+        subprocess.run(["trash", str(shortcut)], check=True)
+
     if "claude" not in selected:
         for path in (home / ".claude/skills").glob("*"):
             remove_if_managed(path)
-    if not selected.intersection({"pi", "omp", "codex"}):
+    if not selected.intersection({"pi", "codex"}):
         for path in (home / ".agents/skills").glob("*"):
             remove_if_managed(path)
 
@@ -159,7 +166,10 @@ def main() -> int:
     deselected = [
         tool for tool in previous if tool in TOOLS and tool not in selected_set
     ]
+    # Retire OMP installations recorded by older managed selections as well.
     uninstall = [mise_name(tool) for tool in deselected]
+    if "omp" in previous:
+        uninstall.append("github:can1357/oh-my-pi")
     if uninstall:
         subprocess.run([mise, "uninstall", "--all", "--yes", *uninstall], check=True)
     if selected:

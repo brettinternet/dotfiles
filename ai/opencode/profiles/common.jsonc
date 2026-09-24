@@ -99,13 +99,6 @@
             "output": 128000
           }
         },
-        "openai/gpt-latest": {
-          "limit": {
-            "context": 256000,
-            "input": 128000,
-            "output": 128000
-          }
-        },
         "anthropic/claude-fable-latest": {
           "limit": {
             "context": 256000,
@@ -114,13 +107,6 @@
           }
         },
         "anthropic/claude-opus-5.5": {
-          "limit": {
-            "context": 256000,
-            "input": 128000,
-            "output": 128000
-          }
-        },
-        "anthropic/claude-sonnet-latest": {
           "limit": {
             "context": 256000,
             "input": 128000,

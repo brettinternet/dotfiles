@@ -109,7 +109,7 @@ def remove_legacy_link(destination: Path, legacy_source: Path) -> None:
 
 
 def main() -> int:
-    if not SELECTION.intersection({"claude", "codex", "omp", "opencode"}):
+    if not SELECTION.intersection({"claude", "codex", "opencode"}):
         return 0
     if STATE_FILE.is_symlink():
         raise SystemExit(f"Refusing to overwrite linked DCG guard state: {STATE_FILE}")
@@ -131,20 +131,12 @@ def main() -> int:
         install_hook(HOME / ".claude/settings.json", "Bash|PowerShell")
     if "codex" in SELECTION:
         install_hook(HOME / ".codex/hooks.json", "Bash")
-    if "omp" in SELECTION:
-        remove_legacy_link(
-            HOME / ".omp/agent/extensions/dcg-guard.ts",
-            DOTFILES / "ai/pi/extensions/dcg-guard.ts",
-        )
-        subprocess.run([str(DCG_BIN), "install", "--omp", "--force"], check=True)
     guards: list[str] = []
     if "opencode" in SELECTION:
         destination = HOME / ".config/opencode/plugins/dcg-guard.js"
         remove_legacy_link(destination, DOTFILES / "ai/opencode/dcg-guard.js")
         subprocess.run([str(DCG_BIN), "install", "--opencode", "--force"], check=True)
         guards.append(str(destination))
-    if "omp" in SELECTION:
-        guards.append(str(HOME / ".omp/agent/extensions/dcg-guard.ts"))
     write_json_atomic(
         STATE_FILE,
         {"marker": STATE_MARKER, "command": str(DCG_BIN), "guards": guards},

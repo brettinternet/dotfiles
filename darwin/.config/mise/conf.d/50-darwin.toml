@@ -65,5 +65,4 @@ github.credential_command = "gh auth token"
 #   "biome",
 #   "claude",
 #   "opencode",
-#   "github:can1357/oh-my-pi",
 # ]
