@@ -9,9 +9,7 @@
     "openrouter/~anthropic/claude-fable-latest",
     "openrouter/anthropic/claude-opus-5.5",
     "openrouter/z-ai/glm-5.3",
-    "openrouter/anthropic/claude-opus-5.5",
-    "openrouter/google/gemini-3.8-flash",
-    "openrouter/anthropic/claude-opus-5.5"
+    "openrouter/google/gemini-3.8-flash"
   ],
   "subagents": {
     "defaultModel": "openrouter/openai/gpt-6-luna",

@@ -70,7 +70,7 @@ class Manifest:
             if "model" in launcher:
                 if not isinstance(launcher["model"], str):
                     raise SystemExit(f"{self.path}: {location}.model must be a model alias")
-                self.model_id(launcher["model"], "pi")
+                self.model_id(launcher["model"])
             if "thinking" in launcher:
                 if not isinstance(launcher["thinking"], str):
                     raise SystemExit(f"{self.path}: {location}.thinking must be an effort")
@@ -81,8 +81,11 @@ class Manifest:
             ):
                 raise SystemExit(f"{self.path}: {location}.args must be non-empty strings")
         for name, role in self.roles.items():
-            if not isinstance(role, dict) or not isinstance(role.get("route"), str):
-                raise SystemExit(f"{self.path}: role {name!r} requires route")
+            if not isinstance(role, dict):
+                raise SystemExit(f"{self.path}: role {name!r} must be a mapping")
+            unknown = set(role) - {"claude", "codex"}
+            if unknown:
+                raise SystemExit(f"{self.path}: unknown keys at roles.{name}: {', '.join(sorted(unknown))}")
             source = AI_ROOT / f"agents/{name}.md"
             if not source.is_file():
                 raise SystemExit(f"{self.path}: missing agent prompt {source}")
@@ -105,36 +108,31 @@ class Manifest:
                         raise SystemExit(f"{self.path}: invalid {harness} model for {name}")
                     if not isinstance(route[1], str):
                         raise SystemExit(f"{self.path}: roles.{name}.{harness} requires effort")
-        outputs: set[tuple[str, str]] = set()
+        outputs: set[str] = set()
         for profile_name, profile in self.profiles.items():
-            routes = profile.get("modelRoutes", {})
-            for role_name, route in routes.items():
-                self.validate_route(route, f"profiles.{profile_name}.modelRoutes.{role_name}")
-            for harness, output in profile.get("outputs", {}).items():
-                if harness != "pi":
-                    raise SystemExit(f"{self.path}: unknown harness {harness!r}")
-                key = (harness, output)
-                if key in outputs:
-                    raise SystemExit(f"{self.path}: duplicate output {harness}/{output}")
-                outputs.add(key)
-            config = profile.get("pi")
-            if config is not None:
-                for role_name in config.get("efforts", {}):
-                    if role_name not in self.roles:
-                        raise SystemExit(f"{self.path}: unknown agent role {role_name!r}")
-                    route_name = self.roles[role_name]["route"]
-                    if route_name not in routes:
-                        raise SystemExit(
-                            f"{self.path}: {profile_name}/pi/{role_name} maps to missing model route {route_name!r}"
-                        )
-                for effort in config.get("efforts", {}).values():
-                    self.validate_effort(effort, f"profiles.{profile_name}.pi.efforts")
-            pi = profile.get("pi")
-            if pi:
-                for key in ("parent", "defaultAgent", "researcher", "progress"):
-                    self.validate_route(pi[key], f"profiles.{profile_name}.pi.{key}")
-                for model in pi.get("enabled", []):
-                    self.model_id(model, "pi")
+            if not isinstance(profile, dict):
+                raise SystemExit(f"{self.path}: profile {profile_name!r} must be a mapping")
+            unknown = set(profile) - {
+                "output", "parent", "enabled", "defaultSubagent", "researcher",
+                "title", "progress", "agents", "modelScope", "settings",
+            }
+            if unknown:
+                raise SystemExit(f"{self.path}: unknown keys at profiles.{profile_name}: {', '.join(sorted(unknown))}")
+            output = profile.get("output", profile_name)
+            if not isinstance(output, str) or not re.fullmatch(r"[a-z][a-z0-9-]*", output):
+                raise SystemExit(f"{self.path}: invalid profile output {output!r}")
+            if output in outputs:
+                raise SystemExit(f"{self.path}: duplicate Pi profile output {output}")
+            outputs.add(output)
+            for key in ("parent", "defaultSubagent", "researcher", "title", "progress"):
+                self.validate_route(profile[key], f"profiles.{profile_name}.{key}")
+            agents = profile.get("agents", {})
+            if set(agents) != set(self.roles):
+                raise SystemExit(f"{self.path}: {profile_name}.agents must cover all agent roles")
+            for role_name, route in agents.items():
+                self.validate_route(route, f"profiles.{profile_name}.agents.{role_name}")
+            for model in profile.get("enabled", []):
+                self.model_id(model)
 
     def agent_route(self, name: str, harness: str) -> str:
         role = self.roles[name]
@@ -143,45 +141,25 @@ class Manifest:
 
     def validate_route(self, route: Any, location: str) -> None:
         if not isinstance(route, list) or len(route) != 2:
-            raise SystemExit(f"{self.path}: {location} must be [model, effort]")
-        self.model(route[0])
+            raise SystemExit(f"{self.path}: {location} must be [model, thinking]")
+        self.model_id(route[0])
+        if not isinstance(route[1], str):
+            raise SystemExit(f"{self.path}: {location} requires a thinking level")
         self.validate_effort(route[1], location)
 
     def validate_effort(self, effort: Any, location: str) -> None:
         if effort is not None and effort not in EFFORTS:
             raise SystemExit(f"{self.path}: invalid effort {effort!r} at {location}")
 
-    def model(self, alias: str) -> dict[str, Any]:
+    def model_id(self, alias: str) -> str:
         try:
             model = self.models[alias]
         except KeyError as exc:
             raise SystemExit(f"{self.path}: unknown model alias {alias!r}") from exc
-        if not isinstance(model, dict) or not isinstance(model.get("ids"), dict):
-            raise SystemExit(f"{self.path}: model {alias!r} requires ids")
-        return model
-
-    def model_id(self, alias: str, harness: str) -> str:
-        model = self.model(alias)
-        try:
-            return model["ids"][harness]
-        except KeyError as exc:
-            raise SystemExit(
-                f"{self.path}: model {alias!r} has no {harness} identifier"
-            ) from exc
-
-    def profile_for(self, harness: str, output: str) -> tuple[str, dict[str, Any]]:
-        matches = [
-            (name, profile)
-            for name, profile in self.profiles.items()
-            if profile.get("outputs", {}).get(harness) == output
-        ]
-        if len(matches) != 1:
-            raise SystemExit(f"{self.path}: no unique profile for {harness}/{output}")
-        return matches[0]
-
-    def route_for_agent(self, profile: dict[str, Any], role_name: str) -> list[str]:
-        route_name = self.roles[role_name]["route"]
-        return profile["modelRoutes"][route_name]
+        if not isinstance(model, dict) or not isinstance(model.get("id"), str):
+            raise SystemExit(f"{self.path}: model {alias!r} requires id")
+        split_model_id(model["id"])
+        return model["id"]
 
 
 def split_model_id(model_id: str) -> tuple[str, str]:
@@ -191,12 +169,12 @@ def split_model_id(model_id: str) -> tuple[str, str]:
     return provider, model
 
 
-def render_catalog(manifest: Manifest, harness: str) -> dict[str, Any]:
+def render_catalog(manifest: Manifest) -> dict[str, Any]:
     providers: dict[str, Any] = {}
     for model in manifest.models.values():
-        model_id = model.get("ids", {}).get(harness)
+        model_id = model["id"]
         context = model.get("context")
-        if not model_id or not context:
+        if not context:
             continue
         provider, name = split_model_id(model_id)
         context_window = 272000 if context == "codex" and provider in {"openai-codex", "openrouter"} else 256000
@@ -206,62 +184,60 @@ def render_catalog(manifest: Manifest, harness: str) -> dict[str, Any]:
 
 
 def render_pi_profile(manifest: Manifest, profile: dict[str, Any]) -> dict[str, Any]:
-    config = profile["pi"]
-    parent_alias, parent_effort = config["parent"]
-    parent_id = manifest.model_id(parent_alias, "pi")
+    parent_alias, parent_effort = profile["parent"]
+    parent_id = manifest.model_id(parent_alias)
     provider, parent_model = split_model_id(parent_id)
-    default_alias, default_effort = config["defaultAgent"]
-    researcher_alias, researcher_effort = config["researcher"]
+    default_alias, default_effort = profile["defaultSubagent"]
+    researcher_alias, researcher_effort = profile["researcher"]
     overrides: dict[str, Any] = {
         "researcher": {
-            "model": manifest.model_id(researcher_alias, "pi"),
+            "model": manifest.model_id(researcher_alias),
             "thinking": researcher_effort,
         }
     }
-    for role_name, effort in config["efforts"].items():
-        route = manifest.route_for_agent(profile, role_name)
+    for role_name, (alias, effort) in profile["agents"].items():
         overrides[role_name] = {
-            "model": manifest.model_id(route[0], "pi"),
+            "model": manifest.model_id(alias),
             "thinking": effort,
         }
     rendered: dict[str, Any] = {
         "defaultProvider": provider,
         "defaultModel": parent_model,
         "defaultThinkingLevel": parent_effort,
-        "enabledModels": [manifest.model_id(alias, "pi") for alias in config["enabled"]],
+        "enabledModels": [manifest.model_id(alias) for alias in profile["enabled"]],
         "subagents": {
-            "defaultModel": manifest.model_id(default_alias, "pi"),
-            "defaultProvider": split_model_id(manifest.model_id(default_alias, "pi"))[0],
+            "defaultModel": manifest.model_id(default_alias),
+            "defaultProvider": split_model_id(manifest.model_id(default_alias))[0],
             "defaultThinking": default_effort,
             "agentOverrides": overrides,
-            "modelScope": {"enforce": True, "strict": True, "allow": config["modelScope"]},
+            "modelScope": {"enforce": True, "strict": True, "allow": profile["modelScope"]},
         },
     }
-    title_alias, title_effort = profile["modelRoutes"]["title"]
+    title_alias, title_effort = profile["title"]
     rendered["titleConfig"] = {
         "enabled": True,
-        "model": f"{manifest.model_id(title_alias, 'pi')}:{title_effort}",
+        "model": f"{manifest.model_id(title_alias)}:{title_effort}",
         "maxTokens": 30,
         "maxLength": 60,
     }
-    progress_alias, progress_effort = config["progress"]
+    progress_alias, progress_effort = profile["progress"]
     rendered["progressConfig"] = {
-        "model": f"{manifest.model_id(progress_alias, 'pi')}:{progress_effort}",
+        "model": f"{manifest.model_id(progress_alias)}:{progress_effort}",
         "maxInputChars": 12000,
         "maxTokens": 180,
         "timeoutMs": 60000,
     }
-    return deep_merge(rendered, config.get("settings", {}))
+    return deep_merge(rendered, profile.get("settings", {}))
 
 
 def render_outputs(manifest: Manifest) -> dict[Path, str]:
     outputs: dict[Path, str] = {}
-    outputs[AI_ROOT / "pi/models.json"] = json.dumps(render_catalog(manifest, "pi"), indent=2) + "\n"
+    outputs[AI_ROOT / "pi/models.json"] = json.dumps(render_catalog(manifest), indent=2) + "\n"
     launchers = {}
     for name, launcher in manifest.pi_launchers.items():
         launchers[name] = {
             **(
-                {"model": manifest.model_id(launcher["model"], "pi")}
+                {"model": manifest.model_id(launcher["model"])}
                 if "model" in launcher
                 else {}
             ),
@@ -281,19 +257,18 @@ def render_outputs(manifest: Manifest) -> dict[Path, str]:
         "{\n" + ",\n".join(launcher_blocks) + "\n}\n"
     )
 
-    for profile in manifest.profiles.values():
-        names = profile["outputs"]
-        if "pi" in names:
-            outputs[AI_ROOT / f"pi/profiles/{names['pi']}.json"] = (
-                json.dumps(render_pi_profile(manifest, profile), indent=2) + "\n"
-            )
+    for name, profile in manifest.profiles.items():
+        output = profile.get("output", name)
+        outputs[AI_ROOT / f"pi/profiles/{output}.json"] = (
+            json.dumps(render_pi_profile(manifest, profile), indent=2) + "\n"
+        )
     return outputs
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true")
-    parser.add_argument("--profile-output", nargs=2, metavar=("PROFILE", "HARNESS"))
+    parser.add_argument("--profile-output", metavar="PROFILE")
     parser.add_argument("--agent-route", nargs=2, metavar=("ROLE", "HARNESS"))
     args = parser.parse_args()
     manifest = Manifest(AI_ROOT / "manifest.yaml")
@@ -304,15 +279,11 @@ def main() -> int:
         print(manifest.agent_route(role, harness))
         return 0
     if args.profile_output:
-        profile_name, harness = args.profile_output
-        try:
-            output = manifest.profiles[profile_name]["outputs"].get(harness)
-        except KeyError as exc:
-            raise SystemExit(f"unknown profile: {profile_name}") from exc
-        if output:
-            print(output)
-            return 0
-        return 3
+        profile_name = args.profile_output
+        if profile_name not in manifest.profiles:
+            raise SystemExit(f"unknown profile: {profile_name}")
+        print(manifest.profiles[profile_name].get("output", profile_name))
+        return 0
     outputs = render_outputs(manifest)
     stale = [path for path, content in outputs.items() if not path.exists() or path.read_text() != content]
     if args.check:

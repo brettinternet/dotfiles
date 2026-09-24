@@ -155,15 +155,6 @@ class AiInstallTests(unittest.TestCase):
         self.assertTrue((self.home / ".codex/agents/executor.toml").is_file())
         manifest = self.load_yaml((ROOT / "ai/manifest.yaml").read_text())
         executor = manifest["roles"]["executor"]
-        for profile in ("codex", "openrouter"):
-            config = manifest["profiles"][profile]
-            output = config["outputs"]["pi"]
-            generated = json.loads((ROOT / f"ai/pi/profiles/{output}.json").read_text())
-            alias, _ = config["modelRoutes"][executor["route"]]
-            self.assertEqual(
-                manifest["models"][alias]["ids"]["pi"],
-                generated["subagents"]["agentOverrides"]["executor"]["model"],
-            )
         codex_executor = tomllib.loads((self.home / ".codex/agents/executor.toml").read_text())
         self.assertEqual(executor["codex"], [codex_executor["model"], codex_executor["model_reasoning_effort"]])
         claude_executor = self.load_yaml(
@@ -333,6 +324,15 @@ class AiInstallTests(unittest.TestCase):
             for model in profile["enabledModels"]:
                 provider, separator, model_name = model.partition("/")
                 self.assertTrue(provider and separator and model_name, f"{profile_path}: {model}")
+            overrides = profile["subagents"]["agentOverrides"]
+            self.assertEqual(
+                {path.stem for path in (ROOT / "ai/agents").glob("*.md")} | {"researcher"},
+                set(overrides),
+            )
+            for role, config in overrides.items():
+                provider, separator, model_name = config["model"].partition("/")
+                self.assertTrue(provider and separator and model_name, f"{profile_path}: {role}")
+                self.assertIn(config["thinking"], ("off", "minimal", "low", "medium", "high", "xhigh", "max"))
 
     def test_pi_launcher_resolves_preset_and_forwards_arguments(self) -> None:
         fake_bin = self.home / "bin"
@@ -371,7 +371,7 @@ class AiInstallTests(unittest.TestCase):
             solo.stdout.splitlines(),
         )
 
-    def test_unified_profile_preflights_every_target_before_writing(self) -> None:
+    def test_profile_activation_preserves_unmanaged_settings(self) -> None:
         pi_settings = self.home / ".pi/agent/settings.json"
         pi_settings.parent.mkdir(parents=True)
         pi_settings.write_text('{"unmanaged": true}\n')
@@ -382,6 +382,20 @@ class AiInstallTests(unittest.TestCase):
 
         self.assertIn("refusing to overwrite unmanaged settings", completed.stderr)
         self.assertFalse((self.home / ".pi/agent/.active-profile").exists())
+
+    def test_manifest_profile_name_activates_pi_output(self) -> None:
+        self.run_command("ai/.bin/ai-config", "use", "openrouter")
+
+        self.assertEqual("or\n", (self.home / ".pi/agent/.active-profile").read_text())
+        settings = json.loads((self.home / ".pi/agent/settings.json").read_text())
+        source = json.loads((ROOT / "ai/pi/profiles/or.json").read_text())
+        self.assertEqual(source["defaultProvider"], settings["defaultProvider"])
+        for key, value in source["subagents"]["agentOverrides"]["oracle"].items():
+            self.assertEqual(value, settings["subagents"]["agentOverrides"]["oracle"][key])
+        self.assertEqual(
+            source["progressConfig"]["model"],
+            json.loads((self.home / ".pi/agent/pi-progress.jsonc").read_text())["model"],
+        )
 
     def test_profiles_preserve_unmanaged_config_and_state(self) -> None:
         profiles = (

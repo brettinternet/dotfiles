@@ -37,9 +37,6 @@
         "openai/gpt-6-sol-pro": {
           "contextWindow": 272000
         },
-        "anthropic/claude-fable-latest": {
-          "contextWindow": 256000
-        },
         "~anthropic/claude-fable-latest": {
           "contextWindow": 256000
         },
