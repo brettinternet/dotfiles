@@ -1,6 +1,6 @@
 ---
 description: Scoped implementer on a cost-efficient model for bounded tasks with settled requirements, clear ownership, and an objective check. Best for targeted code changes, a refined backlog slice, an independent file area, tests, UI, or a migration. Do not use for unresolved design, tightly coupled parent work, or trivial edits the parent can complete directly.
-tools: claude omp pi opencode codex
+tools: claude pi opencode codex
 pi-tools: read, grep, find, ls, bash, edit, write
 ---
 

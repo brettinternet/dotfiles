@@ -32,7 +32,7 @@ case "${1:-generate}" in
     profile=${1:-}
     [ -n "$profile" ] || die "usage: ai-config use <profile> [--targets <list>]"
     shift
-    targets=omp,pi,opencode
+    targets=pi,opencode
     if [ "${1:-}" = --targets ]; then
       [ "$#" -eq 2 ] || die "usage: ai-config use <profile> [--targets <list>]"
       targets=$2
@@ -44,7 +44,7 @@ case "${1:-generate}" in
     IFS=,
     for harness in $targets; do
       IFS=$old_ifs
-      case "$harness" in omp|pi|opencode) ;; *) die "unknown target: $harness" ;; esac
+      case "$harness" in pi|opencode) ;; *) die "unknown target: $harness" ;; esac
       status=0
       output=$(python3 "$generator" --profile-output "$profile" "$harness") || status=$?
       if [ "$status" -eq 3 ]; then
@@ -53,7 +53,6 @@ case "${1:-generate}" in
         exit "$status"
       else
         case "$harness" in
-          omp) "$DOTFILES/ai/.bin/omp-profile" check "$output" ;;
           pi) "$DOTFILES/ai/.bin/pi-profile" check "$output" ;;
           opencode) "$DOTFILES/ai/.bin/opencode-profile" check "$output" ;;
         esac
@@ -63,7 +62,7 @@ case "${1:-generate}" in
     IFS=,
     for harness in $targets; do
       IFS=$old_ifs
-      case "$harness" in omp|pi|opencode) ;; *) die "unknown target: $harness" ;; esac
+      case "$harness" in pi|opencode) ;; *) die "unknown target: $harness" ;; esac
       status=0
       output=$(python3 "$generator" --profile-output "$profile" "$harness") || status=$?
       if [ "$status" -eq 3 ]; then
@@ -73,7 +72,6 @@ case "${1:-generate}" in
         exit "$status"
       else
         case "$harness" in
-          omp) "$DOTFILES/ai/.bin/omp-profile" use "$output" ;;
           pi) "$DOTFILES/ai/.bin/pi-profile" use "$output" ;;
           opencode) "$DOTFILES/ai/.bin/opencode-profile" use "$output" ;;
         esac

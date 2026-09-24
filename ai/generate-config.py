@@ -106,7 +106,7 @@ class Manifest:
             if not source.is_file():
                 raise SystemExit(f"{self.path}: missing agent prompt {source}")
             source_text = source.read_text()
-            if re.search(r"^(?:omp|claude|codex)-(?:model|effort):", source_text, re.MULTILINE):
+            if re.search(r"^(?:claude|codex)-(?:model|effort):", source_text, re.MULTILINE):
                 raise SystemExit(f"{self.path}: model and effort belong in manifest roles, not {source}")
             match = re.search(r"^tools: (.+)$", source_text, re.MULTILINE)
             if not match:
@@ -126,11 +126,11 @@ class Manifest:
                         raise SystemExit(f"{self.path}: roles.{name}.{harness} requires effort")
         outputs: set[tuple[str, str]] = set()
         for profile_name, profile in self.profiles.items():
-            omp_roles = profile.get("ompRoles", {})
-            for role_name, route in omp_roles.items():
-                self.validate_route(route, f"profiles.{profile_name}.ompRoles.{role_name}")
+            routes = profile.get("modelRoutes", {})
+            for role_name, route in routes.items():
+                self.validate_route(route, f"profiles.{profile_name}.modelRoutes.{role_name}")
             for harness, output in profile.get("outputs", {}).items():
-                if harness not in {"omp", "pi", "opencode"}:
+                if harness not in {"pi", "opencode"}:
                     raise SystemExit(f"{self.path}: unknown harness {harness!r}")
                 key = (harness, output)
                 if key in outputs:
@@ -142,7 +142,7 @@ class Manifest:
                     continue
                 if harness == "opencode":
                     for route_name, route in config.get("routes", {}).items():
-                        if route_name not in omp_roles:
+                        if route_name not in routes:
                             raise SystemExit(
                                 f"{self.path}: unknown OpenCode route {route_name!r}"
                             )
@@ -152,9 +152,9 @@ class Manifest:
                     if role_name not in self.roles:
                         raise SystemExit(f"{self.path}: unknown agent role {role_name!r}")
                     route_name = self.roles[role_name]["route"]
-                    if route_name not in omp_roles:
+                    if route_name not in routes:
                         raise SystemExit(
-                            f"{self.path}: {profile_name}/{harness}/{role_name} maps to missing OMP role {route_name!r}"
+                            f"{self.path}: {profile_name}/{harness}/{role_name} maps to missing model route {route_name!r}"
                         )
                 for effort in config.get("efforts", {}).values():
                     self.validate_effort(effort, f"profiles.{profile_name}.{harness}.efforts")
@@ -167,8 +167,6 @@ class Manifest:
 
     def agent_route(self, name: str, harness: str) -> str:
         role = self.roles[name]
-        if harness == "omp":
-            return f"pi/{role['route']}"
         model, effort = role[harness]
         return f"{model} {effort}"
 
@@ -212,7 +210,7 @@ class Manifest:
 
     def route_for_agent(self, profile: dict[str, Any], role_name: str) -> list[str]:
         route_name = self.roles[role_name]["route"]
-        return profile["ompRoles"][route_name]
+        return profile["modelRoutes"][route_name]
 
 
 def split_model_id(model_id: str) -> tuple[str, str]:
@@ -238,15 +236,6 @@ def render_catalog(manifest: Manifest, harness: str) -> dict[str, Any]:
             override = {"contextWindow": context_window}
             providers.setdefault(provider, {}).setdefault("modelOverrides", {})[name] = override
     return {"providers": providers}
-
-
-def render_omp_profile(manifest: Manifest, profile: dict[str, Any]) -> dict[str, Any]:
-    roles = {
-        name: manifest.model_id(route[0], "omp")
-        + (f":{route[1]}" if route[1] else "")
-        for name, route in profile["ompRoles"].items()
-    }
-    return deep_merge({"modelRoles": roles}, profile.get("ompSettings", {}))
 
 
 def render_pi_profile(manifest: Manifest, profile: dict[str, Any]) -> dict[str, Any]:
@@ -281,7 +270,7 @@ def render_pi_profile(manifest: Manifest, profile: dict[str, Any]) -> dict[str, 
             "modelScope": {"enforce": True, "strict": True, "allow": config["modelScope"]},
         },
     }
-    title_alias, title_effort = profile["ompRoles"]["title"]
+    title_alias, title_effort = profile["modelRoutes"]["title"]
     rendered["titleConfig"] = {
         "enabled": True,
         "model": f"{manifest.model_id(title_alias, 'pi')}:{title_effort}",
@@ -314,8 +303,6 @@ def render_opencode_profile(manifest: Manifest, profile: dict[str, Any]) -> dict
 
 def render_outputs(manifest: Manifest) -> dict[Path, str]:
     outputs: dict[Path, str] = {}
-    omp_catalog = render_catalog(manifest, "omp")
-    outputs[AI_ROOT / "omp/models.yml"] = yaml.safe_dump(omp_catalog, sort_keys=False)
     outputs[AI_ROOT / "pi/models.json"] = json.dumps(render_catalog(manifest, "pi"), indent=2) + "\n"
     launchers = {}
     for name, launcher in manifest.pi_launchers.items():
@@ -349,10 +336,6 @@ def render_outputs(manifest: Manifest) -> dict[Path, str]:
 
     for profile in manifest.profiles.values():
         names = profile["outputs"]
-        if "omp" in names:
-            outputs[AI_ROOT / f"omp/profiles/{names['omp']}.yml"] = (
-                "---\n" + yaml.safe_dump(render_omp_profile(manifest, profile), sort_keys=False)
-            )
         if "pi" in names:
             outputs[AI_ROOT / f"pi/profiles/{names['pi']}.json"] = (
                 json.dumps(render_pi_profile(manifest, profile), indent=2) + "\n"
@@ -373,7 +356,7 @@ def main() -> int:
     manifest = Manifest(AI_ROOT / "manifest.yaml")
     if args.agent_route:
         role, harness = args.agent_route
-        if role not in manifest.roles or harness not in {"omp", "claude", "codex"}:
+        if role not in manifest.roles or harness not in {"claude", "codex"}:
             raise SystemExit(f"unknown agent route: {role}/{harness}")
         print(manifest.agent_route(role, harness))
         return 0

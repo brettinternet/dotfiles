@@ -501,7 +501,6 @@ export function localDestructiveTargetDecision(command: string, home = homedir()
       join(home, ".gnupg"),
       join(home, ".local"),
       join(home, ".pi"),
-      join(home, ".omp"),
       join(home, ".claude"),
       join(home, ".codex"),
     ];

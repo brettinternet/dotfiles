@@ -1,6 +1,6 @@
 ---
 description: Read-only adversarial implementation reviewer on the strongest premise-checking model available. Use for substantial changes when fresh-context review targets a named material risk or hard-to-see failure mode, especially cross-cutting, security-sensitive, concurrent, or destructive behavior; skip for small changes directly exercised by focused checks. Tries to falsify correctness with validated concrete counterexamples; never edits, commits, or posts.
-tools: claude omp pi opencode codex
+tools: claude pi opencode codex
 pi-tools: read, grep, find, ls
 ---
 

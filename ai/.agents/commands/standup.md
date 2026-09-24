@@ -92,7 +92,6 @@ Emit exactly these five sections, in this order, always — an empty one prints
 ## In progress
 | Ref | What | State | Next |
 |---|---|---|---|
-| [cli-agent-orchestrator#572](https://github.com/awslabs/cli-agent-orchestrator/pull/572) | Oh My Pi provider | 🔴 changes requested | address feedback |
 | [houston#10090](https://github.com/pdq/houston/pull/10090) | Amp orbs for Houston dev | 👀 awaiting review · CI green | ping reviewer |
 
 ## Reviewed

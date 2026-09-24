@@ -4,11 +4,10 @@ set -eu
 
 source_dir=${1:-ai/agents}
 claude_dir=${2:-"$HOME/.claude/agents"}
-omp_dir=${3:-"$HOME/.omp/agent/agents"}
-opencode_dir=${4:-"$HOME/.config/opencode/agents"}
-codex_dir=${5:-"$HOME/.codex/agents"}
-codex_config=${6:-"$HOME/.codex/config.toml"}
-pi_dir=${7:-"$HOME/.pi/agent/agents"}
+opencode_dir=${3:-"$HOME/.config/opencode/agents"}
+codex_dir=${4:-"$HOME/.codex/agents"}
+codex_config=${5:-"$HOME/.codex/config.toml"}
+pi_dir=${6:-"$HOME/.pi/agent/agents"}
 dotfiles=${DOTFILES:-$(pwd -P)}
 
 tool_enabled() {
@@ -140,7 +139,6 @@ prepare_directory() {
 }
 
 prepare_directory claude "$claude_dir"
-prepare_directory omp "$omp_dir"
 prepare_directory pi "$pi_dir"
 prepare_directory opencode "$opencode_dir"
 prepare_directory codex "$codex_dir"
@@ -173,7 +171,6 @@ for source in "$source_dir"/*.md; do
   fi
 
   if ships "$source" claude; then require_managed "$claude_dir/$claude_name.md"; fi
-  if ships "$source" omp; then require_managed "$omp_dir/$role.md"; fi
   if ships "$source" pi; then require_managed "$pi_dir/$role.md"; fi
   if ships "$source" opencode; then require_managed "$opencode_dir/$role.md"; fi
   if ships "$source" codex; then
@@ -190,7 +187,6 @@ for source in "$source_dir"/*.md; do
 done
 
 claude_names=''
-omp_names=''
 pi_names=''
 opencode_names=''
 codex_roles=''
@@ -217,20 +213,6 @@ for source in "$source_dir"/*.md; do
       body "$source"
     } > "$claude_dir/$claude_name.md"
     claude_names="$claude_names$claude_name.md
-"
-  fi
-
-  if ships "$source" omp; then
-    route=$(python3 "$dotfiles/ai/generate-config.py" --agent-route "$role" omp)
-    {
-      printf '%s\n' '---'
-      printf 'name: %s\n' "$role"
-      printf 'description: %s\n' "$description"
-      printf 'model: %s\n' "$route"
-      printf '%s\n\n' '---'
-      body "$source"
-    } > "$omp_dir/$role.md"
-    omp_names="$omp_names$role.md
 "
   fi
 
@@ -292,13 +274,8 @@ config_file = \"$escaped_target\""
 done
 
 if tool_enabled claude; then reconcile "$claude_dir" "$claude_names"; else retire_managed_directory "$claude_dir"; fi
-if tool_enabled omp; then reconcile "$omp_dir" "$omp_names"; else retire_managed_directory "$omp_dir"; fi
 if tool_enabled pi; then reconcile "$pi_dir" "$pi_names"; else retire_managed_directory "$pi_dir"; fi
 if tool_enabled opencode; then reconcile "$opencode_dir" "$opencode_names"; else retire_managed_directory "$opencode_dir"; fi
-
-if [ "$omp_dir" = "$HOME/.omp/agent/agents" ]; then
-  retire_managed_directory "$HOME/.omp/agents"
-fi
 
 for target in "$codex_dir"/*.toml; do
   [ -f "$target" ] || continue
