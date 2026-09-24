@@ -166,7 +166,7 @@ profiles:
         {
           reviewer: max,
           oracle: max,
-          explore: low,
+          explore: high,
           executor: max,
           verifier: high,
           pr-watcher: low,
