@@ -4,8 +4,8 @@
     "thinking": "high"
   },
   "oracle": {
-    "model": "anthropic/claude-fable-5-1",
-    "thinking": "high"
+    "model": "anthropic/claude-opus-5-5",
+    "thinking": "xhigh"
   },
   "solo": {
     "args": ["--exclude-tools", "subagent,subagent_wait,subagent_supervisor"]
