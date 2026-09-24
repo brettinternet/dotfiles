@@ -17,7 +17,7 @@ roles:
 
 models:
   codex-sol:
-    ids: { omp: openai-codex/gpt-5.6-sol, pi: openai-codex/gpt-5.6-sol, opencode: openai/gpt-5.6-sol }
+    ids: { omp: openai-codex/gpt-6-sol, pi: openai-codex/gpt-6-sol, opencode: openai/gpt-6-sol }
     context: codex
   codex-luna:
     ids: { omp: openai-codex/gpt-6-luna, pi: openai-codex/gpt-6-luna, opencode: openai/gpt-6-luna }
@@ -157,7 +157,7 @@ profiles:
       providers: { webSearchOrder: [codex] }
       advisor: { enabled: false }
     pi:
-      parent: [codex-sol, medium]
+      parent: [codex-sol, high]
       enabled: [codex-luna, codex-sol, codex-astra, claude-opus]
       defaultAgent: [codex-luna, max]
       researcher: [codex-luna, medium]
