@@ -20,6 +20,7 @@ EFFORTS = {"off", "minimal", "low", "medium", "high", "xhigh", "max"}
 # Standalone CLI agents reuse the Pi profile that targets the same provider.
 CLI_AGENT_PROFILES = {"claude": ("claude", "anthropic"), "codex": ("codex", "openai-codex")}
 CLI_EFFORTS = {"low", "medium", "high", "xhigh", "max"}
+CONSERVATIVE_CONTEXT_WINDOW = 272000
 
 
 class ManifestLoader(yaml.SafeLoader):
@@ -85,6 +86,8 @@ class Manifest:
                 not isinstance(argument, str) or not argument for argument in args
             ):
                 raise SystemExit(f"{self.path}: {location}.args must be non-empty strings")
+        for alias in self.models:
+            self.model_id(alias)
         outputs: set[str] = set()
         for profile_name, profile in self.profiles.items():
             if not isinstance(profile, dict):
@@ -153,6 +156,8 @@ class Manifest:
             raise SystemExit(f"{self.path}: unknown model alias {alias!r}") from exc
         if not isinstance(model, dict) or not isinstance(model.get("id"), str):
             raise SystemExit(f"{self.path}: model {alias!r} requires id")
+        if model.get("context", "conservative") != "conservative":
+            raise SystemExit(f"{self.path}: model {alias!r} context must be conservative")
         split_model_id(model["id"])
         return model["id"]
 
@@ -168,12 +173,10 @@ def render_catalog(manifest: Manifest) -> dict[str, Any]:
     providers: dict[str, Any] = {}
     for model in manifest.models.values():
         model_id = model["id"]
-        context = model.get("context")
-        if not context:
+        if not model.get("context"):
             continue
         provider, name = split_model_id(model_id)
-        context_window = 272000 if context == "codex" and provider in {"openai-codex", "openrouter"} else 256000
-        override = {"contextWindow": context_window}
+        override = {"contextWindow": CONSERVATIVE_CONTEXT_WINDOW}
         providers.setdefault(provider, {}).setdefault("modelOverrides", {})[name] = override
     return {"providers": providers}
 

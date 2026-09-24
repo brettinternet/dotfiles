@@ -5,14 +5,13 @@ piLaunchers:
   oracle: { model: claude-fable, thinking: high }
   solo: { args: [--exclude-tools, "subagent,subagent_wait,subagent_supervisor"] }
 
-# Pi model IDs and context-window overrides; aliases keep profiles concise.
+# Pi model IDs; aliases keep profiles concise. `context: conservative` replaces the model's
+# context window with 272K, so use it only on models whose native window is larger.
 models:
   codex-sol:
     id: openai-codex/gpt-6-sol
-    context: codex
   codex-luna:
     id: openai-codex/gpt-6-luna
-    context: codex
   codex-astra:
     id: openai-codex/gpt-6-astra
 
@@ -27,16 +26,16 @@ models:
     context: conservative
   claude-haiku:
     id: anthropic/claude-haiku-4-5
-    context: conservative
+
   or-sol:
     id: openrouter/openai/gpt-6-sol
-    context: codex
+    context: conservative
   or-luna:
     id: openrouter/openai/gpt-6-luna
-    context: codex
+    context: conservative
   or-sol-pro:
     id: openrouter/openai/gpt-6-sol-pro
-    context: codex
+    context: conservative
   or-fable-auto:
     id: openrouter/~anthropic/claude-fable-latest
     context: conservative
