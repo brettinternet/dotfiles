@@ -24,7 +24,7 @@ Unmanaged files and mutable local settings are preserved.
 
 ## Sources
 
-- `manifest.yaml` — Pi model catalog, launchers, per-profile model assignments, and Claude/Codex agent defaults; `generate-config.py` renders Pi settings and model overrides
+- `manifest.yaml` — Pi model catalog, launchers, and per-profile model assignments (also used for Claude Code and Codex CLI agents); `generate-config.py` renders Pi settings and model overrides
 - `agents/` — shared subagent prompts; `install-agents` renders harness-specific definitions
 - `.agents/skills/` — reusable skills discovered through `~/.agents/skills/`
 - `.agents/commands/` — shared workflows rendered as skills by `install-agent-commands`
@@ -51,7 +51,7 @@ p oracle --no-session "Review this design"
 p solo --continue # use the active profile defaults without subagent tools
 ```
 
-Pi combines `pi/profiles/common.json` with the selected generated overlay. `codex` uses ChatGPT subscription models; `or` requires `OPENROUTER_API_KEY`. In `manifest.yaml`, each `[alias, thinking]` pair identifies a Pi model from `models` and its thinking level. `parent` is the interactive Pi model; `defaultSubagent` is the fallback for subagents without an override; `researcher` configures the built-in research subagent; `agents` assigns each named subagent its model and thinking level. `title` and `progress` configure the separate Pi title and progress extensions. `enabled` controls interactive model cycling, while `modelScope` restricts subagent model choices. The `roles` mapping sets models for standalone Claude Code and Codex CLI agents, not Claude/Codex models running inside Pi. Their shared instructions come from `ai/agents/<role>.md`; `install-agents` generates definitions under `~/.claude/agents/` and `~/.codex/agents/`. Pi definitions are generated under `~/.pi/agent/agents/`, with models assigned by each Pi profile's `agents` mapping.
+Pi combines `pi/profiles/common.json` with the selected generated overlay. `codex` uses ChatGPT subscription models; `or` requires `OPENROUTER_API_KEY`. In `manifest.yaml`, each `[alias, thinking]` pair identifies a Pi model from `models` and its thinking level. `parent` is the interactive Pi model; `defaultSubagent` is the fallback for subagents without an override; `researcher` configures the built-in research subagent; `agents` assigns each named subagent its model and thinking level. `title` and `progress` configure the separate Pi title and progress extensions. `enabled` controls interactive model cycling, while `modelScope` restricts subagent model choices. Agent instructions come from `ai/agents/<role>.md`; `install-agents` generates definitions under `~/.pi/agent/agents/`, `~/.claude/agents/`, and `~/.codex/agents/`. Pi agents take their models from the active profile's `agents` mapping. Standalone Claude Code and Codex CLI agents take theirs from the `claude` and `codex` profiles' `agents` mappings, with the provider prefix removed, so each role's model is defined once per provider.
 
 ## Shared agents
 
