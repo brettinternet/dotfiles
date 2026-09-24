@@ -1,14 +1,14 @@
 ---
 modelRoles:
   reviewer: openrouter/anthropic/claude-opus-5.5:xhigh
-  default: openai-codex/gpt-6-sol:medium
+  default: openai-codex/gpt-5.6-sol:medium
   smol: openai-codex/gpt-6-luna:medium
-  slow: openai-codex/gpt-6-sol:max
+  slow: openai-codex/gpt-5.6-sol:max
   designer: openrouter/anthropic/claude-fable-latest:xhigh
-  vision: openai-codex/gpt-6-sol:high
+  vision: openai-codex/gpt-5.6-sol:high
   task: openai-codex/gpt-6-luna:max
   commit: openai-codex/gpt-5.3-codex-spark:high
-  plan: openai-codex/gpt-6-sol:high
+  plan: openai-codex/gpt-5.6-sol:high
   advisor: openai-codex/gpt-6-luna:max
   title: openai-codex/gpt-6-luna:high
   tiny: nvidia/nvidia/nemotron-3-ultra-550b-a55b:medium
