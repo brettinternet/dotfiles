@@ -46,7 +46,7 @@
         "thinking": "max"
       },
       "writer": {
-        "model": "openai-codex/gpt-5.4",
+        "model": "openai-codex/gpt-6-sol",
         "thinking": "low"
       }
     },

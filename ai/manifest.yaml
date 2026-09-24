@@ -5,17 +5,6 @@ piLaunchers:
   oracle: { model: claude-fable, thinking: high }
   solo: { args: [--exclude-tools, "subagent,subagent_wait,subagent_supervisor"] }
 
-# Model defaults for standalone Claude Code and Codex CLI agents; Pi models are set in profiles below.
-roles:
-  explore: { claude: [haiku, low] }
-  executor: { claude: [sonnet, medium], codex: [gpt-5.6-luna, max] }
-  oracle: { claude: [opus, xhigh], codex: [gpt-5.6-sol, xhigh] }
-  pr-watcher: { claude: [haiku, low], codex: [gpt-5.6-luna, low] }
-  reviewer: { claude: [claude-opus-4-8, xhigh], codex: [gpt-5.6-terra, xhigh] }
-  thermo-nuclear-code-quality-review: {}
-  verifier: { claude: [sonnet, medium], codex: [gpt-5.6-luna, high] }
-  writer: { claude: [sonnet, low], codex: [gpt-5.4, medium] }
-
 # Pi model IDs and context-window overrides; aliases keep profiles concise.
 models:
   codex-sol:
@@ -26,8 +15,6 @@ models:
     context: codex
   codex-astra:
     id: openai-codex/gpt-6-astra
-  codex-writer:
-    id: openai-codex/gpt-5.4
 
   claude-fable:
     id: anthropic/claude-fable-5-1
@@ -67,6 +54,7 @@ models:
     context: conservative
 
 # Each pair is [model alias, Pi thinking level].
+# The claude and codex profiles' agents also set standalone Claude Code and Codex CLI agent models.
 profiles:
   codex:
     parent: [codex-sol, high]
@@ -83,7 +71,7 @@ profiles:
       verifier: [codex-luna, high]
       pr-watcher: [codex-luna, low]
       thermo-nuclear-code-quality-review: [codex-astra, max]
-      writer: [codex-writer, low]
+      writer: [codex-sol, low]
     modelScope: [openai-codex/gpt-6-*]
     settings:
       webSearchConfig:

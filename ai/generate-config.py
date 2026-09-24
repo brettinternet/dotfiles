@@ -17,6 +17,9 @@ sys.path.insert(0, str(ROOT / "dotbot/lib/pyyaml/lib"))
 import yaml  # type: ignore[import-untyped]  # noqa: E402
 
 EFFORTS = {"off", "minimal", "low", "medium", "high", "xhigh", "max"}
+# Standalone CLI agents reuse the Pi profile that targets the same provider.
+CLI_AGENT_PROFILES = {"claude": ("claude", "anthropic"), "codex": ("codex", "openai-codex")}
+CLI_EFFORTS = {"low", "medium", "high", "xhigh", "max"}
 
 
 class ManifestLoader(yaml.SafeLoader):
@@ -50,7 +53,9 @@ class Manifest:
             raise SystemExit(f"{path}: expected manifest version 1")
         self.path = path
         self.pi_launchers: dict[str, Any] = data.get("piLaunchers", {})
-        self.roles: dict[str, Any] = data.get("roles", {})
+        self.agent_prompts = {
+            source.stem: source.read_text() for source in sorted((AI_ROOT / "agents").glob("*.md"))
+        }
         self.models: dict[str, Any] = data.get("models", {})
         self.profiles: dict[str, Any] = data.get("profiles", {})
         self.validate()
@@ -80,34 +85,6 @@ class Manifest:
                 not isinstance(argument, str) or not argument for argument in args
             ):
                 raise SystemExit(f"{self.path}: {location}.args must be non-empty strings")
-        for name, role in self.roles.items():
-            if not isinstance(role, dict):
-                raise SystemExit(f"{self.path}: role {name!r} must be a mapping")
-            unknown = set(role) - {"claude", "codex"}
-            if unknown:
-                raise SystemExit(f"{self.path}: unknown keys at roles.{name}: {', '.join(sorted(unknown))}")
-            source = AI_ROOT / f"agents/{name}.md"
-            if not source.is_file():
-                raise SystemExit(f"{self.path}: missing agent prompt {source}")
-            source_text = source.read_text()
-            if re.search(r"^(?:claude|codex)-(?:model|effort):", source_text, re.MULTILINE):
-                raise SystemExit(f"{self.path}: model and effort belong in manifest roles, not {source}")
-            match = re.search(r"^tools: (.+)$", source_text, re.MULTILINE)
-            if not match:
-                raise SystemExit(f"{self.path}: missing tools in {source}")
-            tools = match.group(1).split()
-            for harness in ("claude", "codex"):
-                if (harness in tools) != (harness in role):
-                    raise SystemExit(f"{self.path}: {name} requires {harness} routing exactly when enabled")
-                if harness in role:
-                    route = role[harness]
-                    if not isinstance(route, list) or len(route) != 2:
-                        raise SystemExit(f"{self.path}: roles.{name}.{harness} must be [model, effort]")
-                    self.validate_effort(route[1], f"roles.{name}.{harness}")
-                    if not isinstance(route[0], str) or not re.fullmatch(r"[a-zA-Z0-9.-]+", route[0]):
-                        raise SystemExit(f"{self.path}: invalid {harness} model for {name}")
-                    if not isinstance(route[1], str):
-                        raise SystemExit(f"{self.path}: roles.{name}.{harness} requires effort")
         outputs: set[str] = set()
         for profile_name, profile in self.profiles.items():
             if not isinstance(profile, dict):
@@ -127,16 +104,34 @@ class Manifest:
             for key in ("parent", "defaultSubagent", "researcher", "title", "progress"):
                 self.validate_route(profile[key], f"profiles.{profile_name}.{key}")
             agents = profile.get("agents", {})
-            if set(agents) != set(self.roles):
-                raise SystemExit(f"{self.path}: {profile_name}.agents must cover all agent roles")
+            if set(agents) != set(self.agent_prompts):
+                raise SystemExit(f"{self.path}: {profile_name}.agents must cover all ai/agents prompts")
             for role_name, route in agents.items():
                 self.validate_route(route, f"profiles.{profile_name}.agents.{role_name}")
             for model in profile.get("enabled", []):
                 self.model_id(model)
+        for name, source_text in self.agent_prompts.items():
+            source = AI_ROOT / f"agents/{name}.md"
+            if re.search(r"^(?:claude|codex)-(?:model|effort):", source_text, re.MULTILINE):
+                raise SystemExit(f"{self.path}: model and effort belong in manifest profiles, not {source}")
+            match = re.search(r"^tools: (.+)$", source_text, re.MULTILINE)
+            if not match:
+                raise SystemExit(f"{self.path}: missing tools in {source}")
+            for harness in set(match.group(1).split()) & set(CLI_AGENT_PROFILES):
+                profile_name, provider = CLI_AGENT_PROFILES[harness]
+                location = f"profiles.{profile_name}.agents.{name}"
+                if profile_name not in self.profiles:
+                    raise SystemExit(f"{self.path}: {name} ships to {harness} but profiles.{profile_name} is missing")
+                alias, effort = self.profiles[profile_name]["agents"][name]
+                if split_model_id(self.model_id(alias))[0] != provider:
+                    raise SystemExit(f"{self.path}: {location} must use a model from {provider} for {harness}")
+                if effort not in CLI_EFFORTS:
+                    raise SystemExit(f"{self.path}: {location} thinking {effort!r} is unsupported by {harness}")
 
     def agent_route(self, name: str, harness: str) -> str:
-        role = self.roles[name]
-        model, effort = role[harness]
+        profile_name, _ = CLI_AGENT_PROFILES[harness]
+        alias, effort = self.profiles[profile_name]["agents"][name]
+        _, model = split_model_id(self.model_id(alias))
         return f"{model} {effort}"
 
     def validate_route(self, route: Any, location: str) -> None:
@@ -274,7 +269,7 @@ def main() -> int:
     manifest = Manifest(AI_ROOT / "manifest.yaml")
     if args.agent_route:
         role, harness = args.agent_route
-        if role not in manifest.roles or harness not in {"claude", "codex"}:
+        if role not in manifest.agent_prompts or harness not in CLI_AGENT_PROFILES:
             raise SystemExit(f"unknown agent route: {role}/{harness}")
         print(manifest.agent_route(role, harness))
         return 0
