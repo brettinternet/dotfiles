@@ -1,6 +1,6 @@
 ---
 description: Explicitly requested maintainability audit for structural complexity, spaghetti growth, and missed code-judo simplifications. Applies the thermo-nuclear-code-quality-review skill as its rubric. Read-only - reports findings, never edits, commits, or posts.
-tools: pi opencode
+tools: pi
 pi-tools: read, grep, find, ls
 ---
 

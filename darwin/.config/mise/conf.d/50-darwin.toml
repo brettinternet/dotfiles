@@ -64,5 +64,4 @@ github.credential_command = "gh auth token"
 # minimum_release_age_excludes = [
 #   "biome",
 #   "claude",
-#   "opencode",
 # ]

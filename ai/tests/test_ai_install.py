@@ -68,27 +68,17 @@ class AiInstallTests(unittest.TestCase):
         mise = fake_bin / "mise"
         mise.write_text('#!/bin/sh\nprintf \'%s\\n\' "$*" >> "$HOME/mise.log"\n')
         mise.chmod(0o755)
+        herdr = fake_bin / "herdr"
+        herdr.write_text('#!/bin/sh\nprintf \'%s\\n\' "$*" >> "$HOME/herdr.log"\n')
+        herdr.chmod(0o755)
+        self.environment["PATH"] = f"{fake_bin}:{self.environment['PATH']}"
         self.environment["MISE_BIN"] = str(mise)
         return log
 
     def install_fake_dcg(self) -> Path:
         dcg = self.home / "bin/dcg"
         dcg.parent.mkdir(exist_ok=True)
-        dcg.write_text(
-            """#!/usr/bin/env python3
-import os
-import sys
-from pathlib import Path
-
-target = sys.argv[2]
-if target == "--opencode":
-    path = Path(os.environ["HOME"]) / ".config/opencode/plugins/dcg-guard.js"
-else:
-    raise SystemExit(f"unexpected arguments: {sys.argv[1:]}")
-path.parent.mkdir(parents=True, exist_ok=True)
-path.write_text("// generated guard for test\\n")
-"""
-        )
+        dcg.write_text("#!/bin/sh\nexit 0\n")
         dcg.chmod(0o755)
         self.environment["DCG_BIN"] = str(dcg)
         return dcg
@@ -119,9 +109,6 @@ path.write_text("// generated guard for test\\n")
         self.assertEqual(
             generated.read_text(),
             (self.home / ".claude/skills/pr-review-draft/SKILL.md").read_text(),
-        )
-        self.assertTrue(
-            (self.home / ".config/opencode/commands/pr-review-draft.md").is_file()
         )
         self.assertFalse(legacy.exists())
         self.assertEqual("Unmanaged command\n", unmanaged.read_text())
@@ -158,7 +145,6 @@ path.write_text("// generated guard for test\\n")
         shared_harnesses = (
             ".claude/agents",
             ".pi/agent/agents",
-            ".config/opencode/agents",
         )
         for role in ("executor", "oracle", "reviewer", "verifier", "writer"):
             generated = [self.home / directory / f"{role}.md" for directory in shared_harnesses]
@@ -223,7 +209,7 @@ path.write_text("// generated guard for test\\n")
             "ai/.bin/install-agents",
             str(source),
             str(self.home / ".claude/agents"),
-            str(self.home / ".config/opencode/agents"),
+            str(self.home / "retired-opencode-agents"),
             str(self.home / ".codex/agents"),
             str(self.home / ".codex/config.toml"),
             str(self.home / ".pi/agent/agents"),
@@ -330,9 +316,6 @@ path.write_text("// generated guard for test\\n")
         commands = [entry["hooks"][0]["command"] for entry in entries]
         self.assertEqual(1, commands.count(str(dcg)))
         self.assertIn("preserve", commands)
-        self.assertTrue(
-            (self.home / ".config/opencode/plugins/dcg-guard.js").is_file()
-        )
 
     def test_generated_config_is_current(self) -> None:
         self.run_command("python3", "ai/generate-config.py", "--check")
@@ -398,33 +381,10 @@ path.write_text("// generated guard for test\\n")
         )
 
         self.assertIn("refusing to overwrite unmanaged settings", completed.stderr)
-        self.assertFalse((self.home / ".config/opencode/.active").exists())
-
-    def test_profile_rendering_is_checkout_pure_and_replaces_managed_links(self) -> None:
-        before = self.repository_status()
-        legacy_links = {
-            self.home / ".config/opencode/opencode.jsonc": ROOT
-            / "ai/opencode/opencode.jsonc",
-        }
-        for link, target in legacy_links.items():
-            link.parent.mkdir(parents=True, exist_ok=True)
-            link.symlink_to(target)
-
-        self.run_command("ai/.bin/opencode-profile", "use", "gpt")
-
-        for path in legacy_links:
-            self.assertTrue(path.is_file())
-            self.assertFalse(path.is_symlink())
-        self.assertEqual(before, self.repository_status())
+        self.assertFalse((self.home / ".pi/agent/.active-profile").exists())
 
     def test_profiles_preserve_unmanaged_config_and_state(self) -> None:
         profiles = (
-            (
-                "ai/.bin/opencode-profile",
-                "gpt",
-                self.home / ".config/opencode/opencode.jsonc",
-                self.home / ".config/opencode/.active",
-            ),
             (
                 "ai/.bin/pi-profile",
                 "codex",
@@ -464,11 +424,12 @@ path.write_text("// generated guard for test\\n")
             "ai/.bin/ai-tool-enabled", "--validate", expected_code=2
         )
         self.assertIn("unknown tool: dsh", completed.stderr)
-        self.environment["DOTFILES_AI_TOOLS"] = "omp"
-        completed = self.run_command(
-            "ai/.bin/ai-tool-enabled", "--validate", expected_code=2
-        )
-        self.assertIn("unknown tool: omp", completed.stderr)
+        for retired in ("omp", "opencode"):
+            self.environment["DOTFILES_AI_TOOLS"] = retired
+            completed = self.run_command(
+                "ai/.bin/ai-tool-enabled", "--validate", expected_code=2
+            )
+            self.assertIn(f"unknown tool: {retired}", completed.stderr)
 
     def test_ai_tool_configuration_refuses_dangling_managed_paths(self) -> None:
         config = self.home / ".config/mise/conf.d/40-ai.toml"
@@ -518,6 +479,68 @@ path.write_text("// generated guard for test\\n")
         self.assertTrue((self.home / ".pi/agent/agents/explore.md").is_file())
         self.assertFalse((self.home / ".claude/agents/executor.md").exists())
         self.assertFalse((self.home / ".codex/agents/executor.toml").exists())
+
+    def test_retired_opencode_resources_are_removed_without_touching_other_harnesses(self) -> None:
+        log = self.install_fake_mise()
+        self.environment["DOTFILES_AI_TOOLS"] = "pi,claude,codex"
+        state = self.home / ".local/state/dotfiles/ai-tools"
+        state.parent.mkdir(parents=True)
+        state.write_text("# Generated by configure-ai-tools.\nDOTFILES_AI_TOOLS=pi,opencode,claude,codex\n")
+        config = self.home / ".config/opencode"
+        config.mkdir(parents=True)
+        (config / "AGENTS.md").symlink_to(ROOT / "ai/AGENTS.md")
+        (config / "tui.jsonc").symlink_to(ROOT / "ai/opencode/tui.jsonc")
+        (config / "opencode.jsonc").write_text("// Generated by opencode-profile from ai/opencode/profiles/common.jsonc\n{}\n")
+        (config / ".active").write_text("gpt\n")
+        (config / "personal.jsonc").write_text("keep\n")
+        profiles = config / "profiles"
+        profiles.mkdir()
+        (profiles / "old").symlink_to(ROOT / "ai/opencode/registry/files/profiles/old")
+        (profiles / "personal").write_text("keep\n")
+        (profiles / "personal-link").symlink_to(ROOT / "ai/AGENTS.md")
+        helper = self.home / ".bin/opencode-profile"
+        helper.parent.mkdir()
+        helper.symlink_to(ROOT / "ai/.bin/opencode-profile")
+        shim = self.home / ".local/share/mise/shims/opencode"
+        shim.parent.mkdir(parents=True)
+        shim.symlink_to(self.environment["MISE_BIN"])
+        guard = config / "plugins/dcg-guard.js"
+        guard.parent.mkdir()
+        guard.write_text("// generated guard\n")
+        guard_state = self.home / ".local/state/dotfiles/dcg-guards.json"
+        guard_state.write_text(json.dumps({
+            "marker": "Generated by install-dcg-guards.",
+            "command": "/bin/dcg",
+            "guards": [str(guard)],
+        }))
+        command = config / "commands/generated.md"
+        command.parent.mkdir()
+        command.write_text("# Generated by install-agent-commands.\n")
+        (command.parent / "manual.md").write_text("keep\n")
+        linked_command = command.parent / "linked.md"
+        linked_command.symlink_to(self.home / ".agents/skills/implement/SKILL.md")
+        agent = config / "agents/explore.md"
+        agent.parent.mkdir()
+        agent.write_text("generated\n")
+        (agent.parent / ".install-agents").write_text("# Generated by install-agents.\nexplore.md\n")
+
+        self.run_command("ai/.bin/configure-ai-tools")
+        self.run_command("ai/.bin/install-agent-commands")
+        self.run_command("ai/.bin/install-agents")
+
+        for path in (config / "AGENTS.md", config / "tui.jsonc", config / "opencode.jsonc", config / ".active", profiles / "old", helper, shim, guard, command, agent):
+            self.assertFalse(path.exists() or path.is_symlink(), path)
+        self.assertEqual("keep\n", (config / "personal.jsonc").read_text())
+        self.assertEqual("keep\n", (profiles / "personal").read_text())
+        self.assertTrue((profiles / "personal-link").is_symlink())
+        self.assertEqual("keep\n", (command.parent / "manual.md").read_text())
+        self.assertTrue(linked_command.is_symlink())
+        self.assertTrue((self.home / ".pi/agent/agents/explore.md").is_file())
+        self.assertTrue((self.home / ".claude/agents/executor.md").is_file())
+        self.assertTrue((self.home / ".codex/agents/executor.toml").is_file())
+        self.assertIn("uninstall --all --yes opencode", log.read_text())
+        self.assertIn("integration uninstall opencode", (self.home / "herdr.log").read_text())
+        self.assertEqual([], json.loads(guard_state.read_text())["guards"])
 
     def test_previous_omp_selection_is_uninstalled_without_touching_pi(self) -> None:
         log = self.install_fake_mise()
@@ -569,7 +592,6 @@ path.write_text("// generated guard for test\\n")
         self.run_command("ai/.bin/install-agent-commands")
         self.run_command("ai/.bin/install-agents")
         self.run_command("ai/.bin/pi-profile", "use", "codex")
-        self.run_command("ai/.bin/opencode-profile", "use", "gpt")
 
         helper = self.home / ".bin/ai-config"
         helper.parent.mkdir(parents=True)
@@ -602,10 +624,6 @@ path.write_text("// generated guard for test\\n")
         self.assertFalse((self.home / ".agents/skills/pr-review-draft").exists())
         self.assertFalse((self.home / ".pi/agent/agents/explore.md").exists())
         self.assertFalse((self.home / ".pi/agent/settings.json").exists())
-        self.assertFalse((self.home / ".config/opencode/opencode.jsonc").exists())
-        self.assertFalse(
-            (self.home / ".config/opencode/plugins/dcg-guard.js").exists()
-        )
         self.assertEqual(
             {
                 "preserve": True,
@@ -639,15 +657,11 @@ path.write_text("// generated guard for test\\n")
         pi_settings = pi_dir / "settings.json"
         pi_settings.write_text('{"unmanaged": true}\n')
         (pi_dir / ".active-profile").write_text("codex\n")
-        custom_guard = self.home / ".config/opencode/plugins/dcg-guard.js"
-        custom_guard.parent.mkdir(parents=True)
-        custom_guard.write_text("// custom guard\n")
         mise_log.write_text("")
 
         self.run_command("make", "uninstall-ai")
 
         self.assertEqual('{"unmanaged": true}\n', pi_settings.read_text())
-        self.assertEqual("// custom guard\n", custom_guard.read_text())
         uninstall = "\n".join(
             line
             for line in mise_log.read_text().splitlines()
@@ -671,12 +685,10 @@ path.write_text("// generated guard for test\\n")
         self.run_command("make", "ai")
         self.run_command("make", "ai")
 
-        self.assertFalse((self.home / ".omp").exists())
         self.assertEqual(before, self.repository_status())
         for path in (
             self.home / ".claude/agents/executor.md",
             self.home / ".pi/agent/agents/explore.md",
-            self.home / ".config/opencode/agents/explore.md",
             self.home / ".codex/agents/executor.toml",
         ):
             self.assertTrue(path.is_file(), path)

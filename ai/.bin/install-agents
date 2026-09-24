@@ -140,7 +140,6 @@ prepare_directory() {
 
 prepare_directory claude "$claude_dir"
 prepare_directory pi "$pi_dir"
-prepare_directory opencode "$opencode_dir"
 prepare_directory codex "$codex_dir"
 if tool_enabled codex; then
   mkdir -p "$(dirname "$codex_config")"
@@ -172,7 +171,6 @@ for source in "$source_dir"/*.md; do
 
   if ships "$source" claude; then require_managed "$claude_dir/$claude_name.md"; fi
   if ships "$source" pi; then require_managed "$pi_dir/$role.md"; fi
-  if ships "$source" opencode; then require_managed "$opencode_dir/$role.md"; fi
   if ships "$source" codex; then
     target="$codex_dir/$role.toml"
     if [ -e "$target" ] && ! grep -Fqx "$codex_marker" "$target"; then
@@ -188,7 +186,6 @@ done
 
 claude_names=''
 pi_names=''
-opencode_names=''
 codex_roles=''
 
 for source in "$source_dir"/*.md; do
@@ -237,19 +234,6 @@ for source in "$source_dir"/*.md; do
 "
   fi
 
-  # OpenCode takes the name from the filename and the model from the active
-  # profile's agent.<role> entry, and wants no blank line after the frontmatter.
-  if ships "$source" opencode; then
-    {
-      printf '%s\n' '---'
-      printf 'description: %s\n' "$description"
-      printf '%s\n' 'mode: subagent' '---'
-      body "$source"
-    } > "$opencode_dir/$role.md"
-    opencode_names="$opencode_names$role.md
-"
-  fi
-
   if ships "$source" codex; then
     target="$codex_dir/$role.toml"
     route=$(python3 "$dotfiles/ai/generate-config.py" --agent-route "$role" codex)
@@ -275,7 +259,7 @@ done
 
 if tool_enabled claude; then reconcile "$claude_dir" "$claude_names"; else retire_managed_directory "$claude_dir"; fi
 if tool_enabled pi; then reconcile "$pi_dir" "$pi_names"; else retire_managed_directory "$pi_dir"; fi
-if tool_enabled opencode; then reconcile "$opencode_dir" "$opencode_names"; else retire_managed_directory "$opencode_dir"; fi
+retire_managed_directory "$opencode_dir"
 
 for target in "$codex_dir"/*.toml; do
   [ -f "$target" ] || continue

@@ -11,8 +11,6 @@
     - ~/.claude/agents
     - ~/.pi/agent/agents
     - ~/.pi/agent/themes
-    - ~/.config/opencode/agents
-    - ~/.config/opencode/commands
 - shell:
     - command: ai/.bin/configure-ai-tools
       description: Install the selected AI tools and remove deselected managed tools
@@ -66,27 +64,6 @@
       stdout: true
       stderr: true
     - command: |
-        set -eu
-        ai/.bin/ai-tool-enabled opencode || exit 0
-        profile="$(ai/.bin/opencode-profile show | cut -f1)"
-        ai/.bin/opencode-profile use "$profile"
-      description: Generate the active OpenCode config from its selected profile
-      stdout: true
-      stderr: true
-    - command: |
-        set -eu
-        ai/.bin/ai-tool-enabled opencode || exit 0
-        for name in ocx.jsonc oh-my-openagent.jsonc; do
-          target="$HOME/.config/opencode/$name"
-          if [ -e "$target" ] || [ -L "$target" ]; then
-            trash "$target"
-          fi
-        done
-      description: Remove retired OCX and oh-my-openagent configuration
-      stdout: true
-      stderr: true
-
-    - command: |
         if ai/.bin/ai-tool-enabled claude && command -v claude >/dev/null 2>&1; then
           for name in time chrome-devtools git; do
             claude mcp remove "$name" --scope user >/dev/null 2>&1 || true
@@ -127,12 +104,8 @@
         # Each integration refuses with a nonzero status when its agent's config
         # directory is absent, so skip those instead of failing the whole run.
         # Reinstalling is byte-idempotent: hook entries are replaced, not appended.
-        for name in opencode claude codex; do
+        for name in claude codex; do
           ai/.bin/ai-tool-enabled "$name" || continue
-          if [ "$name" = opencode ] && [ ! -L "$HOME/.config/opencode/tui.jsonc" ]; then
-            echo "herdr integration: opencode deferred until managed links exist"
-            continue
-          fi
           if herdr integration install "$name" >/dev/null 2>&1; then
             echo "herdr integration: $name"
           else
@@ -147,11 +120,11 @@
       stdout: true
       stderr: true
     - command: ai/.bin/install-agent-commands
-      description: Generate shared skills plus Claude and OpenCode command adapters
+      description: Generate shared skills and Claude command adapters
       stdout: true
       stderr: true
     - command: ai/.bin/install-agents
-      description: Generate Claude, Pi, OpenCode, and Codex agent definitions
+      description: Generate Claude, Pi, and Codex agent definitions
       stdout: true
       stderr: true
 
@@ -206,10 +179,3 @@
     ~/.config/amp/AGENTS.md:
       path: ai/AGENTS.md
       if: ai/.bin/ai-tool-enabled amp
-    # OpenCode
-    ~/.config/opencode/AGENTS.md:
-      path: ai/AGENTS.md
-      if: ai/.bin/ai-tool-enabled opencode
-    ~/.config/opencode/tui.jsonc:
-      path: ai/opencode/tui.jsonc
-      if: ai/.bin/ai-tool-enabled opencode
