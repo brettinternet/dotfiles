@@ -8,6 +8,7 @@ opencode_dir=${3:-"$HOME/.config/opencode/agents"}
 codex_dir=${4:-"$HOME/.codex/agents"}
 codex_config=${5:-"$HOME/.codex/config.toml"}
 pi_dir=${6:-"$HOME/.pi/agent/agents"}
+omp_dir=${7:-"$HOME/.omp/agent/agents"}
 dotfiles=${DOTFILES:-$(pwd -P)}
 
 tool_enabled() {
@@ -260,6 +261,9 @@ done
 if tool_enabled claude; then reconcile "$claude_dir" "$claude_names"; else retire_managed_directory "$claude_dir"; fi
 if tool_enabled pi; then reconcile "$pi_dir" "$pi_names"; else retire_managed_directory "$pi_dir"; fi
 retire_managed_directory "$opencode_dir"
+retire_managed_directory "$omp_dir"
+# configure-ai-tools retires the rest of OMP's managed files first.
+rmdir "$(dirname "$omp_dir")" "$(dirname "$(dirname "$omp_dir")")" 2>/dev/null || true
 
 for target in "$codex_dir"/*.toml; do
   [ -f "$target" ] || continue
