@@ -1,13 +1,13 @@
 #!/bin/sh
-# ai-config — generate and activate manifest-backed AI harness profiles
+# ai-config — generate and activate manifest-backed Pi profiles
 set -eu
 
 if [ -z "${DOTFILES:-}" ]; then
   src="$0"
   while [ -L "$src" ]; do
-    dir="$(cd "$(dirname "$src")" && pwd -P)"
+    source_dir="$(cd "$(dirname "$src")" && pwd -P)"
     src="$(readlink "$src")"
-    case "$src" in /*) ;; *) src="$dir/$src" ;; esac
+    case "$src" in /*) ;; *) src="$source_dir/$src" ;; esac
   done
   self="$(cd "$(dirname "$src")" && pwd -P)"
   DOTFILES="$(cd "$self/../.." && pwd -P)"
@@ -29,52 +29,12 @@ case "${1:-generate}" in
     ;;
   use)
     shift
-    profile=${1:-}
-    [ -n "$profile" ] || die "usage: ai-config use <profile> [--targets <list>]"
-    shift
-    targets=pi
-    if [ "${1:-}" = --targets ]; then
-      [ "$#" -eq 2 ] || die "usage: ai-config use <profile> [--targets <list>]"
-      targets=$2
-    elif [ "$#" -ne 0 ]; then
-      die "usage: ai-config use <profile> [--targets <list>]"
-    fi
+    [ "$#" -eq 1 ] || die "usage: ai-config use <profile>"
+    output=$(python3 "$generator" --profile-output "$1")
     python3 "$generator"
-    old_ifs=$IFS
-    IFS=,
-    for harness in $targets; do
-      IFS=$old_ifs
-      case "$harness" in pi) ;; *) die "unknown target: $harness" ;; esac
-      status=0
-      output=$(python3 "$generator" --profile-output "$profile" "$harness") || status=$?
-      if [ "$status" -eq 3 ]; then
-        :
-      elif [ "$status" -ne 0 ]; then
-        exit "$status"
-      else
-        "$DOTFILES/ai/.bin/pi-profile" check "$output"
-      fi
-      IFS=,
-    done
-    IFS=,
-    for harness in $targets; do
-      IFS=$old_ifs
-      case "$harness" in pi) ;; *) die "unknown target: $harness" ;; esac
-      status=0
-      output=$(python3 "$generator" --profile-output "$profile" "$harness") || status=$?
-      if [ "$status" -eq 3 ]; then
-        printf '%s has no %s profile; skipped\n' "$profile" "$harness"
-        status=0
-      elif [ "$status" -ne 0 ]; then
-        exit "$status"
-      else
-        "$DOTFILES/ai/.bin/pi-profile" use "$output"
-      fi
-      IFS=,
-    done
-    IFS=$old_ifs
+    exec "$DOTFILES/ai/.bin/pi-profile" use "$output"
     ;;
   *)
-    die "usage: ai-config [generate [--check]|check|use <profile> [--targets <list>]]"
+    die "usage: ai-config [generate [--check]|check|use <profile>]"
     ;;
 esac

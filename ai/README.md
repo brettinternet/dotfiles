@@ -24,7 +24,7 @@ Unmanaged files and mutable local settings are preserved.
 
 ## Sources
 
-- `manifest.yaml` — central model catalog, Pi launchers, profile routing, and cross-harness role mapping; `generate-config.py` renders harness-specific sources
+- `manifest.yaml` — Pi model catalog, launchers, per-profile model assignments, and Claude/Codex agent defaults; `generate-config.py` renders Pi settings and model overrides
 - `agents/` — shared subagent prompts; `install-agents` renders harness-specific definitions
 - `.agents/skills/` — reusable skills discovered through `~/.agents/skills/`
 - `.agents/commands/` — shared workflows rendered as skills by `install-agent-commands`
@@ -37,7 +37,7 @@ Generated files under `$HOME` should not be edited directly. Change their source
 
 ```sh
 ai-config use codex       # Pi profile
-ai-config use openrouter  # or: claude, personal
+ai-config use openrouter  # or: claude; renders to the `or` Pi profile
 ai-config generate --check
 ```
 
@@ -51,8 +51,7 @@ p oracle --no-session "Review this design"
 p solo --continue # use the active profile defaults without subagent tools
 ```
 
-- **Pi:** combines `pi/profiles/common.json` with the selected generated overlay. `codex` uses ChatGPT subscription models; `or` requires `OPENROUTER_API_KEY`.
-`manifest.yaml` owns model metadata, effort, and role-to-model routing. Shared `modelRoutes` map agent roles to model aliases (for example, `oracle` maps to `slow`); Pi-specific `title` and `progress` routes render their model configs. Claude and Codex agent defaults live in `roles` because those harnesses do not switch profiles; `agents/` holds prompts and non-model metadata only. Pi profile names are mapped by the manifest.
+Pi combines `pi/profiles/common.json` with the selected generated overlay. `codex` uses ChatGPT subscription models; `or` requires `OPENROUTER_API_KEY`. In `manifest.yaml`, each `[alias, thinking]` pair identifies a Pi model from `models` and its thinking level. `parent` is the interactive Pi model; `defaultSubagent` is the fallback for subagents without an override; `researcher` configures the built-in research subagent; `agents` assigns each named subagent its model and thinking level. `title` and `progress` configure the separate Pi title and progress extensions. `enabled` controls interactive model cycling, while `modelScope` restricts subagent model choices. The `roles` mapping sets models for standalone Claude Code and Codex CLI agents, not Claude/Codex models running inside Pi. Their shared instructions come from `ai/agents/<role>.md`; `install-agents` generates definitions under `~/.claude/agents/` and `~/.codex/agents/`. Pi definitions are generated under `~/.pi/agent/agents/`, with models assigned by each Pi profile's `agents` mapping.
 
 ## Shared agents
 
@@ -60,17 +59,7 @@ The roster covers discovery (`explore`), implementation (`executor`), verificati
 
 Pi disables the overlapping builtin `scout`, `worker`, and `delegate` roles. It also disables the optional `claude-code`, `codex-exec`, and `cursor-agent` read-only/writer pairs: those are isolated one-shot adapters to separately installed CLIs, not native Pi roles, and duplicate this roster without supporting native model routing. They can be re-enabled in `pi/profiles/common.json` if a separate CLI subscription or runtime is intentionally needed.
 
-Pi profile overlays route the active roster by task shape:
-
-| Role                                 | `codex`      | `or`                    |
-| ------------------------------------ | ------------ | ----------------------- |
-| `explore`, `pr-watcher`              | Luna, low    | Luna, low               |
-| `researcher`                         | Luna, medium | Luna, medium            |
-| `executor`, `verifier`               | Luna, high   | Luna, high              |
-| `reviewer`                           | Terra, max   | Claude Opus 4.8, xhigh  |
-| `oracle`                             | Sol, max     | Claude Fable, high      |
-| `thermo-nuclear-code-quality-review` | Sol, max     | Sol Pro, xhigh          |
-| `writer`                             | Terra, low   | Claude Opus 4.6, medium |
+Pi subagent assignments are listed explicitly in each profile's `agents` mapping; roles can share a model with different thinking levels.
 
 Delegation policy lives in [`AGENTS.md`](AGENTS.md); role instructions and harness routing live in `agents/<role>.md`.
 
