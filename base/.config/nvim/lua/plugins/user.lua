@@ -83,6 +83,9 @@ return {
     },
     opts = {
       open_for_directories = true,
+      hooks = {
+        on_yazi_ready = function(_, _, process_api) process_api:emit_to_yazi { "hidden", "show" } end,
+      },
       integrations = {
         bufdelete_implementation = function(bufnr)
           -- Yazi can schedule multiple deletion events for the same buffer.
