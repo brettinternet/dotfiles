@@ -9,6 +9,10 @@ Use this skill only when the user explicitly requests Worklease.
 
 Run `worklease instructions safety` before acquiring or managing a claim and treat its output as authoritative. When running inside a repeated autonomous loop also run `worklease instructions loop` and follow its output. Do not load the loop instructions for ordinary one-shot work.
 
+## Supervised runs
+
+When `WORKLEASE_RUN_ID` is set, this process runs under `worklease run`, which already holds, renews, and on exit releases the claim for the handed-off item. Do not select another item, acquire, heartbeat, or release. Use the inherited `WORKLEASE_SESSION_ID` and `WORKLEASE_HANDLE` for `verify` and `checkpoint`, and before exiting write `{"outcome":"done|blocked|review|failed","summary":"..."}` to `$WORKLEASE_RUN_RESULT`.
+
 ## Session selection
 
 Choose one full, collision-resistant identifier for each independent worker or repeated loop. Never truncate an identifier or derive one from a prefix.
