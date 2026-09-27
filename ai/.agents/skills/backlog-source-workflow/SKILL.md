@@ -13,7 +13,7 @@ Use the provider's supported interface: preserve loose Markdown structure, use t
 
 Read enough collection state to understand status, dependencies, active claims, and prior progress. Prerequisites precede dependents. Prefer resumable work in the earliest ready wave. Treat ordinary implementation difficulty and failing tests as work, not blockers.
 
-Use provider-native claims or concurrency controls when available. Refresh before consequential writes, record useful progress in the provider, and reread after writing. Never create a writable local shadow for remote work.
+Use provider-native claims or concurrency controls when available. When `WORKLEASE_RUN_ID` is set, a supervising `worklease run` already holds, renews, and on exit releases the Worklease claim for the handed-off item: do not acquire, heartbeat, or release it, use the inherited session for `worklease verify`, and before exiting write `{"outcome":"done|blocked|review|failed","summary":"..."}` to `$WORKLEASE_RUN_RESULT`. Refresh before consequential writes, record useful progress in the provider, and reread after writing. Never create a writable local shadow for remote work.
 
 When refining an item, preserve product intent and stable IDs. Record a bounded next action, observable acceptance, affected surfaces, and genuine dependencies. Split only independently deliverable work; keep tightly coupled steps together.
 
