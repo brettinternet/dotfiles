@@ -73,6 +73,7 @@ local opts = config.user_config {
         hl.NeoTreeGitAdded = { fg = c.ui.green, bg = c.none }
         hl.NeoTreeGitModified = { fg = c.ui.yellow, bg = c.none }
         hl.NeoTreeGitDeleted = { fg = c.ui.red, bg = c.none }
+        hl.NeoTreeGitIgnored = { fg = c.ui.text_inactive, bg = c.none }
 
         hl.TelescopeBorder = { fg = c.ui.border, bg = c.ui.float }
         hl.TelescopeNormal = { fg = c.ui.text, bg = c.ui.float }

@@ -85,6 +85,14 @@
     ~/.config/nvim:
       path: base/.config/nvim
       if: '[ -x "$(command -v nvim)" ]'
+    ~/.config/yazi/init.lua:
+      path: base/.config/yazi/init.lua
+    ~/.config/yazi/yazi.toml:
+      path: base/.config/yazi/yazi.toml
+    ~/.config/yazi/theme.toml:
+      path: base/.config/yazi/theme.toml
+    ~/.config/yazi/package.toml:
+      path: base/.config/yazi/package.toml
     ~/.bin/:
       glob: true
       path: base/.bin/*
@@ -211,6 +219,12 @@
           "+lua require('lazy').restore({ wait = true, show = false })" \
           +qa
       description: Install Neovim plugins from lazy-lock.json
+      stderr: true
+    - command: |
+        if command -v ya >/dev/null 2>&1; then
+          ya pkg install
+        fi
+      description: Install Yazi plugins from package.toml
       stderr: true
     - command: |
         set -eu

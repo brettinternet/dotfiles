@@ -1,0 +1,3 @@
+[git]
+ignored_sign = "IGN"
+ignored = { fg = "darkgray", bold = true }

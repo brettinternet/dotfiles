@@ -38,6 +38,8 @@ return {
   {
     "AstroNvim/astrocore",
     opts = function(_, opts)
+      opts.mappings.n["<Leader>e"] = false -- Keep Yazi's mapping instead of AstroNvim's Neo-tree default.
+      opts.mappings.n["<Leader>o"] = { "<Cmd>Neotree toggle<CR>", desc = "Toggle Neo-tree" }
       opts.mappings.n["<Leader>tu"] = vim.fn.executable "mise" == 1
           and {
             function() require("astrocore").toggle_term_cmd { cmd = "mise exec gdu -- gdu", direction = "float" } end,
@@ -67,7 +69,10 @@ return {
     end,
   },
 
-  { "nvim-neo-tree/neo-tree.nvim", enabled = false },
+  {
+    "nvim-neo-tree/neo-tree.nvim",
+    opts = { filesystem = { filtered_items = { visible = true } } },
+  },
 
   {
     "mikavilpas/yazi.nvim",
