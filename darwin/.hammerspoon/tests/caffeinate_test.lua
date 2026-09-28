@@ -12,6 +12,7 @@ local idle = {
 
 local batteryPercentage
 local failDisplayToggle = false
+local renderedIcons = 0
 
 _G.hs = {
   configdir = (arg[0]:match("(.*/)") or "") .. "..",
@@ -22,6 +23,30 @@ _G.hs = {
         size = function(self)
           return self
         end,
+      }
+    end,
+    imageFromURL = function(url)
+      assert(url:match("^data:image/svg%+xml;base64,"), "icon must be rendered from SVG")
+      return { url = url }
+    end,
+  },
+  canvas = {
+    new = function(size)
+      assert_equal(size.w, 72, "icon canvas width")
+      assert_equal(size.h, 72, "icon canvas height")
+      return {
+        imageFromCanvas = function(self)
+          local element = self[1]
+          assert_equal(element.type, "image", "icon canvas element")
+          assert_equal(element.frame.x, 18, "icon horizontal inset")
+          assert_equal(element.frame.y, 18, "icon vertical inset")
+          assert_equal(element.frame.w, 36, "icon half width")
+          assert_equal(element.frame.h, 36, "icon half height")
+          assert_equal(element.imageScaling, "scaleProportionally", "icon scaling")
+          renderedIcons = renderedIcons + 1
+          return element.image
+        end,
+        delete = function() end,
       }
     end,
   },
@@ -58,13 +83,18 @@ _G.hs = {
 package.preload["streamdeck.helpers"] = function()
   return {
     svg = function(value)
-      return value
+      return { dataBase64 = value }
+    end,
+    png = function(_, image)
+      assert(image and image.url, "icon must be rendered before it is sent")
+      return { kind = "custom", mediaType = "image/png", dataBase64 = image.url }
     end,
   }
 end
 
 local caffeine = require("caffeine")
 local action = require("caffeinate")
+assert_equal(renderedIcons, 4, "all state icons should be rendered at half size")
 
 local notification_count = 0
 caffeine.subscribe(function()
@@ -90,6 +120,8 @@ assert_equal(system_appearance.title, "", "system-awake state should use only it
 assert_equal(system_appearance.state, "active", "system-awake state")
 assert_equal(system_appearance.presentationState, 1, "system-awake presentation state")
 assert(system_appearance.icon ~= sleep_appearance.icon, "system-awake and sleep states should use distinct icons")
+assert_equal(system_appearance.icon.mediaType, "image/png", "system-awake icon must use a supported format")
+assert_equal(sleep_appearance.icon.mediaType, "image/png", "sleep icon must use a supported format")
 action.press({})
 assert_equal(idle.displayIdle, true, "second press should prevent display idle sleep")
 assert_equal(idle.systemIdle, true, "second press should retain system idle prevention")
@@ -99,6 +131,7 @@ assert_equal(awake_appearance.title, "", "display-awake state should use only it
 assert_equal(awake_appearance.state, "active", "awake state")
 assert_equal(awake_appearance.presentationState, 2, "display-awake presentation state")
 assert(awake_appearance.icon ~= system_appearance.icon, "display- and system-awake states should use distinct icons")
+assert_equal(awake_appearance.icon.mediaType, "image/png", "display-awake icon must use a supported format")
 
 action.press({})
 assert_equal(idle.displayIdle, false, "third press should allow displays to sleep")
