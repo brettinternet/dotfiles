@@ -1,7 +1,7 @@
 {
   "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-6-sol",
-  "defaultThinkingLevel": "high",
+  "defaultModel": "gpt-6-astra",
+  "defaultThinkingLevel": "medium",
   "enabledModels": [
     "openai-codex/gpt-6-luna",
     "openai-codex/gpt-6-sol",
@@ -9,17 +9,17 @@
     "anthropic/claude-opus-5-5"
   ],
   "subagents": {
-    "defaultModel": "openai-codex/gpt-6-luna",
+    "defaultModel": "openai-codex/gpt-6-sol",
     "defaultProvider": "openai-codex",
-    "defaultThinking": "max",
+    "defaultThinking": "high",
     "agentOverrides": {
       "researcher": {
-        "model": "openai-codex/gpt-6-luna",
+        "model": "openai-codex/gpt-6-sol",
         "thinking": "medium"
       },
       "reviewer": {
-        "model": "openai-codex/gpt-6-sol",
-        "thinking": "max"
+        "model": "openai-codex/gpt-6-astra",
+        "thinking": "high"
       },
       "oracle": {
         "model": "openai-codex/gpt-6-astra",
