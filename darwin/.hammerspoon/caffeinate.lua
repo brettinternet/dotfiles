@@ -5,7 +5,18 @@ local function loadIcon(name, color)
   local file = assert(io.open(hs.configdir .. "/icons/lucide/" .. name .. ".svg", "r"))
   local svg = file:read("*a")
   file:close()
-  return helpers.svg((svg:gsub("currentColor", color)))
+  local encoded = helpers.svg((svg:gsub("currentColor", color)))
+  local image = assert(hs.image.imageFromURL("data:image/svg+xml;base64," .. encoded.dataBase64))
+  local canvas = assert(hs.canvas.new({ x = 0, y = 0, w = 72, h = 72 }))
+  canvas[1] = {
+    type = "image",
+    image = image,
+    frame = { x = 18, y = 18, w = 36, h = 36 },
+    imageScaling = "scaleProportionally",
+  }
+  local rendered = canvas:imageFromCanvas()
+  canvas:delete()
+  return assert(helpers.png(nil, rendered), "Failed to render Keep awake icon: " .. name)
 end
 
 local displayAwakeIcon = loadIcon("monitor-up", "#D1FAE5")
