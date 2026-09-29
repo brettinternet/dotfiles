@@ -73,3 +73,7 @@
         '{"UserKeyMapping":[{"HIDKeyboardModifierMappingSrc":0x700000039,"HIDKeyboardModifierMappingDst":0x700000029}]}'
       description: Remap Caps Lock to Escape
       stdout: true
+    # Keep the login keychain unlocked once unlocked (no idle timeout, no lock on sleep).
+    - command: security set-keychain-settings ~/Library/Keychains/login.keychain-db
+      description: Disable login keychain auto-lock
+      stderr: true
