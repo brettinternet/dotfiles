@@ -53,6 +53,14 @@ p solo --continue # use the active profile defaults without subagent tools
 
 Pi combines `pi/profiles/common.json` with the selected generated overlay. `codex` uses ChatGPT subscription models; `or` requires `OPENROUTER_API_KEY`. In `manifest.yaml`, each `[alias, thinking]` pair identifies a Pi model from `models` and its thinking level. `parent` is the interactive Pi model; `defaultSubagent` is the fallback for subagents without an override; `researcher` configures the built-in research subagent; `agents` assigns each named subagent its model and thinking level. `title` and `progress` configure the separate Pi title and progress extensions. `enabled` controls interactive model cycling, while `modelScope` restricts subagent model choices. Agent instructions come from `ai/agents/<role>.md`; `install-agents` generates definitions under `~/.pi/agent/agents/`, `~/.claude/agents/`, and `~/.codex/agents/`. Pi agents take their models from the active profile's `agents` mapping. Standalone Claude Code and Codex CLI agents take theirs from the `claude` and `codex` profiles' `agents` mappings, with the provider prefix removed, so each role's model is defined once per provider.
 
+## Pi extensions and MCP
+
+Package versions live in `pi/profiles/common.json`. After changing a pin, rerender the active profile with `pi-profile use <name>` and run `pi install npm:<package>@<version>` for that package. `pi update --extensions` keeps pinned versions and does not necessarily replace an already-installed older pin.
+
+Pi uses its built-in MCP support, not `pi-mcp-adapter`. Configure personal servers in `~/.pi/agent/mcp.json` and project servers in `.pi/mcp.json`; the built-in loader does not discover shared `.mcp.json` files. For a new project, copy the desired entries from `project/.mcp.json` into `.pi/mcp.json`. Run `pi mcp list` to validate connections and `/reload` after changes. MCP tools use built-in `codemode` / `tool_search` rather than the adapter's `mcp` / `mcpScript` tools.
+
+Pi 0.99.1 reports upstream packaging warnings for the pinned `@juicesharp/rpiv-ask-user-question` (the `ask_user_question` tool) and `pi-lsp-adapter`. They remain enabled intentionally: their latest published versions still put host-provided packages in `dependencies`. Replace the pins when upstream moves those packages to `peerDependencies` with `"*"` ranges; do not patch installed manifests to hide the warnings.
+
 ## Shared agents
 
 The roster covers discovery (`explore`), implementation (`executor`), verification (`verifier`), review (`reviewer`), judgment (`oracle`), PR monitoring (`pr-watcher`), external wording (`writer`), and explicit maintainability audits (`thermo-nuclear-code-quality-review`). Pi also keeps the builtin `researcher` for sourced web research.
