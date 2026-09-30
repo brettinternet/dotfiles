@@ -9,7 +9,7 @@ piLaunchers:
 # setting the window to 272K; omit it on models whose native window is smaller.
 models:
   codex-sol:
-    id: openai-codex/gpt-6-sol
+    id: openai-codex/gpt-6.1-sol
     context: conservative
   codex-luna:
     id: openai-codex/gpt-6-luna
@@ -31,13 +31,13 @@ models:
     id: anthropic/claude-haiku-4-5
 
   or-sol:
-    id: openrouter/openai/gpt-6-sol
+    id: openrouter/openai/gpt-6.1-sol
     context: conservative
   or-luna:
     id: openrouter/openai/gpt-6-luna
     context: conservative
   or-sol-pro:
-    id: openrouter/openai/gpt-6-sol-pro
+    id: openrouter/openai/gpt-6.1-sol-pro
     context: conservative
   or-fable-auto:
     id: openrouter/~anthropic/claude-fable-latest
