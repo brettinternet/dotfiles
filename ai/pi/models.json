@@ -43,9 +43,6 @@
         "anthropic/claude-opus-5.5": {
           "contextWindow": 272000
         },
-        "google/gemini-3.8-flash": {
-          "contextWindow": 272000
-        },
         "deepseek/deepseek-v4-flash-0731": {
           "contextWindow": 272000
         },

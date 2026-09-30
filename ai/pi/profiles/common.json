@@ -33,7 +33,6 @@
       "verifier": { "inheritProjectContext": true, "inheritGlobalContext": true },
       "pr-watcher": { "inheritProjectContext": true, "inheritGlobalContext": true },
       "thermo-nuclear-code-quality-review": { "inheritProjectContext": true, "inheritGlobalContext": true },
-      "writer": { "inheritProjectContext": true, "inheritGlobalContext": true },
       "cursor-agent": { "disabled": true },
       "cursor-agent-writer": { "disabled": true },
       "claude-code": { "disabled": true },

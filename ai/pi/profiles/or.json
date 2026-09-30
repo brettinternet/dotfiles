@@ -8,8 +8,7 @@
     "openrouter/openai/gpt-6.1-sol-pro",
     "openrouter/~anthropic/claude-fable-latest",
     "openrouter/anthropic/claude-opus-5.5",
-    "openrouter/z-ai/glm-5.3",
-    "openrouter/google/gemini-3.8-flash"
+    "openrouter/z-ai/glm-5.3"
   ],
   "subagents": {
     "defaultModel": "openrouter/openai/gpt-6-luna",
@@ -47,13 +46,6 @@
       "thermo-nuclear-code-quality-review": {
         "model": "openrouter/anthropic/claude-opus-5.5",
         "thinking": "xhigh"
-      },
-      "writer": {
-        "model": "openrouter/google/gemini-3.8-flash",
-        "thinking": "medium",
-        "fallbackModels": [
-          "openrouter/anthropic/claude-opus-5.5:medium"
-        ]
       }
     },
     "modelScope": {

@@ -146,7 +146,7 @@ class AiInstallTests(unittest.TestCase):
             ".claude/agents",
             ".pi/agent/agents",
         )
-        for role in ("executor", "oracle", "reviewer", "verifier", "writer"):
+        for role in ("executor", "oracle", "reviewer", "verifier"):
             generated = [self.home / directory / f"{role}.md" for directory in shared_harnesses]
             self.assertTrue(all(path.is_file() for path in generated), role)
             bodies = [self.agent_body(path) for path in generated]
