@@ -43,10 +43,6 @@
       "thermo-nuclear-code-quality-review": {
         "model": "anthropic/claude-opus-5-5",
         "thinking": "xhigh"
-      },
-      "writer": {
-        "model": "anthropic/claude-sonnet-5",
-        "thinking": "low"
       }
     },
     "modelScope": {

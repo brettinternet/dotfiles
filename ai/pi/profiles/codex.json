@@ -44,10 +44,6 @@
       "thermo-nuclear-code-quality-review": {
         "model": "openai-codex/gpt-6-astra",
         "thinking": "max"
-      },
-      "writer": {
-        "model": "openai-codex/gpt-6.1-sol",
-        "thinking": "low"
       }
     },
     "modelScope": {

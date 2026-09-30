@@ -34,7 +34,6 @@ If you are running as a subagent of any kind, ignore this section entirely and d
 
 - Work directly by default. Delegate only when a child materially improves at least one of: independent evidence, context isolation, specialist capability, parallel latency, or isolated execution. Task size alone is not a reason to delegate.
 - Keep the orchestrating context for decisions, synthesis, and shared-interface coordination. Use `explore` (or the built-in Explore in Claude Code) for substantial read-heavy discovery, `executor` for bounded implementation with settled requirements, `verifier` for independent acceptance checks, and `pr-watcher` for CI/review watching.
-- Delegate externally directed wording to `writer` whenever the `user-voice` or `draft-in-editor` skill applies. Give it the facts and constraints, then use its returned wording without rewriting it in the caller.
 - Spec delegated work in one shot: goal, constraints, done-criteria, relevant paths, and the why behind the request — not only the what.
 - Start with the cheapest agent and lowest effort that can plausibly succeed; reserve strong high-effort agents for consequential uncertainty or risk. After two failed attempts, escalate one tier or take over — don't retry the same tier a third time. Ad-hoc fan-outs (built-in general-purpose or Explore agents) must set a model explicitly rather than inherit the session model.
 - Use one explorer by default. Fan out only across distinct evidence seams that can finish without each other's intermediate state; do not duplicate scouts for confidence.
