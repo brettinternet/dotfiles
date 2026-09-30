@@ -4,40 +4,47 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 
 
 def main(checkout_path: str) -> int:
-    try:
+    herdr = os.environ.get("HERDR_BIN_PATH", "herdr")
+
+    def matching_workspaces() -> set[str]:
         result = subprocess.run(
-            ["herdr", "workspace", "list"],
+            [herdr, "workspace", "list"],
             capture_output=True,
             text=True,
-            check=False,
+            check=True,
         )
-    except FileNotFoundError:
-        return 0
-
-    if result.returncode:
-        return 0
+        workspaces = json.loads(result.stdout)["result"]["workspaces"]
+        return {
+            workspace["workspace_id"]
+            for workspace in workspaces
+            if (workspace.get("worktree") or {}).get("checkout_path") == checkout_path
+        }
 
     try:
-        workspaces = json.loads(result.stdout).get("result", {}).get("workspaces", [])
-    except (AttributeError, json.JSONDecodeError):
-        return 0
-
-    workspace_ids = [
-        workspace.get("workspace_id")
-        for workspace in workspaces
-        if workspace.get("worktree", {}).get("checkout_path") == checkout_path
-    ]
-    for workspace_id in filter(None, workspace_ids):
-        subprocess.run(
-            ["herdr", "workspace", "close", workspace_id],
-            check=False,
-        )
-
+        workspace_ids = matching_workspaces()
+        for workspace_id in sorted(workspace_ids):
+            subprocess.run(
+                [herdr, "workspace", "close", workspace_id],
+                check=True,
+            )
+        if workspace_ids and matching_workspaces():
+            raise ValueError("matching workspace still exists after close")
+    except (
+        OSError,
+        subprocess.CalledProcessError,
+        ValueError,
+        KeyError,
+        TypeError,
+        AttributeError,
+    ) as error:
+        print(f"Herdr cleanup failed for {checkout_path}: {error}", file=sys.stderr)
+        return 1
     return 0
 
 

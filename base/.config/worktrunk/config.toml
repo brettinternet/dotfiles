@@ -1,6 +1,11 @@
 # Git owns checkouts, Worktrunk owns preparation, Herdr owns their UI.
 worktree-path = "{{ repo_path }}/.worktrees/{{ branch | sanitize }}"
 
+[pre-start]
+agent-receipt = '''
+python3 "$HOME/.config/worktrunk/record-agent-worktree.py"
+'''
+
 [post-start]
 herdr = '''
 if [ "${HERDR_ENV:-}" = "1" ]; then

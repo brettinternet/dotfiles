@@ -82,6 +82,8 @@
       backup: true
     ~/.config/worktrunk/close-herdr-workspace.py:
       path: base/.config/worktrunk/close-herdr-workspace.py
+    ~/.config/worktrunk/record-agent-worktree.py:
+      path: base/.config/worktrunk/record-agent-worktree.py
     ~/.config/nvim:
       path: base/.config/nvim
       if: '[ -x "$(command -v nvim)" ]'
