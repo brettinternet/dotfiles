@@ -3,9 +3,9 @@
   "defaultModel": "anthropic/claude-opus-5.5",
   "defaultThinkingLevel": "medium",
   "enabledModels": [
-    "openrouter/openai/gpt-6-sol",
+    "openrouter/openai/gpt-6.1-sol",
     "openrouter/openai/gpt-6-luna",
-    "openrouter/openai/gpt-6-sol-pro",
+    "openrouter/openai/gpt-6.1-sol-pro",
     "openrouter/~anthropic/claude-fable-latest",
     "openrouter/anthropic/claude-opus-5.5",
     "openrouter/z-ai/glm-5.3",
