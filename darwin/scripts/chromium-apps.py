@@ -9,6 +9,8 @@ import plistlib
 import re
 import shlex
 import shutil
+import subprocess
+import tempfile
 
 
 PREFIX = "local.chromium-apps."
@@ -104,14 +106,65 @@ def generate(config, home, browser=BROWSER):
         print(f"Generated {destination} (profile: {profile})")
 
 
+def install_url_handler(home):
+    """Build a URL-event receiver; default-browser selection remains explicit."""
+    destination = home / "Applications/Chromium Default.app"
+    identifier = "local.chromium-default-url-handler"
+    if os.path.lexists(destination):
+        if destination.is_symlink() or any(p.is_symlink() for p in destination.rglob("*")):
+            raise ValueError(f"Refusing to update symlink inside {destination}")
+        try:
+            with (destination / "Contents/Info.plist").open("rb") as source:
+                old = plistlib.load(source)
+        except (OSError, ValueError) as error:
+            raise ValueError(f"Refusing to overwrite unmanaged app: {destination}") from error
+        if not isinstance(old, dict) or old.get("CFBundleIdentifier") != identifier:
+            raise ValueError(f"Refusing to overwrite unmanaged app: {destination}")
+    script = Path(__file__).resolve().with_name("chromium-url-handler.applescript")
+    # Compile before touching an existing handler, so compilation errors leave it intact.
+    with tempfile.TemporaryDirectory(prefix="chromium-url-handler-") as temporary:
+        bundle = Path(temporary) / destination.name
+        subprocess.run(["/usr/bin/osacompile", "-o", str(bundle), str(script)], check=True)
+        plist = bundle / "Contents/Info.plist"
+        with plist.open("rb") as source:
+            info = plistlib.load(source)
+        info.update({
+            "CFBundleIdentifier": identifier,
+            "CFBundleName": "Chromium Default",
+            "CFBundleDisplayName": "Chromium Default",
+            "LSUIElement": True,
+            "CFBundleURLTypes": [{
+                "CFBundleURLName": "Web URLs",
+                "CFBundleTypeRole": "Viewer",
+                "CFBundleURLSchemes": ["http", "https"],
+            }],
+        })
+        with plist.open("wb") as output:
+            plistlib.dump(info, output)
+        # osacompile signs its output; re-sign after editing the bundle metadata.
+        subprocess.run(["/usr/bin/codesign", "--force", "--sign", "-", str(bundle)], check=True)
+        shutil.copytree(bundle, destination, dirs_exist_ok=True)
+    subprocess.run([
+        "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister",
+        "-f", str(destination),
+    ], check=True)
+    print(f"Installed {destination}")
+    print("Select Chromium Default in System Settings → Desktop & Dock → Default web browser.")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path,
                         default=Path.home() / ".config/chromium-apps/config.json")
+    parser.add_argument("--install-url-handler", action="store_true",
+                        help="Install Chromium Default.app for base-profile HTTP/HTTPS routing")
     args = parser.parse_args()
     try:
-        generate(args.config.expanduser(), Path.home())
-    except (OSError, ValueError) as error:
+        if args.install_url_handler:
+            install_url_handler(Path.home())
+        else:
+            generate(args.config.expanduser(), Path.home())
+    except (OSError, ValueError, subprocess.CalledProcessError) as error:
         parser.exit(1, f"chromium-apps: {error}\n")
 
 

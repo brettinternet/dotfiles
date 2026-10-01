@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 import plistlib
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -96,6 +97,50 @@ class ChromiumAppsTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "executable not found"):
             module.generate(self.config, self.home, self.home / "missing")
         self.assertFalse((self.home / "Applications").exists())
+
+
+@unittest.skipUnless(sys.platform == "darwin", "Requires macOS AppleScript")
+class URLHandlerTests(unittest.TestCase):
+    def test_url_event_routes_and_quotes_without_launching_browser(self):
+        with tempfile.TemporaryDirectory(prefix="chromium-url-test-") as temporary:
+            root = Path(temporary)
+            browser = root / "fake browser"
+            browser.write_text('#!/bin/sh\nprintf "%s\\n" "$@"\n')
+            browser.chmod(0o755)
+            source = Path(module.__file__).with_name("chromium-url-handler.applescript").read_text()
+            source = source.replace(str(module.BROWSER), str(browser))
+            # Run synchronously and capture fake-browser arguments instead of detaching.
+            source = source.replace(' & " >/dev/null 2>&1 &"', '')
+            script = root / "handler.applescript"
+            script.write_text(source)
+            compiled = root / "handler.scpt"
+            subprocess.run(["osacompile", "-o", str(compiled), str(script)], check=True)
+            url = "https://example.org/?q=one's%20two&literal=$(echo unexpected)"
+            driver = ('set handlerScript to load script POSIX file ' + json.dumps(str(compiled))
+                      + '\ntell handlerScript to open location ' + json.dumps(url))
+            result = subprocess.check_output(["osascript", "-e", driver], text=True).splitlines()
+            self.assertEqual(result, [
+                f"--user-data-dir={Path.home()}/Library/Application Support/Chromium", url,
+            ])
+            rejected = subprocess.run(["osascript", "-e", driver.replace(url, "file:///tmp/example")],
+                                      capture_output=True, text=True)
+            self.assertNotEqual(rejected.returncode, 0)
+            self.assertIn("Only HTTP and HTTPS", rejected.stderr)
+            run_driver = ('set handlerScript to load script POSIX file ' + json.dumps(str(compiled))
+                          + '\nrun handlerScript')
+            self.assertEqual(subprocess.check_output(["osascript", "-e", run_driver], text=True).strip(),
+                             f"--user-data-dir={Path.home()}/Library/Application Support/Chromium")
+
+    def test_installer_preserves_unmanaged_apps(self):
+        with tempfile.TemporaryDirectory(prefix="chromium-url-test-") as temporary:
+            home = Path(temporary)
+            destination = home / "Applications/Chromium Default.app"
+            destination.mkdir(parents=True)
+            sentinel = destination / "sentinel"
+            sentinel.write_text("preserve")
+            with self.assertRaisesRegex(ValueError, "unmanaged"):
+                module.install_url_handler(home)
+            self.assertEqual(sentinel.read_text(), "preserve")
 
 
 if __name__ == "__main__":
