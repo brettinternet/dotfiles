@@ -1,17 +1,13 @@
 {
   "mcpServers": {
-    "playwright": {
-      "command": "bunx",
-      "args": ["@playwright/mcp"]
-    },
     "chrome-devtools": {
       "command": "bunx",
       "args": [
+        "-y",
         "chrome-devtools-mcp@latest",
-        "--executable-path",
-        "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
-        "--headless=true",
-        "--isolated=true"
+        "--autoConnect",
+        "--userDataDir",
+        "~/Library/Application Support/Chromium"
       ]
     },
     "linear": {
