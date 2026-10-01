@@ -63,6 +63,7 @@ tasks:
   check:
     desc: Run checks on tracked files
     cmds:
+      - python3 -m unittest discover -s darwin/tests
       - git diff --check
       - python3 ai/generate-config.py --check
       - python3 themes/kaile.py --check
@@ -73,6 +74,7 @@ tasks:
   check-staged:
     desc: Run checks on staged files
     cmds:
+      - python3 -m unittest discover -s darwin/tests
       - git diff --cached --check
       - python3 ai/generate-config.py --check
       - python3 themes/kaile.py --check

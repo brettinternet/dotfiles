@@ -14,6 +14,8 @@
     - ~/.hammerspoon
 
 - link:
+    ~/.bin/chromium-apps:
+      path: darwin/scripts/chromium-apps.py
     ~/.gitconfig:
       path: darwin/.gitconfig
     ~/.gitignore:
