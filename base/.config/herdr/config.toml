@@ -147,6 +147,12 @@ command = "brettinternet.last-workspace.toggle"
 description = "toggle last workspace"
 
 [[keys.command]]
+key = "prefix+0"
+type = "shell"
+command = "herdr-focus-last-tab"
+description = "focus last tab"
+
+[[keys.command]]
 key = "prefix+shift+0"
 type = "shell"
 command = "herdr-focus-last-workspace"
