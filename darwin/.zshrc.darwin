@@ -11,12 +11,7 @@
   fi
 }
 
-# SSH sessions can't show Keychain prompts; unlock once so tools that store
-# secrets in the login keychain (e.g. pi MCP OAuth) work.
-() {
-  local login_keychain="$HOME/Library/Keychains/login.keychain-db"
-  if [[ -n $SSH_CONNECTION && -o interactive ]] &&
-     ! security show-keychain-info "$login_keychain" &>/dev/null; then
-    security unlock-keychain "$login_keychain"
-  fi
+# Unlock manually when SSH tools need secrets stored in the login keychain.
+unlock-keychain() {
+  security unlock-keychain "$HOME/Library/Keychains/login.keychain-db"
 }
