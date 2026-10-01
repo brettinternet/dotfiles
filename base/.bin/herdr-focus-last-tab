@@ -1,0 +1,9 @@
+#!/bin/sh
+set -eu
+
+herdr_bin=${HERDR_BIN_PATH:-herdr}
+tab_id=$(
+  "$herdr_bin" tab list --workspace "${HERDR_ACTIVE_WORKSPACE_ID:?}" |
+    jq -er '.result.tabs | last | .tab_id'
+)
+exec "$herdr_bin" tab focus "$tab_id"
