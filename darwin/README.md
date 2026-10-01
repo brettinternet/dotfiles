@@ -34,6 +34,25 @@ Icons customize the launcher, not necessarily the running browser's Dock or
 Chromium still runs with your macOS user's permissions. These apps are launchers,
 not separately registered default browsers or URL handlers.
 
+### Route external links to base Chromium
+
+Install the optional URL handler:
+
+```sh
+chromium-apps --install-url-handler
+```
+
+Then select **Chromium Default** in **System Settings → Desktop & Dock → Default
+web browser**. The handler receives HTTP/HTTPS URL events and invokes Chromium
+with `--user-data-dir=~/Library/Application Support/Chromium` (expanded to an
+absolute path), so external links target the base profile even while isolated
+profiles are running. Opening the handler directly opens base Chromium.
+
+This does not intercept links clicked inside a browser or apps that explicitly
+choose another browser. It does not handle local HTML files or custom URL schemes.
+To undo, select Chromium or another browser as the default. To update the handler,
+rerun the install command; it needs macOS's `osacompile` and `codesign` tools.
+
 Run behavioral tests with `python3 -m unittest discover -s darwin/tests`.
 
 ## Fonts
