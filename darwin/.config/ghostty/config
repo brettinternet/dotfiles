@@ -1,6 +1,6 @@
 # Styles
 font-size = 16
-font-family = "Ioskeley Mono"
+font-family = "Ioskeley Mono Term"
 macos-titlebar-style = tabs
 macos-window-buttons = hidden
 macos-titlebar-proxy-icon = hidden
