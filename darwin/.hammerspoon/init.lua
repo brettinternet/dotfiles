@@ -178,6 +178,7 @@ prefix:bind(
 --   end)
 -- )
 local caffeine = require("caffeine").start()
+require("lid_awake").start()
 prefix:bind("cmd", "K", prefixFn(caffeine.toggle))
 prefix:bind(
   "cmd",

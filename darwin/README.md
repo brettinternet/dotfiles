@@ -55,6 +55,44 @@ rerun the install command; it needs macOS's `osacompile` and `codesign` tools.
 
 Run behavioral tests with `python3 -m unittest discover -s darwin/tests`.
 
+## Optional closed-lid awake control
+
+On each laptop that should show the Hammerspoon **Lid** menu, run from this checkout:
+
+```sh
+task setup:lid-awake
+```
+
+Requires Python 3, Xcode Command Line Tools (`xcrun swiftc`), and administrator
+approval. Keep the lid open during installation: starting the helper restores normal
+sleep. Reload Hammerspoon afterward. Installation is local opt-in: no hostnames
+are stored in dotfiles, and other workstations show no menu. Click the menu through
+Apple Remote Desktop rather than relying on a keyboard shortcut.
+
+The control uses `pmset -a disablesleep`, separately from the idle-sleep caffeine
+helper. Enabling on battery is allowed. Once AC power is observed, switching to
+battery restores normal sleep within about one second. A root LaunchDaemon watches
+power independently of Hammerspoon and resets the override on daemon restart/reboot.
+Unplugging Ethernet alone does not reset it if AC remains connected. The override
+is global, not per user; this helper owns it and resets any manually enabled override
+at startup or undock. Keep the laptop ventilated; never transport it while enabled.
+
+The installer copies a compiled helper into `/Library/PrivilegedHelperTools`, installs
+`/Library/LaunchDaemons/local.lid-awake.plist`, and grants only the installing user
+passwordless access to its exact `enable` and `disable` commands through
+`/etc/sudoers.d/local-lid-awake`. It does not grant general `pmset` or shell access.
+Rerun the installer after helper changes; updates start with normal sleep enabled.
+
+Emergency reset (also do this before manually unloading the daemon):
+
+```sh
+sudo pmset -a disablesleep 0
+```
+
+Failures are logged to `/var/log/local.lid-awake.log`. The menu reports actual
+`pmset` state, not just the last requested state. Test enabling on battery, docking,
+and undocking on the target laptop before relying on unattended closed-lid access.
+
 ## Fonts
 
 The Darwin install automatically installs the latest
