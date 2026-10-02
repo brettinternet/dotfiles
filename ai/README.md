@@ -59,7 +59,7 @@ Package versions live in `pi/profiles/common.json`. After changing a pin, rerend
 
 Pi uses its built-in MCP support, not `pi-mcp-adapter`. Configure personal servers in `~/.pi/agent/mcp.json` and project servers in `.pi/mcp.json`; the built-in loader does not discover shared `.mcp.json` files. For a new project, copy the desired entries from `project/.mcp.json` into `.pi/mcp.json`. Run `pi mcp list` to validate connections and `/reload` after changes. MCP tools use built-in `codemode` / `tool_search` rather than the adapter's `mcp` / `mcpScript` tools.
 
-Pi 0.99.1 reports upstream packaging warnings for the pinned `@juicesharp/rpiv-ask-user-question` (the `ask_user_question` tool) and `pi-lsp-adapter`. They remain enabled intentionally: their latest published versions still put host-provided packages in `dependencies`. Replace the pins when upstream moves those packages to `peerDependencies` with `"*"` ranges; do not patch installed manifests to hide the warnings.
+`pi-lsp-adapter` is retired: its fixed-delay diagnostics can report a clean file before analysis finishes or retain an error after a fix. Rerender the active profile and run `pi remove npm:pi-lsp-adapter@0.1.3` to remove an existing installation. `make ai` removes only the old dotfiles-owned `~/.pi/agent/lsp.json` link; custom configuration and runtime data are preserved. Repository lint, typecheck, and test commands remain authoritative.
 
 ## Shared agents
 
