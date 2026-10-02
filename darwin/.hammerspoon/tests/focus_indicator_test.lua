@@ -16,6 +16,8 @@ local timers = {}
 local canvasAllocationFails = false
 local currentFocusedWindow = nil
 local frontmostApplication = nil
+local windowServerWindows = {}
+local nextWindowID = 0
 
 local function stoppable(callback)
   return {
@@ -110,6 +112,10 @@ _G.hs = {
     end,
   },
   window = {
+    list = function(allWindows)
+      assert_equal(allWindows, true, "close check includes off-screen windows")
+      return windowServerWindows
+    end,
     filter = {
       windowFocused = "windowFocused",
       windowMoved = "windowMoved",
@@ -187,7 +193,12 @@ local function window(frame, title, fallbackApplication, fallbackScreen)
     fallbackApplication = application(nil, fallbackApplication)
   end
   local currentFrame = frame
+  nextWindowID = nextWindowID + 1
+  local windowID = nextWindowID
   local target = {
+    id = function()
+      return windowID
+    end,
     focusCount = 0,
     frame = function()
       return currentFrame
@@ -399,11 +410,25 @@ local chromiumWindow = window({ x = 20, y = 20, w = 900, h = 700 }, "Browser", c
 keyboardFocus(ghosttyWindow, "Ghostty")
 keyboardFocus(chromiumWindow, "Chromium")
 frontmostApplication = chromiumApplication
+currentFocusedWindow = chromiumWindow
 chromiumApplication:setMainWindow(nil)
+windowServerWindows = { { kCGWindowNumber = chromiumWindow:id() } }
+inputCallback(event(types.keyDown, { cmd = true }, hs.keycodes.map.w))
+timers[#timers].callback()
+assert_equal(ghosttyWindow.focusCount, 0, "tab close with missing AX main window must not switch apps")
+assert_equal(ghosttyApplication.activationCount, 0, "tab close must not activate the previous app")
+
+windowServerWindows = false
+inputCallback(event(types.keyDown, { cmd = true }, hs.keycodes.map.w))
+timers[#timers].callback()
+assert_equal(ghosttyWindow.focusCount, 0, "failed window-server lookup must not switch apps")
+
+windowServerWindows = { { kCGWindowNumber = chromiumWindow:id() } }
 local timersBeforeLastWindowClose = #timers
 inputCallback(event(types.keyDown, { cmd = true }, hs.keycodes.map.w))
 assert_equal(#timers, timersBeforeLastWindowClose + 1, "designated app schedules last-window check")
 local closeCheckTimer = timers[#timers]
+windowServerWindows = {}
 closeCheckTimer.callback()
 assert_equal(ghosttyWindow.focusCount, 1, "last window close focuses previous window")
 local canvasesBeforeFallbackIndicator = #canvases
@@ -412,6 +437,7 @@ fallbackIndicatorTimer.callback()
 assert_equal(#canvases, canvasesBeforeFallbackIndicator + 1, "fallback focus explicitly shows indicator")
 
 frontmostApplication = chromiumApplication
+currentFocusedWindow = chromiumWindow
 chromiumApplication:setMainWindow(chromiumWindow)
 local previousWindowFocusCount = ghosttyWindow.focusCount
 inputCallback(event(types.keyDown, { cmd = true }, hs.keycodes.map.w))

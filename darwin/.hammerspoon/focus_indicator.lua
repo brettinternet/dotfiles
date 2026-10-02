@@ -263,6 +263,12 @@ local function focusPreviousApplicationAfterClose()
     return
   end
 
+  local closingWindow = hs.window.focusedWindow()
+  local closingWindowID = closingWindow and closingWindow:id()
+  if not closingWindowID then
+    return
+  end
+
   local targetApplication = previousFocusedApplication
   local targetWindow = previousFocusedWindow
   if not targetApplication or targetApplication == closingApplication then
@@ -272,6 +278,18 @@ local function focusPreviousApplicationAfterClose()
   hs.timer.doAfter(closeWindowCheckDelaySeconds, function()
     if hs.application.frontmostApplication() ~= closingApplication or closingApplication:mainWindow() then
       return
+    end
+
+    -- Chromium profiles can report no AX main window even while their window is open.
+    -- Confirm the original window actually disappeared using the window server instead.
+    local windows = hs.window.list(true)
+    if type(windows) ~= "table" then
+      return
+    end
+    for _, window in ipairs(windows) do
+      if window.kCGWindowNumber == closingWindowID then
+        return
+      end
     end
 
     local versionBeforeFocus = renderVersion
