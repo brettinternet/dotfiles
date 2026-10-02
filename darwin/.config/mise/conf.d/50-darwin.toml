@@ -11,7 +11,7 @@ hunk = "github:brettinternet/hunk"
 
 # dev
 go = { version = "latest", postinstall = 'go env -w GOPATH="$HOME/.go"' }
-rust = "latest"
+rust = { version = "latest", postinstall = "rustup component add rust-analyzer" }
 ruby = "latest"
 uv = "latest"
 bun = "latest"
