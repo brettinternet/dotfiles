@@ -1,10 +1,21 @@
 package.path = (arg[0]:match("(.*/)") or "") .. "../?.lua;" .. package.path
 
+local control = "/Library/Application Support/local.lid-awake"
+local request = control .. "/enabled"
 local installed = false
+local requested = false
+local writable = true
 local disabledSleep = false
 local readSuccess = true
 local created = 0
-local menu, poll, pending
+local menu, poll
+local settles = {}
+local function settle()
+  for _, callback in ipairs(settles) do
+    callback()
+  end
+  settles = {}
+end
 local title, alert
 local bar = {}
 function bar:setTitle(value)
@@ -15,10 +26,34 @@ function bar:setMenu(value)
   menu = value
 end
 
+io.open = function(path, mode)
+  assert(path == request and mode == "w")
+  if not writable then
+    return nil, "Permission denied"
+  end
+  requested = true
+  return {
+    close = function()
+      return true
+    end,
+  }
+end
+os.remove = function(path)
+  assert(path == request)
+  if not requested then
+    return nil, "No such file or directory"
+  end
+  requested = false
+  return true
+end
+
 _G.hs = {
   fs = {
-    attributes = function()
-      return installed and {} or nil
+    attributes = function(path)
+      if path == control then
+        return installed and {} or nil
+      end
+      return requested and {} or nil
     end,
   },
   execute = function()
@@ -35,22 +70,14 @@ _G.hs = {
       poll = callback
       return {}
     end,
+    doAfter = function(_, callback)
+      table.insert(settles, callback)
+      return {}
+    end,
   },
   alert = {
     show = function(value)
       alert = value
-    end,
-  },
-  task = {
-    new = function(executable, callback, arguments)
-      assert(executable == "/usr/bin/sudo")
-      assert(arguments[1] == "-n", "Never prompt for a password from the menu")
-      pending = { callback = callback, action = arguments[3] }
-      return {
-        start = function()
-          return true
-        end,
-      }
     end,
   },
 }
@@ -64,26 +91,28 @@ helper.start()
 assert(created == 1, "Repeated starts must not duplicate the menu")
 assert(title == "Lid: sleep")
 menu()[1].fn()
-assert(pending.action == "enable")
-assert(menu()[1].disabled, "Block overlapping requests")
+assert(requested, "Enabling writes a request without sudo")
+assert(title == "Lid: sleep", "Show applied state, not the request")
 disabledSleep = true
-pending.callback(0, "", "")
+settle()
 assert(menu()[1].checked and title == "Lid: awake")
 menu()[1].fn()
-assert(pending.action == "disable")
+assert(not requested, "Disabling removes the request")
 disabledSleep = false
-pending.callback(0, "", "")
+settle()
 assert(title == "Lid: sleep")
 -- The daemon can reset while Hammerspoon is idle or disconnected.
 disabledSleep = true
 poll()
 assert(title == "Lid: awake")
+menu()[1].fn()
+assert(alert == nil, "Removing an already-consumed request is not an error")
 disabledSleep = false
 poll()
 assert(title == "Lid: sleep" and not menu()[1].checked)
+writable = false
 menu()[1].fn()
-pending.callback(1, "", "watcher unavailable")
-assert(alert:match("watcher unavailable") and title == "Lid: sleep")
+assert(alert:match("Permission denied") and title == "Lid: sleep")
 readSuccess = false
 assert(menu()[1].disabled and title == "Lid: ?", "Failed status reads must not claim success")
 print("lid_awake tests passed")

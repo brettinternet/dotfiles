@@ -1,18 +1,30 @@
 import Foundation
 import IOKit.ps
 
+// The installing user owns this directory, so requests need no sudo. The daemon
+// only tests for the file and deletes it; it never reads user-controlled content.
+let request = "/Library/Application Support/local.lid-awake/enabled"
+
 // Unknown readings must not erase an observed AC connection. Failed resets retry.
-struct UndockPolicy {
+struct LidState {
     var wasOnAC: Bool?
     var needsReset = true
+    var applied = false
 
-    mutating func observe(onAC: Bool?) {
-        guard let onAC else { return }
-        if wasOnAC == true && !onAC { needsReset = true }
-        wasOnAC = onAC
+    // Returns the override to write, or nil when nothing should change.
+    mutating func next(onAC: Bool?, requested: Bool) -> Bool? {
+        if let onAC {
+            if wasOnAC == true && !onAC { needsReset = true }
+            wasOnAC = onAC
+        }
+        if needsReset { return false }
+        return requested == applied ? nil : requested
     }
 
-    mutating func didReset() { needsReset = false }
+    mutating func wrote(_ disabled: Bool) {
+        applied = disabled
+        if !disabled { needsReset = false }
+    }
 }
 
 func run(_ executable: String, _ arguments: [String]) throws -> (Int32, String) {
@@ -28,11 +40,17 @@ func run(_ executable: String, _ arguments: [String]) throws -> (Int32, String) 
     return (process.terminationStatus, String(decoding: output, as: UTF8.self))
 }
 
+func fail(_ message: String) -> NSError {
+    NSError(domain: "lid-awake", code: 1, userInfo: [NSLocalizedDescriptionKey: message])
+}
+
 func setSleepDisabled(_ disabled: Bool) throws {
     let (status, output) = try run("/usr/bin/pmset", ["-a", "disablesleep", disabled ? "1" : "0"])
-    guard status == 0 else {
-        throw NSError(domain: "lid-awake", code: Int(status), userInfo: [NSLocalizedDescriptionKey: output])
-    }
+    guard status == 0 else { throw fail(output) }
+}
+
+func clearRequest() throws {
+    guard unlink(request) == 0 || errno == ENOENT else { throw fail(String(cString: strerror(errno))) }
 }
 
 func onACPower() -> Bool? {
@@ -45,63 +63,41 @@ func onACPower() -> Bool? {
     }
 }
 
-// Capture power before any enable work: the watcher may reset during that work.
-func enableOverride(
-    readPower: () -> Bool?,
-    checkWatcher: () throws -> Void,
-    writeOverride: (Bool) throws -> Void
-) throws {
-    let startedOnAC = readPower()
-    try checkWatcher()
-    try writeOverride(true)
-    if startedOnAC != false && readPower() != true {
-        // Unknown power is conservative; a known battery start is explicitly allowed.
-        try writeOverride(false)
-    }
-}
-
 #if !TESTING
 @main
 struct LidAwake {
     static func main() {
-        do {
-            guard CommandLine.arguments.count == 2,
-                  ["enable", "disable", "watch"].contains(CommandLine.arguments[1]) else {
-                throw NSError(domain: "lid-awake", code: 1, userInfo: [NSLocalizedDescriptionKey: "Usage: lid-awake enable|disable|watch"])
-            }
-            guard getuid() == 0 else {
-                throw NSError(domain: "lid-awake", code: 1, userInfo: [NSLocalizedDescriptionKey: "Run through the installed sudo rule."])
-            }
-            switch CommandLine.arguments[1] {
-            case "enable":
-                try enableOverride(readPower: onACPower, checkWatcher: {
-                    let (status, output) = try run("/bin/launchctl", ["print", "system/local.lid-awake"])
-                    guard status == 0 && output.contains("state = running") else {
-                        throw NSError(domain: "lid-awake", code: 1, userInfo: [NSLocalizedDescriptionKey: "Undock watcher is not running; refusing to disable sleep."])
-                    }
-                }, writeOverride: setSleepDisabled)
-            case "disable":
-                try setSleepDisabled(false)
-            default:
-                var policy = UndockPolicy()
-                // Reset on every daemon start, including reboot or crash recovery.
-                // No persistent enabled state can strand the laptop on battery.
-                while true {
-                    policy.observe(onAC: onACPower())
-                    if policy.needsReset {
-                        do {
-                            try setSleepDisabled(false)
-                            policy.didReset()
-                        } catch {
-                            fputs("lid-awake reset failed: \(error.localizedDescription)\n", stderr)
-                        }
-                    }
-                    Thread.sleep(forTimeInterval: 1)
+        guard CommandLine.arguments.count == 2, CommandLine.arguments[1] == "watch" else {
+            fputs("Usage: lid-awake watch\n", stderr)
+            exit(1)
+        }
+        guard getuid() == 0 else {
+            fputs("Run as the root LaunchDaemon.\n", stderr)
+            exit(1)
+        }
+        // Reset on every daemon start, including reboot or crash recovery.
+        // No persistent enabled state can strand the laptop on battery.
+        var state = LidState()
+        // Wake immediately on request changes; kqueue costs nothing while idle.
+        let wake = DispatchSemaphore(value: 0)
+        let directory = open((request as NSString).deletingLastPathComponent, O_EVTONLY)
+        let source = directory >= 0
+            ? DispatchSource.makeFileSystemObjectSource(fileDescriptor: directory, eventMask: .write)
+            : nil
+        source?.setEventHandler { wake.signal() }
+        source?.resume()
+        while true {
+            if let value = state.next(onAC: onACPower(), requested: access(request, F_OK) == 0) {
+                do {
+                    // A reset consumes the request so it cannot re-enable the override.
+                    if state.needsReset { try clearRequest() }
+                    try setSleepDisabled(value)
+                    state.wrote(value)
+                } catch {
+                    fputs("lid-awake update failed: \(error.localizedDescription)\n", stderr)
                 }
             }
-        } catch {
-            fputs("\(error.localizedDescription)\n", stderr)
-            exit(1)
+            _ = wake.wait(timeout: .now() + 1)
         }
     }
 }
