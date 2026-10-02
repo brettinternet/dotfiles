@@ -7,17 +7,13 @@ brew "mas"
 brew "wget"
 
 # GUI
-cask "elgato-stream-deck"
 cask "font-fira-code"
 cask "font-hack-nerd-font"
-cask "github"
 cask "ungoogled-chromium"
+cask "ghostty"
 cask "gpg-suite"
 cask "hammerspoon"
 cask "maccy"
-cask "slack"
-cask "spotify"
-cask "visual-studio-code"
 
 # AppStore
 mas "Xcode", id: 497799835
