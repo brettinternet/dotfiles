@@ -471,6 +471,28 @@ class AiInstallTests(unittest.TestCase):
 
         self.assertEqual("unmanaged = true\n", config.read_text())
 
+    def test_retired_lsp_link_cleanup_preserves_custom_configuration(self) -> None:
+        self.install_fake_mise()
+        self.environment["DOTFILES_AI_TOOLS"] = "pi"
+        config = self.home / ".pi/agent/lsp.json"
+        config.parent.mkdir(parents=True)
+        config.symlink_to(ROOT / "ai/pi/lsp.json")
+
+        self.run_command("ai/.bin/configure-ai-tools")
+        self.assertFalse(config.is_symlink())
+        self.run_command("ai/.bin/configure-ai-tools")
+        self.assertFalse(config.exists())
+
+        config.write_text('{"warmup": false}\n')
+        self.run_command("ai/.bin/configure-ai-tools")
+        self.assertEqual('{"warmup": false}\n', config.read_text())
+        custom = self.home / "personal-lsp.json"
+        config.rename(custom)
+        config.symlink_to(custom)
+        self.run_command("ai/.bin/configure-ai-tools")
+        self.assertTrue(config.is_symlink())
+        self.assertEqual('{"warmup": false}\n', custom.read_text())
+
     def test_pi_only_selection_installs_pi_and_uninstalls_other_ai_tools(self) -> None:
         log = self.install_fake_mise()
         self.run_command("ai/.bin/configure-ai-tools")

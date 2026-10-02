@@ -116,6 +116,11 @@ def remove_managed_links(selected: set[str]) -> None:
     dotfiles = Path(
         os.environ.get("DOTFILES", Path(__file__).resolve().parents[2])
     ).resolve()
+    # Retire the old adapter configuration even when Pi remains selected.
+    legacy_lsp = home / ".pi/agent/lsp.json"
+    if legacy_lsp.is_symlink() and legacy_lsp.resolve() == dotfiles / "ai/pi/lsp.json":
+        trash(legacy_lsp)
+
     destinations = {
         "claude": [
             home / ".claude/CLAUDE.md",
@@ -127,7 +132,6 @@ def remove_managed_links(selected: set[str]) -> None:
             home / ".pi/agent/AGENTS.md",
             home / ".pi/agent/models.json",
             home / ".pi/agent/keybindings.json",
-            home / ".pi/agent/lsp.json",
             home / ".pi/agent/extensions/subagent/config.json",
         ],
         "codex": [home / ".codex/AGENTS.md"],
