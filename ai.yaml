@@ -151,10 +151,6 @@
     ~/.pi/agent/AGENTS.md:
       path: ai/AGENTS.md
       if: ai/.bin/ai-tool-enabled pi
-    ~/.pi/agent/mcp.json:
-      path: ai/pi/mcp.json
-      relink: false
-      if: ai/.bin/ai-tool-enabled pi && test -f ai/pi/mcp.json
     ~/.pi/agent/models.json:
       path: ai/pi/models.json
       if: ai/.bin/ai-tool-enabled pi
