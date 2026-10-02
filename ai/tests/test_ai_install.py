@@ -471,6 +471,27 @@ class AiInstallTests(unittest.TestCase):
 
         self.assertEqual("unmanaged = true\n", config.read_text())
 
+    def test_disabled_pi_removes_mcp_link_but_preserves_local_configuration(self) -> None:
+        self.install_fake_mise()
+        self.environment["DOTFILES_AI_TOOLS"] = "none"
+        dotfiles = self.home / "dotfiles"
+        source = dotfiles / "ai/pi/mcp.json"
+        source.parent.mkdir(parents=True)
+        (dotfiles / "ai/.bin").symlink_to(ROOT / "ai/.bin", target_is_directory=True)
+        source.write_text('{"mcpServers": {}}\n')
+        self.environment["DOTFILES"] = str(dotfiles)
+        config = self.home / ".pi/agent/mcp.json"
+        config.parent.mkdir(parents=True)
+        config.symlink_to(source)
+
+        self.run_command("ai/.bin/configure-ai-tools")
+        self.assertFalse(config.is_symlink())
+        self.assertEqual('{"mcpServers": {}}\n', source.read_text())
+
+        config.write_text('{"mcpServers": {}}\n')
+        self.run_command("ai/.bin/configure-ai-tools")
+        self.assertEqual('{"mcpServers": {}}\n', config.read_text())
+
     def test_retired_lsp_link_cleanup_preserves_custom_configuration(self) -> None:
         self.install_fake_mise()
         self.environment["DOTFILES_AI_TOOLS"] = "pi"
