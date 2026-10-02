@@ -57,4 +57,13 @@ Run behavioral tests with `python3 -m unittest discover -s darwin/tests`.
 
 ## Fonts
 
-Install the [`IoskeleyMono-Term` release](https://github.com/ahatem/IoskeleyMono/releases/latest) manually for Ghostty.
+The Darwin install automatically installs the latest
+[`IoskeleyMono-Term` release](https://github.com/ahatem/IoskeleyMono/releases/latest)
+for Ghostty into `~/Library/Fonts` (normal width, hinted; requires Python 3 and
+`gh` for downloads). It checks `system_profiler` and the user/system font
+directories, skipping downloading or installing if the `Ioskeley Mono Term`
+family or any `IoskeleyMonoTerm-*.ttf` files are already present, including
+partial or disabled installations. It does not upgrade, enable, or overwrite
+existing fonts. Font Book does not need to be opened.
+
+To run separately: `python3 darwin/scripts/install-ioskeley-font.py`.

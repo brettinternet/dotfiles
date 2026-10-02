@@ -57,6 +57,10 @@
       path: darwin/vscode/extensions/kaile-theme
 
 - shell:
+    - command: python3 darwin/scripts/install-ioskeley-font.py
+      description: Install Ioskeley Mono Term unless already present
+      stdout: true
+      stderr: true
     # gh-stack is user-scoped; converge it through Mise after linking its configuration.
     - command: |
         if command -v mise >/dev/null 2>&1; then
