@@ -12,7 +12,7 @@
   "tuiMode": "fullscreen",
   "extensions": ["$DOTFILES/ai/pi/extensions/dcg-guard.ts"],
   "packages": [
-    "git:github.com/nicobailon/pi-subagents@10694a673cb077b4d3ec6a6cfe68acb6c28b83a5",
+    "npm:pi-subagents@0.75.0",
     "npm:pi-web-access@0.33.0",
     "npm:pi-chrome@0.15.46",
     "npm:@sting8k/pi-vcc@0.7.0",
