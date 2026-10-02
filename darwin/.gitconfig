@@ -26,3 +26,6 @@
 
 [beads]
 	role = maintainer
+
+[include]
+	path = ~/.gitconfig.local
