@@ -1,7 +1,9 @@
 -- Installation is the machine-local opt-in; no hostname list is kept in dotfiles.
 local lidAwake = {}
-local helper = "/Library/PrivilegedHelperTools/local.lid-awake"
-local menubar, timer, task
+-- The root daemon applies this request file; the installer makes the directory user-owned.
+local control = "/Library/Application Support/local.lid-awake"
+local request = control .. "/enabled"
+local menubar, timer
 local enabled = false
 local known = false
 
@@ -14,24 +16,25 @@ local function refresh()
 end
 
 local function setEnabled(value)
-  if task then
-    return
+  local ok, err
+  if value then
+    local file
+    file, err = io.open(request, "w")
+    ok = file and file:close()
+  else
+    ok, err = os.remove(request)
+    ok = ok or not hs.fs.attributes(request)
   end
-  task = hs.task.new("/usr/bin/sudo", function(code, _, stderr)
-    task = nil
-    if code ~= 0 then
-      hs.alert.show("Lid override failed: " .. stderr)
-    end
-    refresh()
-  end, { "-n", helper, value and "enable" or "disable" })
-  if not task or not task:start() then
-    task = nil
-    hs.alert.show("Could not start the lid override helper")
+  if not ok then
+    hs.alert.show("Lid override failed: " .. tostring(err))
   end
+  -- Show the daemon's applied state, not the request; it normally reacts at once.
+  hs.timer.doAfter(0.2, refresh)
+  hs.timer.doAfter(1.5, refresh)
 end
 
 function lidAwake.start()
-  if menubar or not hs.fs.attributes(helper) then
+  if menubar or not hs.fs.attributes(control) then
     return lidAwake
   end
   menubar = hs.menubar.new()
@@ -42,7 +45,7 @@ function lidAwake.start()
       {
         title = "Keep awake with lid closed",
         checked = enabled,
-        disabled = task ~= nil or not known,
+        disabled = not known,
         fn = function()
           setEnabled(not enabled)
         end,

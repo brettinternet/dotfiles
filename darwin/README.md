@@ -63,8 +63,10 @@ On each laptop that should show the Hammerspoon **Lid** menu, run from this chec
 task setup:lid-awake
 ```
 
-Requires Python 3, Xcode Command Line Tools (`xcrun swiftc`), and administrator
-approval. Keep the lid open during installation: starting the helper restores normal
+Requires Python 3, Xcode Command Line Tools (`xcrun swiftc`), and `sudo`. All root work
+runs in one `sudo` call, so managed policies that never cache credentials prompt once.
+Run it as the user who will use the menu. A standard user without sudo can borrow a
+separate administrator account: `task setup:lid-awake -- --admin ADMIN_USER`. Keep the lid open during installation: starting the helper restores normal
 sleep. Reload Hammerspoon afterward. Installation is local opt-in: no hostnames
 are stored in dotfiles, and other workstations show no menu. Click the menu through
 Apple Remote Desktop rather than relying on a keyboard shortcut.
@@ -78,9 +80,13 @@ is global, not per user; this helper owns it and resets any manually enabled ove
 at startup or undock. Keep the laptop ventilated; never transport it while enabled.
 
 The installer copies a compiled helper into `/Library/PrivilegedHelperTools`, installs
-`/Library/LaunchDaemons/local.lid-awake.plist`, and grants only the installing user
-passwordless access to its exact `enable` and `disable` commands through
-`/etc/sudoers.d/local-lid-awake`. It does not grant general `pmset` or shell access.
+`/Library/LaunchDaemons/local.lid-awake.plist`, and creates
+`/Library/Application Support/local.lid-awake`, owned by the installing user. The
+menu creates or removes `enabled` there and the daemon applies it immediately,
+so nothing uses `sudo` at runtime (managed policies such as CyberArk EPM ignore
+`NOPASSWD` rules). The daemon only checks whether that file exists; it grants no
+`pmset` or shell access. Requests do nothing while the daemon is stopped, and
+undocking or a daemon restart deletes them. Installing removes older sudoers rules.
 Rerun the installer after helper changes; updates start with normal sleep enabled.
 
 Emergency reset (also do this before manually unloading the daemon):
