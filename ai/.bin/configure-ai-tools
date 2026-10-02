@@ -131,6 +131,7 @@ def remove_managed_links(selected: set[str]) -> None:
         "pi": [
             home / ".pi/agent/AGENTS.md",
             home / ".pi/agent/models.json",
+            home / ".pi/agent/mcp.json",
             home / ".pi/agent/keybindings.json",
             home / ".pi/agent/extensions/subagent/config.json",
         ],
