@@ -18,6 +18,10 @@ tasks:
     preconditions:
       - { msg: "Missing Brewfile", sh: "test -f {{.BREWFILE}}" }
 
+  lid-awake:
+    desc: Install the optional closed-lid awake helper (admin approval; keep lid open)
+    cmd: python3 "{{.ROOT_DIR}}/darwin/scripts/install-lid-awake.py"
+
   undo-escape:
     desc: Undo the capslock -> escape remap
     cmd: hidutil property --set '{"UserKeyMapping":[]}'
