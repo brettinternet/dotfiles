@@ -10,6 +10,7 @@
   "steeringMode": "all",
   "followUpMode": "one-at-a-time",
   "tuiMode": "fullscreen",
+  "defaultTools": ["+codemode"],
   "extensions": ["$DOTFILES/ai/pi/extensions/dcg-guard.ts"],
   "packages": [
     "npm:pi-subagents@0.75.0",
