@@ -13,12 +13,12 @@
   "defaultTools": ["+codemode"],
   "extensions": ["$DOTFILES/ai/pi/extensions/dcg-guard.ts"],
   "packages": [
-    { "source": "git:github.com/brettinternet/pi-subagents@fa6d5277e76a3b6037eecb6a99753fb10639e33d", "skills": [] },
+    { "source": "git:github.com/brettinternet/pi-subagents@adc37941426e5b0c5e77b5b7cc9ece4c695c75d4", "skills": [] },
     "npm:pi-web-access@0.33.0",
     "npm:pi-chrome@0.15.46",
     "npm:@sting8k/pi-vcc@0.7.0",
     "npm:@narumitw/pi-btw@0.57.0",
-    "git:github.com/brettinternet/pi-extensions"
+    "git:github.com/brettinternet/pi-extensions@667b338cfde02e287f32935826e8c8f01bff0f8f"
   ],
   "subagents": {
     "agentOverrides": {
