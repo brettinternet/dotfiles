@@ -13,7 +13,7 @@
   "defaultTools": ["+codemode"],
   "extensions": ["$DOTFILES/ai/pi/extensions/dcg-guard.ts"],
   "packages": [
-    "npm:pi-subagents@0.75.0",
+    { "source": "npm:pi-subagents@0.75.0", "extensions": [], "skills": [] },
     "npm:pi-web-access@0.33.0",
     "npm:pi-chrome@0.15.46",
     "npm:@sting8k/pi-vcc@0.7.0",
