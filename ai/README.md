@@ -57,7 +57,7 @@ Pi combines `pi/profiles/common.json` with the selected generated overlay. `code
 
 Package versions live in `pi/profiles/common.json`. After changing a pin, rerender the active profile with `pi-profile use <name>` and run `pi install npm:<package>@<version>` for that package. `pi update --extensions` keeps pinned versions and does not necessarily replace an already-installed older pin.
 
-`pi-subagents` 0.75.0 is the first release that starts background children on Pi 1.0. To migrate from the earlier temporary Git pin, run `pi remove git:github.com/nicobailon/pi-subagents@10694a673cb077b4d3ec6a6cfe68acb6c28b83a5`, rerender the active profile, then run `pi install npm:pi-subagents@0.75.0`. Restart Pi after updating.
+`pi-subagents` is temporarily pinned to the tested `brettinternet/pi-subagents` fork for async `/loop` session liveness (upstream PR #2674). Its extension is enabled; packaged skills remain disabled. To migrate from npm 0.75.0, run `pi install git:github.com/brettinternet/pi-subagents@fa6d5277e76a3b6037eecb6a99753fb10639e33d`, then `pi remove npm:pi-subagents@0.75.0` and rerender the active profile. Run `pi update git:github.com/brettinternet/pi-extensions` to install the companion loop fix from `main`. Restart Pi after updating.
 
 Pi uses its built-in MCP support, not `pi-mcp-adapter`. Configure personal servers in `~/.pi/agent/mcp.json` and project servers in `.pi/mcp.json`; the built-in loader does not discover shared `.mcp.json` files. For a new project, copy the desired entries from `project/.mcp.json` into `.pi/mcp.json`. Run `pi mcp list` to validate connections and `/reload` after changes. MCP tools use built-in `codemode` / `tool_search` rather than the adapter's `mcp` / `mcpScript` tools.
 
