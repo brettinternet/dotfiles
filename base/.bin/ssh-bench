@@ -2,6 +2,9 @@
 """Compare end-to-end SSH performance without writing files on the remote host."""
 
 import argparse
+import math
+import os
+import select
 import statistics
 import subprocess
 import sys
@@ -16,8 +19,8 @@ def positive_int(value):
     return number
 
 
-def measure(target, command, timeout, stdin=None, stdout=subprocess.PIPE):
-    args = [
+def ssh_args(target, command):
+    return [
         "ssh", "-T",
         "-o", "BatchMode=yes",
         "-o", "ConnectTimeout=10",
@@ -30,9 +33,12 @@ def measure(target, command, timeout, stdin=None, stdout=subprocess.PIPE):
         "-o", "ClearAllForwardings=yes",
         "--", target, command,
     ]
+
+
+def measure(target, command, timeout, stdin=None, stdout=subprocess.PIPE):
     started = time.perf_counter()
     result = subprocess.run(
-        args, stdin=stdin if stdin is not None else subprocess.DEVNULL,
+        ssh_args(target, command), stdin=stdin if stdin is not None else subprocess.DEVNULL,
         stdout=stdout, stderr=subprocess.PIPE, timeout=timeout, check=False,
     )
     elapsed = time.perf_counter() - started
@@ -40,6 +46,47 @@ def measure(target, command, timeout, stdin=None, stdout=subprocess.PIPE):
         detail = result.stderr.decode(errors="replace").strip()
         raise RuntimeError(detail or f"ssh exited {result.returncode}")
     return elapsed, result.stdout
+
+
+def measure_rtt(target, timeout):
+    command = 'sh -c \'while IFS= read -r line; do printf "%s\\n" "$line"; done\''
+    samples = []
+    # A file avoids stderr pipe backpressure while we exchange stdout probes.
+    with tempfile.TemporaryFile() as errors:
+        with subprocess.Popen(
+            ssh_args(target, command), stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE, stderr=errors, bufsize=0,
+        ) as process:
+            try:
+                # The first echo warms up the connection; never count SSH setup as RTT.
+                for index in range(21):
+                    started = time.perf_counter()
+                    process.stdin.write(b"ping\n")
+                    response = b""
+                    while len(response) < 5:
+                        remaining = timeout - (time.perf_counter() - started)
+                        if remaining <= 0 or not select.select([process.stdout], [], [], remaining)[0]:
+                            raise RuntimeError("SSH RTT probe timed out")
+                        chunk = os.read(process.stdout.fileno(), 5 - len(response))
+                        if not chunk:
+                            errors.seek(0)
+                            detail = errors.read().decode(errors="replace").strip()
+                            raise RuntimeError(detail or "SSH RTT connection closed before echo")
+                        response += chunk
+                    elapsed = (time.perf_counter() - started) * 1000
+                    if response != b"ping\n":
+                        raise RuntimeError("SSH RTT echo mismatch")
+                    if index:
+                        samples.append(elapsed)
+                process.stdin.close()
+                if process.wait(timeout=timeout):
+                    raise RuntimeError("SSH RTT command failed")
+            finally:
+                if process.poll() is None:
+                    process.kill()
+                process.wait()
+    # Nearest-rank p95: the 19th ordered value out of 20 measured probes.
+    return statistics.median(samples), sorted(samples)[math.ceil(0.95 * len(samples)) - 1]
 
 
 def benchmark(target, size, runs, timeout):
@@ -74,7 +121,9 @@ def main(argv=None):
         epilog="Requires working noninteractive SSH authentication and a trusted host key. "
         "Uses your SSH config, including jump hosts. No remote files are created. "
         "Results include fresh SSH setup, encryption and local temporary-file I/O; "
-        "setup time is not network RTT or packet loss. Compression is disabled.",
+        "setup time is not network RTT or packet loss. Compression is disabled. "
+        "SSH RTT median/p95 use 20 echoes on one open connection before transfers, "
+        "excluding a warmup echo; includes remote processing, not ICMP ping.",
     )
     parser.add_argument("targets", nargs="+", help="SSH aliases or user@host destinations")
     parser.add_argument("--size", type=positive_int, default=32, help="MiB per transfer (default: 32)")
@@ -85,11 +134,13 @@ def main(argv=None):
         parser.error("targets must not start with '-' ")
     print(f"{args.runs} runs; {args.size} MiB each direction per run "
           f"({2 * args.runs * args.size} MiB/target). Medians; sequential tests.", flush=True)
-    print(f"{'TARGET':<24} {'SETUP ms':>10} {'SETUP min–max':>17} {'UP Mbps':>10} {'DOWN Mbps':>10}", flush=True)
+    print(f"{'TARGET':<24} {'SETUP ms':>10} {'SETUP min–max':>17} "
+          f"{'SSH RTT ms':>11} {'RTT p95 ms':>11} {'UP Mbps':>10} {'DOWN Mbps':>10}", flush=True)
     failed = False
     for target in args.targets:
         print(f"Testing {target}…", file=sys.stderr, flush=True)
         try:
+            rtt, rtt_p95 = measure_rtt(target, args.timeout)
             setup, upload, download = benchmark(target, args.size, args.runs, args.timeout)
         except (OSError, RuntimeError, subprocess.TimeoutExpired) as error:
             failed = True
@@ -97,6 +148,7 @@ def main(argv=None):
             continue
         spread = f"{min(setup):.0f}–{max(setup):.0f}"
         print(f"{target:<24} {statistics.median(setup):>10.0f} {spread:>17} "
+              f"{rtt:>11.1f} {rtt_p95:>11.1f} "
               f"{statistics.median(upload):>10.1f} {statistics.median(download):>10.1f}", flush=True)
     return int(failed)
 
