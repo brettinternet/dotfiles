@@ -1,0 +1,108 @@
+#!/usr/bin/env python3
+"""Compare end-to-end SSH performance without writing files on the remote host."""
+
+import argparse
+import statistics
+import subprocess
+import sys
+import tempfile
+import time
+
+
+def positive_int(value):
+    number = int(value)
+    if number < 1:
+        raise argparse.ArgumentTypeError("must be positive")
+    return number
+
+
+def measure(target, command, timeout, stdin=None, stdout=subprocess.PIPE):
+    args = [
+        "ssh", "-T",
+        "-o", "BatchMode=yes",
+        "-o", "ConnectTimeout=10",
+        "-o", "ConnectionAttempts=1",
+        "-o", "ControlMaster=no",
+        "-o", "ControlPath=none",
+        "-o", "Compression=no",
+        "-o", "ForwardAgent=no",
+        "-o", "ForwardX11=no",
+        "-o", "ClearAllForwardings=yes",
+        "--", target, command,
+    ]
+    started = time.perf_counter()
+    result = subprocess.run(
+        args, stdin=stdin if stdin is not None else subprocess.DEVNULL,
+        stdout=stdout, stderr=subprocess.PIPE, timeout=timeout, check=False,
+    )
+    elapsed = time.perf_counter() - started
+    if result.returncode:
+        detail = result.stderr.decode(errors="replace").strip()
+        raise RuntimeError(detail or f"ssh exited {result.returncode}")
+    return elapsed, result.stdout
+
+
+def benchmark(target, size, runs, timeout):
+    byte_count = size * 1024 * 1024
+    setup, upload, download = [], [], []
+    # Sparse local input avoids allocating the entire payload in memory.
+    with tempfile.TemporaryFile() as source, tempfile.TemporaryFile() as sink:
+        source.truncate(byte_count)
+        for _ in range(runs):
+            elapsed, _ = measure(target, "true", timeout)
+            setup.append(elapsed * 1000)
+            source.seek(0)
+            elapsed, output = measure(target, "wc -c", timeout, stdin=source)
+            if output.strip() != str(byte_count).encode():
+                raise RuntimeError("upload byte count mismatch")
+            upload.append(byte_count * 8 / elapsed / 1_000_000)
+            sink.seek(0)
+            sink.truncate()
+            elapsed, _ = measure(
+                target, f"dd if=/dev/zero bs=1048576 count={size} 2>/dev/null",
+                timeout, stdout=sink,
+            )
+            if sink.tell() != byte_count:
+                raise RuntimeError("download byte count mismatch")
+            download.append(byte_count * 8 / elapsed / 1_000_000)
+    return setup, upload, download
+
+
+def main(argv=None):
+    parser = argparse.ArgumentParser(
+        description="Compare SSH aliases (including the SSH aliases used by Herdr).",
+        epilog="Requires working noninteractive SSH authentication and a trusted host key. "
+        "Uses your SSH config, including jump hosts. No remote files are created. "
+        "Results include fresh SSH setup, encryption and local temporary-file I/O; "
+        "setup time is not network RTT or packet loss. Compression is disabled.",
+    )
+    parser.add_argument("targets", nargs="+", help="SSH aliases or user@host destinations")
+    parser.add_argument("--size", type=positive_int, default=32, help="MiB per transfer (default: 32)")
+    parser.add_argument("--runs", type=positive_int, default=3, help="samples per target (default: 3)")
+    parser.add_argument("--timeout", type=positive_int, default=60, help="seconds per SSH command (default: 60)")
+    args = parser.parse_args(argv)
+    if any(target.startswith("-") for target in args.targets):
+        parser.error("targets must not start with '-' ")
+    print(f"{args.runs} runs; {args.size} MiB each direction per run "
+          f"({2 * args.runs * args.size} MiB/target). Medians; sequential tests.", flush=True)
+    print(f"{'TARGET':<24} {'SETUP ms':>10} {'SETUP min–max':>17} {'UP Mbps':>10} {'DOWN Mbps':>10}", flush=True)
+    failed = False
+    for target in args.targets:
+        print(f"Testing {target}…", file=sys.stderr, flush=True)
+        try:
+            setup, upload, download = benchmark(target, args.size, args.runs, args.timeout)
+        except (OSError, RuntimeError, subprocess.TimeoutExpired) as error:
+            failed = True
+            print(f"{target:<24} FAILED: {' '.join(str(error).split())}", flush=True)
+            continue
+        spread = f"{min(setup):.0f}–{max(setup):.0f}"
+        print(f"{target:<24} {statistics.median(setup):>10.0f} {spread:>17} "
+              f"{statistics.median(upload):>10.1f} {statistics.median(download):>10.1f}", flush=True)
+    return int(failed)
+
+
+if __name__ == "__main__":
+    try:
+        sys.exit(main())
+    except KeyboardInterrupt:
+        sys.exit(130)
