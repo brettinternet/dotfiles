@@ -5,8 +5,17 @@ local callback
 local enabled = true
 local present = true
 local selections = {}
+local pid = 1234
+local bundleID = "org.chromium.Chromium"
 local app = {
+  pid = function()
+    return pid
+  end,
+  bundleID = function()
+    return bundleID
+  end,
   findMenuItem = function(_, path)
+    assert(pid ~= -1 or bundleID ~= "org.chromium.Chromium", "invalid Chromium must bypass menu lookup")
     assert(path[1] == "Window" and path[2] == "Move & Resize")
     return present and { enabled = enabled } or nil
   end,
@@ -103,6 +112,17 @@ assert(send("r"), "unavailable restore must be consumed")
 assert(send("up"), "disabled tiling must be consumed")
 present = false
 assert(send("down"), "missing tiling must be consumed")
+pid = -1
+for _, key in ipairs({ "left", "right", "up", "down", "home", "end", "pageup", "pagedown", "r" }) do
+  assert(not send(key), "invalid Chromium application must pass through")
+  assert(not send(key, nil, 11), "invalid Chromium key release must pass through")
+  assert(not send(key, nil, 10, 1), "invalid Chromium autorepeat must pass through")
+end
+bundleID = "com.example.Other"
+assert(send("up"), "Chromium exception must not change other applications")
+bundleID = "org.chromium.Chromium"
+pid = 1234
+assert(send("up"), "valid Chromium must still suppress unavailable tiling")
 frontmost = nil
 assert(send("left"), "missing application must be handled")
 assert(#selections == 8, "unavailable commands must not be selected")

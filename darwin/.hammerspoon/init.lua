@@ -269,8 +269,8 @@ focusIndicator.start({
 -- Reload config on change
 local home = os.getenv("HOME")
 hs.pathwatcher
-  .new(home .. "/.dotfiles/darwin/.hammerspoon/", function()
-    hs.reload()
-  end)
-  :start()
+    .new(home .. "/.dotfiles/darwin/.hammerspoon/", function()
+      hs.reload()
+    end)
+    :start()
 hs.alert.show("Hammerspoon config loaded")
