@@ -106,7 +106,7 @@ def generate(config, home, browser=BROWSER):
         print(f"Generated {destination} (profile: {profile})")
 
 
-def install_url_handler(home):
+def install_url_handler(home, remote_debugging=False):
     """Build a URL-event receiver; default-browser selection remains explicit."""
     destination = home / "Applications/Chromium Default.app"
     identifier = "local.chromium-default-url-handler"
@@ -124,7 +124,13 @@ def install_url_handler(home):
     # Compile before touching an existing handler, so compilation errors leave it intact.
     with tempfile.TemporaryDirectory(prefix="chromium-url-handler-") as temporary:
         bundle = Path(temporary) / destination.name
-        subprocess.run(["/usr/bin/osacompile", "-o", str(bundle), str(script)], check=True)
+        source = script.read_text()
+        if remote_debugging:
+            source = source.replace("property remoteDebuggingEnabled : false",
+                                    "property remoteDebuggingEnabled : true")
+        compiled_source = Path(temporary) / script.name
+        compiled_source.write_text(source)
+        subprocess.run(["/usr/bin/osacompile", "-o", str(bundle), str(compiled_source)], check=True)
         plist = bundle / "Contents/Info.plist"
         with plist.open("rb") as source:
             info = plistlib.load(source)
@@ -150,6 +156,9 @@ def install_url_handler(home):
     ], check=True)
     print(f"Installed {destination}")
     print("Select Chromium Default in System Settings → Desktop & Dock → Default web browser.")
+    if remote_debugging:
+        print("Remote debugging enabled on loopback port 9222: local processes can access your browser.")
+        print("Quit Chromium normally, then open Chromium Default to apply the launch flags.")
 
 
 def main():
@@ -158,10 +167,14 @@ def main():
                         default=Path.home() / ".config/chromium-apps/config.json")
     parser.add_argument("--install-url-handler", action="store_true",
                         help="Install Chromium Default.app for base-profile HTTP/HTTPS routing")
+    parser.add_argument("--enable-remote-debugging", action="store_true",
+                        help="With --install-url-handler, enable unauthenticated loopback CDP on port 9222")
     args = parser.parse_args()
+    if args.enable_remote_debugging and not args.install_url_handler:
+        parser.error("--enable-remote-debugging requires --install-url-handler")
     try:
         if args.install_url_handler:
-            install_url_handler(Path.home())
+            install_url_handler(Path.home(), remote_debugging=args.enable_remote_debugging)
         else:
             generate(args.config.expanduser(), Path.home())
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
