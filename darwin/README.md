@@ -43,15 +43,56 @@ chromium-apps --install-url-handler
 ```
 
 Then select **Chromium Default** in **System Settings → Desktop & Dock → Default
-web browser**. The handler receives HTTP/HTTPS URL events and invokes Chromium
-with `--user-data-dir=~/Library/Application Support/Chromium` (expanded to an
-absolute path), so external links target the base profile even while isolated
-profiles are running. Opening the handler directly opens base Chromium.
+web browser**. The handler receives HTTP/HTTPS URL events and launches Chromium
+through `/usr/bin/open -n -a /Applications/Chromium.app --args` with
+`--user-data-dir=~/Library/Application Support/Chromium` (expanded to an absolute
+path). Launch Services registers the real browser process for tools such as
+Hammerspoon; Chromium routes external links to the base profile even while
+isolated profiles are running. Opening the handler directly opens base Chromium.
 
 This does not intercept links clicked inside a browser or apps that explicitly
 choose another browser. It does not handle local HTML files or custom URL schemes.
 To undo, select Chromium or another browser as the default. To update the handler,
 rerun the install command; it needs macOS's `osacompile` and `codesign` tools.
+
+### Optional unattended debugging of your everyday browser
+
+On each Mac, explicitly install the handler with debugging enabled:
+
+```sh
+chromium-apps --install-url-handler --enable-remote-debugging
+```
+
+This adds `--remote-debugging-port=9222` to the handler's launch arguments. It keeps
+using your existing Chromium data, logins, and extensions: no migration, copy,
+sync, or new profile. This targets the Brewfile's **ungoogled-chromium**, not Google
+Chrome. The installed Chromium 154 build was verified to allow port debugging on
+its default data directory; branded Chrome requires a non-default directory.
+
+Save browser work and quit Chromium normally once, then open **Chromium Default**.
+Flags cannot enable debugging in an already-running browser. Select **Chromium
+Default** as the default web browser and pin that launcher in the Dock instead of
+Chromium. On other Macs, install the handler there too; browser data remains local.
+
+Configure the MCP server to use `--browserUrl=http://127.0.0.1:9222`, **not**
+`--autoConnect`. The direct port connection does not need the `chrome://inspect`
+consent flow. Check `http://127.0.0.1:9222/json/version` after launching. The browser
+must remain running and the Mac awake for unattended use.
+
+The endpoint is unauthenticated: any local process able to connect can access your
+signed-in browser. Keep it on loopback; use SSH forwarding rather than exposing
+CDP to the network. Do not enable debugging on isolated app profiles with the same
+port. Installation never quits the browser or changes the default-browser setting.
+
+Opening `/Applications/Chromium.app` directly (including a cold launch by a
+Hammerspoon bundle-ID shortcut) bypasses these flags. Launch **Chromium Default**
+first; subsequent focus shortcuts do not disable debugging. The browser's own
+“make default” button selects Chromium, not this handler, so use macOS Settings.
+This handler covers HTTP/HTTPS, not local HTML files or custom schemes.
+
+To disable, rerun `chromium-apps --install-url-handler` **without** the debugging
+option, quit Chromium, and reopen the handler. Reinstalling without the option
+always resets the opt-in; it does not leave debugging silently enabled.
 
 Run behavioral tests with `python3 -m unittest discover -s darwin/tests`.
 
