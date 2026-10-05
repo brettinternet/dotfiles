@@ -178,7 +178,10 @@ prefix:bind(
 --   end)
 -- )
 local caffeine = require("caffeine").start()
-require("lid_awake").start()
+-- The helper installation is the machine-local opt-in, including loading its module.
+if hs.fs.attributes("/Library/Application Support/local.lid-awake") then
+  require("lid_awake").start()
+end
 prefix:bind("cmd", "K", prefixFn(caffeine.toggle))
 prefix:bind(
   "cmd",
