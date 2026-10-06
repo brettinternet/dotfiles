@@ -1,14 +1,27 @@
 // dotfiles-dcg-shell-guard
 import { spawn } from "node:child_process";
-import { existsSync, realpathSync, statSync } from "node:fs";
+import {
+  closeSync, existsSync, lstatSync, mkdirSync, openSync, readFileSync,
+  realpathSync, renameSync, statSync, unlinkSync, writeFileSync,
+} from "node:fs";
 import { homedir } from "node:os";
-import { isAbsolute, join, relative, resolve } from "node:path";
+import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path";
 type ApprovalContext = {
   hasUI: boolean;
   ui: { confirm(title: string, message: string): Promise<boolean> };
 };
 
-type ToolCallContext = ApprovalContext & { cwd: string };
+type ToolCallContext = ApprovalContext & {
+  cwd: string;
+  sessionManager: {
+    getSessionId(): string;
+    getEntries(): Array<{ type: string; customType?: string; data?: unknown }>;
+  };
+  ui: ApprovalContext["ui"] & {
+    select(title: string, options: string[]): Promise<string | undefined>;
+    notify(message: string, type?: "info" | "error"): void;
+  };
+};
 
 type ApprovalEvents = {
   emit(event: string, value: unknown): void;
@@ -16,6 +29,11 @@ type ApprovalEvents = {
 
 type ExtensionAPI = {
   events: ApprovalEvents;
+  appendEntry(customType: string, data: unknown): void;
+  registerCommand(
+    name: string,
+    command: { description: string; handler(args: string, ctx: ToolCallContext): Promise<void> },
+  ): void;
   on(event: "session_start", handler: (_event: unknown, ctx: ToolCallContext) => Promise<void>): void;
   on(
     event: "tool_call",
@@ -31,7 +49,7 @@ const DCG_BIN =
 const UNAVAILABLE = { deny: true, reason: "Blocked because the dcg safety guard is unavailable." };
 const ALLOW = { deny: false, reason: "" };
 
-type Decision = { deny: boolean; reason: string; ruleId?: string };
+type Decision = { deny: boolean; reason: string; ruleId?: string; accessPath?: string };
 
 const GIT_COMMAND =
   /^\s*(?:(?:then|do|else)\s+)?(?:rtk\s+)?git((?:\s+-C\s+(?:"[^"]*"|'[^']*'|\S+))*)\s+([a-z-]+)(?:\s+([^;&|\n]*))?\s*$/;
@@ -410,7 +428,10 @@ function searchPathOperands(executable: string, words: string[]): string[] {
 }
 
 function canonicalPath(path: string): string {
-  return existsSync(path) ? realpathSync(path) : resolve(path);
+  const absolute = resolve(path);
+  if (existsSync(absolute)) return realpathSync(absolute);
+  const parent = dirname(absolute);
+  return parent === absolute ? absolute : join(canonicalPath(parent), basename(absolute));
 }
 
 function isWithinRoot(path: string, root: string): boolean {
@@ -420,7 +441,11 @@ function isWithinRoot(path: string, root: string): boolean {
   return relation === "" || (!relation.startsWith("..") && !isAbsolute(relation));
 }
 
-export function localBashIntegrityDecision(input: unknown, cwd: string): Decision {
+export function localBashIntegrityDecision(input: unknown, cwd: string, allowedRoots: readonly string[] = []): Decision {
+  const permitted = (path: string) =>
+    isWithinRoot(path, cwd) || allowedRoots.some(
+      (root) => isAbsolute(root) && canonicalPath(root) === root && isWithinRoot(path, root),
+    );
   if (!input || typeof input !== "object" || Array.isArray(input)) {
     return { deny: true, reason: "Blocked malformed Bash arguments." };
   }
@@ -454,8 +479,8 @@ export function localBashIntegrityDecision(input: unknown, cwd: string): Decisio
         return { deny: true, reason: "Blocked `cd` with a missing or ambiguous target." };
       }
       const target = resolve(effectiveCwd, operands[0]);
-      if (!isWithinRoot(target, cwd)) {
-        return { deny: true, reason: `Blocked \`cd\` outside the session root: ${operands[0]}.` };
+      if (!permitted(target)) {
+        return { deny: true, reason: `Blocked \`cd\` outside the session root: ${operands[0]}.`, accessPath: target };
       }
       if (!existsSync(target) || !statSync(target).isDirectory()) {
         return { deny: true, reason: `Blocked \`cd\` to a nonexistent directory: ${operands[0]}.` };
@@ -470,8 +495,8 @@ export function localBashIntegrityDecision(input: unknown, cwd: string): Decisio
         return { deny: true, reason: `Blocked dynamic ${executable} path: ${word}.` };
       }
       const target = resolve(effectiveCwd, word);
-      if (!isWithinRoot(target, cwd)) {
-        return { deny: true, reason: `Blocked ${executable} path outside the session root: ${word}.` };
+      if (!permitted(target)) {
+        return { deny: true, reason: `Blocked ${executable} path outside the session root: ${word}.`, accessPath: target };
       }
     }
   }
@@ -480,7 +505,8 @@ export function localBashIntegrityDecision(input: unknown, cwd: string): Decisio
 }
 
 export function localDestructiveTargetDecision(command: string, home = homedir()): Decision {
-  for (const clause of command.split(/&&|\|\||[;\n]/)) {
+  for (const part of command.split(/&&|\|\||[;\n]/)) {
+    const clause = part.trimStart();
     if (RM_COMMAND.test(clause)) {
       return { deny: true, reason: "Blocked `rm` by local policy. Use `trash` instead." };
     }
@@ -752,7 +778,148 @@ export async function applyUserApproval(
   }
 }
 
+const ACCESS_ENTRY = "dcg-directory-access";
+const ACCESS_FILE = join(homedir(), ".pi/agent/access.json");
+const ACCESS_USAGE = "/access list | allow [--permanent] <directory> | revoke [--permanent] <directory>";
+
+function accessRoots(data: unknown): string[] {
+  if (
+    !data ||
+    typeof data !== "object" ||
+    !("roots" in data) ||
+    !Array.isArray(data.roots) ||
+    !data.roots.every((root: unknown) => typeof root === "string" && isAbsolute(root))
+  ) {
+    throw new Error("Invalid directory access data; expected absolute roots.");
+  }
+  return [...new Set(data.roots as string[])];
+}
+
+export function readAccessRoots(file: string): string[] {
+  try {
+    if (!lstatSync(file).isFile()) throw new Error(`Access file must be a regular, non-symlink file: ${file}`);
+    const data = JSON.parse(readFileSync(file, "utf8"));
+    if (data?.version !== 1) throw new Error(`Unsupported access file version: ${file}`);
+    return accessRoots(data);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return [];
+    throw error;
+  }
+}
+
+export function updateAccessRoots(file: string, root: string, allow: boolean): void {
+  mkdirSync(dirname(file), { recursive: true, mode: 0o700 });
+  // Exclusive creation serializes writers across Pi sessions; rename makes reads atomic.
+  const pending = `${file}.pending`;
+  const fd = openSync(pending, "wx", 0o600);
+  let renamed = false;
+  try {
+    const roots = new Set(readAccessRoots(file));
+    if (allow) roots.add(root);
+    else roots.delete(root);
+    writeFileSync(fd, `${JSON.stringify({ version: 1, roots: [...roots] }, null, 2)}\n`);
+    renameSync(pending, file);
+    renamed = true;
+  } finally {
+    closeSync(fd);
+    if (!renamed) unlinkSync(pending);
+  }
+}
+
+function sessionAccessRoots(ctx: ToolCallContext): string[] {
+  // Permissions are session-wide, not conversation-branch state: /tree must not undo revocations.
+  const entry = ctx.sessionManager.getEntries().findLast((entry) => {
+    const data = entry.data as { sessionId?: string } | undefined;
+    return entry.type === "custom" && entry.customType === ACCESS_ENTRY && data?.sessionId === ctx.sessionManager.getSessionId();
+  });
+  return entry ? accessRoots(entry.data) : [];
+}
+
+function saveSessionAccess(pi: ExtensionAPI, ctx: ToolCallContext, root: string, allow: boolean): void {
+  const roots = new Set(sessionAccessRoots(ctx));
+  if (allow) roots.add(root);
+  else roots.delete(root);
+  pi.appendEntry(ACCESS_ENTRY, { sessionId: ctx.sessionManager.getSessionId(), roots: [...roots] });
+}
+
+export function registerDirectoryAccess(pi: ExtensionAPI, file = ACCESS_FILE) {
+  pi.registerCommand("access", {
+    description: ACCESS_USAGE,
+    handler: async (args, ctx) => {
+      try {
+        const words = shellWords(args.trim());
+        if (!words) throw new Error(ACCESS_USAGE);
+        const [action = "list", ...operands] = words;
+        const permanent = operands[0] === "--permanent";
+        if (permanent) operands.shift();
+        if (action === "list" && operands.length === 0 && !permanent) {
+          ctx.ui.notify(
+            [
+              `Session root: ${ctx.cwd}`,
+              ...sessionAccessRoots(ctx).map((root) => `Session: ${root}`),
+              ...readAccessRoots(file).map((root) => `Permanent: ${root}`),
+              `Permanent storage: ${file}`,
+            ].join("\n"),
+            "info",
+          );
+          return;
+        }
+        if (!["allow", "revoke"].includes(action) || operands.length !== 1) throw new Error(ACCESS_USAGE);
+        if (!ctx.hasUI) throw new Error("Directory access changes require an interactive approval UI.");
+        const operand = operands[0];
+        const expanded = operand === "~" ? homedir() : operand.startsWith("~/") ? join(homedir(), operand.slice(2)) : operand;
+        const absolute = resolve(ctx.cwd, expanded);
+        const allow = action === "allow";
+        const stored = permanent ? readAccessRoots(file) : sessionAccessRoots(ctx);
+        // A replaced symlink must not prevent revoking the original stored grant.
+        const root = !allow && stored.includes(absolute) ? absolute : canonicalPath(absolute);
+        if (allow && (!existsSync(root) || !statSync(root).isDirectory())) throw new Error(`Not a directory: ${root}`);
+        if (
+          allow &&
+          !(await ctx.ui.confirm(
+            "Allow directory access?",
+            `${root}\nScope: ${permanent ? "permanent (all sessions)" : "this session"}.\nOnly path restrictions are relaxed; destructive-command checks remain enabled.`,
+          ))
+        )
+          return;
+        if (permanent) updateAccessRoots(file, root, allow);
+        else saveSessionAccess(pi, ctx, root, allow);
+        ctx.ui.notify(`${allow ? "Allowed" : "Revoked"} ${permanent ? "permanent" : "session"} access: ${root}`, "info");
+      } catch (error) {
+        ctx.ui.notify(String(error), "error");
+      }
+    },
+  });
+
+  return async (input: unknown, ctx: ToolCallContext): Promise<Decision> => {
+    const once: string[] = [];
+    for (;;) {
+      const decision = localBashIntegrityDecision(input, ctx.cwd, [...readAccessRoots(file), ...sessionAccessRoots(ctx), ...once]);
+      if (!decision.deny || !decision.accessPath || !ctx.hasUI) return decision;
+      // Never offer a broad ancestor grant for a nonexistent path.
+      if (!existsSync(decision.accessPath)) return decision;
+      const target = canonicalPath(decision.accessPath);
+      const root = statSync(target).isDirectory() ? target : dirname(target);
+      pi.events.emit("herdr:blocked", { active: true, label: "Directory access approval required" });
+      let choice: string | undefined;
+      try {
+        choice = await ctx.ui.select(
+          `Allow directory access to ${root}?\nCommand: ${String((input as { command: string }).command)}\nDestructive-command checks remain enabled.`,
+          ["Deny", "Allow once", "Allow for this session"],
+        );
+      } finally {
+        pi.events.emit("herdr:blocked", { active: false });
+      }
+      if (choice === "Allow for this session") saveSessionAccess(pi, ctx, root, true);
+      else if (choice === "Allow once") once.push(root);
+      else return { deny: true, reason: "Directory access denied by user." };
+      // Recheck the entire command: one approval must not hide another outside path.
+    }
+  };
+}
+
 export default function dcgGuard(pi: ExtensionAPI): void {
+  const directoryAccess = registerDirectoryAccess(pi);
   const ownership: GitOwnership = {
     managedRoots: new Map(),
     repoRoots: new Map(),
@@ -766,7 +933,7 @@ export default function dcgGuard(pi: ExtensionAPI): void {
 
   pi.on("tool_call", async (event, ctx) => {
     if (event.toolName !== "bash") return;
-    let decision: Decision = localBashIntegrityDecision(event.input, ctx.cwd);
+    let decision: Decision = await directoryAccess(event.input, ctx);
     if (decision.deny) return { block: true, reason: decision.reason };
 
     const command = String(event.input?.command ?? "");
