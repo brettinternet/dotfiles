@@ -30,7 +30,7 @@ class WindowRulesTests(unittest.TestCase):
             self.assertIn("Usage:", invalid.stderr)
 
     def test_rebuilds_keep_the_designated_requirement(self):
-        # TCC keeps Accessibility approval while the designated requirement is unchanged.
+        # TCC keeps Device Control and Data Access approval while the designated requirement is unchanged.
         with tempfile.TemporaryDirectory(prefix="window-rules-test-") as directory:
             directory = Path(directory)
             keychain = directory / "test.keychain-db"

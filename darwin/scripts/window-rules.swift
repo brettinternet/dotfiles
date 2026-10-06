@@ -130,7 +130,7 @@ func perform(_ action: Action, on target: Target, rule: Rule) {
             if !CGPreflightPostEventAccess() {
                 // The access check is cached per process. Exiting lets launchd restart the
                 // agent, whose initial scan picks this prompt up again once access is granted.
-                log("\(rule.name): grant Accessibility to \(CommandLine.arguments[0])")
+                log("\(rule.name): grant Device Control and Data Access to \(CommandLine.arguments[0])")
                 exit(1)
             } else if hasWindow(target.pid) {
                 post(keystroke, to: target.pid)
@@ -182,7 +182,7 @@ struct WindowRules {
             exit(1)
         }
         if !CGRequestPostEventAccess() {
-            log("Accessibility not granted; rules cannot send input until it is")
+            log("Device Control and Data Access not granted; rules cannot send input until it is")
         }
         let watcher = Watcher()
         watcher.start()

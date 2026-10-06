@@ -178,7 +178,7 @@ Requires Xcode Command Line Tools (`xcrun swiftc`); no `sudo`. The installer bui
 `darwin/scripts/window-rules.swift` into
 `~/Library/Application Support/local.window-rules/` and loads the LaunchAgent
 `~/Library/LaunchAgents/local.window-rules.plist`. Allow that binary once under
-**System Settings > Privacy & Security > Accessibility**.
+**System Settings > Privacy & Security > Device Control and Data Access**.
 
 The binary is signed with the identifier `local.window-rules` by a self-signed
 **Dotfiles Local Code Signing** certificate. The first install creates it in
