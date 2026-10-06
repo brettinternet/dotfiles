@@ -41,6 +41,7 @@ local function prefixFn(fn)
   end
 end
 local focusIndicator = require("focus_indicator")
+local launchApplication = require("launch_application")
 
 local function getNextVisibleWindow(application, currentWindow)
   local windows = {}
@@ -86,7 +87,7 @@ local function getLaunchOrFocusFn(bundleIDs)
 
     if not alreadyFocused then
       for _, bundleID in ipairs(bundleIDs) do
-        if hs.application.launchOrFocusByBundleID(bundleID) then
+        if launchApplication(bundleID) then
           break
         end
       end
@@ -128,7 +129,7 @@ function getLaunchFocusOrHideAndSwitchBackFn(bundleid, kill)
         lastApp:activate(true)
       end
     else
-      hs.application.launchOrFocusByBundleID(bundleid)
+      launchApplication(bundleid)
       lastApp = currentApp
     end
 

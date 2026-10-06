@@ -39,11 +39,19 @@ not separately registered default browsers or URL handlers.
 Install the optional URL handler:
 
 ```sh
-chromium-apps --install-url-handler
+chromium-apps --install-url-handler --set-default
 ```
 
-Then select **Chromium Default** in **System Settings → Desktop & Dock → Default
-web browser**. The handler receives HTTP/HTTPS URL events and launches Chromium
+`--set-default` requires macOS 12+ and Xcode Command Line Tools (`xcrun swift`).
+Approve any macOS confirmation prompts. It sets HTTP/HTTPS handlers and verifies
+both through Launch Services; a failure exits nonzero and may leave one scheme
+changed. It can also run alone without reinstalling or changing debugging flags.
+Without this option, installation leaves default preferences alone; select
+**Chromium Default** in **System Settings → Desktop & Dock → Default web browser**
+manually instead. Quit and reopen Settings if its browser list is stale.
+
+The bundle declares both HTML and XHTML support so it appears in that picker.
+The CLI does not set document defaults (HTML, PDF, etc.). The handler receives HTTP/HTTPS URL events and launches Chromium
 through `/usr/bin/open -n -a /Applications/Chromium.app --args` with
 `--user-data-dir=~/Library/Application Support/Chromium` (expanded to an absolute
 path). Launch Services registers the real browser process for tools such as
@@ -51,17 +59,26 @@ Hammerspoon; Chromium routes external links to the base profile even while
 isolated profiles are running. Opening the handler directly opens base Chromium.
 
 This does not intercept links clicked inside a browser or apps that explicitly
-choose another browser. It does not handle local HTML files or custom URL schemes.
+choose another browser. Local HTML/XHTML files explicitly opened with the wrapper
+are forwarded to Chromium, but custom URL schemes are not handled.
 To undo, select Chromium or another browser as the default. To update the handler,
 rerun the install command; it needs macOS's `osacompile` and `codesign` tools.
 
 ### Optional unattended debugging of your everyday browser
 
-On each Mac, explicitly install the handler with debugging enabled:
+After updating the checkout, run `make darwin` to refresh symlinks (including the
+Hammerspoon launch helper). On each Mac, explicitly install the handler with
+debugging enabled:
 
 ```sh
-chromium-apps --install-url-handler --enable-remote-debugging
+chromium-apps --install-url-handler --enable-remote-debugging --set-default --pin-to-dock
 ```
+
+`--pin-to-dock` requires `dockutil` (included in `darwin/Brewfile`; install separately
+with `brew install dockutil` if needed). It replaces a pinned `/Applications/Chromium.app`
+with the wrapper, or adds the wrapper if absent, preserving other Dock items.
+Repeated runs do not duplicate it. This option restarts the Dock, not the browser,
+and can also run alone. Omit it to manage the Dock manually.
 
 This adds `--remote-debugging-port=9222` to the handler's launch arguments. It keeps
 using your existing Chromium data, logins, and extensions: no migration, copy,
@@ -82,13 +99,22 @@ must remain running and the Mac awake for unattended use.
 The endpoint is unauthenticated: any local process able to connect can access your
 signed-in browser. Keep it on loopback; use SSH forwarding rather than exposing
 CDP to the network. Do not enable debugging on isolated app profiles with the same
-port. Installation never quits the browser or changes the default-browser setting.
+port. Installation never quits the browser. Default-handler changes require the
+explicit `--set-default` option; ordinary dotfiles installation enables neither
+debugging nor default-browser changes.
 
-Opening `/Applications/Chromium.app` directly (including a cold launch by a
-Hammerspoon bundle-ID shortcut) bypasses these flags. Launch **Chromium Default**
-first; subsequent focus shortcuts do not disable debugging. The browser's own
-“make default” button selects Chromium, not this handler, so use macOS Settings.
-This handler covers HTTP/HTTPS, not local HTML files or custom schemes.
+The dotfiles' Hammerspoon keyboard, HTTP launch/focus shortcut, and Stream Deck
+application action use the wrapper for cold Chromium launches when it is installed.
+Running Chromium instances retain normal focus/hide behavior. Reload Hammerspoon
+after updating dotfiles. Machines without the wrapper keep the previous behavior.
+
+Opening `/Applications/Chromium.app` directly (Spotlight, Finder, login items, or
+another app explicitly launching Chromium) still bypasses these flags. Launch
+**Chromium Default** first; subsequent focus shortcuts do not disable debugging.
+The browser's own “make default” button selects Chromium, not this handler, so
+use `chromium-apps --set-default` or macOS Settings. Links within another browser
+or an app's embedded browser can stay there. Isolated Chromium profiles and
+custom URL schemes are unchanged.
 
 To disable, rerun `chromium-apps --install-url-handler` **without** the debugging
 option, quit Chromium, and reopen the handler. Reinstalling without the option
