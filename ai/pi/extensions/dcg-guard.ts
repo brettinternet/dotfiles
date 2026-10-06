@@ -1,7 +1,7 @@
 // dotfiles-dcg-shell-guard
 import { spawn } from "node:child_process";
 import {
-  closeSync, existsSync, lstatSync, mkdirSync, openSync, readFileSync,
+  closeSync, existsSync, lstatSync, mkdirSync, openSync, readdirSync, readFileSync,
   realpathSync, renameSync, statSync, unlinkSync, writeFileSync,
 } from "node:fs";
 import { homedir } from "node:os";
@@ -32,7 +32,11 @@ type ExtensionAPI = {
   appendEntry(customType: string, data: unknown): void;
   registerCommand(
     name: string,
-    command: { description: string; handler(args: string, ctx: ToolCallContext): Promise<void> },
+    command: {
+      description: string;
+      getArgumentCompletions?(prefix: string): Array<{ value: string; label: string }> | null;
+      handler(args: string, ctx: ToolCallContext): Promise<void>;
+    },
   ): void;
   on(event: "session_start", handler: (_event: unknown, ctx: ToolCallContext) => Promise<void>): void;
   on(
@@ -842,9 +846,60 @@ function saveSessionAccess(pi: ExtensionAPI, ctx: ToolCallContext, root: string,
   pi.appendEntry(ACCESS_ENTRY, { sessionId: ctx.sessionManager.getSessionId(), roots: [...roots] });
 }
 
+function completeAccessArguments(prefix: string, ctx: ToolCallContext | undefined, file: string) {
+  const args = prefix.trimStart();
+  if (!/\s/.test(args)) {
+    return ["list", "allow", "revoke"].filter((action) => action.startsWith(args)).map((action) => ({ value: action, label: action }));
+  }
+  const match = /^(allow|revoke)\s+(--permanent\s+)?(.*)$/s.exec(args);
+  if (!match) return null;
+  const [, action, flag = "", pathPrefix] = match;
+  const lead = `${action} ${flag ? "--permanent " : ""}`;
+  const items = !flag && "--permanent".startsWith(pathPrefix) ? [{ value: `${action} --permanent`, label: "--permanent" }] : [];
+  if (!ctx) return items;
+
+  // Complete an unfinished quoted operand using the same parser as the command handler.
+  const words = shellWords(pathPrefix) ?? shellWords(`${pathPrefix}"`) ?? shellWords(`${pathPrefix}'`);
+  if (!words || words.length > 1) return items;
+  const path = words[0] ?? "";
+  const quote = (value: string) => (/[\s'"\\$`]/.test(value) ? `"${value.replace(/[\\"$`]/g, "\\$&")}"` : value);
+  try {
+    if (action === "revoke") {
+      const roots = flag ? readAccessRoots(file) : sessionAccessRoots(ctx);
+      for (const root of roots.sort()) {
+        if (root.startsWith(path)) items.push({ value: lead + quote(root), label: root });
+      }
+    } else {
+      const slash = path.lastIndexOf("/");
+      const parent = path === "~" ? "~/" : path.slice(0, slash + 1);
+      const partial = path === "~" ? "" : path.slice(slash + 1);
+      const directory =
+        path === "~" ? homedir() : resolve(ctx.cwd, parent.startsWith("~/") ? join(homedir(), parent.slice(2)) : parent || ".");
+      for (const entry of readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+        if (!entry.name.startsWith(partial) || (entry.name.startsWith(".") && !partial.startsWith("."))) continue;
+        try {
+          if (!entry.isDirectory() && !(entry.isSymbolicLink() && statSync(join(directory, entry.name)).isDirectory())) continue;
+        } catch {
+          continue;
+        }
+        const candidate = `${parent}${entry.name}/`;
+        // Keep the cursor after closing quotes: Pi replaces the full argument prefix,
+        // but only removes a trailing quote when that prefix itself starts with a quote.
+        items.push({ value: lead + quote(candidate), label: quote(candidate) });
+      }
+    }
+  } catch {
+    // Missing/unreadable directories or invalid grant data must not break the editor.
+  }
+  return items.length ? items : null;
+}
+
 export function registerDirectoryAccess(pi: ExtensionAPI, file = ACCESS_FILE) {
+  let completionContext: ToolCallContext | undefined;
+  pi.on("session_start", async (_event, ctx) => { completionContext = ctx; });
   pi.registerCommand("access", {
     description: ACCESS_USAGE,
+    getArgumentCompletions: (prefix) => completeAccessArguments(prefix, completionContext, file),
     handler: async (args, ctx) => {
       try {
         const words = shellWords(args.trim());

@@ -79,6 +79,8 @@ Run `/reload` once after updating the extension. Thereafter, access changes take
 /access revoke --permanent "/absolute/path with spaces"
 ```
 
+Tab completion suggests subcommands, `--permanent`, and directory paths (including relative paths and `~/`). For `revoke`, it suggests saved grants in the selected scope, including missing directories. Paths containing spaces or quotes are quoted automatically.
+
 Grants require confirmation. Blocked commands targeting an existing directory or file offer **Deny**, **Allow once** (that tool call), or **Allow for this session**. File requests grant their containing directory. Noninteractive runs cannot approve new access; use an existing grant or start Pi in the target directory. Dynamic shell paths and malformed commands remain blocked.
 
 Session grants are saved as local Pi session entries: they survive `/reload`, resume, and context compaction, but do not transfer to another session or fork. They are session-wide, so `/tree` does not undo a revocation. With `--no-session`, they last only for that process. Custom session storage and exported transcripts may contain these paths; do not commit or share them inadvertently.

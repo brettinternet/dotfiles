@@ -36,14 +36,19 @@ function fixture() {
   const choices: Array<string | undefined> = [];
   const prompts: string[] = [];
   let handler: (args: string, ctx: Context) => Promise<void>;
+  let complete: NonNullable<Parameters<API["registerCommand"]>[1]["getArgumentCompletions"]>;
+  let start: (_event: unknown, ctx: Context) => Promise<unknown>;
   const api: API = {
     events: { emit() {} },
-    on() {},
+    on(event, callback) {
+      if (event === "session_start") start = callback;
+    },
     appendEntry(customType, data) {
       entries.push({ type: "custom", customType, data });
     },
     registerCommand(_name, command) {
       handler = command.handler;
+      complete = command.getArgumentCompletions!;
     },
   };
   let sessionId = "session-one";
@@ -63,6 +68,7 @@ function fixture() {
     },
   };
   let check = registerDirectoryAccess(api, file);
+  void start(undefined, ctx);
   return {
     base,
     cwd,
@@ -76,8 +82,10 @@ function fixture() {
     notifications,
     check: (command: string) => check({ command }, ctx),
     command: (args: string) => handler(args, ctx),
+    complete: (prefix: string) => complete(prefix)?.map((item) => item.value) ?? [],
     reload: () => {
       check = registerDirectoryAccess(api, file);
+      void start(undefined, ctx);
     },
     switchSession: () => {
       sessionId = "session-two";
@@ -90,6 +98,57 @@ function fixture() {
 }
 
 describe("directory access", () => {
+  test("completes actions, flags, and directory operands that round-trip through the handler", async () => {
+    const f = fixture();
+    const odd = join(f.cwd, 'quotes " and $dollar');
+    const regularFile = join(f.cwd, "not-a-directory");
+    mkdirSync(odd);
+    writeFileSync(regularFile, "");
+    try {
+      expect(f.complete("al")).toEqual(["allow"]);
+      expect(f.complete("allow --p")).toEqual(["allow --permanent"]);
+      expect(f.complete("list ")).toEqual([]);
+      expect(f.complete("allow --permanent --p")).toEqual([]);
+      expect(f.complete("allow not-a")).toEqual([]);
+      expect(f.complete("allow ../oth")).toEqual(['allow "../other project/"']);
+      expect(f.complete('allow "../other pro')).toEqual(['allow "../other project/"']);
+      expect(f.complete(`allow --permanent '${f.base}/oth`)).toEqual([`allow --permanent "${f.outside}/"`]);
+      const [completion] = f.complete("allow quotes");
+      expect(completion).toBeDefined();
+      await f.command(completion);
+      expect(f.notifications.at(-1)).toBe(`Allowed session access: ${odd}`);
+      expect(f.complete("allow /nonexistent-dcg-completion/child")).toEqual([]);
+      expect(f.complete("allow ../third extra")).toEqual([]);
+      expect(existsSync(f.file)).toBe(false);
+    } finally {
+      unlinkSync(regularFile);
+      rmdirSync(odd);
+      f.dispose();
+    }
+  });
+
+  test("revoke completion reads current grants in the selected scope, even after deletion", async () => {
+    const f = fixture();
+    try {
+      await f.command(`allow "${f.outside}"`);
+      await f.command(`allow --permanent "${f.third}"`);
+      expect(f.complete("revoke ")).toContain(`revoke "${f.outside}"`);
+      expect(f.complete("revoke ")).not.toContain(`revoke ${f.third}`);
+      expect(f.complete("revoke --permanent ")).toEqual([`revoke --permanent ${f.third}`]);
+      rmdirSync(f.outside);
+      const [completion] = f.complete(`revoke "${f.base}/oth`);
+      expect(completion).toBe(`revoke "${f.outside}"`);
+      await f.command(completion);
+      expect(f.complete(`revoke ${f.base}/oth`)).toEqual([]);
+      f.reload();
+      expect(f.complete("revoke --permanent ")).toEqual([`revoke --permanent ${f.third}`]);
+      expect(f.entries).toHaveLength(2); // Completion itself never mutates grants.
+    } finally {
+      if (!existsSync(f.outside)) mkdirSync(f.outside);
+      f.dispose();
+    }
+  });
+
   test("session commands take effect immediately, survive reload, and do not transfer to another session", async () => {
     const f = fixture();
     try {
