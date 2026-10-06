@@ -11,6 +11,7 @@ import shlex
 import shutil
 import subprocess
 import tempfile
+from urllib.parse import unquote, urlsplit
 
 
 PREFIX = "local.chromium-apps."
@@ -138,7 +139,14 @@ def install_url_handler(home, remote_debugging=False):
             "CFBundleIdentifier": identifier,
             "CFBundleName": "Chromium Default",
             "CFBundleDisplayName": "Chromium Default",
+            "CFBundleVersion": "1",
+            "CFBundleShortVersionString": "1.0",
             "LSUIElement": True,
+            "CFBundleDocumentTypes": [{
+                "CFBundleTypeName": "Web document",
+                "CFBundleTypeRole": "Viewer",
+                "LSItemContentTypes": ["public.html", "public.xhtml"],
+            }],
             "CFBundleURLTypes": [{
                 "CFBundleURLName": "Web URLs",
                 "CFBundleTypeRole": "Viewer",
@@ -161,6 +169,39 @@ def install_url_handler(home, remote_debugging=False):
         print("Quit Chromium normally, then open Chromium Default to apply the launch flags.")
 
 
+def set_default_browser(home):
+    helper = Path(__file__).resolve().with_name("chromium-default-browser.swift")
+    print("Setting HTTP/HTTPS defaults; approve any macOS confirmation prompts.", flush=True)
+    subprocess.run(["/usr/bin/xcrun", "swift", str(helper), "--set",
+                    str(home / "Applications/Chromium Default.app")], check=True)
+
+
+def pin_to_dock(home):
+    bundle = home / "Applications/Chromium Default.app"
+    if not bundle.is_dir():
+        raise ValueError("Install Chromium Default with --install-url-handler first")
+    dockutil = shutil.which("dockutil")
+    if not dockutil:
+        raise ValueError("Dock setup requires dockutil (brew install dockutil)")
+    # Match the real browser by URL, not a potentially unrelated tile's label.
+    browser = BROWSER.parent.parent.parent
+    listing = subprocess.run([dockutil, "--list"], check=True, capture_output=True, text=True)
+    paths = set()
+    for line in listing.stdout.splitlines():
+        fields = line.split("\t")
+        if len(fields) >= 2:
+            item = fields[1]
+            paths.add((unquote(urlsplit(item).path) if item.startswith("file://") else item).rstrip("/"))
+    if str(bundle) in paths:
+        if str(browser) in paths:
+            subprocess.run([dockutil, "--remove", str(browser)], check=True)
+        return
+    command = [dockutil, "--add", str(bundle)]
+    if str(browser) in paths:
+        command += ["--replacing", str(browser)]
+    subprocess.run(command, check=True)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path,
@@ -169,13 +210,21 @@ def main():
                         help="Install Chromium Default.app for base-profile HTTP/HTTPS routing")
     parser.add_argument("--enable-remote-debugging", action="store_true",
                         help="With --install-url-handler, enable unauthenticated loopback CDP on port 9222")
+    parser.add_argument("--set-default", action="store_true",
+                        help="Set and verify Chromium Default as the HTTP/HTTPS handler (macOS may prompt)")
+    parser.add_argument("--pin-to-dock", action="store_true",
+                        help="Pin Chromium Default, replacing a Chromium tile if present (requires dockutil)")
     args = parser.parse_args()
     if args.enable_remote_debugging and not args.install_url_handler:
         parser.error("--enable-remote-debugging requires --install-url-handler")
     try:
         if args.install_url_handler:
             install_url_handler(Path.home(), remote_debugging=args.enable_remote_debugging)
-        else:
+        if args.set_default:
+            set_default_browser(Path.home())
+        if args.pin_to_dock:
+            pin_to_dock(Path.home())
+        if not (args.install_url_handler or args.set_default or args.pin_to_dock):
             generate(args.config.expanduser(), Path.home())
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
         parser.exit(1, f"chromium-apps: {error}\n")

@@ -12,6 +12,14 @@ on run
 	my launchChromium("")
 end run
 
+-- Browser eligibility requires HTML and XHTML declarations. Honor file-open
+-- events without changing the user's document associations during setup.
+on open documentFiles
+	repeat with documentFile in documentFiles
+		my launchChromium(POSIX path of documentFile)
+	end repeat
+end open
+
 on launchChromium(targetURL)
 	set browserPath to "/Applications/Chromium.app"
 	set dataPath to (POSIX path of (path to home folder)) & "Library/Application Support/Chromium"

@@ -1,3 +1,4 @@
+local launchApplication = require("launch_application")
 local target_by_instance = {}
 local previous_application_by_instance = {}
 local last_activated_application
@@ -166,7 +167,7 @@ end
 local function launch_or_focus_application(bundle_id)
   require_application_api("launchOrFocusByBundleID")
 
-  local ok, result = pcall(hs.application.launchOrFocusByBundleID, bundle_id)
+  local ok, result = pcall(launchApplication, bundle_id)
   if not ok then
     error("failed to open application: " .. tostring(result))
   end

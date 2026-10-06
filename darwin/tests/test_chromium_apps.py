@@ -101,6 +101,58 @@ class ChromiumAppsTests(unittest.TestCase):
         self.assertFalse((self.home / "Applications").exists())
 
 
+class SetupTests(unittest.TestCase):
+    def test_cli_setup_is_explicit_and_ordered(self):
+        calls = []
+        with patch.object(module, "install_url_handler", side_effect=lambda *a, **k: calls.append("install")), \
+                patch.object(module, "set_default_browser", side_effect=lambda *a: calls.append("default")), \
+                patch.object(module, "pin_to_dock", side_effect=lambda *a: calls.append("dock")), \
+                patch.object(module, "generate", side_effect=lambda *a: calls.append("generate")):
+            for flags, expected in (
+                ([], ["generate"]),
+                (["--install-url-handler"], ["install"]),
+                (["--set-default"], ["default"]),
+                (["--pin-to-dock"], ["dock"]),
+                (["--install-url-handler", "--enable-remote-debugging", "--set-default", "--pin-to-dock"],
+                 ["install", "default", "dock"]),
+            ):
+                calls.clear()
+                with self.subTest(flags=flags), patch.object(sys, "argv", ["chromium-apps"] + flags):
+                    module.main()
+                    self.assertEqual(calls, expected)
+
+    def test_default_failure_stops_setup(self):
+        with patch.object(sys, "argv", ["chromium-apps", "--set-default", "--pin-to-dock"]), \
+                patch.object(module.subprocess, "run", side_effect=subprocess.CalledProcessError(1, "helper")), \
+                patch.object(module, "pin_to_dock") as dock, self.assertRaises(SystemExit) as exited:
+            module.main()
+        self.assertEqual(exited.exception.code, 1)
+        dock.assert_not_called()
+
+    def test_dock_add_replace_and_repeat(self):
+        with tempfile.TemporaryDirectory(prefix="chromium-dock-test-") as temporary:
+            home = Path(temporary)
+            bundle = home / "Applications/Chromium Default.app"
+            bundle.mkdir(parents=True)
+            browser = module.BROWSER.parent.parent.parent
+            for existing, expected in (
+                ([], ["--add", str(bundle)]),
+                ([browser], ["--add", str(bundle), "--replacing", str(browser)]),
+                ([bundle], None),
+                ([browser, bundle], ["--remove", str(browser)]),
+            ):
+                for as_url in (False, True):
+                    listing = "\n".join(f"tile\t{path.as_uri() if as_url else path}/\tpersistentApps"
+                                        for path in existing)
+                    with self.subTest(existing=existing, as_url=as_url), \
+                            patch.object(module.shutil, "which", return_value="dockutil"), \
+                            patch.object(module.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, listing)) as run:
+                        module.pin_to_dock(home)
+                        self.assertEqual(run.call_count, 2 if expected else 1)
+                        if expected:
+                            self.assertEqual(run.call_args.args[0], ["dockutil"] + expected)
+
+
 @unittest.skipUnless(sys.platform == "darwin", "Requires macOS AppleScript")
 class URLHandlerTests(unittest.TestCase):
     def test_url_event_routes_and_quotes_without_launching_browser(self):
@@ -145,6 +197,13 @@ class URLHandlerTests(unittest.TestCase):
                                            '\nrun handlerScript')
             self.assertEqual(subprocess.check_output(["osascript", "-e", debug_run], text=True).splitlines(),
                              expected + ["--remote-debugging-port=9222"])
+            document = root / "one's $(echo unexpected).xhtml"
+            document.write_text("<html/>")
+            file_driver = ('set handlerScript to load script POSIX file ' + json.dumps(str(compiled))
+                           + '\nset documentFile to POSIX file ' + json.dumps(str(document)) + ' as alias'
+                           + '\ntell handlerScript to open {documentFile}')
+            self.assertEqual(subprocess.check_output(["osascript", "-e", file_driver], text=True).splitlines(),
+                             expected + [str(document.resolve())])
 
     def test_installer_compiles_opt_in_and_can_disable_it(self):
         run = subprocess.run
@@ -172,6 +231,14 @@ class URLHandlerTests(unittest.TestCase):
                 schemes = info["CFBundleURLTypes"][0]["CFBundleURLSchemes"]
                 self.assertIn("http", schemes)
                 self.assertIn("https", schemes)
+
+    def test_default_helper_rejects_missing_bundle_without_changing_preferences(self):
+        helper = Path(module.__file__).with_name("chromium-default-browser.swift")
+        with tempfile.TemporaryDirectory(prefix="chromium-default-test-") as temporary:
+            result = subprocess.run(["xcrun", "swift", str(helper), "--set", temporary],
+                                    capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Install Chromium Default", result.stderr)
 
     def test_installer_preserves_unmanaged_apps(self):
         with tempfile.TemporaryDirectory(prefix="chromium-url-test-") as temporary:
