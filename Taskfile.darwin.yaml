@@ -23,7 +23,7 @@ tasks:
     cmd: python3 "{{.ROOT_DIR}}/darwin/scripts/install-lid-awake.py" {{.CLI_ARGS}}
 
   window-rules:
-    desc: Install the per-user window-rules agent (defers the MDM restart prompt; needs Accessibility)
+    desc: Install the per-user window-rules agent (defers the MDM restart prompt; needs Device Control and Data Access)
     cmd: python3 "{{.ROOT_DIR}}/darwin/scripts/install-window-rules.py"
 
   undo-escape:

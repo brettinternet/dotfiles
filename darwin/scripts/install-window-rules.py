@@ -68,7 +68,7 @@ def create_identity(directory):
 
 def sign(binary, identity):
     """TCC matches the designated requirement (identifier and certificate), not the
-    binary hash, so rebuilds signed by the same certificate keep Accessibility approval."""
+    binary hash, so rebuilds signed by the same certificate keep their Device Control and Data Access approval."""
     subprocess.run(
         ["/usr/bin/codesign", "--force", "--sign", identity, "--keychain", str(KEYCHAIN),
          "--identifier", LABEL, str(binary)],
@@ -118,7 +118,7 @@ def main(argv=None):
     subprocess.run(["/bin/launchctl", "bootout", f"{domain}/{LABEL}"], stderr=subprocess.DEVNULL)
     subprocess.run(["/bin/launchctl", "bootstrap", domain, str(PLIST)], check=True)
     print(f"Running. If not yet allowed, enable {BINARY} under")
-    print("System Settings > Privacy & Security > Accessibility. Updates keep the approval.")
+    print("System Settings > Privacy & Security > Device Control and Data Access. Updates keep the approval.")
     print(f"Log: {LOG}")
 
 
