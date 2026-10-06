@@ -178,7 +178,9 @@ Requires Xcode Command Line Tools (`xcrun swiftc`); no `sudo`. The installer bui
 `darwin/scripts/window-rules.swift` into
 `~/Library/Application Support/local.window-rules/` and loads the LaunchAgent
 `~/Library/LaunchAgents/local.window-rules.plist`. Allow that binary once under
-**System Settings > Privacy & Security > Device Control and Data Access**.
+**System Settings > Privacy & Security > Device Control and Data Access**, then confirm it
+works with `task setup:window-rules-check`. That shows a 15-second test restart prompt,
+unrelated to MDM, and passes only if the agent defers it.
 
 The binary is signed with the identifier `local.window-rules` by a self-signed
 **Dotfiles Local Code Signing** certificate. The first install creates it in

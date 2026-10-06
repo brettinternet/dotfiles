@@ -119,6 +119,7 @@ def main(argv=None):
     subprocess.run(["/bin/launchctl", "bootstrap", domain, str(PLIST)], check=True)
     print(f"Running. If not yet allowed, enable {BINARY} under")
     print("System Settings > Privacy & Security > Device Control and Data Access. Updates keep the approval.")
+    print("Confirm with: task setup:window-rules-check")
     print(f"Log: {LOG}")
 
 

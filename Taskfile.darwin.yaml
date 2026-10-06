@@ -26,6 +26,29 @@ tasks:
     desc: Install the per-user window-rules agent (defers the MDM restart prompt; needs Device Control and Data Access)
     cmd: python3 "{{.ROOT_DIR}}/darwin/scripts/install-window-rules.py"
 
+  window-rules-check:
+    desc: Confirm the window-rules agent can defer a test restart prompt (shows it briefly)
+    silent: true
+    vars:
+      DIALOG: /Library/Application Support/Dialog/Dialog.app/Contents/MacOS/Dialog
+    preconditions:
+      - { msg: "swiftDialog is not installed", sh: 'test -x "{{.DIALOG}}"' }
+      - msg: "Agent not loaded; run task setup:window-rules"
+        sh: launchctl print "gui/$(id -u)/local.window-rules" >/dev/null 2>&1
+    cmds:
+      - |
+        # Exit 10 is swiftDialog's quit key, which the agent sends; 4 means the timer ran out.
+        status=0
+        "{{.DIALOG}}" --title "Restart required" --message "window-rules check: this closes itself" \
+          --button1text "Restart now" --timer 15 --position bottomright >/dev/null 2>&1 || status=$?
+        if [ "$status" -eq 10 ]; then
+          echo "window-rules: access granted; test prompt deferred"
+        else
+          echo "window-rules: test prompt not deferred (exit $status). Check Device Control and Data Access"
+          echo "and ~/Library/Logs/local.window-rules.log"
+          exit 1
+        fi
+
   undo-escape:
     desc: Undo the capslock -> escape remap
     cmd: hidutil property --set '{"UserKeyMapping":[]}'
