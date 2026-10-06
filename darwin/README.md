@@ -166,6 +166,48 @@ Failures are logged to `/var/log/local.lid-awake.log`. The menu reports actual
 `pmset` state, not just the last requested state. Test enabling on battery, docking,
 and undocking on the target laptop before relying on unattended closed-lid access.
 
+## Optional window rules
+
+On a machine that should automatically handle specific app prompts, run:
+
+```sh
+task setup:window-rules
+```
+
+Requires Xcode Command Line Tools (`xcrun swiftc`); no `sudo`. The installer builds
+`darwin/scripts/window-rules.swift` into
+`~/Library/Application Support/local.window-rules/` and loads the LaunchAgent
+`~/Library/LaunchAgents/local.window-rules.plist`. Allow that binary once under
+**System Settings > Privacy & Security > Accessibility**.
+
+The binary is signed with the identifier `local.window-rules` by a self-signed
+**Dotfiles Local Code Signing** certificate. The first install creates it in
+`~/Library/Keychains/dotfiles-local-codesign.keychain-db`, a keychain with an empty
+password that is kept off the keychain search list. That keychain works from terminals
+that cannot write the login keychain. Any process running as you can sign with it, which
+is no more access than a login-keychain key that `codesign` can use without prompting.
+macOS ties the approval to the identifier and certificate rather than the binary's hash,
+so rerunning the installer after source changes keeps it. Deleting that keychain means
+approving the newly signed binary again.
+The log is `~/Library/Logs/local.window-rules.log`.
+
+The agent watches app launches, including menu-bar-only apps, and applies the first
+matching rule in `rules`. Each rule matches a bundle ID and inspects the process's
+arguments to choose an action. Add a `Rule` for another app and an `Action` case for
+a new kind of interaction, then rerun the installer.
+
+The included rule defers the SimpleMDM uptime restart prompt. That script shows a
+swiftDialog (`au.csiro.dialog`) window and restarts when swiftDialog exits with 0
+(**Restart now**, or any ordinary app quit) or 4 (timer expired). Its quit key
+(Command-Q unless `--quitkey` is set) exits 10, which the script treats as a deferral.
+The rule matches swiftDialog windows whose title, message, or first button mentions
+"restart". It posts that keystroke directly to the process once its window appears and
+never quits it any other way. Other swiftDialog prompts are left alone. The prompt
+returns on a later check while uptime stays high, so restart periodically.
+
+To remove: `launchctl bootout gui/$(id -u)/local.window-rules`, then trash the plist
+and the application support directory.
+
 ## Fonts
 
 The Darwin install automatically installs the latest

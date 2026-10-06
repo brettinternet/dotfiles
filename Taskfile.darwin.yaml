@@ -22,6 +22,10 @@ tasks:
     desc: Install the optional closed-lid awake helper (sudo once; keep lid open; -- --admin USER)
     cmd: python3 "{{.ROOT_DIR}}/darwin/scripts/install-lid-awake.py" {{.CLI_ARGS}}
 
+  window-rules:
+    desc: Install the per-user window-rules agent (defers the MDM restart prompt; needs Accessibility)
+    cmd: python3 "{{.ROOT_DIR}}/darwin/scripts/install-window-rules.py"
+
   undo-escape:
     desc: Undo the capslock -> escape remap
     cmd: hidutil property --set '{"UserKeyMapping":[]}'
