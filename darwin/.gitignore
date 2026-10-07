@@ -4,6 +4,7 @@ mise.local.toml
 .trees
 .worktrees
 .hum.yaml
+.worktreeinclude
 
 # AI
 .rtk
