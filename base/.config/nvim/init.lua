@@ -1,5 +1,17 @@
 -- This file simply bootstraps the installation of Lazy.nvim and then calls other files for execution
 -- This file doesn't necessarily need to be touched, BE CAUTIOUS editing this file and proceed at your own risk.
+-- Remote panes (SSH, Herdr machines) copy to the attached terminal, not the host's pbcopy.
+-- Paste reads the last yank because Herdr doesn't answer OSC 52 queries.
+if vim.env.SSH_CONNECTION then
+  local osc52 = require "vim.ui.clipboard.osc52"
+  local function paste() return { vim.fn.split(vim.fn.getreg "", "\n"), vim.fn.getregtype "" } end
+  vim.g.clipboard = {
+    name = "OSC 52",
+    copy = { ["+"] = osc52.copy "+", ["*"] = osc52.copy "*" },
+    paste = { ["+"] = paste, ["*"] = paste },
+  }
+end
+
 local lazypath = vim.env.LAZY or vim.fn.stdpath "data" .. "/lazy/lazy.nvim"
 
 if not (vim.env.LAZY or (vim.uv or vim.loop).fs_stat(lazypath)) then
