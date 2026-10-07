@@ -80,6 +80,16 @@
       description: Remap Caps Lock to Escape
       stdout: true
     # Keep the login keychain unlocked once unlocked (no idle timeout, no lock on sleep).
-    - command: security set-keychain-settings ~/Library/Keychains/login.keychain-db
+    # A locked keychain or non-GUI session cannot be changed, so warn instead of failing.
+    - command: |
+        keychain=~/Library/Keychains/login.keychain-db
+        if ! settings=$(security show-keychain-info "$keychain" 2>&1); then
+          echo "Skipping keychain auto-lock: $settings" >&2
+        else
+          case "$settings" in
+            *'" no-timeout') ;;
+            *) security set-keychain-settings "$keychain" ;;
+          esac
+        fi
       description: Disable login keychain auto-lock
       stderr: true
