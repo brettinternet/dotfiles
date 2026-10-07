@@ -5,6 +5,9 @@ worktree-path = "{{ repo_path }}/.worktrees/{{ branch | sanitize }}"
 agent-receipt = '''
 python3 "$HOME/.config/worktrunk/record-agent-worktree.py"
 '''
+# Opt-in per repo: copies only gitignored files listed in the primary
+# checkout's (globally ignored) .worktreeinclude; no-op without one.
+copy-local = "wt step copy-ignored --require-include"
 
 [post-start]
 herdr = '''
