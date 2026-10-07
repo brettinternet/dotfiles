@@ -26,6 +26,9 @@
       path: base/.zshrc
       if: '[ -x "$(command -v zsh)" ]'
       force: true
+    ~/.zshenv:
+      path: base/.zshenv
+      if: '[ -x "$(command -v zsh)" ]'
     ~/.editorconfig:
       path: base/.editorconfig
     ~/.profile:
