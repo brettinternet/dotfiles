@@ -1,0 +1,7 @@
+#!/bin/sh
+# Copy files or stdin to the attached terminal's clipboard with OSC 52.
+# Usage: osc52 [file...]   |   cmd | osc52
+set -eu
+
+payload=$(cat -- "$@" | base64 | tr -d '\r\n')
+printf '\033]52;c;%s\a' "$payload" >/dev/tty
