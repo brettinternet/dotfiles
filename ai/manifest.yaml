@@ -28,7 +28,7 @@ models:
     id: anthropic/claude-sonnet-5
     context: conservative
   claude-haiku:
-    id: anthropic/claude-haiku-4-5
+    id: anthropic/claude-haiku-5-5
 
   or-sol:
     id: openrouter/openai/gpt-6.1-sol

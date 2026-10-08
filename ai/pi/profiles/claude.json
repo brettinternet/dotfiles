@@ -5,15 +5,15 @@
   "enabledModels": [
     "anthropic/claude-sonnet-5",
     "anthropic/claude-opus-5-5",
-    "anthropic/claude-haiku-4-5"
+    "anthropic/claude-haiku-5-5"
   ],
   "subagents": {
-    "defaultModel": "anthropic/claude-haiku-4-5",
+    "defaultModel": "anthropic/claude-haiku-5-5",
     "defaultProvider": "anthropic",
     "defaultThinking": "medium",
     "agentOverrides": {
       "researcher": {
-        "model": "anthropic/claude-haiku-4-5",
+        "model": "anthropic/claude-haiku-5-5",
         "thinking": "medium"
       },
       "reviewer": {
@@ -25,7 +25,7 @@
         "thinking": "xhigh"
       },
       "explore": {
-        "model": "anthropic/claude-haiku-4-5",
+        "model": "anthropic/claude-haiku-5-5",
         "thinking": "medium"
       },
       "executor": {
@@ -37,7 +37,7 @@
         "thinking": "high"
       },
       "pr-watcher": {
-        "model": "anthropic/claude-haiku-4-5",
+        "model": "anthropic/claude-haiku-5-5",
         "thinking": "medium"
       },
       "thermo-nuclear-code-quality-review": {
@@ -55,12 +55,12 @@
   },
   "titleConfig": {
     "enabled": true,
-    "model": "anthropic/claude-haiku-4-5:off",
+    "model": "anthropic/claude-haiku-5-5:off",
     "maxTokens": 30,
     "maxLength": 60
   },
   "progressConfig": {
-    "model": "anthropic/claude-haiku-4-5:off",
+    "model": "anthropic/claude-haiku-5-5:off",
     "maxInputChars": 12000,
     "maxTokens": 180,
     "timeoutMs": 60000
