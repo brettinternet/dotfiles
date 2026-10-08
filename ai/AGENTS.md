@@ -16,6 +16,19 @@ When making technical decisions, do not give much weight to development time cos
 
 Before introducing a new pattern, search for an existing implementation and reuse or extend it. Announce "CODE PATTERN:" with a very brief description only when introducing a genuinely new reusable pattern or consolidating a duplicate.
 
+## Testing
+
+Never use TDD or write tests first. Implement, then verify with the existing suite and direct execution.
+
+Add tests only for critical logic: data integrity, security and authorization boundaries, money, parsing or serialization, nontrivial state transitions, and regressions of subtle bugs likely to recur. Before adding a test, name the specific realistic failure it catches; if you cannot, do not write it.
+
+- Write the fewest tests that cover the critical path, through public interfaces, asserting observable behavior.
+- Do not test trivial code, getters, wiring, static config, framework or library behavior, or mere re-statements of the implementation.
+- Avoid heavy mocking; a test that mostly verifies mocks is not worth keeping.
+- Extend existing tests and helpers before creating new files or fixtures.
+- Never weaken, skip, or delete a test just to make it pass; fix the code or report the conflict.
+- Do not chase coverage numbers or add edge-case permutations unless they guard a real risk.
+
 ## Tools
 
 - Use `gh` for all GitHub operations, including `gh api`/`gh api graphql` when no subcommand covers it; never curl the API or open browser URLs.
