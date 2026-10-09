@@ -150,6 +150,7 @@ local browserBundleIDs = { "org.chromium.Chromium", "com.google.Chrome", "com.ap
 -- Applications
 prefix:bind("", ";", prefixFn(getLaunchOrFocusFn("com.mitchellh.ghostty")))
 prefix:bind("", "J", prefixFn(getLaunchOrFocusFn(browserBundleIDs)))
+prefix:bind("shift", "J", prefixFn(getLaunchOrFocusFn("com.apple.Safari")))
 prefix:bind("", "H", prefixFn(getLaunchOrFocusFn("com.apple.finder")))
 prefix:bind("", "K", prefixFn(getLaunchOrFocusFn("com.tinyspeck.slackmacgap")))
 prefix:bind("", "T", prefixFn(getLaunchOrFocusFn("com.microsoft.teams2")))
