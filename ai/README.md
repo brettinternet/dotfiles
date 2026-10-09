@@ -57,7 +57,7 @@ Pi combines `pi/profiles/common.json` with the selected generated overlay. `code
 
 Package sources live in `pi/profiles/common.json` and are unpinned: npm packages follow the latest release, while Git packages follow their default branch. After changing sources, rerender the active profile with `pi-profile use <name>`. Run `make update-pi` to update installed packages and refresh model catalogs.
 
-`pi-subagents` and `pi-extensions` track their upstream Git repositories. The subagents extension is enabled; packaged skills remain disabled. Restart Pi after updating and after owned background work has finished; creating a fresh session alone does not reload cached extensions.
+`pi-subagents` tracks npm's `latest` tag; `pi-extensions` tracks its upstream Git repository. The subagents extension is enabled; packaged skills remain disabled. Restart Pi after updating and after owned background work has finished; creating a fresh session alone does not reload cached extensions.
 
 Pi uses its built-in MCP support, not `pi-mcp-adapter`. Configure personal servers in `~/.pi/agent/mcp.json` and project servers in `.pi/mcp.json`; the built-in loader does not discover shared `.mcp.json` files. For a new project, copy the desired entries from `project/.mcp.json` into `.pi/mcp.json`. Run `pi mcp list` to validate connections and `/reload` after changes. MCP tools use built-in `codemode` / `tool_search` rather than the adapter's `mcp` / `mcpScript` tools.
 
