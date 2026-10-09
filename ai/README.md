@@ -55,9 +55,9 @@ Pi combines `pi/profiles/common.json` with the selected generated overlay. `code
 
 ## Pi extensions and MCP
 
-Package versions live in `pi/profiles/common.json`. After changing a pin, rerender the active profile with `pi-profile use <name>` and run `pi install npm:<package>@<version>` for that package. `pi update --extensions` keeps pinned versions and does not necessarily replace an already-installed older pin.
+Package sources live in `pi/profiles/common.json` and are unpinned: npm packages follow the latest release, while Git packages follow their default branch. After changing sources, rerender the active profile with `pi-profile use <name>`. Run `make update-pi` to update installed packages and refresh model catalogs.
 
-`pi-subagents` is pinned to an upstream commit containing 0.76.0 plus the merged queued-completion reload fix ([PR #2687](https://github.com/nicobailon/pi-subagents/pull/2687)). Keep this pin until an upstream release includes that fix, then switch to the released package. Its extension is enabled; packaged skills remain disabled. `pi-extensions` is pinned to the companion registry consumer ([PR #5](https://github.com/brettinternet/pi-extensions/pull/5)). Install both exact Git sources from `pi/profiles/common.json` with `pi install <source>`, then rerender the active profile to replace old fork or npm declarations. Leave old package files in place while existing sessions may still use them. Restart Pi after owned background work has finished; creating a fresh session alone does not reload cached extensions.
+`pi-subagents` and `pi-extensions` track their upstream Git repositories. The subagents extension is enabled; packaged skills remain disabled. Restart Pi after updating and after owned background work has finished; creating a fresh session alone does not reload cached extensions.
 
 Pi uses its built-in MCP support, not `pi-mcp-adapter`. Configure personal servers in `~/.pi/agent/mcp.json` and project servers in `.pi/mcp.json`; the built-in loader does not discover shared `.mcp.json` files. For a new project, copy the desired entries from `project/.mcp.json` into `.pi/mcp.json`. Run `pi mcp list` to validate connections and `/reload` after changes. MCP tools use built-in `codemode` / `tool_search` rather than the adapter's `mcp` / `mcpScript` tools.
 
