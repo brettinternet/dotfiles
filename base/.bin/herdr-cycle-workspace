@@ -1,0 +1,29 @@
+#!/bin/sh
+set -eu
+
+case "${1:-}" in
+  next|previous) ;;
+  *) echo "usage: herdr-cycle-workspace next|previous" >&2; exit 2 ;;
+esac
+
+herdr_bin=${HERDR_BIN_PATH:-herdr}
+workspace_id=$(
+  "$herdr_bin" workspace list |
+    jq -r --arg direction "$1" --arg active "${HERDR_ACTIVE_WORKSPACE_ID:-}" '
+      .result.workspaces
+      | if $direction == "previous" then reverse else . end
+      | . as $workspaces
+      | map(if $active != "" then .workspace_id == $active else .focused == true end)
+      | index(true) as $index
+      | if $index == null then empty else
+          first(
+            range(1; ($workspaces | length) + 1) as $offset
+            | $workspaces[($index + $offset) % ($workspaces | length)]
+            | select(.worktree.is_linked_worktree != true)
+            | .workspace_id
+          ) // empty
+        end
+    '
+)
+[ -n "$workspace_id" ] || exit 0
+exec "$herdr_bin" workspace focus "$workspace_id"
