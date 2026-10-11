@@ -1,7 +1,7 @@
 #:schema https://mise.en.dev/schema/mise.json
 
 [tool_alias]
-hunk = "github:brettinternet/hunk"
+hunk = "github:modem-dev/hunk"
 
 [tools]
 # personal
@@ -16,7 +16,7 @@ ruby = "latest"
 uv = "latest"
 bun = "latest"
 k9s = "latest"
-hunk = { version = "v0.22.0-hunk-guide.1", matching_regex = '^hunkdiff-darwin-arm64\.tar\.gz$', strip_components = 1, checksum = "sha256:88108c1f072e1d7c1705ecb21656aea4c9fa117f969839ea53ad53dd51f3590c" }
+hunk = { version = "v0.23.0", matching_regex = '^hunkdiff-darwin-arm64\.tar\.gz$', strip_components = 1, checksum = "sha256:ae42cfe52798a4f51d25f63ceb8685ca2a6cb3039a124d6a6fc172a112f8d6b8" }
 gh = { version = "latest", postinstall = "gh extension install github/gh-stack --force" }
 biome = "latest"
 "vfox:jdx/vfox-eza" = "latest"
