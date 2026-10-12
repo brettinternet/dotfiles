@@ -335,9 +335,10 @@ const BASH_ARGUMENT_KEYS = new Set(["command", "timeout"]);
 const ASSIGNMENT = /^[A-Za-z_][A-Za-z0-9_]*=/;
 const DYNAMIC_PATH = /(^|[^\\])\$|[*?\[{]/;
 
-function shellWords(command: string): string[] | undefined {
+function shellWords(command: string, ignoreNullRedirections = false): string[] | undefined {
   const words: string[] = [];
   let word = "";
+  let wordStart = 0;
   let quote: Quote | undefined;
   let escaped = false;
 
@@ -369,9 +370,21 @@ function shellWords(command: string): string[] | undefined {
       quote = index > 0 && command[index - 1] === "$" ? "ansi" : "single";
       continue;
     }
+    if (ignoreNullRedirections && /[<>]/.test(character) && !/[<>]/.test(command[index - 1] ?? "")) {
+      const redirection = command.slice(index).match(/^(?:>>|>\||<>|>|<)[ \t]*(?:\/dev\/null|"\/dev\/null"|'\/dev\/null')(?=$|[\s;&|<>])/);
+      if (redirection) {
+        // Only unquoted digits immediately before the operator are an FD.
+        if (word && !/^\d+$/.test(command.slice(wordStart, index))) words.push(word);
+        word = "";
+        index += redirection[0].length - 1;
+        wordStart = index + 1;
+        continue;
+      }
+    }
     if (/\s/.test(character)) {
       if (word) words.push(word);
       word = "";
+      wordStart = index + 1;
       continue;
     }
     if (character === "`" || (character === "$" && command[index + 1] === "(")) return undefined;
@@ -469,7 +482,7 @@ export function localBashIntegrityDecision(input: unknown, cwd: string, allowedR
   }
   let effectiveCwd = cwd;
   for (const clause of clauses) {
-    const parsedWords = shellWords(clause);
+    const parsedWords = shellWords(clause, true);
     if (!parsedWords || parsedWords.length === 0) continue;
     const words = commandWords(parsedWords);
     const executable = words[0]?.split("/").at(-1);
