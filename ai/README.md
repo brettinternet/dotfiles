@@ -67,7 +67,7 @@ For host-local servers shared by all Pi sessions, edit `~/.pi/agent/mcp.json` di
 
 ### Pi directory access
 
-The local `dcg-guard` extension restricts Bash `cd`, `rg`, and `grep` paths to the session root by default. It is a command guard, **not a filesystem sandbox**: other commands, file tools, and extensions are not confined by these path checks.
+The local `dcg-guard` extension restricts Bash `cd`, `rg`, and `grep` paths to the session root by default. Shell redirections to `/dev/null` (such as `2>/dev/null`) need no access grant; using it as a search path still requires one. It is a command guard, **not a filesystem sandbox**: other commands, file tools, and extensions are not confined by these path checks.
 
 Run `/reload` once after updating the extension. Thereafter, access changes take effect immediately:
 

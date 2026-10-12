@@ -144,6 +144,37 @@ describe("local Bash integrity policy", () => {
     expect(localBashIntegrityDecision({ command }, cwd).deny).toBe(true);
   });
 
+  test.each([
+    "rg needle . > /dev/null",
+    "rg needle . 2>/dev/null",
+    "grep needle . 2> '/dev/null'",
+    'rg needle . >>"/dev/null"',
+    "rg needle . < /dev/null",
+    "rg needle . >/dev/null 2>&1",
+    "rg needle . &>/dev/null",
+    "rg 2>/dev/null needle .",
+    "rg needle>/dev/null .",
+    ">/dev/null rg needle .",
+  ])("allows null-device redirections without a directory grant: %s", (command: string) => {
+    expect(localBashIntegrityDecision({ command }, cwd).deny).toBe(false);
+  });
+
+  test.each([
+    "rg needle /dev/null",
+    "rg needle /dev/zero",
+    "rg needle . > /dev/zero",
+    "rg needle . > /dev/null-extra",
+    "rg '> /dev/null' ../outside",
+    "rg needle . \\> /dev/null",
+    "rg needle ../outside >/dev/null",
+    "rg 2>/dev/null needle ../outside",
+    'rg "2">/dev/null ../outside',
+    "rg needle>/dev/null ../outside",
+    ">/dev/null rg needle ../outside",
+  ])("does not let null redirections exempt search paths: %s", (command: string) => {
+    expect(localBashIntegrityDecision({ command }, cwd).deny).toBe(true);
+  });
+
   test("rejects a search through a symlink outside the session root", () => {
     const root = mkdtempSync(join(tmpdir(), "dcg-guard-root-"));
     const outside = mkdtempSync(join(tmpdir(), "dcg-guard-outside-"));
