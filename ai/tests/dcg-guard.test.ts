@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtempSync, realpathSync, rmdirSync, symlinkSync, unlinkSync } from "node:fs";
+import { mkdtempSync, realpathSync, rmdirSync, symlinkSync, unlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -10,6 +10,7 @@ import {
   localBashIntegrityDecision,
   localDestructiveTargetDecision,
   resetGitOwnership,
+  verifyCheckoutOwnership,
 } from "../pi/extensions/dcg-guard";
 
 const home = "/Users/example";
@@ -210,6 +211,46 @@ describe("local Bash integrity policy", () => {
 });
 
 describe("Git ownership discovery", () => {
+  test("requires matching creation and live evidence for sibling checkouts", async () => {
+    const gitDir = mkdtempSync(join(tmpdir(), "dcg-ownership-"));
+    const receiptPath = join(gitDir, "agent-creation.json");
+    const checkout = { gitDir, repoKey, root: managedCwd, branch: "agent-work" };
+    const receipt = {
+      version: 1, checkout_path: managedCwd, branch: "agent-work",
+      session_id: "creator", creation_commit: "a".repeat(40),
+    };
+    const listing = {
+      schema: 2, repo: { default_branch: "main" },
+      items: [{ branch: "agent-work", worktree: {
+        path: managedCwd, main: false, branch_mismatch: false, duplicate_branch: false,
+      } }],
+    };
+    const run = async () => JSON.stringify(listing);
+    try {
+      expect(await verifyCheckoutOwnership(checkout, "creator", "/primary", run)).toBe(false);
+      expect(await verifyCheckoutOwnership(checkout, "creator", managedCwd, run)).toBe(true);
+      writeFileSync(receiptPath, JSON.stringify(receipt));
+      expect(await verifyCheckoutOwnership(checkout, "creator", "/primary", run)).toBe(true);
+      expect(await verifyCheckoutOwnership(checkout, "other", managedCwd, run)).toBe(false);
+      expect(await verifyCheckoutOwnership({ ...checkout, branch: "changed" }, "creator", managedCwd, run)).toBe(false);
+      expect(await verifyCheckoutOwnership({ ...checkout, gitDir: repoKey }, "creator", managedCwd, run)).toBe(false);
+      listing.items[0].worktree.main = true;
+      expect(await verifyCheckoutOwnership(checkout, "creator", managedCwd, run)).toBe(false);
+      listing.items[0].worktree.main = false;
+      listing.repo.default_branch = "agent-work";
+      expect(await verifyCheckoutOwnership(checkout, "creator", managedCwd, run)).toBe(false);
+      listing.repo.default_branch = "main";
+      listing.items = [];
+      expect(await verifyCheckoutOwnership(checkout, "creator", managedCwd, run)).toBe(false);
+      expect(await verifyCheckoutOwnership(checkout, "creator", managedCwd, async () => undefined)).toBe(false);
+      writeFileSync(receiptPath, "{");
+      expect(await verifyCheckoutOwnership(checkout, "creator", managedCwd, run)).toBe(false);
+    } finally {
+      unlinkSync(receiptPath);
+      rmdirSync(gitDir);
+    }
+  });
+
   test("distinguishes a linked worktree from a primary checkout with a separate Git directory", () => {
     expect(isLinkedGitCheckout({ gitDir: "/repo/.git/worktrees/task", repoKey: "/repo/.git" })).toBe(true);
     expect(isLinkedGitCheckout({ gitDir: "/external/repo.git", repoKey: "/external/repo.git" })).toBe(false);
@@ -233,6 +274,40 @@ describe("Git ownership discovery", () => {
 });
 
 describe("dcg user approval", () => {
+  test.each(["-q", "--quiet"])("accepts harmless deletion flag %s without relaxing ownership", async (flag) => {
+    const blocked = { deny: true, reason: "Branch deletion.", ruleId: "core.git:branch-force-delete" };
+    for (const branch of ["agent-work", "user-feature"]) {
+      const decision = await applyManagedCleanup(
+        blocked, `git branch -D ${branch} ${flag}`,
+        { hasUI: false, ui: { confirm: async () => false } },
+      );
+      expect(decision.deny).toBe(branch === "user-feature");
+    }
+  });
+
+  test.each(["git branch -r -D origin/main", "git branch -D agent-work --unknown"])(
+    "distinguishes unsupported options from absent ownership: %s", async (command) => {
+      const decision = await applyManagedCleanup(
+        { deny: true, reason: "Branch deletion.", ruleId: "core.git:branch-force-delete" },
+        command, { hasUI: false, ui: { confirm: async () => false } },
+      );
+      expect(decision.deny).toBe(true);
+      expect(decision.reason).toContain("unsupported shell syntax or branch options");
+      expect(decision.reason).not.toContain("Ownership could not be verified");
+    },
+  );
+
+  test("does not blame or exempt executable deletion bundled with a heredoc", async () => {
+    const decision = await applyManagedCleanup(
+      { deny: true, reason: "Branch deletion.", ruleId: "core.git:branch-force-delete" },
+      "git branch -D agent-work -q && python3 - <<'EOF'\nprint('ledger')\nEOF",
+      { hasUI: false, ui: { confirm: async () => false } },
+    );
+    expect(decision.deny).toBe(true);
+    expect(decision.reason).toContain("Run Git cleanup separately");
+    expect(decision.reason).not.toContain("may have triggered");
+  });
+
   test("allows branch deletion when every other command passes dcg", async () => {
     const checked: string[] = [];
     const command =
@@ -440,6 +515,17 @@ describe("dcg user approval", () => {
     expect(checked).toEqual(["git status --short --branch", "git log -1 --oneline"]);
   });
 
+  test("does not exempt reset of a protected branch in a linked checkout", async () => {
+    const decision = await applyUserApproval(
+      { deny: true, reason: "Reset discards changes.", ruleId: "core.git:reset-hard" },
+      "git reset --hard HEAD",
+      { hasUI: false, ui: { confirm: async () => false }, cwd: managedCwd },
+      undefined, undefined, ownership,
+      async () => ({ repoKey, root: managedCwd, branch: "main" }),
+    );
+    expect(decision.deny).toBe(true);
+  });
+
   test("does not exempt reset in the primary checkout", async () => {
     const blocked = {
       deny: true,
@@ -459,7 +545,7 @@ describe("dcg user approval", () => {
     expect(decision).toEqual(blocked);
   });
 
-  test("explains destructive command text embedded in a heredoc", async () => {
+  test("reports that heredoc commands cannot receive ownership exemptions", async () => {
     const decision = await applyUserApproval(
       {
         deny: true,
@@ -475,7 +561,7 @@ describe("dcg user approval", () => {
     );
 
     expect(decision.deny).toBe(true);
-    expect(decision.reason).toContain("Destructive command text inside a heredoc may have triggered this rule");
+    expect(decision.reason).toContain("Ownership exemptions are not evaluated for commands containing heredocs");
     expect(decision.reason).toContain("`edit` or `write`");
   });
 
@@ -520,7 +606,6 @@ describe("dcg user approval", () => {
 
   test.each([
     "git branch -D user-feature",
-    "git branch -r -D origin/main",
     "git branch -f main HEAD~1",
   ])("does not exempt an unowned, remote, or default branch: %s", async (command) => {
     const blocked = {

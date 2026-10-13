@@ -72,7 +72,7 @@ const HEREDOC = /<<-?\s*(?:'[^'\n]+'|"[^"\n]+"|[A-Za-z_][A-Za-z0-9_]*)/;
 const BRANCH_OWNERSHIP_GUIDANCE =
   "Ownership could not be verified. For a Worktrunk-managed checkout, verify it with the session creation receipt and `wt list --format=json`, then run `wt remove <branch> --foreground --format=json` from a surviving checkout.";
 const HEREDOC_GUIDANCE =
-  "Destructive command text inside a heredoc may have triggered this rule. If it is fixture or documentation data rather than executable code, use the `edit` or `write` tool and run validation separately.";
+  "Ownership exemptions are not evaluated for commands containing heredocs. Run Git cleanup separately. For fixture or documentation data, use the `edit` or `write` tool and run validation separately.";
 
 export type GitOwnership = {
   managedRoots: Map<string, string>;
@@ -178,7 +178,7 @@ function deletedBranches(arguments_: string): string[] | undefined {
   for (const word of words) {
     if (!optionsEnded && word === "--") {
       optionsEnded = true;
-    } else if (!optionsEnded && ["-d", "-D", "--delete"].includes(word)) {
+    } else if (!optionsEnded && ["-d", "-D", "--delete", "-q", "--quiet"].includes(word)) {
       continue;
     } else if (!optionsEnded && word.startsWith("-")) {
       return undefined;
@@ -217,6 +217,7 @@ async function isOwnedCleanup(
   if (!checkout) return false;
   if (git.subcommand === "branch") return targetsManagedBranch(git, checkout.repoKey, ownership);
   if (ownership.managedRoots.get(checkout.root) !== checkout.repoKey) return false;
+  if (checkout.branch && ownership.protectedBranches.has(branchKey(checkout.repoKey, checkout.branch))) return false;
 
   if (git.subcommand === "restore") return true;
   if (git.subcommand === "checkout") return /^--\s+\S/.test(git.arguments);
@@ -224,6 +225,7 @@ async function isOwnedCleanup(
 }
 
 function parseCommandSequence(command: string, cwd: string): CommandSequence {
+  if (HEREDOC.test(command)) return { clauses: [], valid: false };
   const commands = splitShellSequence(command, true);
   if (!commands) return { clauses: [], valid: false };
 
@@ -622,7 +624,48 @@ export function resetGitOwnership(ownership: GitOwnership): void {
   ownership.protectedBranches.clear();
 }
 
-async function refreshGitOwnership(ownership: GitOwnership, cwd: string): Promise<void> {
+// Receipts are creation evidence, not transferable leases. Cross-session adoption
+// remains an explicit approval until a machine-verifiable adoption protocol exists.
+export async function verifyCheckoutOwnership(
+  checkout: GitCheckout,
+  sessionId: string,
+  sessionRoot: string | undefined,
+  run: typeof commandOutput = commandOutput,
+): Promise<boolean> {
+  if (!isLinkedGitCheckout(checkout)) return false;
+  const receiptPath = join(checkout.gitDir, "agent-creation.json");
+  let receipt;
+  try {
+    if (!lstatSync(receiptPath).isFile()) return false;
+    receipt = JSON.parse(readFileSync(receiptPath, "utf8"));
+  } catch (error) {
+    // Plain Git fallback applies only inside this session's linked checkout.
+    // Invalid receipts must never fall back to implicit ownership.
+    return (error as NodeJS.ErrnoException).code === "ENOENT" && checkout.root === sessionRoot;
+  }
+  if (
+    receipt?.version !== 1 || !sessionId || receipt.session_id !== sessionId ||
+    receipt.checkout_path !== checkout.root || receipt.branch !== (checkout.branch ?? null) ||
+    typeof receipt.creation_commit !== "string" || !/^[a-f0-9]{40,64}$/.test(receipt.creation_commit)
+  ) return false;
+
+  try {
+    const output = await run("wt", ["list", "--format=json"], checkout.root);
+    const listing = JSON.parse(output ?? "");
+    return listing.schema === 2 && Array.isArray(listing.items) &&
+      listing.repo?.default_branch !== checkout.branch &&
+      listing.items.some((item: {
+        branch?: string;
+        worktree?: { path?: string; main?: boolean; branch_mismatch?: boolean; duplicate_branch?: boolean };
+      }) => item.worktree?.path === checkout.root && item.worktree.main === false &&
+        item.worktree.branch_mismatch === false && item.worktree.duplicate_branch === false &&
+        (item.branch ?? null) === (checkout.branch ?? null));
+  } catch {
+    return false;
+  }
+}
+
+async function refreshGitOwnership(ownership: GitOwnership, cwd: string, sessionId: string): Promise<void> {
   resetGitOwnership(ownership);
 
   const sessionCheckout = await gitCheckout(cwd);
@@ -636,11 +679,33 @@ async function refreshGitOwnership(ownership: GitOwnership, cwd: string): Promis
     ownership.repoRoots.set(primaryRoot, sessionCheckout.repoKey);
     ownership.repoRoots.set(sessionCheckout.root, sessionCheckout.repoKey);
     await protectRepositoryBranches(ownership, primaryRoot, sessionCheckout.repoKey);
-    if (linked) {
+    if (linked && await verifyCheckoutOwnership(sessionCheckout, sessionId, sessionCheckout.root)) {
       ownership.managedRoots.set(sessionCheckout.root, sessionCheckout.repoKey);
       if (sessionCheckout.branch) {
         ownership.managedBranches.add(branchKey(sessionCheckout.repoKey, sessionCheckout.branch));
       }
+    }
+  }
+
+  if (sessionCheckout) {
+    try {
+      const listing = JSON.parse(await commandOutput("wt", ["list", "--format=json"], sessionCheckout.root) ?? "");
+      if (listing.schema === 2 && Array.isArray(listing.items)) {
+        if (typeof listing.repo?.default_branch === "string") {
+          ownership.protectedBranches.add(branchKey(sessionCheckout.repoKey, listing.repo.default_branch));
+        }
+        for (const item of listing.items) {
+          if (typeof item.worktree?.path !== "string" || item.worktree.main !== false) continue;
+          const checkout = await gitCheckout(item.worktree.path);
+          if (!checkout || checkout.repoKey !== sessionCheckout.repoKey ||
+            !await verifyCheckoutOwnership(checkout, sessionId, sessionCheckout.root)) continue;
+          ownership.repoRoots.set(checkout.root, checkout.repoKey);
+          ownership.managedRoots.set(checkout.root, checkout.repoKey);
+          if (checkout.branch) ownership.managedBranches.add(branchKey(checkout.repoKey, checkout.branch));
+        }
+      }
+    } catch {
+      // Missing or malformed Worktrunk evidence cannot grant sibling ownership.
     }
   }
 
@@ -676,8 +741,12 @@ async function refreshGitOwnership(ownership: GitOwnership, cwd: string): Promis
       const branch = await commandOutput("git", ["-C", checkoutPath, "symbolic-ref", "--quiet", "--short", "HEAD"]);
       if (PROTECTED_WORKSPACE_LABEL.test(workspace.label ?? "")) {
         if (branch) ownership.protectedBranches.add(branchKey(repoKey, branch));
+        ownership.managedRoots.delete(checkoutPath);
         continue;
       }
+      const checkout = await gitCheckout(checkoutPath);
+      if (!checkout || checkout.repoKey !== repoKey ||
+        !await verifyCheckoutOwnership(checkout, sessionId, sessionCheckout?.root)) continue;
       ownership.managedRoots.set(checkoutPath, repoKey);
       if (branch) ownership.managedBranches.add(branchKey(repoKey, branch));
     }
@@ -757,8 +826,13 @@ export async function applyUserApproval(
 
   const originalRuleId = decision.ruleId;
   let ownershipVerified = false;
+  let unsupportedSyntax = false;
   if (EXEMPTED_GIT_RULES.has(decision.ruleId) && ctx.cwd && ownership) {
     const sequence = parseCommandSequence(command, ctx.cwd);
+    unsupportedSyntax = !sequence.valid || sequence.clauses.some((clause) => {
+      const git = parseGitCommand(clause.command, clause.cwd);
+      return git?.subcommand === "branch" && DELETE_OPTION.test(git.arguments) && !deletedBranches(git.arguments);
+    });
     if (sequence.valid) {
       const ownershipChecks = await Promise.all(
         sequence.clauses.map((clause) => isOwnedCleanup(clause.command, clause.cwd, ownership, resolveCheckout)),
@@ -775,7 +849,10 @@ export async function applyUserApproval(
   }
 
   if (originalRuleId === "core.git:branch-force-delete" && !ownershipVerified) {
-    decision = { ...decision, reason: `${decision.reason}\n\n${BRANCH_OWNERSHIP_GUIDANCE}` };
+    const guidance = unsupportedSyntax
+      ? "Ownership exemption could not be evaluated: unsupported shell syntax or branch options. Run cleanup as a separate, literal command; unknown options require approval."
+      : BRANCH_OWNERSHIP_GUIDANCE;
+    decision = { ...decision, reason: `${decision.reason}\n\n${guidance}` };
   }
   if (EXEMPTED_GIT_RULES.has(originalRuleId) && HEREDOC.test(command) && !ownershipVerified) {
     decision = { ...decision, reason: `${decision.reason}\n\n${HEREDOC_GUIDANCE}` };
@@ -996,7 +1073,7 @@ export default function dcgGuard(pi: ExtensionAPI): void {
   };
 
   pi.on("session_start", async (_event, ctx) => {
-    await refreshGitOwnership(ownership, ctx.cwd);
+    await refreshGitOwnership(ownership, ctx.cwd, ctx.sessionManager.getSessionId());
   });
 
   pi.on("tool_call", async (event, ctx) => {
@@ -1006,7 +1083,7 @@ export default function dcgGuard(pi: ExtensionAPI): void {
 
     const command = String(event.input?.command ?? "");
     const refreshedOwnership = WORKTREE_LIFECYCLE_COMMAND.test(command);
-    if (refreshedOwnership) await refreshGitOwnership(ownership, ctx.cwd);
+    if (refreshedOwnership) await refreshGitOwnership(ownership, ctx.cwd, ctx.sessionManager.getSessionId());
     decision = localDestructiveTargetDecision(command);
     if (decision.deny) return { block: true, reason: decision.reason };
 
@@ -1016,7 +1093,7 @@ export default function dcgGuard(pi: ExtensionAPI): void {
       decision = UNAVAILABLE;
     }
     if (!refreshedOwnership && decision.ruleId && EXEMPTED_GIT_RULES.has(decision.ruleId)) {
-      await refreshGitOwnership(ownership, ctx.cwd);
+      await refreshGitOwnership(ownership, ctx.cwd, ctx.sessionManager.getSessionId());
     }
     decision = await applyUserApproval(decision, command, ctx, pi.events, dcgDecision, ownership);
     if (decision.deny) return { block: true, reason: decision.reason };
