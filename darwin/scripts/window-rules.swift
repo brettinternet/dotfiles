@@ -186,6 +186,7 @@ struct WindowRules {
         }
         let watcher = Watcher()
         watcher.start()
+        log("watching")
         RunLoop.main.run()
     }
 }
