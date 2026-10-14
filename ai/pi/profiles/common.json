@@ -15,7 +15,6 @@
   "packages": [
     { "source": "npm:pi-subagents@latest", "skills": [] },
     "npm:pi-web-access",
-    "npm:pi-chrome",
     "npm:@sting8k/pi-vcc",
     "npm:@narumitw/pi-btw",
     "git:github.com/brettinternet/pi-extensions"
