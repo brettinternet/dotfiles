@@ -9,7 +9,7 @@
   "defaultProjectTrust": "ask",
   "steeringMode": "all",
   "followUpMode": "one-at-a-time",
-  "tuiMode": "fullscreen",
+  "tuiMode": "regular",
   "defaultTools": ["+codemode"],
   "extensions": ["$DOTFILES/ai/pi/extensions/dcg-guard.ts"],
   "packages": [
