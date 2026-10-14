@@ -1072,8 +1072,9 @@ export default function dcgGuard(pi: ExtensionAPI): void {
     protectedBranches: new Set(),
   };
 
-  pi.on("session_start", async (_event, ctx) => {
-    await refreshGitOwnership(ownership, ctx.cwd, ctx.sessionManager.getSessionId());
+  pi.on("session_start", async () => {
+    // Discover ownership only when a tool call needs it; never carry grants across sessions.
+    resetGitOwnership(ownership);
   });
 
   pi.on("tool_call", async (event, ctx) => {
