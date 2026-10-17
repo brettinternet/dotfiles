@@ -51,7 +51,11 @@ elif command == "pane run":
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     sys.exit(0)  # Herdr pane run returns no JSON; command exit is not submission exit.
 elif command == "agent start":
-    result = {"agent": {"pane_id": "w9:p1", "name": args[2]}}
+    result = {"agent": {**state.get("started", {}), "pane_id": "w9:p1", "name": args[2]}}
+elif command == "agent get":
+    snapshot = state["snapshots"].pop(0)
+    pathlib.Path(os.environ["STATE"]).write_text(json.dumps(state))
+    result = {"agent": snapshot}
 else:
     raise AssertionError(args)
 print(json.dumps({"result": result}))
@@ -146,6 +150,58 @@ class AgentLauncherTests(unittest.TestCase):
         self.run_agent("--list", "--herdr-session", "other", "--dry-run")
         self.run_agent("alice", "--list", code=2)
         self.assertEqual([], self.commands())
+
+    def test_agent_status_routes_exact_name_without_mutation(self) -> None:
+        snapshot = {"name": "alice", "agent_status": "working", "pane_id": "w1:p1"}
+        self.state.write_text(json.dumps({"snapshots": [snapshot]}))
+        result = self.run_agent("--status", "alice", "--herdr-session", "other")
+        self.assertEqual(snapshot, json.loads(result.stdout)["result"]["agent"])
+        self.assertEqual([["--session", "other", "agent", "get", "alice"]], self.commands())
+        self.calls.write_text("")
+        self.run_agent("--status", "alice", "--herdr-session", "other", "--dry-run")
+        self.run_agent("--status", "alice", "--close-on-done", code=2)
+        self.run_agent("alice", "--close-on-done", code=2)
+        self.assertEqual([], self.commands())
+
+    def watch_identity(self) -> dict:
+        self.environment.update(HERDR_ENV="1", HERDR_WORKSPACE_ID="caller")
+        return {"pane_id": "w9:p1", "name": "alice", "terminal_id": "term-1", "agent": "pi",
+                "agent_session": {"kind": "path", "value": "/session/one"},
+                "agent_status": "idle", "state_change_seq": 1}
+
+    def test_close_on_done_requires_work_and_rechecks_completion(self) -> None:
+        identity = self.watch_identity()
+        statuses = ["idle", "done", "working", "idle", "done", "done"]
+        snapshots = [{**identity, "agent_status": status, "state_change_seq": min(index, 4) + 1}
+                     for index, status in enumerate(statuses)]
+        self.state.write_text(json.dumps({"started": identity, "snapshots": snapshots}))
+        self.run_agent("alice", "-t", "--close-on-done")
+        calls = self.commands()
+        self.assertEqual(6, sum(call[:2] == ["agent", "get"] for call in calls))
+        self.assertEqual(["pane", "close", "w9:p1"], calls[-1])
+        self.assertEqual(1, sum(call[:2] == ["pane", "close"] for call in calls))
+
+    def test_close_on_done_cancels_on_uncertainty_without_closing(self) -> None:
+        identity = self.watch_identity()
+        working = {**identity, "agent_status": "working", "state_change_seq": 2}
+        done = {**identity, "agent_status": "done", "state_change_seq": 3}
+        cases = [
+            {"snapshots": [working, {**done, "agent_status": "blocked"}]},
+            {"snapshots": [working, {**done, "agent_status": "unknown"}]},
+            {"snapshots": [working, done, {**done, "agent_session": {"value": "/session/two"}}]},
+            {"snapshots": [working, done, {**working, "state_change_seq": 4}]},
+            {"fail": "agent get"},
+            {"started": {}},
+            {"started": {**working, "state_change_seq": None}, "snapshots": [done, done]},
+            {"started": {**identity, "agent_status": "blocked"}, "snapshots": [working, done, done]},
+        ]
+        for state in cases:
+            with self.subTest(state=state):
+                self.calls.write_text("")
+                self.state.write_text(json.dumps({"started": identity, **state}))
+                result = self.run_agent("alice", "-t", "--close-on-done", code=1)
+                self.assertIn("retained Herdr pane w9:p1", result.stderr)
+                self.assertFalse(any(call[:2] == ["pane", "close"] for call in self.commands()))
 
     def test_local_exec_preserves_argv_environment_and_exit_status(self) -> None:
         literal = "quotes ' \" $HOME $(touch should-not-exist)\nnext line"
