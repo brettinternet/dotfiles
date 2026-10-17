@@ -32,12 +32,14 @@ if command == "agent list":
     result = {"agents": state.get("agents", [])}
 elif command == "workspace list":
     result = {"workspaces": state.get("workspaces", [])}
+elif command == "tab list":
+    result = {"tabs": state.get("tabs", [])}
 elif command == "pane list":
     result = {"panes": state["panes"][args[-1]]}
 elif command in ("workspace create", "tab create", "pane split"):
     result = {"root_pane": {"pane_id": "w9:p1"},
               "pane": {"pane_id": "w9:p1"}, "tab": {"tab_id": "w9:t1"}}
-elif command in ("tab rename", "pane rename"):
+elif command in ("tab rename", "pane rename", "pane close"):
     result = {}
 elif command == "agent start":
     result = {"agent": {"pane_id": "w9:p1", "name": args[2]}}
@@ -137,6 +139,66 @@ class AgentLauncherTests(unittest.TestCase):
                     self.assertEqual(["--workspace", "caller", "--label", "alice"], calls[1][2:6])
                 else:
                     self.assertEqual(["tab", "rename", "w9:t1", "review"], calls[-3])
+
+    def reuse_state(self) -> dict:
+        self.environment.update(HERDR_ENV="1", HERDR_WORKSPACE_ID="w1")
+        return {"agents": [{"name": "alice", "pane_id": "w1:p1"}],
+                "tabs": [{"label": "review", "tab_id": "w1:t1"}],
+                "panes": {"w1": [{"pane_id": "w1:p1", "tab_id": "w1:t1"}]}}
+
+    def test_tab_reuse_preserves_agent_unless_replacement_requested(self) -> None:
+        self.state.write_text(json.dumps(self.reuse_state()))
+        for flag, name in (("--reuse-tab", "alice-2"), ("--reuse-pane", "alice")):
+            with self.subTest(flag=flag):
+                self.calls.write_text("")
+                self.run_agent("alice", "-t", "review", flag)
+                calls = self.commands()
+                split = next(call for call in calls if call[:2] == ["pane", "split"])
+                self.assertEqual("w1:p1", split[2])
+                self.assertIn("--no-focus", split)
+                self.assertIn("AGENT_NAME=alice", split)
+                self.assertEqual(["agent", "start", name], calls[-1][:3])
+                closes = [call for call in calls if call[:2] == ["pane", "close"]]
+                self.assertEqual([["pane", "close", "w1:p1"]] if flag == "--reuse-pane" else [], closes)
+                if closes:
+                    self.assertLess(calls.index(split), calls.index(closes[0]))
+                    self.assertEqual(closes[0], calls[-2])
+
+    def test_replacement_refuses_ambiguous_or_unrelated_targets_and_failed_split(self) -> None:
+        for problem in ("duplicate tab", "other tab", "missing tab", "split failure", "rename failure"):
+            with self.subTest(problem=problem):
+                self.calls.write_text("")
+                state = self.reuse_state()
+                if problem == "duplicate tab":
+                    state["tabs"].append({"label": "review", "tab_id": "w1:t2"})
+                elif problem == "other tab":
+                    state["panes"]["w1"][0]["tab_id"] = "w1:t2"
+                elif problem == "missing tab":
+                    state["tabs"] = []
+                else:
+                    state["fail"] = "pane rename" if problem == "rename failure" else "pane split"
+                self.state.write_text(json.dumps(state))
+                self.run_agent("alice", "-t", "review", "--reuse-pane", "--pane-title", "Review", code=1)
+                self.assertFalse(any(call[:2] in (["pane", "close"], ["agent", "start"],
+                                                ["tab", "create"]) for call in self.commands()))
+
+    def test_close_exact_live_name_and_dry_run(self) -> None:
+        state = self.reuse_state()
+        self.state.write_text(json.dumps(state))
+        self.run_agent("alice", "--close", "--dry-run")
+        self.assertEqual([], self.commands())
+        self.run_agent("alice", "--close", "--herdr-session", "test")
+        self.assertEqual([["--session", "test", "agent", "list"],
+                          ["--session", "test", "pane", "close", "w1:p1"]], self.commands())
+        for agents in ([], state["agents"] * 2):
+            self.calls.write_text("")
+            self.state.write_text(json.dumps({"agents": agents}))
+            self.run_agent("alice", "--close", code=1)
+            self.assertEqual([["agent", "list"]], self.commands())
+        self.calls.write_text("")
+        for options in (("--close", "-t"), ("--reuse-pane",), ("--reuse-tab", "-s")):
+            self.run_agent("alice", *options, code=2)
+        self.assertEqual([], self.commands())
 
     def test_derived_live_name_avoids_collisions(self) -> None:
         self.state.write_text(json.dumps({"agents": [{"name": "auth-review"}, {"name": "auth-review-2"}]}))

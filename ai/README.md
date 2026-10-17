@@ -124,9 +124,24 @@ agent alice -w maintenance -t review
 agent reviewer --herdr-session default -w maintenance -t review -C ~/dev/me/maintenance
 ```
 
-`-w/--workspace` is a **label**, matched together with canonical `-C/--cwd` (default: current directory) against workspace panes. One match gets a fresh tab; no match gets a new workspace with its initial tab renamed; multiple matches fail. Existing tabs and panes are never reused for launches. `-t/--tab` takes an optional title that defaults to NAME, as does the tab when only `-w` is given. `-s/--split` takes an optional direction (`right` by default), targets only the calling pane, and cannot be combined with workspace, tab, or session selection. Put NAME before a bare `-s` or `-t`, since they would otherwise consume it as their value.
+`-w/--workspace` is a **label**, matched together with canonical `-C/--cwd` (default: current directory) against workspace panes. One match always reuses that workspace; no match gets a new workspace with its initial tab renamed; multiple matches fail. Tabs and panes are fresh by default. `-t/--tab` takes an optional title that defaults to NAME, as does the tab when only `-w` is given. `-s/--split` takes an optional direction (`right` by default), targets only the calling pane, and cannot be combined with workspace, tab, or session selection. Put NAME before a bare `-s` or `-t`, since they would otherwise consume it as their value.
 
-Placement uses the inherited Herdr session unless `--herdr-session` is explicit. An explicit session requires `-w`, so it never falls back to another session's focused workspace. Focus is preserved unless `-f/--focus` is supplied. The Herdr live name is derived from NAME (`Auth review` → `auth-review`) and gets a numeric suffix (`auth-review-2`) if taken, so repeated scheduled jobs need no unique name. `--herdr-name` sets an exact live name matching `[a-z][a-z0-9_-]{0,31}` and fails on collision instead. Neither path interrupts an existing agent.
+Placement uses the inherited Herdr session unless `--herdr-session` is explicit. An explicit session requires `-w`, so it never falls back to another session's focused workspace. Focus is preserved unless `-f/--focus` is supplied. The Herdr live name is derived from NAME (`Auth review` → `auth-review`) and gets a numeric suffix (`auth-review-2`) if taken, so repeated scheduled jobs need no unique name. `--herdr-name` sets an exact live name matching `[a-z][a-z0-9_-]{0,31}` and fails on collision instead. Neither path interrupts an existing agent unless `--reuse-pane` is requested.
+
+Reuse is opt-in:
+
+```sh
+agent alice -w maintenance -t review --reuse-tab  # add a split to the matching tab
+agent alice -w maintenance -t review --reuse-pane # replace alice there; implies --reuse-tab
+agent --close alice                              # terminate alice's pane
+agent --close alice --herdr-session default      # also works outside Herdr
+```
+
+`--reuse-tab` matches the exact tab title within the selected workspace; no match creates a tab, and multiple matches fail. `--reuse-pane` matches the exact live name (`--herdr-name` or the derived NAME, without a numeric suffix) within that tab. If absent, it adds a pane; if that name exists elsewhere, it fails rather than replacing an unrelated agent. Both flags require `-w` or `-t` and cannot be combined with `-s`.
+
+Herdr has no in-place process restart: replacement creates a fresh adjacent pane with the requested cwd/environment, closes the old pane, then starts the new agent under the same live name. This terminates the old pane's processes and loses its scrollback; the pane ID changes. A failed start does not restore the old agent. Other panes are preserved.
+
+`--close NAME` requires the exact live name, not a display name or pane ID, and closes only its hosting pane (including all processes there). Missing or ambiguous names fail. Closing the last pane can also remove its tab/workspace. Close accepts `--herdr-session` without `-w` and supports `--dry-run` without contacting Herdr.
 
 `-T/--pane-title TEXT` explicitly labels only the newly created pane; your pane-title plugin respects that label. Omit it to retain dynamic titles. `--startup-timeout SECONDS` controls Herdr's wait for interactive readiness (1–300; default 30), not the duration of the agent's work. Both require Herdr placement.
 
@@ -142,7 +157,7 @@ Use repeatable `-e/--env KEY` to copy exported variables into the new terminal, 
 
 For a scheduled job, pass the prompt as a native argument; see the `review` job in `~/dev/me/maintenance/noon.yaml`.
 
-Herdr launches print the successful `agent start` JSON, including the resolved live name, to stdout. Failed starts return nonzero and leave the created pane in place, reporting its ID when available; inspect it before retrying. A timeout does not prove nothing started. The helper never closes panes or resubmits work.
+Herdr launches print the successful `agent start` JSON, including the resolved live name, to stdout. Failed starts return nonzero and leave the created pane in place, reporting its ID when available; inspect it before retrying. A timeout does not prove nothing started. The helper never retries or resubmits work; it closes panes only for explicit replacement or `--close`.
 
 ## Herdr
 
