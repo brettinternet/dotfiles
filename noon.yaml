@@ -12,8 +12,16 @@ jobs:
     description: Install macOS dotfiles each morning.
     schedule: every day at 7am
     run: make darwin
+    on_failure: >-
+      : "${APPRISE_URLS:?must be exported in the scheduler environment}" &&
+      exec tell --config tell.yaml notify --type failure --title dotfiles
+      "Dotfiles make darwin failed. Check noon logs darwin."
 
   ai:
     description: Install AI dotfiles each morning.
     schedule: every day at 7am
     run: make ai
+    on_failure: >-
+      : "${APPRISE_URLS:?must be exported in the scheduler environment}" &&
+      exec tell --config tell.yaml notify --type failure --title dotfiles
+      "Dotfiles make ai failed. Check noon logs ai."
