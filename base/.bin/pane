@@ -1,14 +1,29 @@
 #!/usr/bin/env python3
 # Run argv in a new Herdr pane; installed by the base dotfiles group.
-#   pane -w test -- echo test
+# Examples:
+#   pane -- echo test                        # new right split; retain output
+#   pane -s down -- bun test --watch          # split below the calling pane
+#   pane -t -- bun test                       # fresh tab titled "bun"
+#   pane -t checks -f -- bun test             # named tab, focused
+#   pane -w test -- echo test                 # reuse workspace by label + cwd
 #   pane -w maintenance -t logs -- tail -f app.log
-#   pane -s down -- bun test --watch
+#                                            # fresh logs tab in that workspace
 #   pane -w test -t checks --reuse-tab -- bun test
+#                                            # add a split in the first matching tab
+#   pane -s -T "Dev server" -- bun dev        # label the created pane
 #   pane -t disposable --close-on-exit -- echo done
+#                                            # close on exit, even on failure
+#   pane -t checks -e CI=true -- bun test     # set a child environment variable
+#   pane -w jobs -e APPRISE_URLS -- ./review  # copy an exported variable
 #   pane --herdr-session default -w jobs -C ~/dev/me/project -- bun test
-#   pane -w test -- sh -c 'echo test; date'  # shell syntax is explicit
+#                                            # launch outside Herdr in an explicit session
+#   pane -w test -t checks --reuse-tab -n -- bun test
+#                                            # preview only; does not contact Herdr
+#   pane -w test -- sh -c 'echo test; date'   # shell syntax is explicit
+#   pane -- printf '%s\n' '$HOME'            # literal argument; no shell expansion
 # Without placement flags, split the calling pane to the right. Commands return
 # to the pane's shell by default, preserving output. --close-on-exit discards it.
+# See `pane --help` and README.md for placement rules and command lifecycle.
 """Run a command in a new Herdr pane, retaining its output by default."""
 from __future__ import annotations
 
