@@ -137,7 +137,7 @@ agent --close alice                              # terminate alice's pane
 agent --close alice --herdr-session default      # also works outside Herdr
 ```
 
-`--reuse-tab` matches the exact tab title within the selected workspace; no match creates a tab, and multiple matches fail. `--reuse-pane` matches the exact live name (`--herdr-name` or the derived NAME, without a numeric suffix) within that tab. If absent, it adds a pane; if that name exists elsewhere, it fails rather than replacing an unrelated agent. Both flags require `-w` or `-t` and cannot be combined with `-s`.
+`--reuse-tab` matches the exact tab title within the selected workspace; no match creates a tab, and multiple matches select the first in Herdr’s returned tab order. `--reuse-pane` matches the exact live name (`--herdr-name` or the derived NAME, without a numeric suffix) within that tab. If absent, it adds a pane; if that name exists elsewhere, it fails rather than replacing an unrelated agent. Both flags require `-w` or `-t` and cannot be combined with `-s`.
 
 Herdr has no in-place process restart: replacement creates a fresh adjacent pane with the requested cwd/environment, closes the old pane, then starts the new agent under the same live name. This terminates the old pane's processes and loses its scrollback; the pane ID changes. A failed start does not restore the old agent. Other panes are preserved.
 
