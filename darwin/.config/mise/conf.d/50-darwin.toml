@@ -15,7 +15,6 @@ hunk = "github:modem-dev/hunk"
 go = { version = "latest", postinstall = 'go env -w GOPATH="$HOME/.go"' }
 rust = { version = "latest", postinstall = "rustup component add rust-analyzer" }
 ruby = "latest"
-uv = "latest"
 bun = "latest"
 k9s = "latest"
 hunk = { version = "v0.23.0", matching_regex = '^hunkdiff-darwin-arm64\.tar\.gz$', strip_components = 1, checksum = "sha256:ae42cfe52798a4f51d25f63ceb8685ca2a6cb3039a124d6a6fc172a112f8d6b8" }
@@ -56,8 +55,6 @@ ln -sf "$compose_plugin" ~/.local/bin/docker-compose
 '''
 
 [settings]
-disable_backends = ["pipx"]
-pipx.uvx = true
 npm.package_manager = "bun"
 experimental = true
 # Guard: the gh shim can re-enter mise, which would rerun this command forever.
