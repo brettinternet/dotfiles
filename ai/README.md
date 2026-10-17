@@ -133,6 +133,8 @@ Reuse is opt-in:
 ```sh
 agent alice -w maintenance -t review --reuse-tab  # add a split to the matching tab
 agent alice -w maintenance -t review --reuse-pane # replace alice there; implies --reuse-tab
+agent alice -t --close-on-done -- 'Review this diff' # watch working -> done, then close
+agent --status alice                             # current live status as Herdr JSON
 agent --list                                     # live agents and locations as Herdr JSON
 agent --list --herdr-session default              # inspect an explicit session
 agent --close alice                              # terminate alice's pane
@@ -142,6 +144,12 @@ agent --close alice --herdr-session default      # also works outside Herdr
 `--reuse-tab` matches the exact tab title within the selected workspace; no match creates a tab, and multiple matches select the first in Herdr’s returned tab order. `--reuse-pane` matches the exact live name (`--herdr-name` or the derived NAME, without a numeric suffix) within that tab. If absent, it adds a pane; if that name exists elsewhere, it fails rather than replacing an unrelated agent. Both flags require `-w` or `-t` and cannot be combined with `-s`.
 
 Herdr has no in-place process restart: replacement creates a fresh adjacent pane with the requested cwd/environment, closes the old pane, then starts the new agent under the same live name. This terminates the old pane's processes and loses its scrollback; the pane ID changes. A failed start does not restore the old agent. Other panes are preserved.
+
+`--status NAME` returns Herdr’s current agent record for the exact live name, including `agent_status` (`idle`, `working`, `blocked`, `done`, or `unknown`). Missing names fail. It accepts `--herdr-session` and `--dry-run`, but no launch options.
+
+`--close-on-done` requires Herdr placement and keeps the launcher running as a foreground watcher after printing the start JSON. It must observe `working` before `done`; initial idle/done and later idle states never trigger a close. It pins the launched pane, terminal, name, kind, and agent-session identity, and rechecks identity, completion status, and the state-change sequence immediately before closing. Blocked/unknown states, missing identity/state metadata, changed identity, or Herdr errors cancel auto-close with a nonzero exit and retain the pane. Ctrl-C cancels the watcher without closing the pane. Completion prints a second JSON response for the close.
+
+This is opt-in, best-effort turn cleanup—not proof the requested task succeeded. It polls every half-second, so very short activity can be missed; a focused agent may report idle rather than done. In either case it keeps waiting until an observed working → done transition, or cancellation. It cannot detect questions incorrectly reported as done, and Herdr provides no atomic conditional-close operation: do not reuse or manipulate the watched pane concurrently. Closing discards the result/scrollback and terminates the agent. The watcher is not detached or durable across terminal/session exits.
 
 `--list` returns Herdr’s live agent list, including names and pane/tab/workspace IDs. It accepts `--herdr-session` without `-w` and `--dry-run`, but no NAME or launch options.
 
