@@ -81,7 +81,7 @@ class AgentLauncherTests(unittest.TestCase):
         self.environment["CHILD_EXIT"] = "7"
         for kind in ("pi", "claude", "codex"):
             with self.subTest(kind=kind):
-                result = self.run_agent("--kind", kind, "--name", "Alice Smith", "--env", "EXTRA",
+                result = self.run_agent("--kind", kind, "Alice Smith", "--env", "EXTRA",
                                         "--", "--resume", literal, code=7)
                 received = json.loads(result.stdout)
                 prefix = [] if kind == "codex" else ["--name", "Alice Smith"]
@@ -101,7 +101,7 @@ class AgentLauncherTests(unittest.TestCase):
         }))
         self.environment.update(HERDR_ENV="1", HERDR_WORKSPACE_ID="unrelated",
                                 EXTRA="secret ' with spaces")
-        self.run_agent("--name", "reviewer", "--herdr-name", "review-123", "--herdr-session", "default",
+        self.run_agent("reviewer", "--herdr-name", "review-123", "--herdr-session", "default",
                        "--workspace", "maintenance", "--tab", "PR review", "--env", "EXTRA")
         calls = self.commands()
         self.assertTrue(all(call[:2] == ["--session", "default"] for call in calls))
@@ -117,28 +117,35 @@ class AgentLauncherTests(unittest.TestCase):
         cases = [
             (["--herdr-session", "default", "--workspace", "maintenance", "--tab", "review"],
              ["agent list", "workspace list", "workspace create", "tab rename", "agent start"]),
-            (["--split", "down"], ["agent list", "pane split", "agent start"]),
-            (["--tab", "review"], ["agent list", "tab create", "agent start"]),
+            (["-s"], ["agent list", "pane split", "agent start"]),
+            (["-t"], ["agent list", "tab create", "agent start"]),
         ]
         self.environment.update(HERDR_ENV="1", HERDR_PANE_ID="caller:p1", HERDR_WORKSPACE_ID="caller")
         for options, expected in cases:
             with self.subTest(options=options):
                 self.calls.write_text("")
-                self.run_agent("--name", "alice", *options, "--pane-title=--Dependency PRs",
-                               "--startup-timeout", "60000", "--", "--model", "example")
+                self.run_agent("alice", *options, "--pane-title=--Dependency PRs",
+                               "--startup-timeout", "60", "--", "--model", "example")
                 calls = [call[2:] if call[0] == "--session" else call for call in self.commands()]
                 self.assertEqual(expected[:-1] + ["pane rename", "agent start"],
                                  [" ".join(call[:2]) for call in calls])
                 self.assertEqual(["pane", "rename", "w9:p1", "--Dependency PRs"], calls[-2])
                 self.assertEqual(["--timeout", "60000", "--", "--name", "alice", "--model", "example"], calls[-1][-7:])
-                if "--split" in options:
-                    self.assertIn("--current", calls[1])
+                if "-s" in options:
+                    self.assertEqual(["--current", "--direction", "right"], calls[1][2:5])
                 elif "--workspace" not in options:
-                    self.assertEqual(["--workspace", "caller"], calls[1][2:4])
+                    self.assertEqual(["--workspace", "caller", "--label", "alice"], calls[1][2:6])
                 else:
                     self.assertEqual(["tab", "rename", "w9:t1", "review"], calls[-3])
 
-    def test_ambiguous_workspace_and_live_name_collision_fail_before_creation(self) -> None:
+    def test_derived_live_name_avoids_collisions(self) -> None:
+        self.state.write_text(json.dumps({"agents": [{"name": "auth-review"}, {"name": "auth-review-2"}]}))
+        self.run_agent("Auth Review!", "--herdr-session", "default", "--workspace", "work")
+        start = self.commands()[-1][2:]
+        self.assertEqual(["agent", "start", "auth-review-3"], start[:3])
+        self.assertEqual(["--name", "Auth Review!"], start[-2:])
+
+    def test_ambiguous_workspace_and_explicit_name_collision_fail_before_creation(self) -> None:
         ambiguous = {
             "workspaces": [{"label": "work", "workspace_id": name} for name in ("a", "b")],
             "panes": {name: [{"cwd": str(self.project)}] for name in ("a", "b")},
@@ -148,7 +155,8 @@ class AgentLauncherTests(unittest.TestCase):
             with self.subTest(state=state):
                 self.calls.write_text("")
                 self.state.write_text(json.dumps(state))
-                result = self.run_agent("--name", "alice", "--herdr-session", "default", "--workspace", "work", code=1)
+                result = self.run_agent("alice", "--herdr-name", "alice", "--herdr-session", "default",
+                                        "--workspace", "work", code=1)
                 self.assertIn(message, result.stderr)
                 self.assertTrue(all(call[3] == "list" for call in self.commands()))
 
@@ -158,7 +166,7 @@ class AgentLauncherTests(unittest.TestCase):
             with self.subTest(failure=failure):
                 self.calls.write_text("")
                 self.state.write_text(json.dumps({"fail": failure}))
-                result = self.run_agent("--name", "alice", "--herdr-session", "default", "--workspace", "work",
+                result = self.run_agent("alice", "--herdr-session", "default", "--workspace", "work",
                                         "--pane-title", "Review", "--env", "EXTRA", code=1)
                 self.assertIn("retained Herdr pane w9:p1", result.stderr)
                 self.assertNotIn(self.environment["EXTRA"], result.stdout + result.stderr)
@@ -171,9 +179,9 @@ class AgentLauncherTests(unittest.TestCase):
         self.environment["EXTRA"] = "exported-secret"
         native = ["--model", "example", "literal ' $HOME prompt"]
         for options in ([], ["--herdr-session", "default", "--workspace", "work",
-                             "--pane-title", "Review", "--startup-timeout", "60000"]):
+                             "--pane-title", "Review", "--startup-timeout", "60"]):
             with self.subTest(options=options):
-                result = self.run_agent("--name", "alice", *options, "--dry-run", "--env", "EXTRA",
+                result = self.run_agent("alice", *options, "--dry-run", "--env", "EXTRA",
                                         "--env", "TOKEN=inline-secret", "--", *native)
                 plan = json.loads(result.stdout)
                 self.assertTrue(plan["dry_run"])
@@ -186,7 +194,7 @@ class AgentLauncherTests(unittest.TestCase):
                     self.assertEqual("default", plan["herdr"]["session"])
                     self.assertEqual("work", plan["herdr"]["workspace_label"])
                     self.assertEqual("Review", plan["herdr"]["pane_title"])
-                    self.assertEqual(60000, plan["herdr"]["startup_timeout_ms"])
+                    self.assertEqual(60, plan["herdr"]["startup_timeout_seconds"])
                 else:
                     self.assertIsNone(plan["herdr"])
         self.assertEqual([], self.commands())
@@ -194,16 +202,16 @@ class AgentLauncherTests(unittest.TestCase):
     def test_invalid_routing_and_reserved_environment_fail_before_side_effects(self) -> None:
         for options in (["--workspace", "work"], ["--herdr-session", "default"],
                         ["--split", "down", "--workspace", "work"], ["--focus"],
-                        ["--tab", ""], ["--pane-title", "Review"], ["--startup-timeout", "60000"],
+                        ["--tab", " "], ["--pane-title", "Review"], ["--startup-timeout", "60"],
                         ["--herdr-session", "default", "--workspace", "work", "--pane-title", " "],
                         ["--herdr-session", "default", "--workspace", "work", "--startup-timeout", "0"],
-                        ["--herdr-session", "default", "--workspace", "work", "--startup-timeout", "300001"],
+                        ["--herdr-session", "default", "--workspace", "work", "--startup-timeout", "301"],
                         ["--herdr-session", "default", "--workspace", "work", "--startup-timeout", "slow"],
-                        ["--name", "bad name", "--herdr-session", "default", "--workspace", "work"]):
+                        ["--herdr-name", "Bad", "--herdr-session", "default", "--workspace", "work"]):
             with self.subTest(options=options):
-                self.run_agent("--name", "alice", *options, code=2)
+                self.run_agent("alice", *options, code=2)
         for variable in ("HERDR_PANE_ID=other", "AGENT_NAME=bob"):
-            self.run_agent("--name", "alice", "--env", variable, code=1)
+            self.run_agent("alice", "--env", variable, code=1)
         self.assertEqual([], self.commands())
 
 
