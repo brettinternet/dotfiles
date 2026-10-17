@@ -146,8 +146,11 @@ class AgentLauncherTests(unittest.TestCase):
                 "tabs": [{"label": "review", "tab_id": "w1:t1"}],
                 "panes": {"w1": [{"pane_id": "w1:p1", "tab_id": "w1:t1"}]}}
 
-    def test_tab_reuse_preserves_agent_unless_replacement_requested(self) -> None:
-        self.state.write_text(json.dumps(self.reuse_state()))
+    def test_tab_reuse_selects_first_match_and_preserves_agent_unless_replacing(self) -> None:
+        state = self.reuse_state()
+        state["tabs"].append({"label": "review", "tab_id": "w1:t2"})
+        state["panes"]["w1"].append({"pane_id": "w1:p2", "tab_id": "w1:t2"})
+        self.state.write_text(json.dumps(state))
         for flag, name in (("--reuse-tab", "alice-2"), ("--reuse-pane", "alice")):
             with self.subTest(flag=flag):
                 self.calls.write_text("")
@@ -164,13 +167,15 @@ class AgentLauncherTests(unittest.TestCase):
                     self.assertLess(calls.index(split), calls.index(closes[0]))
                     self.assertEqual(closes[0], calls[-2])
 
-    def test_replacement_refuses_ambiguous_or_unrelated_targets_and_failed_split(self) -> None:
-        for problem in ("duplicate tab", "other tab", "missing tab", "split failure", "rename failure"):
+    def test_replacement_refuses_unrelated_targets_and_failed_pane_setup(self) -> None:
+        for problem in ("later matching tab", "other tab", "missing tab", "split failure", "rename failure"):
             with self.subTest(problem=problem):
                 self.calls.write_text("")
                 state = self.reuse_state()
-                if problem == "duplicate tab":
+                if problem == "later matching tab":
                     state["tabs"].append({"label": "review", "tab_id": "w1:t2"})
+                    state["panes"]["w1"][0]["tab_id"] = "w1:t2"
+                    state["panes"]["w1"].append({"pane_id": "w1:p2", "tab_id": "w1:t1"})
                 elif problem == "other tab":
                     state["panes"]["w1"][0]["tab_id"] = "w1:t2"
                 elif problem == "missing tab":

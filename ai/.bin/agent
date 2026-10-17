@@ -82,7 +82,7 @@ def arguments() -> tuple[argparse.Namespace, list[str]]:
                        help="fresh tab in the caller's or -w workspace (title defaults to NAME)")
     herdr.add_argument("-w", "--workspace", metavar="LABEL",
                        help="workspace label, matched with the checkout; created if absent")
-    herdr.add_argument("--reuse-tab", action="store_true", help="reuse a unique matching tab title; add a split")
+    herdr.add_argument("--reuse-tab", action="store_true", help="reuse the first matching tab title; add a split")
     herdr.add_argument("--reuse-pane", action="store_true",
                        help="replace the exact named agent in the selected tab; implies --reuse-tab")
     herdr.add_argument("-T", "--pane-title", metavar="TITLE", help="label the created pane")
@@ -281,8 +281,6 @@ def launch_herdr(args: argparse.Namespace, native: list[str], variables: dict[st
             if workspace and args.reuse_tab:
                 tabs = [item for item in h("tab", "list", "--workspace", workspace)["result"]["tabs"]
                         if item["label"] == args.tab]
-                if len(tabs) > 1:
-                    raise ValueError("Multiple tabs match title; refusing to guess")
                 tab = tabs[0]["tab_id"] if tabs else None
             old = [agent for agent in agents if agent.get("name") == name] if args.reuse_pane else []
             panes = h("pane", "list", "--workspace", workspace)["result"]["panes"] if tab else []
