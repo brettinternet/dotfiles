@@ -146,6 +146,22 @@ describe("local Bash integrity policy", () => {
   });
 
   test.each([
+    "if true; then rg needle ../outside; fi",
+    "true && { rg needle ../outside; }",
+    "(rg needle ../outside)",
+    "search() { rg needle ../outside; }; search",
+    'sh -c "rg needle ../outside"',
+    'env LC_ALL=C /bin/bash -lc "rg needle ../outside"',
+    'eval "rg needle ../outside"',
+  ])("rejects shell bodies that could hide outside-root searches: %s", (command: string) => {
+    const decision = localBashIntegrityDecision({ command }, cwd);
+    expect(decision.deny).toBe(true);
+    expect(decision.reason).toContain("unsupported shell");
+    // A directory grant must not turn uninspectable shell code into an allowed command.
+    expect(localBashIntegrityDecision({ command }, cwd, ["/"]).deny).toBe(true);
+  });
+
+  test.each([
     "rg needle . > /dev/null",
     "rg needle . 2>/dev/null",
     "grep needle . 2> '/dev/null'",
@@ -192,7 +208,11 @@ describe("local Bash integrity policy", () => {
   });
 
   test("allows slash-prefixed patterns and paths within the session root", () => {
-    const commands = [`rg -n '/api/v1' ai`, `rg -e '/api/v1' ai`, `rg -n needle ${cwd}/ai`];
+    const commands = [
+      `rg -n '/api/v1' ai`, `rg -e '/api/v1' ai`, `rg -n needle ${cwd}/ai`,
+      `rg -e 'if true; then sh -c (needle); fi' ai`,
+      `printf '%s' 'sh -c "rg needle ../outside"'`,
+    ];
 
     for (const command of commands) {
       expect(localBashIntegrityDecision({ command, timeout: 30 }, cwd).deny).toBe(false);

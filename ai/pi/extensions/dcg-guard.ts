@@ -260,6 +260,14 @@ const RM_COMMAND =
   /(?:^|[|&(]\s*)(?:(?:command|builtin|sudo)\s+)*(?:\/[^\s]+\/)?rm\b|\bfind\b[^\n]*-exec\s+(?:\/[^\s]+\/)?rm\b|\bxargs\b[^\n]*(?:\/[^\s]+\/)?rm\b/;
 const DELETE_COMMAND =
   /(?:^|[|&(]\s*)(?:(?:command|builtin|sudo)\s+)*(?:\/[^\s]+\/)?(?:rm|trash)\b|\bfind\b[^\n]*(?:-delete|-exec\s+(?:\/[^\s]+\/)?(?:rm|trash)\b)|\bxargs\b[^\n]*(?:\/[^\s]+\/)?(?:rm|trash)\b/;
+// The lightweight parser only models simple commands, pipelines, and lists.
+// Do not silently allow shell constructs whose bodies it cannot inspect.
+const UNSUPPORTED_SHELL_COMMANDS = new Set([
+  "if", "then", "elif", "else", "fi", "for", "while", "until", "do", "done",
+  "case", "esac", "select", "function", "!", "time", "coproc",
+  "eval", "source", ".", "exec",
+  "sh", "bash", "dash", "ash", "zsh", "ksh", "fish", "csh", "tcsh",
+]);
 const PATH_SCOPED_SEARCH_COMMANDS = new Set(["grep", "rg"]);
 type SearchOptionSpec = { values: Set<string>; patterns: Set<string>; files: Set<string> };
 const SEARCH_OPTION_SPECS: Record<string, SearchOptionSpec> = {
@@ -488,6 +496,13 @@ export function localBashIntegrityDecision(input: unknown, cwd: string, allowedR
     if (!parsedWords || parsedWords.length === 0) continue;
     const words = commandWords(parsedWords);
     const executable = words[0]?.split("/").at(-1);
+
+    if (executable && (UNSUPPORTED_SHELL_COMMANDS.has(executable) || /[(){}]/.test(words[0]))) {
+      return {
+        deny: true,
+        reason: "Blocked unsupported shell control flow or nested shell execution. Run the commands directly so directory access can be checked.",
+      };
+    }
 
     if (executable === "cd") {
       if (clauses.length === 1) {
