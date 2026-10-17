@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/brettinternet/noon/main/noon.schema.json
+version: 1
+timezone: Local
+
+jobs:
+  fetch:
+    description: Fetch origin every hour without changing the working tree.
+    schedule: every 1h
+    run: [git, fetch, origin]
+
+  darwin:
+    description: Install macOS dotfiles each morning.
+    schedule: every day at 7am
+    run: make darwin
+
+  ai:
+    description: Install AI dotfiles each morning.
+    schedule: every day at 7am
+    run: make ai
