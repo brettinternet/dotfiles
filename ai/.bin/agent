@@ -1,5 +1,24 @@
 #!/usr/bin/env python3
 # Stateless named launches for Pi, Claude Code, and Codex; installed by make ai.
+# Examples:
+#   agent alice                              # Pi in this terminal
+#   agent bob -k claude -- 'Review this diff' # Claude Code with a prompt
+#   agent carol -k codex -- resume            # Codex session picker
+#   agent alice -s down                       # new split below the calling pane
+#   agent alice -t review -f                  # fresh tab, focused
+#   agent alice -w maintenance -t review      # reuse workspace by label + cwd
+#   agent alice -w maintenance -t review --reuse-tab
+#                                            # add a split in the matching tab
+#   agent alice -w maintenance -t review --reuse-pane
+#                                            # replace alice there; terminates old agent
+#   agent reviewer --herdr-session default -w maintenance -C ~/dev/me/maintenance
+#                                            # launch outside Herdr in an explicit session
+#   agent alice -w maintenance -t review --reuse-pane -n
+#                                            # preview only; does not contact Herdr
+#   agent --close alice                      # close the exact live name's pane
+#   agent --close alice --herdr-session default
+#                                            # close in an explicit session
+# Reuse flags are opt-in; --reuse-pane implies --reuse-tab. Pane IDs change on replacement.
 # See `agent --help` and ai/README.md.
 """Launch a named coding agent locally or in Herdr, or close it by live name."""
 from __future__ import annotations
