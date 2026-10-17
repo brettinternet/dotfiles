@@ -101,7 +101,7 @@ Delegation policy lives in [`AGENTS.md`](AGENTS.md); role instructions and harne
 
 ## Named launches
 
-`agent NAME` (`ai/.bin/agent`, linked by `make ai`) launches Pi by default, or Claude Code / Codex with `-k/--kind`. It is stateless: a name is a label, not automatic resume or a durable identity registry. Native arguments go after `--`; the wrapper does not replace the native CLIs. `agent --help` lists every flag with examples.
+`agent NAME` (`ai/.bin/agent`, linked by `make ai`) launches Pi by default, or Claude Code / Codex with `-k/--kind`. For arbitrary scripts and commands, use the sibling [`pane`](../README.md#herdr-command-panes) launcher instead. It is stateless: a name is a label, not automatic resume or a durable identity registry. Native arguments go after `--`; the wrapper does not replace the native CLIs. `agent --help` lists every flag with examples.
 
 ```sh
 agent alice
@@ -133,6 +133,8 @@ Reuse is opt-in:
 ```sh
 agent alice -w maintenance -t review --reuse-tab  # add a split to the matching tab
 agent alice -w maintenance -t review --reuse-pane # replace alice there; implies --reuse-tab
+agent --list                                     # live agents and locations as Herdr JSON
+agent --list --herdr-session default              # inspect an explicit session
 agent --close alice                              # terminate alice's pane
 agent --close alice --herdr-session default      # also works outside Herdr
 ```
@@ -140,6 +142,8 @@ agent --close alice --herdr-session default      # also works outside Herdr
 `--reuse-tab` matches the exact tab title within the selected workspace; no match creates a tab, and multiple matches select the first in Herdr’s returned tab order. `--reuse-pane` matches the exact live name (`--herdr-name` or the derived NAME, without a numeric suffix) within that tab. If absent, it adds a pane; if that name exists elsewhere, it fails rather than replacing an unrelated agent. Both flags require `-w` or `-t` and cannot be combined with `-s`.
 
 Herdr has no in-place process restart: replacement creates a fresh adjacent pane with the requested cwd/environment, closes the old pane, then starts the new agent under the same live name. This terminates the old pane's processes and loses its scrollback; the pane ID changes. A failed start does not restore the old agent. Other panes are preserved.
+
+`--list` returns Herdr’s live agent list, including names and pane/tab/workspace IDs. It accepts `--herdr-session` without `-w` and `--dry-run`, but no NAME or launch options.
 
 `--close NAME` requires the exact live name, not a display name or pane ID, and closes only its hosting pane (including all processes there). An absent name succeeds without closing anything and returns `{"result":{"name":"NAME","closed":false,"reason":"not_found"}}`. Ambiguous names and Herdr lookup/close failures still fail. Closing the last pane can also remove its tab/workspace. Close accepts `--herdr-session` without `-w` and supports `--dry-run` without contacting Herdr.
 

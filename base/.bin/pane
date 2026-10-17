@@ -1,0 +1,139 @@
+#!/usr/bin/env python3
+# Run argv in a new Herdr pane; installed by the base dotfiles group.
+#   pane -w test -- echo test
+#   pane -w maintenance -t logs -- tail -f app.log
+#   pane -s down -- bun test --watch
+#   pane -w test -t checks --reuse-tab -- bun test
+#   pane -t disposable --close-on-exit -- echo done
+#   pane --herdr-session default -w jobs -C ~/dev/me/project -- bun test
+#   pane -w test -- sh -c 'echo test; date'  # shell syntax is explicit
+# Without placement flags, split the calling pane to the right. Commands return
+# to the pane's shell by default, preserving output. --close-on-exit discards it.
+"""Run a command in a new Herdr pane, retaining its output by default."""
+from __future__ import annotations
+
+import argparse
+import base64
+import json
+import os
+from pathlib import Path
+import re
+import sys
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "lib"))
+from herdr_launch import herdr_client, placed_pane
+
+
+def arguments() -> tuple[argparse.Namespace, list[str]]:
+    parser = argparse.ArgumentParser(description=__doc__, allow_abbrev=False,
+                                     usage="%(prog)s [options] -- COMMAND [ARG ...]")
+    parser.add_argument("-C", "--cwd", type=Path, default=Path.cwd(), metavar="DIR")
+    parser.add_argument("-e", "--env", action="append", default=[], metavar="KEY[=VALUE]")
+    parser.add_argument("-s", "--split", nargs="?", const="right", choices=("right", "down"))
+    parser.add_argument("-t", "--tab", nargs="?", const="", metavar="TITLE",
+                        help="fresh tab; title defaults to the command basename")
+    parser.add_argument("-w", "--workspace", metavar="LABEL", help="match label and cwd, or create")
+    parser.add_argument("--reuse-tab", action="store_true", help="split in the first matching tab")
+    parser.add_argument("-T", "--pane-title", metavar="TITLE")
+    parser.add_argument("-f", "--focus", action="store_true")
+    parser.add_argument("--herdr-session", metavar="SESSION", help="explicit session; requires -w")
+    parser.add_argument("--close-on-exit", action="store_true", help="close the created pane when the command exits")
+    parser.add_argument("-n", "--dry-run", action="store_true", help="preview without contacting Herdr")
+    raw = sys.argv[1:]
+    boundary = raw.index("--") if "--" in raw else len(raw)
+    args = parser.parse_args(raw[:boundary])
+    command = raw[boundary + 1:]
+    if not command or not command[0]:
+        parser.error("a command is required after --")
+    if any("\0" in word for word in command):
+        parser.error("command arguments cannot contain NUL")
+    if args.reuse_tab and (args.split or (args.workspace is None and args.tab is None)):
+        parser.error("--reuse-tab requires --workspace or --tab, and cannot be combined with --split")
+    if args.split and (args.workspace is not None or args.tab is not None or args.herdr_session is not None):
+        parser.error("--split cannot be combined with --workspace, --tab, or --herdr-session")
+    if args.herdr_session is not None and args.workspace is None:
+        parser.error("--herdr-session requires --workspace")
+    if any(value is not None and not value.strip() for value in
+           (args.workspace, args.herdr_session, args.pane_title)) or (args.tab and not args.tab.strip()):
+        parser.error("session, workspace, and titles must not be blank")
+    if args.pane_title == "--clear":
+        parser.error("--pane-title cannot be --clear")
+    if args.herdr_session is None and os.environ.get("HERDR_ENV") != "1":
+        parser.error("requires running inside Herdr or --herdr-session")
+    if args.workspace is None and args.tab is None:
+        args.split = args.split or "right"
+    if args.split and not os.environ.get("HERDR_PANE_ID"):
+        parser.error("--split requires the calling HERDR_PANE_ID")
+    if not args.split and args.workspace is None and not os.environ.get("HERDR_WORKSPACE_ID"):
+        parser.error("--tab requires the calling HERDR_WORKSPACE_ID or --workspace")
+    args.cwd = args.cwd.expanduser().resolve()
+    if not args.cwd.is_dir():
+        parser.error("--cwd must be an existing directory")
+    if not args.split:
+        args.tab = args.tab or Path(command[0]).name
+    return args, command
+
+
+def child_variables(specifications: list[str]) -> dict[str, str]:
+    variables = {}
+    for specification in specifications:
+        key, separator, value = specification.partition("=")
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", key) or key.startswith("HERDR_"):
+            raise ValueError("--env requires a valid non-Herdr variable name")
+        if not separator:
+            if key not in os.environ:
+                raise ValueError(f"--env {key}: variable is not exported")
+            value = os.environ[key]
+        variables[key] = value
+    return variables
+
+
+def command_line(command: list[str], close_on_exit: bool) -> str:
+    # Herdr's pane run accepts shell text, not argv. Only this fixed Python
+    # bootstrap reaches that shell; user argv is encoded data, never shell syntax.
+    source = f'''import os, subprocess, sys
+try:
+    status = subprocess.call({command!r})
+except OSError as error:
+    print("pane: " + str(error), file=sys.stderr)
+    status = 127
+except KeyboardInterrupt:
+    status = 130
+if {close_on_exit!r}:
+    result = subprocess.run(["herdr", "pane", "close", os.environ["HERDR_PANE_ID"]],
+                            capture_output=True)
+    if result.returncode:
+        print("pane: could not close completed pane", file=sys.stderr)
+else:
+    print("\\npane: command exited with status " + str(status))
+sys.exit(status if status >= 0 else 128 - status)
+'''
+    encoded = base64.b64encode(source.encode()).decode()
+    return f'python3 -c \'import base64; exec(base64.b64decode("{encoded}"))\''
+
+
+def main() -> int:
+    args, command = arguments()
+    try:
+        variables = child_variables(args.env)
+        if args.dry_run:
+            print(json.dumps({"dry_run": True, "argv": command, "cwd": str(args.cwd),
+                              "env": {key: "<redacted>" for key in variables},
+                              "session": args.herdr_session or "inherited", "workspace_label": args.workspace,
+                              "tab_title": args.tab, "split": args.split, "reuse_tab": args.reuse_tab,
+                              "pane_title": args.pane_title, "focus": args.focus,
+                              "close_on_exit": args.close_on_exit}, indent=2))
+            return 0
+        h = herdr_client(args)
+        with placed_pane(h, args, variables, tool="pane") as pane:
+            print(json.dumps(h("pane", "run", pane, command_line(command, args.close_on_exit))))
+        return 0
+    except (OSError, ValueError, KeyError, TypeError, RuntimeError) as error:
+        print(f"pane: {error}", file=sys.stderr)
+        return 1
+    except KeyboardInterrupt:
+        return 130
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
