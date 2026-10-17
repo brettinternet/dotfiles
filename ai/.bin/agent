@@ -1,0 +1,183 @@
+#!/usr/bin/env python3
+# Stateless named launches for Pi, Claude Code, and Codex; installed by make ai.
+# Without placement flags, run in this terminal. Herdr placement creates a fresh
+# tab or split, preserves focus by default, and never interrupts an existing agent.
+# Names are labels, not automatic resume. Native CLI arguments follow --.
+# Codex naming uses AGENT_NAME and optional Herdr identity, not a native title.
+#
+# Examples:
+#   agent --name alice                          # Pi in this terminal
+#   agent --name bob --kind claude              # Claude Code
+#   agent --name charlie --kind codex -- resume # Codex's session picker
+#   agent --name alice -- --session-id alice    # Create/reopen this Pi conversation
+#   agent --name alice --split down             # Split the calling Herdr pane
+#   agent --name alice --tab "Auth review"      # Fresh tab in the caller's workspace
+#
+# Scheduled launch, including outside Herdr: match workspace label AND checkout,
+# create a fresh review tab, and copy exported APPRISE_URLS into its environment.
+# A separate unique live name allows repeated jobs with the same display name.
+#   agent --name reviewer --herdr-name "review-$(date +%s)-$$" \
+#     --herdr-session default --workspace maintenance --tab review \
+#     --cwd ~/dev/me/maintenance --env APPRISE_URLS
+#
+# Herdr launches print agent-start JSON. On failure, inspect the retained pane
+# before retrying; a timeout does not prove the agent never started.
+"""Launch a named coding agent here or in explicitly selected Herdr layout."""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+
+
+def arguments() -> tuple[argparse.Namespace, list[str]]:
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        epilog="Native agent arguments go after --. Naming does not resume a conversation.",
+        allow_abbrev=False,
+    )
+    parser.add_argument("--name", required=True, help="session display name / AGENT_NAME")
+    parser.add_argument("--kind", choices=("pi", "claude", "codex"), default="pi")
+    parser.add_argument("--cwd", type=Path, default=Path.cwd())
+    parser.add_argument("--workspace", help="Herdr workspace label, matched with canonical cwd")
+    parser.add_argument("--tab", help="new Herdr tab title (defaults to name)")
+    parser.add_argument("--herdr-session", help="explicit Herdr session, including outside Herdr")
+    parser.add_argument("--herdr-name", help="unique live Herdr name (defaults to name)")
+    parser.add_argument("--split", choices=("down", "right"), help="split the calling Herdr pane")
+    parser.add_argument("--focus", action="store_true", help="focus the created Herdr layout")
+    parser.add_argument("--env", action="append", default=[], metavar="KEY[=VALUE]",
+                        help="set a child variable, or copy an exported variable")
+    raw = sys.argv[1:]
+    boundary = raw.index("--") if "--" in raw else len(raw)
+    args = parser.parse_args(raw[:boundary])
+    native = raw[boundary + 1:]
+    args.cwd = args.cwd.expanduser().resolve()
+    if not args.cwd.is_dir():
+        parser.error("--cwd must be an existing directory")
+    if not args.name.strip():
+        parser.error("--name must not be blank")
+    args.herdr = any(value is not None for value in (args.workspace, args.tab, args.split))
+    if args.split and any(value is not None for value in (args.workspace, args.tab, args.herdr_session)):
+        parser.error("--split cannot be combined with --workspace, --tab, or --herdr-session")
+    if args.herdr_session is not None and args.workspace is None:
+        parser.error("--herdr-session requires --workspace; never use another session's focused workspace")
+    if not args.herdr and (args.focus or args.herdr_name is not None):
+        parser.error("--focus and --herdr-name require --workspace, --tab, or --split")
+    if args.herdr:
+        if args.herdr_session is None and os.environ.get("HERDR_ENV") != "1":
+            parser.error("Herdr placement requires running inside Herdr or an explicit --herdr-session")
+        if args.split and not os.environ.get("HERDR_PANE_ID"):
+            parser.error("--split requires the calling HERDR_PANE_ID")
+        if args.tab is not None and args.workspace is None and not os.environ.get("HERDR_WORKSPACE_ID"):
+            parser.error("--tab requires the calling HERDR_WORKSPACE_ID or --workspace")
+        args.herdr_name = args.herdr_name if args.herdr_name is not None else args.name
+        if not re.fullmatch(r"[a-z][a-z0-9_-]{0,31}", args.herdr_name):
+            parser.error("Herdr names must match [a-z][a-z0-9_-]{0,31}; use --herdr-name for a separate live name")
+        if any(value is not None and not value.strip() for value in
+               (args.workspace, args.tab, args.herdr_session)):
+            parser.error("Herdr session, workspace, and tab names must not be blank")
+    return args, native
+
+
+def child_variables(specifications: list[str], name: str) -> dict[str, str]:
+    variables = {}
+    for specification in specifications:
+        key, separator, value = specification.partition("=")
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", key):
+            raise ValueError("--env requires a valid environment variable name")
+        if key == "AGENT_NAME" or key.startswith("HERDR_"):
+            raise ValueError("--env cannot override AGENT_NAME or Herdr routing variables")
+        if not separator:
+            if key not in os.environ:
+                raise ValueError(f"--env {key}: variable is not exported")
+            value = os.environ[key]
+        variables[key] = value
+    variables["AGENT_NAME"] = name
+    return variables
+
+
+def launch_herdr(args: argparse.Namespace, native: list[str], variables: dict[str, str]) -> None:
+    prefix = ["herdr"]
+    if args.herdr_session is not None:
+        prefix += ["--session", args.herdr_session]
+
+    def h(*command: str) -> dict:
+        # Never echo argv: creation arguments may contain secrets from --env.
+        result = subprocess.run([*prefix, *command], capture_output=True, text=True)
+        if result.returncode:
+            # Herdr's structured diagnostics can contain submitted command text.
+            # Leave inspection to the caller rather than accidentally printing secrets.
+            raise RuntimeError(f"Herdr {' '.join(command[:2])} failed (exit {result.returncode}); inspect Herdr before retrying")
+        response = json.loads(result.stdout)
+        if response.get("error") or not isinstance(response.get("result"), dict):
+            raise ValueError("Herdr returned an unsuccessful or malformed response")
+        return response
+
+    # Refuse collisions before making layout. Herdr also enforces uniqueness at start.
+    agents = h("agent", "list")["result"]["agents"]
+    if any(agent.get("name") == args.herdr_name for agent in agents):
+        raise ValueError(f"Herdr agent {args.herdr_name!r} already exists; choose --herdr-name")
+
+    creation = ["--cwd", str(args.cwd), "--focus" if args.focus else "--no-focus"]
+    for key, value in variables.items():
+        creation += ["--env", f"{key}={value}"]
+    pane = None
+    try:
+        if args.split:
+            created = h("pane", "split", "--current", "--direction", args.split, *creation)
+            pane = created["result"]["pane"]["pane_id"]
+        else:
+            workspace = os.environ.get("HERDR_WORKSPACE_ID")
+            if args.workspace is not None:
+                matches = []
+                for candidate in h("workspace", "list")["result"]["workspaces"]:
+                    if candidate["label"] != args.workspace:
+                        continue
+                    candidate_id = candidate["workspace_id"]
+                    panes = h("pane", "list", "--workspace", candidate_id)["result"]["panes"]
+                    if any(p.get("cwd") and Path(p["cwd"]).resolve() == args.cwd for p in panes):
+                        matches.append(candidate_id)
+                if len(matches) > 1:
+                    raise ValueError("Multiple workspaces match label and checkout; refusing to guess")
+                workspace = matches[0] if matches else None
+            title = args.tab if args.tab is not None else args.name
+            if workspace:
+                created = h("tab", "create", "--workspace", workspace, "--label", title, *creation)
+                pane = created["result"]["root_pane"]["pane_id"]
+            else:
+                created = h("workspace", "create", "--label", args.workspace, *creation)
+                pane = created["result"]["root_pane"]["pane_id"]
+                h("tab", "rename", created["result"]["tab"]["tab_id"], title)
+        result = h("agent", "start", args.herdr_name, "--kind", args.kind, "--pane", pane, "--", *native)
+        print(json.dumps(result))
+    except (OSError, ValueError, KeyError, TypeError, RuntimeError):
+        if pane:
+            print(f"agent: retained Herdr pane {pane}; inspect it before retrying (session {args.herdr_session or 'inherited'})", file=sys.stderr)
+        raise
+
+
+def main() -> int:
+    args, native = arguments()
+    try:
+        variables = child_variables(args.env, args.name)
+        if args.kind in ("pi", "claude"):
+            native = ["--name", args.name, *native]
+        else:
+            print("agent: Codex has no native --name; using AGENT_NAME and, when selected, the Herdr live name", file=sys.stderr)
+        if args.herdr:
+            launch_herdr(args, native, variables)
+        else:
+            os.chdir(args.cwd)
+            os.execvpe(args.kind, [args.kind, *native], {**os.environ, **variables})
+        return 0
+    except (OSError, ValueError, KeyError, TypeError, RuntimeError) as error:
+        print(f"agent: {error}", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
