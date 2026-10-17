@@ -62,7 +62,10 @@ This does not intercept links clicked inside a browser or apps that explicitly
 choose another browser. Local HTML/XHTML files explicitly opened with the wrapper
 are forwarded to Chromium, but custom URL schemes are not handled.
 To undo, select Chromium or another browser as the default. To update the handler,
-rerun the install command; it needs macOS's `osacompile` and `codesign` tools.
+rerun the install command; it needs Xcode Command Line Tools (`xcrun swiftc`) and
+macOS's `codesign`. The native Swift wrapper handles URL/file events without
+AppleScript's forced Run/Quit dialog when Control is held (such as Herdr Ctrl-click).
+Reinstalling replaces the old AppleScript bundle without changing browser data.
 
 ### Optional unattended debugging of your everyday browser
 

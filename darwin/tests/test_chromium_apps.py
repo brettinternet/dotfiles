@@ -2,7 +2,6 @@ import importlib.util
 import json
 from pathlib import Path
 import plistlib
-import shlex
 import subprocess
 import sys
 import tempfile
@@ -153,84 +152,79 @@ class SetupTests(unittest.TestCase):
                             self.assertEqual(run.call_args.args[0], ["dockutil"] + expected)
 
 
-@unittest.skipUnless(sys.platform == "darwin", "Requires macOS AppleScript")
+@unittest.skipUnless(sys.platform == "darwin", "Requires macOS AppKit")
 class URLHandlerTests(unittest.TestCase):
-    def test_url_event_routes_and_quotes_without_launching_browser(self):
-        with tempfile.TemporaryDirectory(prefix="chromium-url-test-") as temporary:
-            root = Path(temporary)
-            browser = root / "fake browser"
-            browser.write_text('#!/bin/sh\nprintf "%s\\n" "$@"\n')
-            browser.chmod(0o755)
-            source = Path(module.__file__).with_name("chromium-url-handler.applescript").read_text()
-            # Capture the Launch Services argv without starting a real browser.
-            source = source.replace('/usr/bin/open', shlex.quote(str(browser)))
-            source = source.replace('do shell script "test -x "', '-- do shell script "test -x "')
-            script = root / "handler.applescript"
-            script.write_text(source)
-            compiled = root / "handler.scpt"
-            subprocess.run(["osacompile", "-o", str(compiled), str(script)], check=True)
-            url = "https://example.org/?q=one's%20two&literal=$(echo unexpected)"
-            driver = ('set handlerScript to load script POSIX file ' + json.dumps(str(compiled))
-                      + '\ntell handlerScript to open location ' + json.dumps(url))
-            result = subprocess.check_output(["osascript", "-e", driver], text=True).splitlines()
-            expected = [
-                "-n", "-a", "/Applications/Chromium.app", "--args",
-                f"--user-data-dir={Path.home()}/Library/Application Support/Chromium",
-            ]
-            self.assertEqual(result, expected + [url])
-            debug_driver = driver.replace('\ntell handlerScript',
-                                          '\nset remoteDebuggingEnabled of handlerScript to true'
-                                          '\ntell handlerScript')
-            self.assertEqual(subprocess.check_output(["osascript", "-e", debug_driver],
-                                                     text=True).splitlines(),
-                             expected + ["--remote-debugging-port=9222", url])
-            rejected = subprocess.run(["osascript", "-e", driver.replace(url, "file:///tmp/example")],
-                                      capture_output=True, text=True)
-            self.assertNotEqual(rejected.returncode, 0)
-            self.assertIn("Only HTTP and HTTPS", rejected.stderr)
-            run_driver = ('set handlerScript to load script POSIX file ' + json.dumps(str(compiled))
-                          + '\nrun handlerScript')
-            self.assertEqual(subprocess.check_output(["osascript", "-e", run_driver], text=True).splitlines(),
-                             expected)
-            debug_run = run_driver.replace('\nrun handlerScript',
-                                           '\nset remoteDebuggingEnabled of handlerScript to true'
-                                           '\nrun handlerScript')
-            self.assertEqual(subprocess.check_output(["osascript", "-e", debug_run], text=True).splitlines(),
-                             expected + ["--remote-debugging-port=9222"])
-            document = root / "one's $(echo unexpected).xhtml"
-            document.write_text("<html/>")
-            file_driver = ('set handlerScript to load script POSIX file ' + json.dumps(str(compiled))
-                           + '\nset documentFile to POSIX file ' + json.dumps(str(document)) + ' as alias'
-                           + '\ntell handlerScript to open {documentFile}')
-            self.assertEqual(subprocess.check_output(["osascript", "-e", file_driver], text=True).splitlines(),
-                             expected + [str(document.resolve())])
-
-    def test_installer_compiles_opt_in_and_can_disable_it(self):
+    def test_native_events_and_installer_updates(self):
         run = subprocess.run
-
-        def without_registration(args, **kwargs):
-            if Path(args[0]).name == "lsregister":
-                return subprocess.CompletedProcess(args, 0)
-            return run(args, **kwargs)
-
         with tempfile.TemporaryDirectory(prefix="chromium-url-test-") as temporary:
             home = Path(temporary)
+            log = home / "arguments.jsonl"
+            recorder = home / "record arguments"
+            recorder.write_text(
+                f"#!{sys.executable}\nimport json, sys\n"
+                f"with open({str(log)!r}, 'a') as output:\n"
+                "    output.write(json.dumps(sys.argv[1:]) + '\\n')\n"
+            )
+            recorder.chmod(0o755)
+            source = Path(module.__file__).with_name("chromium-url-handler.swift").read_text()
+            source = source.replace('"/usr/bin/open"', json.dumps(str(recorder)))
+            browser = home / "Chromium.app"
+            executable = browser / "Contents/MacOS/Chromium"
+            executable.parent.mkdir(parents=True)
+            executable.symlink_to(recorder)
+            source = source.replace('"/Applications/Chromium.app"', json.dumps(str(browser)))
+            script = home / "chromium-url-handler.swift"
+            script.write_text(source)
             bundle = home / "Applications/Chromium Default.app"
+
+            def without_registration(args, **kwargs):
+                if Path(args[0]).name == "lsregister":
+                    return subprocess.CompletedProcess(args, 0)
+                return run(args, **kwargs)
+
+            expected = [
+                "-n", "-a", str(browser), "--args",
+                f"--user-data-dir={Path.home()}/Library/Application Support/Chromium",
+            ]
+            url = "https://example.org/?q=one's%20two&literal=$(echo%20unexpected)"
+            document = home / "one's $(echo unexpected).xhtml"
+            document.write_text("<html/>")
             for enabled in (False, True, False):
-                with self.subTest(enabled=enabled), patch.object(module.subprocess, "run",
-                                                                 side_effect=without_registration):
+                with self.subTest(enabled=enabled), \
+                        patch.object(module, "__file__", str(home / "chromium-apps.py")), \
+                        patch.object(module.subprocess, "run", side_effect=without_registration):
                     module.install_url_handler(home, remote_debugging=enabled)
-                compiled = bundle / "Contents/Resources/Scripts/main.scpt"
-                driver = ('set handlerScript to load script POSIX file ' + json.dumps(str(compiled))
-                          + '\nreturn remoteDebuggingEnabled of handlerScript')
-                result = subprocess.check_output(["osascript", "-e", driver], text=True).strip()
-                self.assertEqual(result, str(enabled).lower())
+                # Updating must replace the bundle, not retain old AppleScript resources.
+                self.assertFalse((bundle / "Contents/Resources/Scripts").exists())
                 subprocess.run(["codesign", "--verify", "--deep", "--strict", str(bundle)], check=True)
-                with (bundle / "Contents/Info.plist").open("rb") as source:
-                    info = plistlib.load(source)
-                schemes = info["CFBundleURLTypes"][0]["CFBundleURLSchemes"]
-                self.assertIn("http", schemes)
-                self.assertIn("https", schemes)
+                plist = bundle / "Contents/Info.plist"
+                with plist.open("rb") as stream:
+                    info = plistlib.load(stream)
+                self.assertIn("http", info["CFBundleURLTypes"][0]["CFBundleURLSchemes"])
+                self.assertIn("https", info["CFBundleURLTypes"][0]["CFBundleURLSchemes"])
+                # Isolate Launch Services tests from the user's installed default handler.
+                info["CFBundleIdentifier"] += ".test"
+                with plist.open("wb") as stream:
+                    plistlib.dump(info, stream)
+                subprocess.run(["codesign", "--force", "--sign", "-", str(bundle)], check=True)
+                for targets in ([url], [str(document.resolve())], []):
+                    before = log.read_text().splitlines() if log.exists() else []
+                    subprocess.run(["/usr/bin/open", "-W", "-n", "-a", str(bundle), *targets],
+                                   check=True, timeout=20)
+                    calls = [json.loads(line) for line in log.read_text().splitlines()[len(before):]]
+                    flags = ["--remote-debugging-port=9222"] if enabled else []
+                    self.assertEqual(calls, [expected + flags + targets])
+                before = log.read_text()
+                subprocess.run(["/usr/bin/open", "-W", "-n", "-a", str(bundle), "unsupported://example"],
+                               check=True, timeout=20)
+                self.assertEqual(log.read_text(), before)
+                # Restore managed identity and seed obsolete applet resources for the next update.
+                info["CFBundleIdentifier"] = "local.chromium-default-url-handler"
+                with plist.open("wb") as stream:
+                    plistlib.dump(info, stream)
+                obsolete = bundle / "Contents/Resources/Scripts"
+                obsolete.mkdir(parents=True)
+                (obsolete / "main.scpt").write_text("obsolete applet")
 
     def test_default_helper_rejects_missing_bundle_without_changing_preferences(self):
         helper = Path(module.__file__).with_name("chromium-default-browser.swift")
