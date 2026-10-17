@@ -37,7 +37,7 @@ elif command == "pane list":
 elif command in ("workspace create", "tab create", "pane split"):
     result = {"root_pane": {"pane_id": "w9:p1"},
               "pane": {"pane_id": "w9:p1"}, "tab": {"tab_id": "w9:t1"}}
-elif command == "tab rename":
+elif command in ("tab rename", "pane rename"):
     result = {}
 elif command == "agent start":
     result = {"agent": {"pane_id": "w9:p1", "name": args[2]}}
@@ -124,15 +124,19 @@ class AgentLauncherTests(unittest.TestCase):
         for options, expected in cases:
             with self.subTest(options=options):
                 self.calls.write_text("")
-                self.run_agent("--name", "alice", *options)
+                self.run_agent("--name", "alice", *options, "--pane-title=--Dependency PRs",
+                               "--startup-timeout", "60000", "--", "--model", "example")
                 calls = [call[2:] if call[0] == "--session" else call for call in self.commands()]
-                self.assertEqual(expected, [" ".join(call[:2]) for call in calls])
+                self.assertEqual(expected[:-1] + ["pane rename", "agent start"],
+                                 [" ".join(call[:2]) for call in calls])
+                self.assertEqual(["pane", "rename", "w9:p1", "--", "--Dependency PRs"], calls[-2])
+                self.assertEqual(["--timeout", "60000", "--", "--name", "alice", "--model", "example"], calls[-1][-7:])
                 if "--split" in options:
                     self.assertIn("--current", calls[1])
                 elif "--workspace" not in options:
                     self.assertEqual(["--workspace", "caller"], calls[1][2:4])
                 else:
-                    self.assertEqual(["tab", "rename", "w9:t1", "review"], calls[-2])
+                    self.assertEqual(["tab", "rename", "w9:t1", "review"], calls[-3])
 
     def test_ambiguous_workspace_and_live_name_collision_fail_before_creation(self) -> None:
         ambiguous = {
@@ -148,21 +152,54 @@ class AgentLauncherTests(unittest.TestCase):
                 self.assertIn(message, result.stderr)
                 self.assertTrue(all(call[3] == "list" for call in self.commands()))
 
-    def test_failed_start_keeps_pane_without_retry_or_secret_disclosure(self) -> None:
-        self.state.write_text(json.dumps({"fail": "agent start"}))
+    def test_failed_launch_keeps_pane_without_retry_or_secret_disclosure(self) -> None:
         self.environment["EXTRA"] = "must-not-be-printed"
-        result = self.run_agent("--name", "alice", "--herdr-session", "default", "--workspace", "work",
-                                "--env", "EXTRA", code=1)
-        self.assertIn("retained Herdr pane w9:p1", result.stderr)
-        self.assertNotIn(self.environment["EXTRA"], result.stdout + result.stderr)
-        calls = self.commands()
-        self.assertEqual(1, sum(call[2:4] == ["agent", "start"] for call in calls))
-        self.assertFalse(any("close" in call for call in calls))
+        for failure in ("agent start", "pane rename"):
+            with self.subTest(failure=failure):
+                self.calls.write_text("")
+                self.state.write_text(json.dumps({"fail": failure}))
+                result = self.run_agent("--name", "alice", "--herdr-session", "default", "--workspace", "work",
+                                        "--pane-title", "Review", "--env", "EXTRA", code=1)
+                self.assertIn("retained Herdr pane w9:p1", result.stderr)
+                self.assertNotIn(self.environment["EXTRA"], result.stdout + result.stderr)
+                calls = self.commands()
+                self.assertEqual(1 if failure == "agent start" else 0,
+                                 sum(call[2:4] == ["agent", "start"] for call in calls))
+                self.assertFalse(any("close" in call for call in calls))
+
+    def test_dry_run_never_executes_and_redacts_environment(self) -> None:
+        self.environment["EXTRA"] = "exported-secret"
+        native = ["--model", "example", "literal ' $HOME prompt"]
+        for options in ([], ["--herdr-session", "default", "--workspace", "work",
+                             "--pane-title", "Review", "--startup-timeout", "60000"]):
+            with self.subTest(options=options):
+                result = self.run_agent("--name", "alice", *options, "--dry-run", "--env", "EXTRA",
+                                        "--env", "TOKEN=inline-secret", "--", *native)
+                plan = json.loads(result.stdout)
+                self.assertTrue(plan["dry_run"])
+                self.assertEqual(["pi", "--name", "alice", *native], plan["argv"])
+                self.assertEqual(str(self.project), plan["cwd"])
+                self.assertEqual({"AGENT_NAME": "<redacted>", "EXTRA": "<redacted>", "TOKEN": "<redacted>"}, plan["env"])
+                for secret in ("exported-secret", "inline-secret"):
+                    self.assertNotIn(secret, result.stdout + result.stderr)
+                if options:
+                    self.assertEqual("default", plan["herdr"]["session"])
+                    self.assertEqual("work", plan["herdr"]["workspace_label"])
+                    self.assertEqual("Review", plan["herdr"]["pane_title"])
+                    self.assertEqual(60000, plan["herdr"]["startup_timeout_ms"])
+                else:
+                    self.assertIsNone(plan["herdr"])
+        self.assertEqual([], self.commands())
 
     def test_invalid_routing_and_reserved_environment_fail_before_side_effects(self) -> None:
         for options in (["--workspace", "work"], ["--herdr-session", "default"],
                         ["--split", "down", "--workspace", "work"], ["--focus"],
-                        ["--tab", ""], ["--name", "bad name", "--herdr-session", "default", "--workspace", "work"]):
+                        ["--tab", ""], ["--pane-title", "Review"], ["--startup-timeout", "60000"],
+                        ["--herdr-session", "default", "--workspace", "work", "--pane-title", " "],
+                        ["--herdr-session", "default", "--workspace", "work", "--startup-timeout", "0"],
+                        ["--herdr-session", "default", "--workspace", "work", "--startup-timeout", "300001"],
+                        ["--herdr-session", "default", "--workspace", "work", "--startup-timeout", "slow"],
+                        ["--name", "bad name", "--herdr-session", "default", "--workspace", "work"]):
             with self.subTest(options=options):
                 self.run_agent("--name", "alice", *options, code=2)
         for variable in ("HERDR_PANE_ID=other", "AGENT_NAME=bob"):

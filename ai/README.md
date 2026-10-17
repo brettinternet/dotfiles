@@ -117,7 +117,8 @@ Pi and Claude receive `--name`. All children receive `AGENT_NAME`; Codex has no 
 ```sh
 agent --name alice --split down
 agent --name alice --tab "Auth review" # fresh tab in the caller's workspace
-agent --name alice --workspace maintenance --tab review
+agent --name alice --workspace maintenance --tab review \
+  --pane-title "Dependency PRs" --startup-timeout 60000
 
 # An explicit session works outside Herdr too, including from a scheduler.
 agent --name reviewer --herdr-name "review-$(date +%s)-$$" \
@@ -128,6 +129,17 @@ agent --name reviewer --herdr-name "review-$(date +%s)-$$" \
 `--workspace` is a **label**, matched together with canonical `--cwd` (default: current directory) against workspace panes, like `maintenance/scripts/noon-review.sh`. One match gets a fresh tab; no match gets a new workspace with its initial tab renamed; multiple matches fail. Existing tabs and panes are never reused for launches. `--tab` defaults to the display name when a workspace is specified. `--split` targets only the calling pane and cannot be combined with workspace, tab, or session selection.
 
 Placement uses the inherited Herdr session unless `--herdr-session` is explicit. An explicit session requires `--workspace`, so it never falls back to another session's focused workspace. Focus is preserved unless `--focus` is supplied. Live Herdr names must match `[a-z][a-z0-9_-]{0,31}` and be unique within the selected session; `--herdr-name` separates that address from the session display name for repeated jobs. A collision fails rather than interrupting an existing agent.
+
+`--pane-title TEXT` explicitly labels only the newly created pane; your pane-title plugin respects that label. Omit it to retain dynamic titles. `--startup-timeout MS` controls Herdr's wait for interactive readiness (1–300000 ms; default 30000), not the duration of the agent's work. Both require Herdr placement.
+
+Use `--dry-run` to print a JSON plan containing the native argv, canonical cwd, environment overrides, and optional Herdr placement:
+
+```sh
+agent --name reviewer --herdr-session default --workspace maintenance \
+  --tab review --pane-title "Dependency PRs" --env APPRISE_URLS --dry-run
+```
+
+Dry-run validates local arguments and environment references but never starts a process or contacts Herdr. Workspace resolution, live-name collision checks, and readiness checks occur only on a real launch; the plan is not a reservation or a guarantee that launch will succeed. All environment override values are redacted. Native argv and titles are shown verbatim, so do not put secrets in those fields when sharing the output. Without Herdr placement, dry-run previews the local CLI invocation.
 
 Use repeatable `--env KEY` to copy exported variables into the new terminal, or `--env KEY=VALUE` to set them. Do not assume a long-running Herdr server has your scheduler's environment. `AGENT_NAME` and `HERDR_*` overrides are rejected. Values sent through Herdr's CLI may be visible in process arguments, so prefer credential files or agent-native secret lookup for stronger isolation.
 
