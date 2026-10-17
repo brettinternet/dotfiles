@@ -1,0 +1,7 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/brettinternet/tell/main/tell.schema.json
+# Noon must load this explicitly: tell --config tell.yaml notify "Message"
+# Desktop routing is not permitted in auto-discovered shared configuration.
+version: 1
+notify:
+  via: desktop
