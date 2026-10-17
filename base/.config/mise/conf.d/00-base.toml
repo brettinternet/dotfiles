@@ -2,6 +2,7 @@
 
 [tools]
 # helpers
+"pypi:apprise" = { version = "latest", depends = ["uv"] }
 task = "latest"
 tmux = "latest"
 neovim = "latest"
@@ -17,6 +18,7 @@ herdr = { version = "latest", minimum_release_age = "0", postinstall = 'mkdir -p
 # Explicit backend: packslip does not resolve Worktrunk's nested release binaries.
 "aqua:max-sixty/worktrunk" = "latest"
 python = "latest"
+uv = "latest"
 node = "latest"
 "aqua:nushell/nushell" = "latest"
 atuin = "latest"
@@ -40,3 +42,6 @@ lua-language-server = "latest"
 marksman = "latest"
 ruff = "latest"
 taplo = "latest"
+
+[settings]
+pypi.uvx = true
