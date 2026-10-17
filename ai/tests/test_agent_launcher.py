@@ -1,0 +1,174 @@
+from __future__ import annotations
+
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import unittest
+
+ROOT = Path(__file__).resolve().parents[2]
+LAUNCHER = ROOT / "ai/.bin/agent"
+
+# A process-boundary stand-in: record actual argv/env and answer Herdr's JSON API.
+CHILD = '''import json, os, pathlib, sys
+args = sys.argv[1:]
+with open(os.environ["CALLS"], "a") as log:
+    log.write(json.dumps(args) + "\\n")
+if pathlib.Path(sys.argv[0]).name != "herdr":
+    print(json.dumps({"args": args, "cwd": os.getcwd(),
+                      "name": os.environ.get("AGENT_NAME"),
+                      "value": os.environ.get("EXTRA")}))
+    sys.exit(int(os.environ.get("CHILD_EXIT", "0")))
+if args[:1] == ["--session"]:
+    args = args[2:]
+state = json.loads(pathlib.Path(os.environ["STATE"]).read_text())
+command = " ".join(args[:2])
+if command == state.get("fail"):
+    print("sensitive diagnostic: " + os.environ.get("EXTRA", ""), file=sys.stderr)
+    sys.exit(1)
+if command == "agent list":
+    result = {"agents": state.get("agents", [])}
+elif command == "workspace list":
+    result = {"workspaces": state.get("workspaces", [])}
+elif command == "pane list":
+    result = {"panes": state["panes"][args[-1]]}
+elif command in ("workspace create", "tab create", "pane split"):
+    result = {"root_pane": {"pane_id": "w9:p1"},
+              "pane": {"pane_id": "w9:p1"}, "tab": {"tab_id": "w9:t1"}}
+elif command == "tab rename":
+    result = {}
+elif command == "agent start":
+    result = {"agent": {"pane_id": "w9:p1", "name": args[2]}}
+else:
+    raise AssertionError(args)
+print(json.dumps({"result": result}))
+'''
+
+
+class AgentLauncherTests(unittest.TestCase):
+    def setUp(self) -> None:
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name).resolve()
+        self.calls = self.root / "calls.jsonl"
+        self.state = self.root / "state.json"
+        self.state.write_text("{}")
+        self.project = self.root / "project with spaces"
+        self.project.mkdir()
+        self.environment = {key: value for key, value in os.environ.items()
+                            if not key.startswith("HERDR_")}
+        self.environment.update(PATH=f"{self.root}:{os.environ['PATH']}",
+                                CALLS=str(self.calls), STATE=str(self.state))
+        for name in ("herdr", "pi", "claude", "codex"):
+            child = self.root / name
+            child.write_text(f"#!{sys.executable}\n{CHILD}")
+            child.chmod(0o755)
+
+    def run_agent(self, *args: str, code: int = 0) -> subprocess.CompletedProcess[str]:
+        result = subprocess.run([str(LAUNCHER), "--cwd", str(self.project), *args],
+                                env=self.environment, capture_output=True, text=True)
+        self.assertEqual(code, result.returncode, result.stdout + result.stderr)
+        return result
+
+    def commands(self) -> list[list[str]]:
+        return [json.loads(line) for line in self.calls.read_text().splitlines()] if self.calls.exists() else []
+
+    def test_local_exec_preserves_argv_environment_and_exit_status(self) -> None:
+        literal = "quotes ' \" $HOME $(touch should-not-exist)\nnext line"
+        self.environment["EXTRA"] = literal
+        self.environment["CHILD_EXIT"] = "7"
+        for kind in ("pi", "claude", "codex"):
+            with self.subTest(kind=kind):
+                result = self.run_agent("--kind", kind, "--name", "Alice Smith", "--env", "EXTRA",
+                                        "--", "--resume", literal, code=7)
+                received = json.loads(result.stdout)
+                prefix = [] if kind == "codex" else ["--name", "Alice Smith"]
+                self.assertEqual(prefix + ["--resume", literal], received["args"])
+                self.assertEqual(str(self.project), received["cwd"])
+                self.assertEqual("Alice Smith", received["name"])
+                self.assertEqual(literal, received["value"])
+        self.assertFalse((self.project / "should-not-exist").exists())
+
+    def test_workspace_selection_uses_checkout_and_pins_session(self) -> None:
+        alias = self.root / "alias"
+        alias.symlink_to(self.project, target_is_directory=True)
+        self.state.write_text(json.dumps({
+            "workspaces": [{"label": "maintenance", "workspace_id": "wrong"},
+                           {"label": "maintenance", "workspace_id": "right"}],
+            "panes": {"wrong": [{"cwd": str(self.root)}], "right": [{"cwd": str(alias)}]},
+        }))
+        self.environment.update(HERDR_ENV="1", HERDR_WORKSPACE_ID="unrelated",
+                                EXTRA="secret ' with spaces")
+        self.run_agent("--name", "reviewer", "--herdr-name", "review-123", "--herdr-session", "default",
+                       "--workspace", "maintenance", "--tab", "PR review", "--env", "EXTRA")
+        calls = self.commands()
+        self.assertTrue(all(call[:2] == ["--session", "default"] for call in calls))
+        create = next(call[2:] for call in calls if call[2:4] == ["tab", "create"])
+        self.assertEqual(["tab", "create", "--workspace", "right", "--label", "PR review"], create[:6])
+        self.assertIn("--no-focus", create)
+        self.assertIn("EXTRA=secret ' with spaces", create)
+        self.assertIn("AGENT_NAME=reviewer", create)
+        self.assertEqual(["agent", "start", "review-123", "--kind", "pi", "--pane", "w9:p1",
+                          "--", "--name", "reviewer"], calls[-1][2:])
+
+    def test_new_workspace_and_caller_layout_never_reuse_occupied_panes(self) -> None:
+        cases = [
+            (["--herdr-session", "default", "--workspace", "maintenance", "--tab", "review"],
+             ["agent list", "workspace list", "workspace create", "tab rename", "agent start"]),
+            (["--split", "down"], ["agent list", "pane split", "agent start"]),
+            (["--tab", "review"], ["agent list", "tab create", "agent start"]),
+        ]
+        self.environment.update(HERDR_ENV="1", HERDR_PANE_ID="caller:p1", HERDR_WORKSPACE_ID="caller")
+        for options, expected in cases:
+            with self.subTest(options=options):
+                self.calls.write_text("")
+                self.run_agent("--name", "alice", *options)
+                calls = [call[2:] if call[0] == "--session" else call for call in self.commands()]
+                self.assertEqual(expected, [" ".join(call[:2]) for call in calls])
+                if "--split" in options:
+                    self.assertIn("--current", calls[1])
+                elif "--workspace" not in options:
+                    self.assertEqual(["--workspace", "caller"], calls[1][2:4])
+                else:
+                    self.assertEqual(["tab", "rename", "w9:t1", "review"], calls[-2])
+
+    def test_ambiguous_workspace_and_live_name_collision_fail_before_creation(self) -> None:
+        ambiguous = {
+            "workspaces": [{"label": "work", "workspace_id": name} for name in ("a", "b")],
+            "panes": {name: [{"cwd": str(self.project)}] for name in ("a", "b")},
+        }
+        for state, message in ((ambiguous, "refusing to guess"),
+                               ({"agents": [{"name": "alice"}]}, "already exists")):
+            with self.subTest(state=state):
+                self.calls.write_text("")
+                self.state.write_text(json.dumps(state))
+                result = self.run_agent("--name", "alice", "--herdr-session", "default", "--workspace", "work", code=1)
+                self.assertIn(message, result.stderr)
+                self.assertTrue(all(call[3] == "list" for call in self.commands()))
+
+    def test_failed_start_keeps_pane_without_retry_or_secret_disclosure(self) -> None:
+        self.state.write_text(json.dumps({"fail": "agent start"}))
+        self.environment["EXTRA"] = "must-not-be-printed"
+        result = self.run_agent("--name", "alice", "--herdr-session", "default", "--workspace", "work",
+                                "--env", "EXTRA", code=1)
+        self.assertIn("retained Herdr pane w9:p1", result.stderr)
+        self.assertNotIn(self.environment["EXTRA"], result.stdout + result.stderr)
+        calls = self.commands()
+        self.assertEqual(1, sum(call[2:4] == ["agent", "start"] for call in calls))
+        self.assertFalse(any("close" in call for call in calls))
+
+    def test_invalid_routing_and_reserved_environment_fail_before_side_effects(self) -> None:
+        for options in (["--workspace", "work"], ["--herdr-session", "default"],
+                        ["--split", "down", "--workspace", "work"], ["--focus"],
+                        ["--tab", ""], ["--name", "bad name", "--herdr-session", "default", "--workspace", "work"]):
+            with self.subTest(options=options):
+                self.run_agent("--name", "alice", *options, code=2)
+        for variable in ("HERDR_PANE_ID=other", "AGENT_NAME=bob"):
+            self.run_agent("--name", "alice", "--env", variable, code=1)
+        self.assertEqual([], self.commands())
+
+
+if __name__ == "__main__":
+    unittest.main()
