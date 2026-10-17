@@ -58,7 +58,8 @@ disable_backends = ["pipx"]
 pipx.uvx = true
 npm.package_manager = "bun"
 experimental = true
-github.credential_command = "gh auth token"
+# Guard: the gh shim can re-enter mise, which would rerun this command forever.
+github.credential_command = '[ -z "$MISE_GH_CREDENTIAL_GUARD" ] && MISE_GH_CREDENTIAL_GUARD=1 gh auth token'
 
 # minimum_release_age = "12h"
 # minimum_release_age_excludes = [
