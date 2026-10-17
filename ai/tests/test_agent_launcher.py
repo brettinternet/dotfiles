@@ -198,8 +198,15 @@ class AgentLauncherTests(unittest.TestCase):
         for agents in ([], state["agents"] * 2):
             self.calls.write_text("")
             self.state.write_text(json.dumps({"agents": agents}))
-            self.run_agent("alice", "--close", code=1)
+            result = self.run_agent("alice", "--close", code=1 if agents else 0)
+            if not agents:
+                self.assertEqual({"name": "alice", "closed": False, "reason": "not_found"},
+                                 json.loads(result.stdout)["result"])
             self.assertEqual([["agent", "list"]], self.commands())
+        self.calls.write_text("")
+        self.state.write_text(json.dumps({"fail": "agent list"}))
+        self.run_agent("alice", "--close", code=1)
+        self.assertEqual([["agent", "list"]], self.commands())
         self.calls.write_text("")
         for options in (("--close", "-t"), ("--reuse-pane",), ("--reuse-tab", "-s")):
             self.run_agent("alice", *options, code=2)
@@ -211,6 +218,29 @@ class AgentLauncherTests(unittest.TestCase):
         start = self.commands()[-1][2:]
         self.assertEqual(["agent", "start", "auth-review-3"], start[:3])
         self.assertEqual(["--name", "Auth Review!"], start[-2:])
+
+    def test_workspace_preference_requires_matching_caller_in_inherited_session(self) -> None:
+        state = {
+            "workspaces": [{"label": "work", "workspace_id": name} for name in ("a", "b")],
+            "panes": {name: [{"cwd": str(self.project)}] for name in ("a", "b")},
+        }
+        self.environment.update(HERDR_ENV="1", HERDR_WORKSPACE_ID="b")
+        self.state.write_text(json.dumps(state))
+        self.run_agent("alice", "-w", "work")
+        create = next(call for call in self.commands() if call[:2] == ["tab", "create"])
+        self.assertEqual(["--workspace", "b"], create[2:4])
+        for caller, session in (("b", ["--herdr-session", "other"]), ("unrelated", [])):
+            self.calls.write_text("")
+            self.environment["HERDR_WORKSPACE_ID"] = caller
+            self.run_agent("alice", "-w", "work", *session, code=1)
+            self.assertFalse(any("create" in call for call in self.commands()))
+        self.calls.write_text("")
+        self.environment["HERDR_WORKSPACE_ID"] = "b"
+        state["panes"]["b"][0]["cwd"] = str(self.root)
+        self.state.write_text(json.dumps(state))
+        self.run_agent("alice", "-w", "work")
+        create = next(call for call in self.commands() if call[:2] == ["tab", "create"])
+        self.assertEqual(["--workspace", "a"], create[2:4])
 
     def test_ambiguous_workspace_and_explicit_name_collision_fail_before_creation(self) -> None:
         ambiguous = {
