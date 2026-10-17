@@ -121,21 +121,20 @@ def install_url_handler(home, remote_debugging=False):
             raise ValueError(f"Refusing to overwrite unmanaged app: {destination}") from error
         if not isinstance(old, dict) or old.get("CFBundleIdentifier") != identifier:
             raise ValueError(f"Refusing to overwrite unmanaged app: {destination}")
-    script = Path(__file__).resolve().with_name("chromium-url-handler.applescript")
-    # Compile before touching an existing handler, so compilation errors leave it intact.
-    with tempfile.TemporaryDirectory(prefix="chromium-url-handler-") as temporary:
+    script = Path(__file__).resolve().with_name("chromium-url-handler.swift")
+    # Build on the destination filesystem before replacing the managed bundle.
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix="chromium-url-handler-", dir=destination.parent) as temporary:
         bundle = Path(temporary) / destination.name
-        source = script.read_text()
-        if remote_debugging:
-            source = source.replace("property remoteDebuggingEnabled : false",
-                                    "property remoteDebuggingEnabled : true")
-        compiled_source = Path(temporary) / script.name
-        compiled_source.write_text(source)
-        subprocess.run(["/usr/bin/osacompile", "-o", str(bundle), str(compiled_source)], check=True)
-        plist = bundle / "Contents/Info.plist"
-        with plist.open("rb") as source:
-            info = plistlib.load(source)
-        info.update({
+        contents = bundle / "Contents"
+        (contents / "MacOS").mkdir(parents=True)
+        subprocess.run(["/usr/bin/xcrun", "swiftc", "-O", str(script), "-o",
+                        str(contents / "MacOS/launch")], check=True)
+        plist = contents / "Info.plist"
+        info = {
+            "CFBundleExecutable": "launch",
+            "CFBundlePackageType": "APPL",
+            "ChromiumRemoteDebuggingEnabled": remote_debugging,
             "CFBundleIdentifier": identifier,
             "CFBundleName": "Chromium Default",
             "CFBundleDisplayName": "Chromium Default",
@@ -152,12 +151,24 @@ def install_url_handler(home, remote_debugging=False):
                 "CFBundleTypeRole": "Viewer",
                 "CFBundleURLSchemes": ["http", "https"],
             }],
-        })
+        }
+        icon = BROWSER.parent.parent / "Resources/app.icns"
+        if icon.is_file():
+            (contents / "Resources").mkdir()
+            shutil.copyfile(icon, contents / "Resources/app.icns")
+            info["CFBundleIconFile"] = "app.icns"
         with plist.open("wb") as output:
             plistlib.dump(info, output)
-        # osacompile signs its output; re-sign after editing the bundle metadata.
         subprocess.run(["/usr/bin/codesign", "--force", "--sign", "-", str(bundle)], check=True)
-        shutil.copytree(bundle, destination, dirs_exist_ok=True)
+        previous = Path(temporary) / "previous.app"
+        if destination.exists():
+            destination.rename(previous)
+        try:
+            bundle.rename(destination)
+        except OSError:
+            if previous.exists():
+                previous.rename(destination)
+            raise
     subprocess.run([
         "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister",
         "-f", str(destination),
