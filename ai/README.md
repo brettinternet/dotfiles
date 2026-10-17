@@ -101,60 +101,48 @@ Delegation policy lives in [`AGENTS.md`](AGENTS.md); role instructions and harne
 
 ## Named launches
 
-`agent` (`ai/.bin/agent`, linked by `make ai`) launches Pi by default, or Claude Code / Codex with `--kind`. It is stateless: a name is a label, not automatic resume or a durable identity registry. Native arguments go after `--`; the wrapper does not replace the native CLIs.
+`agent NAME` (`ai/.bin/agent`, linked by `make ai`) launches Pi by default, or Claude Code / Codex with `-k/--kind`. It is stateless: a name is a label, not automatic resume or a durable identity registry. Native arguments go after `--`; the wrapper does not replace the native CLIs. `agent --help` lists every flag with examples.
 
 ```sh
-agent --name alice
-agent --name bob --kind claude
-agent --name alice -- --session-id alice # explicitly create/reopen this Pi conversation
-agent --name charlie --kind codex -- resume
+agent alice
+agent bob -k claude
+agent alice -- --session-id alice # explicitly create/reopen this Pi conversation
+agent carol -k codex -- resume
 ```
 
-Pi and Claude receive `--name`. All children receive `AGENT_NAME`; Codex has no native `--name`, so the helper warns that only the environment and optional Herdr live name are set. The environment variable is metadata, not an instruction to the model or an authorization mechanism. With no placement flags, the helper replaces itself with the native CLI in the current terminal and preserves its exit status—even inside Herdr. It does not rename that existing Herdr pane's agent.
+Pi and Claude receive `--name`. All children receive `AGENT_NAME`; Codex has no native `--name`, so it gets only the environment and the Herdr live name. The environment variable is metadata, not an instruction to the model or an authorization mechanism. With no placement flags, the helper replaces itself with the native CLI in the current terminal and preserves its exit status—even inside Herdr. It does not rename that existing Herdr pane's agent.
 
 ### Herdr placement
 
 ```sh
-agent --name alice --split down
-agent --name alice --tab "Auth review" # fresh tab in the caller's workspace
-agent --name alice --workspace maintenance --tab review \
-  --pane-title "Dependency PRs" --startup-timeout 60000
+agent alice -s                    # split the calling pane to the right
+agent alice -s down -T "Dependency PRs" --startup-timeout 60
+agent "Auth review" -t            # fresh tab titled "Auth review" in the caller's workspace
+agent alice -w maintenance -t review
 
 # An explicit session works outside Herdr too, including from a scheduler.
-agent --name reviewer --herdr-name "review-$(date +%s)-$$" \
-  --herdr-session default --workspace maintenance --tab review \
-  --cwd ~/dev/me/maintenance
+agent reviewer --herdr-session default -w maintenance -t review -C ~/dev/me/maintenance
 ```
 
-`--workspace` is a **label**, matched together with canonical `--cwd` (default: current directory) against workspace panes, like `maintenance/scripts/noon-review.sh`. One match gets a fresh tab; no match gets a new workspace with its initial tab renamed; multiple matches fail. Existing tabs and panes are never reused for launches. `--tab` defaults to the display name when a workspace is specified. `--split` targets only the calling pane and cannot be combined with workspace, tab, or session selection.
+`-w/--workspace` is a **label**, matched together with canonical `-C/--cwd` (default: current directory) against workspace panes. One match gets a fresh tab; no match gets a new workspace with its initial tab renamed; multiple matches fail. Existing tabs and panes are never reused for launches. `-t/--tab` takes an optional title that defaults to NAME, as does the tab when only `-w` is given. `-s/--split` takes an optional direction (`right` by default), targets only the calling pane, and cannot be combined with workspace, tab, or session selection. Put NAME before a bare `-s` or `-t`, since they would otherwise consume it as their value.
 
-Placement uses the inherited Herdr session unless `--herdr-session` is explicit. An explicit session requires `--workspace`, so it never falls back to another session's focused workspace. Focus is preserved unless `--focus` is supplied. Live Herdr names must match `[a-z][a-z0-9_-]{0,31}` and be unique within the selected session; `--herdr-name` separates that address from the session display name for repeated jobs. A collision fails rather than interrupting an existing agent.
+Placement uses the inherited Herdr session unless `--herdr-session` is explicit. An explicit session requires `-w`, so it never falls back to another session's focused workspace. Focus is preserved unless `-f/--focus` is supplied. The Herdr live name is derived from NAME (`Auth review` → `auth-review`) and gets a numeric suffix (`auth-review-2`) if taken, so repeated scheduled jobs need no unique name. `--herdr-name` sets an exact live name matching `[a-z][a-z0-9_-]{0,31}` and fails on collision instead. Neither path interrupts an existing agent.
 
-`--pane-title TEXT` explicitly labels only the newly created pane; your pane-title plugin respects that label. Omit it to retain dynamic titles. `--startup-timeout MS` controls Herdr's wait for interactive readiness (1–300000 ms; default 30000), not the duration of the agent's work. Both require Herdr placement.
+`-T/--pane-title TEXT` explicitly labels only the newly created pane; your pane-title plugin respects that label. Omit it to retain dynamic titles. `--startup-timeout SECONDS` controls Herdr's wait for interactive readiness (1–300; default 30), not the duration of the agent's work. Both require Herdr placement.
 
-Use `--dry-run` to print a JSON plan containing the native argv, canonical cwd, environment overrides, and optional Herdr placement:
+Use `-n/--dry-run` to print a JSON plan containing the native argv, canonical cwd, environment overrides, and optional Herdr placement:
 
 ```sh
-agent --name reviewer --herdr-session default --workspace maintenance \
-  --tab review --pane-title "Dependency PRs" --env APPRISE_URLS --dry-run
+agent reviewer --herdr-session default -w maintenance -t review -T "Dependency PRs" -e APPRISE_URLS -n
 ```
 
 Dry-run validates local arguments and environment references but never starts a process or contacts Herdr. Workspace resolution, live-name collision checks, and readiness checks occur only on a real launch; the plan is not a reservation or a guarantee that launch will succeed. All environment override values are redacted. Native argv and titles are shown verbatim, so do not put secrets in those fields when sharing the output. Without Herdr placement, dry-run previews the local CLI invocation.
 
-Use repeatable `--env KEY` to copy exported variables into the new terminal, or `--env KEY=VALUE` to set them. Do not assume a long-running Herdr server has your scheduler's environment. `AGENT_NAME` and `HERDR_*` overrides are rejected. Values sent through Herdr's CLI may be visible in process arguments, so prefer credential files or agent-native secret lookup for stronger isolation.
+Use repeatable `-e/--env KEY` to copy exported variables into the new terminal, or `--env KEY=VALUE` to set them. Do not assume a long-running Herdr server has your scheduler's environment. `AGENT_NAME` and `HERDR_*` overrides are rejected. Values sent through Herdr's CLI may be visible in process arguments, so prefer credential files or agent-native secret lookup for stronger isolation.
 
-For the review script, keep credential setup and prompt text there; replace its layout/start block with:
+For a scheduled job, pass the prompt as a native argument; see the `review` job in `~/dev/me/maintenance/noon.yaml`.
 
-```sh
-export APPRISE_URLS="pover://${PUSHOVER_USER_KEY}@${PUSHOVER_TOKEN}"
-review_agent="review-$(date +%s)-$$"
-agent --name reviewer --herdr-name "$review_agent" \
-  --herdr-session default --workspace maintenance --tab review \
-  --cwd "$project" --env APPRISE_URLS
-herdr --session default agent prompt "$review_agent" "$prompt"
-```
-
-Herdr launches print the successful `agent start` JSON to stdout. Failed starts return nonzero and leave the created pane in place, reporting its ID when available; inspect it before retrying. A timeout does not prove nothing started. The helper never closes panes or resubmits work. Run the script with `set -e` (as your review script does) so a failed launch cannot proceed to prompting.
+Herdr launches print the successful `agent start` JSON, including the resolved live name, to stdout. Failed starts return nonzero and leave the created pane in place, reporting its ID when available; inspect it before retrying. A timeout does not prove nothing started. The helper never closes panes or resubmits work.
 
 ## Herdr
 
