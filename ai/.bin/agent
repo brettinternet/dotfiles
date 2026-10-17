@@ -237,8 +237,11 @@ def close_agent(args: argparse.Namespace) -> None:
         return
     h = herdr_client(args)
     matches = [agent for agent in h("agent", "list")["result"]["agents"] if agent.get("name") == args.name]
-    if len(matches) != 1:
-        raise ValueError("Expected exactly one agent with that live name; refusing to close")
+    if not matches:
+        print(json.dumps({"result": {"name": args.name, "closed": False, "reason": "not_found"}}))
+        return
+    if len(matches) > 1:
+        raise ValueError("Multiple agents have that live name; refusing to close")
     print(json.dumps(h("pane", "close", matches[0]["pane_id"])))
 
 
@@ -274,6 +277,9 @@ def launch_herdr(args: argparse.Namespace, native: list[str], variables: dict[st
                     panes = h("pane", "list", "--workspace", candidate_id)["result"]["panes"]
                     if any(p.get("cwd") and Path(p["cwd"]).resolve() == args.cwd for p in panes):
                         matches.append(candidate_id)
+                # Caller IDs are meaningful only within the inherited session.
+                if args.herdr_session is None and workspace in matches:
+                    matches = [workspace]
                 if len(matches) > 1:
                     raise ValueError("Multiple workspaces match label and checkout; refusing to guess")
                 workspace = matches[0] if matches else None
