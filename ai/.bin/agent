@@ -189,11 +189,12 @@ def launch_herdr(args: argparse.Namespace, native: list[str], variables: dict[st
                 pane = created["result"]["root_pane"]["pane_id"]
                 h("tab", "rename", created["result"]["tab"]["tab_id"], title)
         if args.pane_title is not None:
-            h("pane", "rename", pane, "--", args.pane_title)
+            # Herdr joins every remaining word into the label, including a literal "--".
+            h("pane", "rename", pane, args.pane_title)
         timeout = ["--timeout", str(args.startup_timeout)] if args.startup_timeout is not None else []
         result = h("agent", "start", args.herdr_name, "--kind", args.kind, "--pane", pane, *timeout, "--", *native)
         print(json.dumps(result))
-    except (OSError, ValueError, KeyError, TypeError, RuntimeError):
+    except BaseException:  # including Ctrl-C during the startup wait
         if pane:
             print(f"agent: retained Herdr pane {pane}; inspect it before retrying (session {args.herdr_session or 'inherited'})", file=sys.stderr)
         raise
@@ -218,6 +219,8 @@ def main() -> int:
     except (OSError, ValueError, KeyError, TypeError, RuntimeError) as error:
         print(f"agent: {error}", file=sys.stderr)
         return 1
+    except KeyboardInterrupt:
+        return 130
 
 
 if __name__ == "__main__":

@@ -129,7 +129,7 @@ class AgentLauncherTests(unittest.TestCase):
                 calls = [call[2:] if call[0] == "--session" else call for call in self.commands()]
                 self.assertEqual(expected[:-1] + ["pane rename", "agent start"],
                                  [" ".join(call[:2]) for call in calls])
-                self.assertEqual(["pane", "rename", "w9:p1", "--", "--Dependency PRs"], calls[-2])
+                self.assertEqual(["pane", "rename", "w9:p1", "--Dependency PRs"], calls[-2])
                 self.assertEqual(["--timeout", "60000", "--", "--name", "alice", "--model", "example"], calls[-1][-7:])
                 if "--split" in options:
                     self.assertIn("--current", calls[1])
