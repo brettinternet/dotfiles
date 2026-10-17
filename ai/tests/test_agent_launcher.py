@@ -10,9 +10,10 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 LAUNCHER = ROOT / "ai/.bin/agent"
+PANE = ROOT / "base/.bin/pane"
 
 # A process-boundary stand-in: record actual argv/env and answer Herdr's JSON API.
-CHILD = '''import json, os, pathlib, sys
+CHILD = '''import json, os, pathlib, subprocess, sys
 args = sys.argv[1:]
 with open(os.environ["CALLS"], "a") as log:
     log.write(json.dumps(args) + "\\n")
@@ -37,10 +38,18 @@ elif command == "tab list":
 elif command == "pane list":
     result = {"panes": state["panes"][args[-1]]}
 elif command in ("workspace create", "tab create", "pane split"):
+    state["launch_cwd"] = args[args.index("--cwd") + 1]
+    state["launch_env"] = dict(args[index + 1].split("=", 1) for index, word in enumerate(args) if word == "--env")
+    pathlib.Path(os.environ["STATE"]).write_text(json.dumps(state))
     result = {"root_pane": {"pane_id": "w9:p1"},
               "pane": {"pane_id": "w9:p1"}, "tab": {"tab_id": "w9:t1"}}
 elif command in ("tab rename", "pane rename", "pane close"):
     result = {}
+elif command == "pane run":
+    subprocess.run(["sh", "-c", args[3]], cwd=state["launch_cwd"],
+                   env={**os.environ, **state["launch_env"], "HERDR_PANE_ID": "w9:p1"},
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    sys.exit(0)  # Herdr pane run returns no JSON; command exit is not submission exit.
 elif command == "agent start":
     result = {"agent": {"pane_id": "w9:p1", "name": args[2]}}
 else:
@@ -76,6 +85,67 @@ class AgentLauncherTests(unittest.TestCase):
 
     def commands(self) -> list[list[str]]:
         return [json.loads(line) for line in self.calls.read_text().splitlines()] if self.calls.exists() else []
+
+    def run_pane(self, *args: str, code: int = 0) -> subprocess.CompletedProcess[str]:
+        result = subprocess.run([str(PANE), "--cwd", str(self.project), *args],
+                                env=self.environment, capture_output=True, text=True)
+        self.assertEqual(code, result.returncode, result.stdout + result.stderr)
+        return result
+
+    def test_pane_runs_literal_argv_and_keeps_output_pane_unless_close_requested(self) -> None:
+        self.environment.update(HERDR_ENV="1", HERDR_PANE_ID="caller:p1", EXTRA="secret ' $HOME")
+        output = self.root / "received.json"
+        command = [sys.executable, "-c",
+                   "import json, os, pathlib, sys; pathlib.Path(sys.argv[1]).write_text("
+                   "json.dumps([sys.argv[2:], os.getcwd(), os.environ['EXTRA']])); sys.exit(7)",
+                   str(output), "", "quotes ' \\\" $HOME $(touch unexpected) ; echo bad", "line\\nnext"]
+        for close in (False, True):
+            with self.subTest(close=close):
+                self.calls.write_text("")
+                result = self.run_pane(*(["--close-on-exit"] if close else []), "-e", "EXTRA", "--", *command)
+                self.assertEqual({"pane_id": "w9:p1", "submitted": True}, json.loads(result.stdout)["result"])
+                self.assertEqual([command[4:], str(self.project), self.environment["EXTRA"]], json.loads(output.read_text()))
+                self.assertFalse((self.project / "unexpected").exists())
+                calls = self.commands()
+                self.assertEqual(["pane", "split", "--current", "--direction", "right"], calls[0][:5])
+                self.assertEqual([["pane", "close", "w9:p1"]] if close else [],
+                                 [call for call in calls if call[:2] == ["pane", "close"]])
+
+    def test_pane_reuses_workspace_and_tab_without_touching_agents(self) -> None:
+        state = self.reuse_state()
+        state["workspaces"] = [{"label": "work", "workspace_id": "w1"}]
+        state["panes"]["w1"][0]["cwd"] = str(self.project)
+        self.state.write_text(json.dumps(state))
+        self.run_pane("-w", "work", "-t", "review", "--reuse-tab", "--", "echo", "test")
+        calls = self.commands()
+        self.assertTrue(any(call[:3] == ["pane", "split", "w1:p1"] for call in calls))
+        self.assertFalse(any(call[0] == "agent" or "close" in call or "create" in call for call in calls))
+
+    def test_pane_dry_run_routing_validation_and_failed_submission(self) -> None:
+        self.environment.update(HERDR_ENV="1", HERDR_PANE_ID="caller:p1")
+        result = self.run_pane("--dry-run", "-e", "TOKEN=secret", "--", "echo", "test")
+        self.assertNotIn("secret", result.stdout)
+        self.assertEqual(["echo", "test"], json.loads(result.stdout)["argv"])
+        for options in (("--",), ("--herdr-session", "other", "--", "echo"),
+                        ("-s", "-w", "work", "--", "echo")):
+            self.run_pane(*options, code=2)
+        self.run_pane("-e", "HERDR_PANE_ID=wrong", "--", "echo", code=1)
+        self.assertEqual([], self.commands())
+        self.state.write_text(json.dumps({"fail": "pane run"}))
+        result = self.run_pane("--", "echo", code=1)
+        self.assertIn("retained Herdr pane w9:p1", result.stderr)
+        self.assertFalse(any("close" in call for call in self.commands()))
+
+    def test_agent_list_routes_session_and_never_mutates(self) -> None:
+        agents = [{"name": "alice", "pane_id": "w1:p1"}]
+        self.state.write_text(json.dumps({"agents": agents}))
+        result = self.run_agent("--list", "--herdr-session", "other")
+        self.assertEqual(agents, json.loads(result.stdout)["result"]["agents"])
+        self.assertEqual([["--session", "other", "agent", "list"]], self.commands())
+        self.calls.write_text("")
+        self.run_agent("--list", "--herdr-session", "other", "--dry-run")
+        self.run_agent("alice", "--list", code=2)
+        self.assertEqual([], self.commands())
 
     def test_local_exec_preserves_argv_environment_and_exit_status(self) -> None:
         literal = "quotes ' \" $HOME $(touch should-not-exist)\nnext line"
