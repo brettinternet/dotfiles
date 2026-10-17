@@ -2,7 +2,6 @@
 
 [tools]
 # helpers
-"pypi:apprise" = { version = "latest", depends = ["uv"] }
 task = "latest"
 tmux = "latest"
 neovim = "latest"
@@ -19,6 +18,7 @@ herdr = { version = "latest", minimum_release_age = "0", postinstall = 'mkdir -p
 "aqua:max-sixty/worktrunk" = "latest"
 python = "latest"
 uv = "latest"
+"pypi:apprise" = { version = "latest", depends = ["uv"] }
 node = "latest"
 "aqua:nushell/nushell" = "latest"
 atuin = "latest"
