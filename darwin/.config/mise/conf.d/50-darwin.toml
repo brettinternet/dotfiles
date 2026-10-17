@@ -8,6 +8,8 @@ hunk = "github:modem-dev/hunk"
 "github:brettinternet/worklease" = { version = "latest", minimum_release_age = "0" }
 "github:brettinternet/panelctl" = { version = "latest", minimum_release_age = "0", matching_regex = '^panelctl-cli-v.*-macos-universal\.zip$' }
 "github:brettinternet/hum" = { version = "latest", minimum_release_age = "0" }
+"github:brettinternet/noon" = { version = "latest", minimum_release_age = "0" }
+"github:brettinternet/tell" = { version = "latest", minimum_release_age = "0" }
 
 # dev
 go = { version = "latest", postinstall = 'go env -w GOPATH="$HOME/.go"' }
