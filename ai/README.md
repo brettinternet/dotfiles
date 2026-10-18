@@ -179,12 +179,12 @@ Use repeatable `-e/--env KEY` to copy exported variables into the new terminal, 
 For a scheduled job, use `agent-window` from the checkout's Noon jobs:
 
 ```sh
-agent-window launch review '/skill:pr-review repo:o/r' "gh pr list -R o/r --json number,headRefOid --jq 'if length == 0 then empty else tojson end'"
+agent-window launch review '/skill:pr-review repo:{repo}' "gh pr list --json number,headRefOid --jq 'if length == 0 then empty else tojson end'"
 agent-window launch --daily babysit '/skill:pr-babysit-loop'  # one long-lived agent per day
 agent-window close review                                    # close a leftover done or idle pane
 ```
 
-By default each launch runs one pass in the checkout's workspace and returns once its pane closes on `done`. The optional gate prints a fingerprint of pending work: empty output is a noop (exit 3), a nonzero exit fails the run, and a fingerprint matching the one taken before the last completed pass is a noop. A working or blocked pass is never replaced; a blocked pass fails its run and keeps its pane for you, and the next launch closes it once it is done or idle. Fingerprints live in `~/.local/state/agent-window/`.
+By default each launch runs one pass in the checkout's workspace and returns once its pane closes on `done`. The optional gate prints a fingerprint of pending work: empty output is a noop (exit 3), a nonzero exit fails the run, and a fingerprint matching the one taken before the last completed pass is a noop. A working or blocked pass is never replaced; a blocked pass fails its run and keeps its pane for you, and the next launch closes it once it is done or idle. Fingerprints live in `~/.local/state/agent-window/`. `{repo}` expands to the checkout's GitHub `OWNER/NAME`, and `{today}`, `{yesterday}`, and `{today-N}` to local dates, so one Noon file can serve several checkouts.
 
 Herdr launches print the successful `agent start` JSON, including the resolved live name, to stdout. Failed starts return nonzero and leave the created pane in place, reporting its ID when available; inspect it before retrying. A timeout does not prove nothing started. The helper never retries or resubmits work; it closes panes only for explicit replacement or `--close`.
 

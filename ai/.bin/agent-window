@@ -8,11 +8,12 @@
 # nothing to do, and a nonzero exit fails the run so a broken gate is not mistaken for idle.
 # A pass is skipped when the fingerprint matches the one taken before the last completed pass,
 # or while the previous pass is still working or blocked; a finished leftover pane is closed first.
-# Date tokens in PROMPT and GATE expand to local YYYY-MM-DD dates before use:
+# Tokens in PROMPT and GATE expand before use; dates are local YYYY-MM-DD:
+#   {repo}       this checkout's GitHub OWNER/NAME
 #   {today}      today's date
 #   {yesterday}  one day ago
 #   {today-N}    N days ago, e.g. {today-7}
-# Example: agent-window launch review '/pr-review repo:o/r updated:>={yesterday}'
+# Example: agent-window launch review '/skill:pr-review repo:{repo} updated:>={yesterday}'
 # Exit 3 = nothing to do (noon records it as noop). macOS only (BSD date).
 set -euo pipefail
 
@@ -35,8 +36,9 @@ agent_status() {
   fi
 }
 
-expand_dates() {
+expand_tokens() {
   local s=$1
+  s=${s//"{repo}"/$repo}
   s=${s//"{today}"/$(date +%F)}
   s=${s//"{yesterday}"/$(date -v-1d +%F)}
   while [[ $s =~ \{today-([0-9]+)\} ]]; do
@@ -54,7 +56,11 @@ echo "$name: status=$status"
 
 case $mode in
   launch)
-    prompt=$(expand_dates "$3") gate=$(expand_dates "${4:-}")
+    repo=
+    if [[ "$3${4:-}" == *"{repo}"* ]]; then
+      repo=$(gh repo view --json nameWithOwner --jq .nameWithOwner) || { echo "cannot resolve {repo}" >&2; exit 1; }
+    fi
+    prompt=$(expand_tokens "$3") gate=$(expand_tokens "${4:-}")
     agent=("$HOME/.bin/agent" "$name" -k pi -w "$(basename "$PWD")" -t "$name" --reuse-tab -C "$PWD"
       --herdr-session default)
     # A daily agent is still needed after a scheduler restart orphans its waiting run. A blocked
