@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # Launch or close a named Herdr agent in this checkout's workspace; cron sets the windows.
-#   agent-window launch NAME PROMPT [GATE]          run one pass if GATE (shell) exits 0; returns
-#                                                   once the agent finishes its turn and its pane closes
+#   agent-window launch NAME PROMPT [GATE]          run one pass; returns once the agent
+#                                                   finishes its turn and its pane closes
 #   agent-window launch --daily NAME PROMPT [GATE]  start once per day; blocks until the agent exits
 #   agent-window close NAME                         close the agent once it's done or idle
-# A pass is skipped while the previous one is still working or blocked; a finished leftover
-# pane is closed first. Non-empty GATE stdout is a fingerprint: a pass is skipped when it
-# matches the fingerprint taken before the last completed pass.
+# GATE is a shell command printing a fingerprint of the pending work: empty output means
+# nothing to do, and a nonzero exit fails the run so a broken gate is not mistaken for idle.
+# A pass is skipped when the fingerprint matches the one taken before the last completed pass,
+# or while the previous pass is still working or blocked; a finished leftover pane is closed first.
 # Date tokens in PROMPT and GATE expand to local YYYY-MM-DD dates before use:
 #   {today}      today's date
 #   {yesterday}  one day ago
@@ -44,6 +45,10 @@ expand_dates() {
   printf '%s' "$s"
 }
 
+run_gate() {
+  bash -c "$gate" || { echo "gate failed" >&2; exit 1; }
+}
+
 status=$(agent_status)
 echo "$name: status=$status"
 
@@ -52,32 +57,32 @@ case $mode in
     prompt=$(expand_dates "$3") gate=$(expand_dates "${4:-}")
     agent=("$HOME/.bin/agent" "$name" -k pi -w "$(basename "$PWD")" -t "$name" --reuse-tab -C "$PWD"
       --herdr-session default)
-    if [[ -n $daily ]]; then
-      # Still needed after a scheduler restart orphans the waiting run.
-      [[ $status == absent ]] || exit 3
-      # NOON_LAST_SUCCESS_AT is the UTC start of the last run whose agent exited normally.
-      if [[ -n ${NOON_LAST_SUCCESS_AT:-} ]]; then
-        last=$(date -j -u -f %Y-%m-%dT%H:%M:%S "${NOON_LAST_SUCCESS_AT%%[.Z]*}" +%s)
-        [[ $(date -r "$last" +%F) == $(date +%F) ]] && { echo "already ran today"; exit 3; }
-      fi
-      if [[ -n $gate ]] && ! bash -c "$gate"; then echo "gate not met"; exit 3; fi
-      exec "${agent[@]}" --wait -- "$prompt"
-    fi
-    # A blocked pass keeps its pane for the user; once answered and finished, it is replaced.
+    # A daily agent is still needed after a scheduler restart orphans its waiting run. A blocked
+    # pass keeps its pane for the user; once answered and finished, the next pass replaces it.
     case $status in
       absent) ;;
-      done | idle) "$HOME/.bin/agent" --close "$name" --herdr-session default ;;
+      done | idle) [[ -z $daily ]] || exit 3 ;;
       *) exit 3 ;;
     esac
+    # NOON_LAST_SUCCESS_AT is the UTC start of the last run whose agent exited normally.
+    if [[ -n $daily && -n ${NOON_LAST_SUCCESS_AT:-} ]]; then
+      last=$(date -j -u -f %Y-%m-%dT%H:%M:%S "${NOON_LAST_SUCCESS_AT%%[.Z]*}" +%s)
+      [[ $(date -r "$last" +%F) == $(date +%F) ]] && { echo "already ran today"; exit 3; }
+    fi
     fingerprint=
-    if [[ -n $gate ]] && ! fingerprint=$(bash -c "$gate"); then echo "gate not met"; exit 3; fi
+    if [[ -n $gate ]]; then
+      fingerprint=$(run_gate)
+      [[ -n $fingerprint ]] || { echo "nothing to do"; exit 3; }
+    fi
+    [[ -z $daily ]] || exec "${agent[@]}" --wait --prompt "$prompt"
     state="${XDG_STATE_HOME:-$HOME/.local/state}/agent-window/$(basename "$PWD")-$name.gate"
     if [[ -n $fingerprint && -f $state && $(<"$state") == "$fingerprint" ]]; then
       echo "unchanged since last pass"
       exit 3
     fi
+    [[ $status == absent ]] || "$HOME/.bin/agent" --close "$name" --herdr-session default
     # Fails, keeping the pane, when the agent blocks on the user.
-    "${agent[@]}" --close-on-done -- "$prompt"
+    "${agent[@]}" --close-on-done --prompt "$prompt"
     mkdir -p "${state%/*}"
     printf '%s' "$fingerprint" >"$state"
     ;;
