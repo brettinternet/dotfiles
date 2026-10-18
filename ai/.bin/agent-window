@@ -3,8 +3,11 @@
 #   agent-window launch NAME PROMPT [GATE]  start once per day if GATE (shell) exits 0;
 #                                          blocks until the agent exits (agent --wait)
 #   agent-window close NAME                 close the agent once it's done or idle
-# PROMPT and GATE expand {today}, {yesterday}, and {today-N} to local YYYY-MM-DD dates,
-# e.g. "updated:>={today-7}".
+# Date tokens in PROMPT and GATE expand to local YYYY-MM-DD dates before use:
+#   {today}      today's date
+#   {yesterday}  one day ago
+#   {today-N}    N days ago, e.g. {today-7}
+# Example: agent-window launch review '/pr-review-loop repo:o/r updated:>={yesterday}'
 # Exit 3 = nothing to do (noon records it as noop). macOS only (BSD date).
 set -euo pipefail
 
