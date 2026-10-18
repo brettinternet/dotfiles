@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import signal
 from pathlib import Path
 import subprocess
 import sys
@@ -28,7 +29,10 @@ if args[:1] == ["--session"]:
 state = json.loads(pathlib.Path(os.environ["STATE"]).read_text())
 command = " ".join(args[:2])
 if command == state.get("fail"):
-    print("sensitive diagnostic: " + os.environ.get("EXTRA", ""), file=sys.stderr)
+    if state.get("error_code"):
+        print(json.dumps({"error": {"code": state["error_code"]}}), file=sys.stderr)
+    else:
+        print("sensitive diagnostic: " + os.environ.get("EXTRA", ""), file=sys.stderr)
     sys.exit(1)
 if command == "agent list":
     result = {"agents": state.get("agents", [])}
@@ -45,6 +49,9 @@ elif command in ("workspace create", "tab create", "pane split"):
     result = {"root_pane": {"pane_id": "w9:p1"},
               "pane": {"pane_id": "w9:p1"}, "tab": {"tab_id": "w9:t1"}}
 elif command in ("tab rename", "pane rename", "pane close"):
+    if command == "pane close" and state.get("agent_pid"):
+        import signal
+        os.kill(state["agent_pid"], signal.SIGTERM)
     result = {}
 elif command == "pane run":
     run = subprocess.Popen if state.get("async_run") else subprocess.run
@@ -53,6 +60,8 @@ elif command == "pane run":
                    stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                    start_new_session=True)
     sys.exit(0)  # Herdr pane run returns no JSON; command exit is not submission exit.
+elif command == "pane process-info":
+    result = {"process_info": state["process_info"]}
 elif command == "pane get":
     result = {"pane": {"pane_id": args[2]}}
 elif command == "agent start":
@@ -60,6 +69,11 @@ elif command == "agent start":
 elif command == "agent get":
     snapshot = state["snapshots"].pop(0)
     pathlib.Path(os.environ["STATE"]).write_text(json.dumps(state))
+    if snapshot.get("exit_agent"):
+        import signal
+        os.kill(snapshot["exit_agent"], signal.SIGTERM)
+        print(json.dumps({"error": {"code": "agent_not_found"}}), file=sys.stderr)
+        sys.exit(1)
     result = {"agent": snapshot}
 else:
     raise AssertionError(args)
@@ -239,17 +253,23 @@ class AgentLauncherTests(unittest.TestCase):
         statuses = ["idle", "done", "working", "idle", "done", "done"]
         snapshots = [{**identity, "agent_status": status, "state_change_seq": min(index, 4) + 1}
                      for index, status in enumerate(statuses)]
-        for flag in ("--wait", "--close-on-done"):
-            with self.subTest(flag=flag):
+        for options in (("--close-on-done",), ("--close-on-done", "--wait")):
+            with self.subTest(options=options), subprocess.Popen(["pi", "-c", "import time; time.sleep(30)"],
+                                                                executable=sys.executable) as child:
                 self.calls.write_text("")
-                self.state.write_text(json.dumps({"started": identity, "snapshots": snapshots}))
-                result = self.run_agent("alice", "-t", flag)
-                calls = self.commands()
-                self.assertEqual(6, sum(call[:2] == ["agent", "get"] for call in calls))
-                self.assertEqual(int(flag == "--close-on-done"),
-                                 sum(call[:2] == ["pane", "close"] for call in calls))
-                if flag == "--wait":
-                    self.assertTrue(json.loads(result.stdout.splitlines()[-1])["result"]["done"])
+                self.state.write_text(json.dumps({"started": identity,
+                                                   "snapshots": ([identity] if "--wait" in options else []) + snapshots,
+                                                   "agent_pid": child.pid, "process_info": self.process_info(child.pid)}))
+                try:
+                    result = self.run_agent("alice", "-t", *options)
+                    calls = self.commands()
+                    self.assertEqual(6 + int("--wait" in options), sum(call[:2] == ["agent", "get"] for call in calls))
+                    self.assertEqual(1, sum(call[:2] == ["pane", "close"] for call in calls))
+                    if "--wait" in options:
+                        self.assertTrue(json.loads(result.stdout.splitlines()[-1])["result"]["exited"])
+                finally:
+                    if child.poll() is None:
+                        child.terminate()
 
     def test_close_on_done_cancels_on_uncertainty_without_closing(self) -> None:
         identity = self.watch_identity()
@@ -265,13 +285,89 @@ class AgentLauncherTests(unittest.TestCase):
             {"started": {**working, "state_change_seq": None}, "snapshots": [done, done]},
             {"started": {**identity, "agent_status": "blocked"}, "snapshots": [working, done, done]},
         ]
-        for flag, state in ((flag, state) for flag in ("--wait", "--close-on-done") for state in cases):
-            with self.subTest(flag=flag, state=state):
+        for state in cases:
+            with self.subTest(state=state):
                 self.calls.write_text("")
                 self.state.write_text(json.dumps({"started": identity, **state}))
-                result = self.run_agent("alice", "-t", flag, code=1)
+                result = self.run_agent("alice", "-t", "--close-on-done", code=1)
                 self.assertIn("retained Herdr pane w9:p1", result.stderr)
                 self.assertFalse(any(call[:2] == ["pane", "close"] for call in self.commands()))
+
+    @staticmethod
+    def process_info(pid: int) -> dict:
+        return {"foreground_process_group_id": pid, "shell_pid": os.getpid(),
+                "foreground_processes": [{"pid": pid}]}
+
+    def test_agent_wait_tracks_process_not_lifecycle_and_keeps_pane(self) -> None:
+        identity = self.watch_identity()
+        for status, close in (("idle", False), ("done", False), ("blocked", False), ("unknown", False), ("blocked", True)):
+            with self.subTest(status=status, close=close):
+                self.calls.write_text("")
+                with subprocess.Popen(["pi", "-c", "import time; time.sleep(30)"], executable=sys.executable) as child:
+                    self.state.write_text(json.dumps({"started": {**identity, "agent_status": status},
+                                                       "snapshots": [identity], "process_info": self.process_info(child.pid)}))
+                    with subprocess.Popen([str(LAUNCHER), "alice", "-t", "--wait",
+                                           *(["--close-on-done"] if close else [])], env=self.environment,
+                                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as waiter:
+                        try:
+                            json.loads(waiter.stdout.readline())  # Start acknowledged, process still alive.
+                            os.kill(child.pid, signal.SIGSTOP)
+                            time.sleep(0.7)
+                            self.assertIsNone(waiter.poll(), "Neither a settled state nor suspension is process exit")
+                            os.kill(child.pid, signal.SIGCONT)
+                            child.terminate()
+                            stdout, stderr = waiter.communicate(timeout=5)
+                            self.assertEqual(0, waiter.returncode, stderr)
+                            if close:
+                                self.assertIn("auto-close cancelled", stderr)
+                            result = json.loads(stdout)["result"]
+                            self.assertTrue(result["exited"])
+                            self.assertIsNone(result["exit_code"])
+                            self.assertFalse(any(call[:2] == ["pane", "close"] for call in self.commands()))
+                        finally:
+                            if child.poll() is None:
+                                os.kill(child.pid, signal.SIGCONT)
+                                child.terminate()
+                            if waiter.poll() is None:
+                                waiter.kill()
+                                waiter.communicate(timeout=5)
+
+    def test_agent_wait_rejects_unrelated_foreground_job(self) -> None:
+        identity = self.watch_identity()
+        with subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"]) as child:
+            try:
+                self.state.write_text(json.dumps({"started": identity, "snapshots": [identity],
+                                                   "process_info": self.process_info(child.pid)}))
+                result = self.run_agent("alice", "-t", "--wait", code=1)
+                self.assertIn("not the launched agent", result.stderr)
+                self.assertIsNone(child.poll())
+            finally:
+                child.terminate()
+
+    def test_agent_wait_observes_exit_racing_auto_close_query(self) -> None:
+        identity = {**self.watch_identity(), "agent_status": "working"}
+        with subprocess.Popen(["pi", "-c", "import time; time.sleep(30)"], executable=sys.executable) as child:
+            try:
+                self.state.write_text(json.dumps({"started": identity, "snapshots": [identity, {"exit_agent": child.pid}],
+                                                   "process_info": self.process_info(child.pid)}))
+                result = self.run_agent("alice", "-t", "--wait", "--close-on-done")
+                self.assertTrue(json.loads(result.stdout.splitlines()[-1])["result"]["exited"])
+                self.assertFalse(any(call[:2] == ["pane", "close"] for call in self.commands()))
+            finally:
+                if child.poll() is None:
+                    child.terminate()
+
+    def test_pane_wait_reports_external_close_without_inventing_exit_code(self) -> None:
+        self.environment.update(HERDR_ENV="1", HERDR_PANE_ID="caller:p1")
+        self.state.write_text(json.dumps({"fail": "pane get", "error_code": "pane_not_found"}))
+        result = self.run_pane("--wait", "--", sys.executable, "-c",
+                               "import os, signal; os.kill(os.getppid(), signal.SIGKILL)", code=1)
+        self.assertEqual({"pane_id": "w9:p1", "closed": True, "exit_code": None},
+                         json.loads(result.stdout.splitlines()[-1])["result"])
+        self.state.write_text(json.dumps({"fail": "pane get", "error_code": "server_unavailable"}))
+        result = self.run_pane("--wait", "--", sys.executable, "-c",
+                               "import os, signal; os.kill(os.getppid(), signal.SIGKILL)", code=1)
+        self.assertNotIn('"closed": true', result.stdout)
 
     def test_local_exec_preserves_argv_environment_and_exit_status(self) -> None:
         literal = "quotes ' \" $HOME $(touch should-not-exist)\nnext line"

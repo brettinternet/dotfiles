@@ -34,6 +34,7 @@ import os
 from pathlib import Path
 import re
 import signal
+import subprocess
 import sys
 import time
 
@@ -100,7 +101,7 @@ def arguments() -> tuple[argparse.Namespace, list[str]]:
     herdr.add_argument("-T", "--pane-title", metavar="TITLE", help="label the created pane")
     herdr.add_argument("-f", "--focus", action="store_true", help="focus the created pane")
     parser.add_argument("--wait", action="store_true",
-                        help="wait for working then done in Herdr; otherwise wait for process exit")
+                        help="wait for the launched agent process to exit, regardless of lifecycle status")
     herdr.add_argument("--close-on-done", action="store_true",
                        help="stay running; close after observing working then done; cancel on blocked/unknown")
     herdr.add_argument("--startup-timeout", type=int, metavar="SECONDS",
@@ -224,7 +225,7 @@ def preview(args: argparse.Namespace, native: list[str], variables: dict[str, st
             "pane_title": args.pane_title,
             "focus": args.focus,
             "startup_timeout_seconds": args.startup_timeout or DEFAULT_STARTUP_TIMEOUT,
-            "wait": args.wait or args.close_on_done,
+            "wait": args.wait,
             "close_on_done": args.close_on_done,
         }
     print(json.dumps({
@@ -250,38 +251,108 @@ def close_agent(args: argparse.Namespace) -> None:
     print(json.dumps(h("pane", "close", matches[0]["pane_id"])))
 
 
-def wait_when_done(h, pane: str, name: str, started: dict, *, close: bool) -> None:
-    """Fail closed on uncertainty; never reinterpret idle as completion."""
+def process_identity(pid: int) -> tuple[int, str] | None:
+    """Pin process birth as well as PID; stopped processes are still alive."""
+    result = subprocess.run(["ps", "-p", str(pid), "-o", "ppid=", "-o", "lstart=", "-o", "stat="],
+                            capture_output=True, text=True)
+    if result.returncode == 1 and not result.stdout.strip() and not result.stderr.strip():
+        return None
+    if result.returncode:
+        raise RuntimeError("Cannot inspect launched agent process; wait cancelled")
+    fields = result.stdout.strip().rsplit(None, 1)
+    if len(fields) != 2:
+        raise ValueError("Invalid agent process information; wait cancelled")
+    parent, birth = fields[0].split(None, 1)
+    return None if fields[1].startswith("Z") else (int(parent), birth)
+
+
+def watch_agent(h, pane: str, name: str, started: dict, *, wait: bool, close: bool) -> None:
+    """Process waiting and optional, conservative turn cleanup are separate policies."""
+    pid = birth = None
+    if wait:
+        info = h("pane", "process-info", "--pane", pane)["result"]["process_info"]
+        pid = info["foreground_process_group_id"]
+        if (not isinstance(pid, int) or pid <= 0 or pid == info["shell_pid"]
+                or not any(item.get("pid") == pid for item in info["foreground_processes"])):
+            raise ValueError("Cannot establish launched agent process; wait cancelled")
+        # A pager/tool can own the foreground group. Follow ancestry to the
+        # original shell child rather than mistaking that tool's exit for the agent's.
+        seen = set()
+        while pid not in seen:
+            seen.add(pid)
+            process = process_identity(pid)
+            if process is None:
+                raise ValueError("Agent exited during process identification; exit status unavailable")
+            parent, birth = process
+            if parent == info["shell_pid"]:
+                break
+            if parent <= 1 or parent == pid:
+                raise ValueError("Cannot establish agent ancestry; wait cancelled")
+            pid = parent
+        else:
+            raise ValueError("Invalid agent process ancestry; wait cancelled")
+        command = subprocess.run(["ps", "-p", str(pid), "-o", "args="], capture_output=True, text=True)
+        if (command.returncode or not command.stdout.split()
+                or Path(command.stdout.split()[0]).name != started.get("agent")):
+            raise ValueError("Foreground process is not the launched agent; wait cancelled")
+        checked = h("agent", "get", pane)["result"]["agent"]
+        if any(checked.get(key) != started.get(key) for key in
+               ("terminal_id", "name", "agent", "agent_session")):
+            raise ValueError("Agent changed during process identification; wait cancelled")
     identity_keys = ("pane_id", "terminal_id", "name", "agent", "agent_session")
     identity = {key: started.get(key) for key in identity_keys}
-    if identity["pane_id"] != pane or identity["name"] != name or not all(identity.values()):
-        raise ValueError("Cannot establish launched agent identity; wait cancelled")
+    if close and (identity["pane_id"] != pane or identity["name"] != name or not all(identity.values())):
+        if not wait:
+            raise ValueError("Cannot establish launched agent identity; wait cancelled")
+        close = False
+        print("agent: auto-close cancelled (incomplete identity); still waiting for process exit", file=sys.stderr)
     working = False
     current = started
     while True:
-        if any(current.get(key) != value for key, value in identity.items()):
-            raise ValueError("Agent identity changed; wait cancelled")
-        if not isinstance(current.get("state_change_seq"), int):
-            raise ValueError("Agent state sequence is unavailable; wait cancelled")
-        status = current.get("agent_status")
-        if status not in ("idle", "working", "done"):
-            raise ValueError("Agent is blocked or its state is unknown; wait cancelled")
-        if status == "working":
-            working = True
-        elif status == "done" and working:
-            # Re-read before accepting completion or closing. Pane IDs are never reused.
-            checked = h("agent", "get", pane)["result"]["agent"]
-            if (any(checked.get(key) != value for key, value in identity.items())
-                    or checked.get("agent_status") != "done"
-                    or checked.get("state_change_seq") != current.get("state_change_seq")):
-                raise ValueError("Agent changed before completion; wait cancelled")
-            if close:
+        if wait:
+            process = process_identity(pid)
+            if process is None or process[1] != birth:
+                print(json.dumps({"result": {"pane_id": pane, "name": name, "exited": True,
+                                             "exit_code": None}}), flush=True)
+                return
+        if not close:
+            time.sleep(0.5)
+            continue
+        try:
+            if current is None:
+                current = h("agent", "get", pane)["result"]["agent"]
+            if any(current.get(key) != value for key, value in identity.items()):
+                raise ValueError("Agent identity changed; wait cancelled")
+            if not isinstance(current.get("state_change_seq"), int):
+                raise ValueError("Agent state sequence is unavailable; wait cancelled")
+            status = current.get("agent_status")
+            if status not in ("idle", "working", "done"):
+                raise ValueError("Agent is blocked or its state is unknown; wait cancelled")
+            if status == "working":
+                working = True
+            elif status == "done" and working:
+                # Re-read before accepting completion or closing. Pane IDs are never reused.
+                checked = h("agent", "get", pane)["result"]["agent"]
+                if (any(checked.get(key) != value for key, value in identity.items())
+                        or checked.get("agent_status") != "done"
+                        or checked.get("state_change_seq") != current.get("state_change_seq")):
+                    raise ValueError("Agent changed before completion; wait cancelled")
                 print(json.dumps(h("pane", "close", pane)), flush=True)
-            else:
-                print(json.dumps({"result": {"pane_id": pane, "name": name, "done": True}}), flush=True)
-            return
+                if wait:
+                    close = False
+                    continue
+                return
+        except (OSError, ValueError, KeyError, TypeError, RuntimeError) as error:
+            if not wait:
+                raise
+            # A failed closing policy must not abandon an independent lifetime wait.
+            close = False
+            process = process_identity(pid)
+            if process is not None and process[1] == birth:
+                print(f"agent: auto-close cancelled ({error}); still waiting for process exit", file=sys.stderr)
+            continue  # Natural exit can also race any lifecycle query or close.
         time.sleep(0.5)
-        current = h("agent", "get", pane)["result"]["agent"]
+        current = None
 
 
 def launch_herdr(args: argparse.Namespace, native: list[str], variables: dict[str, str]) -> None:
@@ -305,7 +376,7 @@ def launch_herdr(args: argparse.Namespace, native: list[str], variables: dict[st
         result = h("agent", "start", name, "--kind", args.kind, "--pane", pane, *timeout, "--", *native)
         print(json.dumps(result), flush=True)
         if args.wait or args.close_on_done:
-            wait_when_done(h, pane, name, result["result"]["agent"], close=args.close_on_done)
+            watch_agent(h, pane, name, result["result"]["agent"], wait=args.wait, close=args.close_on_done)
 
 
 def main() -> int:

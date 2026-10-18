@@ -41,7 +41,7 @@ import tempfile
 import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "lib"))
-from herdr_launch import herdr_client, placed_pane
+from herdr_launch import HerdrError, herdr_client, placed_pane
 
 
 def arguments() -> tuple[argparse.Namespace, list[str]]:
@@ -149,6 +149,21 @@ sys.exit(status)
     return f'python3 -c \'import base64; exec(base64.b64decode("{encoded}"))\''
 
 
+def pane_closed(h, pane: str) -> bool:
+    try:
+        h("pane", "get", pane)
+    except HerdrError as error:
+        if error.code == "pane_not_found":
+            return True
+        raise
+    return False
+
+
+def report_closed(pane: str) -> int:
+    print(json.dumps({"result": {"pane_id": pane, "closed": True, "exit_code": None}}), flush=True)
+    return 1  # Closure without an exit report must not masquerade as command success.
+
+
 def wait_for_exit(h, pane: str, listener: socket.socket) -> int:
     listener.settimeout(0.5)
     deadline = time.monotonic() + 30
@@ -159,18 +174,31 @@ def wait_for_exit(h, pane: str, listener: socket.socket) -> int:
         except socket.timeout:
             if time.monotonic() >= deadline:
                 raise RuntimeError("Command bootstrap did not connect within 30 seconds; inspect pane before retrying")
-            try:
-                h("pane", "get", pane)
-            except (OSError, ValueError, RuntimeError):
+            if pane_closed(h, pane):
                 # Completion/auto-close may race the query; accept a queued report first.
-                connection, _ = listener.accept()
+                try:
+                    connection, _ = listener.accept()
+                except socket.timeout:
+                    return report_closed(pane)
                 break
     with connection:
-        connection.settimeout(None)
+        connection.settimeout(0.5)
         data = b""
         while not data.endswith(b"\n"):
-            chunk = connection.recv(16)
+            try:
+                chunk = connection.recv(16)
+            except socket.timeout:
+                if pane_closed(h, pane):
+                    # Prefer a command status that raced with pane closure.
+                    try:
+                        chunk = connection.recv(16)
+                    except socket.timeout:
+                        return report_closed(pane)
+                else:
+                    continue
             if not chunk:
+                if pane_closed(h, pane):
+                    return report_closed(pane)
                 raise RuntimeError("Command bootstrap exited without reporting completion")
             data += chunk
             if len(data) > 4:
