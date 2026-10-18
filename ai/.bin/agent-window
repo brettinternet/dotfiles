@@ -3,6 +3,8 @@
 #   agent-window launch NAME PROMPT [GATE]  start once per day if GATE (shell) exits 0;
 #                                          blocks until the agent exits (agent --wait)
 #   agent-window close NAME                 close the agent once it's done or idle
+# PROMPT and GATE expand {today}, {yesterday}, and {today-N} to local YYYY-MM-DD dates,
+# e.g. "updated:>={today-7}".
 # Exit 3 = nothing to do (noon records it as noop). macOS only (BSD date).
 set -euo pipefail
 
@@ -20,12 +22,22 @@ agent_status() {
   fi
 }
 
+expand_dates() {
+  local s=$1
+  s=${s//"{today}"/$(date +%F)}
+  s=${s//"{yesterday}"/$(date -v-1d +%F)}
+  while [[ $s =~ \{today-([0-9]+)\} ]]; do
+    s=${s//"${BASH_REMATCH[0]}"/$(date -v-"${BASH_REMATCH[1]}"d +%F)}
+  done
+  printf '%s' "$s"
+}
+
 status=$(agent_status)
 echo "$name: status=$status"
 
 case $mode in
   launch)
-    prompt=$3 gate=${4:-}
+    prompt=$(expand_dates "$3") gate=$(expand_dates "${4:-}")
     # Still needed after a scheduler restart orphans the waiting run.
     [[ $status == absent ]] || exit 3
     # NOON_LAST_SUCCESS_AT is the UTC start of the last run whose agent exited normally.
