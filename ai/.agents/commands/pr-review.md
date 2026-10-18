@@ -5,7 +5,7 @@ argument-hint: '[linear-project] [gh-search-qualifiers...]'
 
 Run one review pass over open PRs matching the optional Linear project and `gh search prs` qualifiers in `$ARGUMENTS`, then exit. A scheduler owns repetition; do not wait, poll, or schedule another pass. Treat an argument containing a GitHub search qualifier such as `author:octocat`, `updated:>=2026-01-01`, or `repo:owner/name` as a qualifier rather than a Linear project. With no `author:` qualifier, match PRs by any author. This command authorizes review comments and approvals on matching PRs. Never edit code, push, merge, close, or request changes.
 
-Keep per-repository state in `/tmp/pr-review-state.json` containing each reviewed PR's authored commit subjects. Preserve other repositories' entries. Ignore merge commits and main-sync commits so rebases do not trigger another review.
+Keep per-repository state in `~/.local/state/pr-review.json` containing each reviewed PR's authored commit subjects. Preserve other repositories' entries. Ignore merge commits and main-sync commits so rebases do not trigger another review.
 
 1. Discover matching non-draft PRs. Pass all GitHub search qualifiers through to `gh search prs`. If a Linear project was supplied but unavailable, fall back to all PRs matching those qualifiers.
 2. Skip PRs with no authored commits since the saved baseline. Do not post again on an unchanged PR already approved by the authenticated user.
