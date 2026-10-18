@@ -21,7 +21,7 @@
 #                                            # watch working -> done, then close; Ctrl-C cancels
 #   agent alice -t --wait -- 'Review this diff'
 #                                            # block until exit; SIGTERM closes it, Ctrl-C detaches
-#   agent alice -t --close-on-done --prompt 'Review this diff'
+#   agent alice -t --close-on-done -p 'Review this diff'
 #                                            # submit once ready, so Herdr's startup check can pass
 #   herdr agent wait alice --until done      # wait for done (not proof the task succeeded)
 #   agent --close alice                      # close the exact live name's pane
@@ -109,7 +109,7 @@ def arguments() -> tuple[argparse.Namespace, list[str]]:
                              "SIGTERM closes the agent's pane")
     herdr.add_argument("--close-on-done", action="store_true",
                        help="stay running; close after observing working then done; cancel on blocked/unknown")
-    herdr.add_argument("--prompt", metavar="TEXT",
+    herdr.add_argument("-p", "--prompt", metavar="TEXT",
                        help="submit TEXT once the agent is ready; Herdr start never sees a native prompt's agent "
                             "become ready, so use this for unattended launches")
     herdr.add_argument("--startup-timeout", type=int, metavar="SECONDS",

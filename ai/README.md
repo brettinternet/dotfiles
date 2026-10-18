@@ -134,7 +134,7 @@ Reuse is opt-in:
 agent alice -w maintenance -t review --reuse-tab  # add a split to the matching tab
 agent alice -w maintenance -t review --reuse-pane # replace alice there; implies --reuse-tab
 agent alice -t --wait --prompt 'Review this diff' # wait until the agent process exits
-agent alice -t --close-on-done --prompt 'Review this diff' # close when the turn is done
+agent alice -t --close-on-done -p 'Review this diff'      # close when the turn is done
 agent --status alice                             # current live status as Herdr JSON
 agent --list                                     # live agents and locations as Herdr JSON
 agent --list --herdr-session default              # inspect an explicit session
@@ -162,7 +162,7 @@ Automatic closing is best-effort turn completion detection—not proof the reque
 
 `--close NAME` requires the exact live name, not a display name or pane ID, and closes only its hosting pane (including all processes there). An absent name succeeds without closing anything and returns `{"result":{"name":"NAME","closed":false,"reason":"not_found"}}`. Ambiguous names and Herdr lookup/close failures still fail. Closing the last pane can also remove its tab/workspace. Close accepts `--herdr-session` without `-w` and supports `--dry-run` without contacting Herdr.
 
-`--prompt TEXT` submits TEXT with `herdr agent prompt` once the agent is ready, and waits for the turn to start, so `--close-on-done` cannot miss a brief turn. Use it instead of a native prompt argument with Herdr placement: `herdr agent start` succeeds only when the agent is ready for input, which an agent already working on a native prompt never reports, so the launch times out and fails.
+`-p/--prompt TEXT` submits TEXT with `herdr agent prompt` once the agent is ready, and waits for the turn to start, so `--close-on-done` cannot miss a brief turn. Use it instead of a native prompt argument with Herdr placement: `herdr agent start` succeeds only when the agent is ready for input, which an agent already working on a native prompt never reports, so the launch times out and fails.
 
 `-T/--pane-title TEXT` explicitly labels only the newly created pane; your pane-title plugin respects that label. Omit it to retain dynamic titles. `--startup-timeout SECONDS` controls Herdr's wait for interactive readiness (1–300; default 30), not the duration of the agent's work. Both require Herdr placement.
 
