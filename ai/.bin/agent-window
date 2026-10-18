@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# Launch or close a named Herdr agent in this checkout's workspace; cron sets the windows.
+#   agent-window launch NAME PROMPT [GATE]  start once per day if GATE (shell) exits 0;
+#                                          blocks until the agent exits (agent --wait)
+#   agent-window close NAME                 close the agent once it's done or idle
+# Exit 3 = nothing to do (noon records it as noop). macOS only (BSD date).
+set -euo pipefail
+
+mode=$1 name=$2
+
+agent_status() {
+  local out
+  if out=$(herdr agent get "$name" 2>&1); then
+    jq -r '[.. | objects | .agent_status? | strings][0] // "unknown"' <<<"$out"
+  elif grep -q agent_not_found <<<"$out"; then
+    echo absent
+  else
+    echo "herdr agent get $name failed: $out" >&2
+    exit 1
+  fi
+}
+
+status=$(agent_status)
+echo "$name: status=$status"
+
+case $mode in
+  launch)
+    prompt=$3 gate=${4:-}
+    # Still needed after a scheduler restart orphans the waiting run.
+    [[ $status == absent ]] || exit 3
+    # NOON_LAST_SUCCESS_AT is the UTC start of the last run whose agent exited normally.
+    if [[ -n ${NOON_LAST_SUCCESS_AT:-} ]]; then
+      last=$(date -j -u -f %Y-%m-%dT%H:%M:%S "${NOON_LAST_SUCCESS_AT%%[.Z]*}" +%s)
+      [[ $(date -r "$last" +%F) == $(date +%F) ]] && { echo "already ran today"; exit 3; }
+    fi
+    if [[ -n $gate ]] && ! bash -c "$gate"; then echo "gate not met"; exit 3; fi
+    exec "$HOME/.bin/agent" "$name" -k pi -w "$(basename "$PWD")" -t "$name" -C "$PWD" \
+      --herdr-session default --wait -- "$prompt"
+    ;;
+  close)
+    case $status in
+      done | idle) exec "$HOME/.bin/agent" --close "$name" --herdr-session default ;;
+      *) exit 3 ;;
+    esac
+    ;;
+  *)
+    echo "usage: $0 launch NAME PROMPT [GATE] | close NAME" >&2
+    exit 2
+    ;;
+esac
