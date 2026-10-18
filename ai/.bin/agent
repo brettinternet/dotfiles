@@ -21,6 +21,8 @@
 #                                            # watch working -> done, then close; Ctrl-C cancels
 #   agent alice -t --wait -- 'Review this diff'
 #                                            # block until exit; SIGTERM closes it, Ctrl-C detaches
+#   agent alice -t --close-on-done --prompt 'Review this diff'
+#                                            # submit once ready, so Herdr's startup check can pass
 #   herdr agent wait alice --until done      # wait for done (not proof the task succeeded)
 #   agent --close alice                      # close the exact live name's pane
 #   agent --close alice --herdr-session default
@@ -107,6 +109,9 @@ def arguments() -> tuple[argparse.Namespace, list[str]]:
                              "SIGTERM closes the agent's pane")
     herdr.add_argument("--close-on-done", action="store_true",
                        help="stay running; close after observing working then done; cancel on blocked/unknown")
+    herdr.add_argument("--prompt", metavar="TEXT",
+                       help="submit TEXT once the agent is ready; Herdr start never sees a native prompt's agent "
+                            "become ready, so use this for unattended launches")
     herdr.add_argument("--startup-timeout", type=int, metavar="SECONDS",
                        help=f"wait for interactive readiness, 1-300 (default: {DEFAULT_STARTUP_TIMEOUT})")
     herdr.add_argument("--herdr-session", metavar="SESSION",
@@ -148,7 +153,8 @@ def arguments() -> tuple[argparse.Namespace, list[str]]:
     args.herdr = any(value is not None for value in (args.workspace, args.tab, args.split))
     if not args.herdr:
         if args.focus or args.close_on_done or any(value is not None for value in
-                             (args.herdr_name, args.herdr_session, args.pane_title, args.startup_timeout)):
+                             (args.herdr_name, args.herdr_session, args.pane_title, args.startup_timeout,
+                              args.prompt)):
             parser.error("Herdr options require --workspace, --tab, or --split")
         return args, native
     if args.split and (args.workspace is not None or args.tab is not None or args.herdr_session is not None):
@@ -159,6 +165,8 @@ def arguments() -> tuple[argparse.Namespace, list[str]]:
         parser.error("--startup-timeout must be between 1 and 300 seconds")
     if any(value is not None and not value.strip() for value in (args.workspace, args.herdr_session, args.pane_title)):
         parser.error("Herdr session, workspace, and pane titles must not be blank")
+    if args.prompt is not None and not args.prompt.strip():
+        parser.error("--prompt must not be blank")
     if args.tab and not args.tab.strip():
         parser.error("--tab title must not be blank")
     if args.pane_title == "--clear":
@@ -230,6 +238,7 @@ def preview(args: argparse.Namespace, native: list[str], variables: dict[str, st
             "startup_timeout_seconds": args.startup_timeout or DEFAULT_STARTUP_TIMEOUT,
             "wait": args.wait,
             "close_on_done": args.close_on_done,
+            "prompt": args.prompt,
         }
     print(json.dumps({
         "dry_run": True,
@@ -395,9 +404,14 @@ def launch_herdr(args: argparse.Namespace, native: list[str], variables: dict[st
         timeout = ["--timeout", str(args.startup_timeout * 1000)] if args.startup_timeout else []
         result = h("agent", "start", name, "--kind", args.kind, "--pane", pane, *timeout, "--", *native)
         print(json.dumps(result), flush=True)
+        started = result["result"]["agent"]
+        if args.prompt is not None:
+            # Waiting for the turn to start lets close-on-done see working even when the turn is brief.
+            started = h("agent", "prompt", pane, args.prompt, "--wait",
+                        "--until", "working", "--until", "blocked")["result"]["agent"]
         if args.wait or args.close_on_done:
             try:
-                watch_agent(h, pane, name, result["result"]["agent"], wait=args.wait, close=args.close_on_done)
+                watch_agent(h, pane, name, started, wait=args.wait, close=args.close_on_done)
             except SystemExit as stop:
                 # A supervisor's SIGTERM stops the work it waits on; Ctrl-C only detaches.
                 if not (args.wait and stop.code == 143 and stop_agent(h, pane, result["result"]["agent"])):

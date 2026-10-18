@@ -72,6 +72,8 @@ elif command == "pane get":
     result = {"pane": {"pane_id": args[2]}}
 elif command == "agent start":
     result = {"agent": {**state.get("started", {}), "pane_id": "w9:p1", "name": args[2]}}
+elif command == "agent prompt":
+    result = {"agent": {**state.get("started", {}), "pane_id": args[2], "agent_status": "working"}}
 elif command == "agent get":
     snapshot = state["snapshots"].pop(0)
     pathlib.Path(os.environ["STATE"]).write_text(json.dumps(state))
@@ -289,6 +291,20 @@ class AgentLauncherTests(unittest.TestCase):
                 finally:
                     if child.poll() is None:
                         child.terminate()
+
+    def test_prompt_is_submitted_after_readiness_and_counts_as_work(self) -> None:
+        # A native prompt keeps Herdr's start readiness check from passing, so every scheduled launch failed.
+        identity = self.watch_identity()
+        done = {**identity, "agent_status": "done", "state_change_seq": 3}
+        self.state.write_text(json.dumps({"started": identity, "snapshots": [done, done]}))
+        self.run_agent("alice", "-t", "--close-on-done", "--prompt", "Review it")
+        calls = self.commands()
+        start = next(call for call in calls if call[:2] == ["agent", "start"])
+        self.assertNotIn("Review it", start)
+        prompt = next(call for call in calls if call[:2] == ["agent", "prompt"])
+        self.assertLess(calls.index(start), calls.index(prompt))
+        self.assertEqual(["w9:p1", "Review it"], prompt[2:4])
+        self.assertEqual(["pane", "close", "w9:p1"], calls[-1][:3])
 
     def test_close_on_done_cancels_on_uncertainty_without_closing(self) -> None:
         identity = self.watch_identity()
