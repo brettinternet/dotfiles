@@ -62,7 +62,7 @@ examples:
 
   # Scheduled launch, including outside Herdr; copies exported APPRISE_URLS
   agent reviewer --herdr-session default -w maintenance -C ~/dev/me/maintenance \\
-    -e APPRISE_URLS -- 'Review open PRs'
+    -e APPRISE_URLS --close-on-done --prompt 'Review open PRs'
 
 Native agent arguments go after --. A name is a label, not automatic resume.
 Without -w, -t, or -s the agent runs in this terminal. Herdr placement defaults to fresh tabs/panes, preserves focus unless -f,

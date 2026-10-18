@@ -133,8 +133,8 @@ Reuse is opt-in:
 ```sh
 agent alice -w maintenance -t review --reuse-tab  # add a split to the matching tab
 agent alice -w maintenance -t review --reuse-pane # replace alice there; implies --reuse-tab
-agent alice -t --wait -- 'Review this diff'      # wait until the agent process exits
-agent alice -t --wait --close-on-done -- 'Review this diff' # close on done, wait for exit
+agent alice -t --wait --prompt 'Review this diff' # wait until the agent process exits
+agent alice -t --close-on-done --prompt 'Review this diff' # close when the turn is done
 agent --status alice                             # current live status as Herdr JSON
 agent --list                                     # live agents and locations as Herdr JSON
 agent --list --herdr-session default              # inspect an explicit session
@@ -162,6 +162,8 @@ Automatic closing is best-effort turn completion detection—not proof the reque
 
 `--close NAME` requires the exact live name, not a display name or pane ID, and closes only its hosting pane (including all processes there). An absent name succeeds without closing anything and returns `{"result":{"name":"NAME","closed":false,"reason":"not_found"}}`. Ambiguous names and Herdr lookup/close failures still fail. Closing the last pane can also remove its tab/workspace. Close accepts `--herdr-session` without `-w` and supports `--dry-run` without contacting Herdr.
 
+`--prompt TEXT` submits TEXT with `herdr agent prompt` once the agent is ready, and waits for the turn to start, so `--close-on-done` cannot miss a brief turn. Use it instead of a native prompt argument with Herdr placement: `herdr agent start` succeeds only when the agent is ready for input, which an agent already working on a native prompt never reports, so the launch times out and fails.
+
 `-T/--pane-title TEXT` explicitly labels only the newly created pane; your pane-title plugin respects that label. Omit it to retain dynamic titles. `--startup-timeout SECONDS` controls Herdr's wait for interactive readiness (1–300; default 30), not the duration of the agent's work. Both require Herdr placement.
 
 Use `-n/--dry-run` to print a JSON plan containing the native argv, canonical cwd, environment overrides, and optional Herdr placement:
@@ -174,7 +176,15 @@ Dry-run validates local arguments and environment references but never starts a 
 
 Use repeatable `-e/--env KEY` to copy exported variables into the new terminal, or `--env KEY=VALUE` to set them. Do not assume a long-running Herdr server has your scheduler's environment. `AGENT_NAME` and `HERDR_*` overrides are rejected. Values sent through Herdr's CLI may be visible in process arguments, so prefer credential files or agent-native secret lookup for stronger isolation.
 
-For a scheduled job, pass the prompt as a native argument; see the `review` job in `~/dev/me/maintenance/noon.yaml`.
+For a scheduled job, use `agent-window` from the checkout's Noon jobs:
+
+```sh
+agent-window launch review '/skill:pr-review repo:o/r' "gh pr list -R o/r --json number,headRefOid --jq 'if length == 0 then empty else tojson end'"
+agent-window launch --daily babysit '/skill:pr-babysit-loop'  # one long-lived agent per day
+agent-window close review                                    # close a leftover done or idle pane
+```
+
+By default each launch runs one pass in the checkout's workspace and returns once its pane closes on `done`. The optional gate prints a fingerprint of pending work: empty output is a noop (exit 3), a nonzero exit fails the run, and a fingerprint matching the one taken before the last completed pass is a noop. A working or blocked pass is never replaced; a blocked pass fails its run and keeps its pane for you, and the next launch closes it once it is done or idle. Fingerprints live in `~/.local/state/agent-window/`.
 
 Herdr launches print the successful `agent start` JSON, including the resolved live name, to stdout. Failed starts return nonzero and leave the created pane in place, reporting its ID when available; inspect it before retrying. A timeout does not prove nothing started. The helper never retries or resubmits work; it closes panes only for explicit replacement or `--close`.
 
