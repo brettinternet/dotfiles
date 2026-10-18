@@ -1,17 +1,26 @@
 #!/usr/bin/env bash
 # Launch or close a named Herdr agent in this checkout's workspace; cron sets the windows.
-#   agent-window launch NAME PROMPT [GATE]  start once per day if GATE (shell) exits 0;
-#                                          blocks until the agent exits (agent --wait)
-#   agent-window close NAME                 close the agent once it's done or idle
+#   agent-window launch NAME PROMPT [GATE]          run one pass if GATE (shell) exits 0; returns
+#                                                   once the agent finishes its turn and its pane closes
+#   agent-window launch --daily NAME PROMPT [GATE]  start once per day; blocks until the agent exits
+#   agent-window close NAME                         close the agent once it's done or idle
+# A pass is skipped while the previous one is still working or blocked; a finished leftover
+# pane is closed first. Non-empty GATE stdout is a fingerprint: a pass is skipped when it
+# matches the fingerprint taken before the last completed pass.
 # Date tokens in PROMPT and GATE expand to local YYYY-MM-DD dates before use:
 #   {today}      today's date
 #   {yesterday}  one day ago
 #   {today-N}    N days ago, e.g. {today-7}
-# Example: agent-window launch review '/pr-review-loop repo:o/r updated:>={yesterday}'
+# Example: agent-window launch review '/pr-review repo:o/r updated:>={yesterday}'
 # Exit 3 = nothing to do (noon records it as noop). macOS only (BSD date).
 set -euo pipefail
 
-mode=$1 name=$2
+mode=$1 daily=
+if [[ $mode == launch && ${2:-} == --daily ]]; then
+  daily=1
+  shift
+fi
+name=$2
 
 agent_status() {
   local out
@@ -41,16 +50,36 @@ echo "$name: status=$status"
 case $mode in
   launch)
     prompt=$(expand_dates "$3") gate=$(expand_dates "${4:-}")
-    # Still needed after a scheduler restart orphans the waiting run.
-    [[ $status == absent ]] || exit 3
-    # NOON_LAST_SUCCESS_AT is the UTC start of the last run whose agent exited normally.
-    if [[ -n ${NOON_LAST_SUCCESS_AT:-} ]]; then
-      last=$(date -j -u -f %Y-%m-%dT%H:%M:%S "${NOON_LAST_SUCCESS_AT%%[.Z]*}" +%s)
-      [[ $(date -r "$last" +%F) == $(date +%F) ]] && { echo "already ran today"; exit 3; }
+    agent=("$HOME/.bin/agent" "$name" -k pi -w "$(basename "$PWD")" -t "$name" --reuse-tab -C "$PWD"
+      --herdr-session default)
+    if [[ -n $daily ]]; then
+      # Still needed after a scheduler restart orphans the waiting run.
+      [[ $status == absent ]] || exit 3
+      # NOON_LAST_SUCCESS_AT is the UTC start of the last run whose agent exited normally.
+      if [[ -n ${NOON_LAST_SUCCESS_AT:-} ]]; then
+        last=$(date -j -u -f %Y-%m-%dT%H:%M:%S "${NOON_LAST_SUCCESS_AT%%[.Z]*}" +%s)
+        [[ $(date -r "$last" +%F) == $(date +%F) ]] && { echo "already ran today"; exit 3; }
+      fi
+      if [[ -n $gate ]] && ! bash -c "$gate"; then echo "gate not met"; exit 3; fi
+      exec "${agent[@]}" --wait -- "$prompt"
     fi
-    if [[ -n $gate ]] && ! bash -c "$gate"; then echo "gate not met"; exit 3; fi
-    exec "$HOME/.bin/agent" "$name" -k pi -w "$(basename "$PWD")" -t "$name" --reuse-tab -C "$PWD" \
-      --herdr-session default --wait -- "$prompt"
+    # A blocked pass keeps its pane for the user; once answered and finished, it is replaced.
+    case $status in
+      absent) ;;
+      done | idle) "$HOME/.bin/agent" --close "$name" --herdr-session default ;;
+      *) exit 3 ;;
+    esac
+    fingerprint=
+    if [[ -n $gate ]] && ! fingerprint=$(bash -c "$gate"); then echo "gate not met"; exit 3; fi
+    state="${XDG_STATE_HOME:-$HOME/.local/state}/agent-window/$(basename "$PWD")-$name.gate"
+    if [[ -n $fingerprint && -f $state && $(<"$state") == "$fingerprint" ]]; then
+      echo "unchanged since last pass"
+      exit 3
+    fi
+    # Fails, keeping the pane, when the agent blocks on the user.
+    "${agent[@]}" --close-on-done -- "$prompt"
+    mkdir -p "${state%/*}"
+    printf '%s' "$fingerprint" >"$state"
     ;;
   close)
     case $status in
@@ -59,7 +88,7 @@ case $mode in
     esac
     ;;
   *)
-    echo "usage: $0 launch NAME PROMPT [GATE] | close NAME" >&2
+    echo "usage: $0 launch [--daily] NAME PROMPT [GATE] | close NAME" >&2
     exit 2
     ;;
 esac
