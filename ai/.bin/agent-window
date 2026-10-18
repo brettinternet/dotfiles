@@ -49,7 +49,7 @@ case $mode in
       [[ $(date -r "$last" +%F) == $(date +%F) ]] && { echo "already ran today"; exit 3; }
     fi
     if [[ -n $gate ]] && ! bash -c "$gate"; then echo "gate not met"; exit 3; fi
-    exec "$HOME/.bin/agent" "$name" -k pi -w "$(basename "$PWD")" -t "$name" -C "$PWD" \
+    exec "$HOME/.bin/agent" "$name" -k pi -w "$(basename "$PWD")" -t "$name" --reuse-tab -C "$PWD" \
       --herdr-session default --wait -- "$prompt"
     ;;
   close)
