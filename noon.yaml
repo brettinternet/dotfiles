@@ -6,7 +6,9 @@ jobs:
   fetch:
     description: Fetch origin every hour without changing the working tree.
     schedule: "0 6-16 * * *"
-    run: [git, fetch, origin]
+    run: [git, fetch, --quiet, --prune, origin]
+    timeout: 5m
+    missed: skip
 
   darwin:
     description: Install macOS dotfiles each morning.
