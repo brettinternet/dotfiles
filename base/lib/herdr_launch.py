@@ -10,9 +10,10 @@ import subprocess
 import sys
 
 class HerdrError(RuntimeError):
-    def __init__(self, message: str, code: str | None = None):
+    def __init__(self, message: str, code: str | None = None, detail: str = ""):
         super().__init__(message)
         self.code = code
+        self.detail = detail  # Herdr's own message; for matching only, never printed.
 
 
 def herdr_client(args: argparse.Namespace):
@@ -24,13 +25,14 @@ def herdr_client(args: argparse.Namespace):
         # Never echo argv or Herdr diagnostics: they can contain --env secrets.
         result = subprocess.run([*prefix, *command], capture_output=True, text=True)
         if result.returncode:
-            code = None
+            code, detail = None, ""
             try:
-                code = json.loads(result.stderr).get("error", {}).get("code")
+                error = json.loads(result.stderr).get("error", {})
+                code, detail = error.get("code"), str(error.get("message", ""))
             except (ValueError, AttributeError):
                 pass
             raise HerdrError(f"Herdr {' '.join(command[:2])} failed (exit {result.returncode}); inspect Herdr before retrying",
-                             code=code)
+                             code=code, detail=detail)
         # Unlike layout operations, pane run acknowledges submission with no stdout.
         if command[:2] == ("pane", "run") and not result.stdout.strip():
             return {"result": {"pane_id": command[2], "submitted": True}}

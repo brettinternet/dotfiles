@@ -53,6 +53,12 @@ elif command in ("tab rename", "pane rename", "pane close"):
         import signal
         os.kill(state["agent_pid"], signal.SIGTERM)
     result = {}
+elif command == "pane run" and state.get("canonical_rejections"):
+    state["canonical_rejections"] -= 1
+    pathlib.Path(os.environ["STATE"]).write_text(json.dumps(state))
+    print(json.dumps({"error": {"code": "pane_send_failed", "message": "terminal is in canonical mode"}}),
+          file=sys.stderr)
+    sys.exit(1)
 elif command == "pane run":
     run = subprocess.Popen if state.get("async_run") else subprocess.run
     run(["sh", "-c", args[3]], cwd=state["launch_cwd"],
@@ -145,9 +151,9 @@ class AgentLauncherTests(unittest.TestCase):
                                  json.loads(result.stdout.splitlines()[-1])["result"])
                 self.assertEqual(close, any(call[:2] == ["pane", "close"] for call in self.commands()))
 
-    def test_pane_wait_blocks_after_submission_and_cancellation_retains_work(self) -> None:
+    def test_pane_wait_blocks_and_sigterm_stops_while_ctrl_c_detaches(self) -> None:
         self.environment.update(HERDR_ENV="1", HERDR_PANE_ID="caller:p1")
-        for cancel in (False, True):
+        for cancel in (None, signal.SIGTERM, signal.SIGINT):
             with self.subTest(cancel=cancel):
                 self.calls.write_text("")
                 self.state.write_text(json.dumps({"async_run": True}))
@@ -164,10 +170,16 @@ class AgentLauncherTests(unittest.TestCase):
                     try:
                         self.assertTrue(json.loads(process.stdout.readline())["result"]["submitted"])
                         self.assertIsNone(process.poll())
-                        if cancel:
+                        if cancel == signal.SIGTERM:
                             process.terminate()
+                            stdout, stderr = process.communicate(timeout=10)
+                            self.assertEqual(143, process.returncode, stderr)
+                            self.assertEqual({"pane_id": "w9:p1", "exit_code": 143, "stopped": True},
+                                             json.loads(stdout)["result"])
+                        elif cancel == signal.SIGINT:
+                            process.send_signal(signal.SIGINT)
                             _, stderr = process.communicate(timeout=5)
-                            self.assertEqual(143, process.returncode)
+                            self.assertEqual(130, process.returncode)
                             self.assertIn("retained Herdr pane", stderr)
                         else:
                             gate.write_text("go")
@@ -180,10 +192,11 @@ class AgentLauncherTests(unittest.TestCase):
                         if process.poll() is None:
                             process.kill()
                             process.communicate(timeout=5)
-                        deadline = time.monotonic() + 5
+                        deadline = time.monotonic() + (1 if cancel == signal.SIGTERM else 5)
                         while not finished.exists() and time.monotonic() < deadline:
                             time.sleep(0.02)
-                        self.assertTrue(finished.exists(), "Cancellation must not stop the command")
+                        # Only a supervisor's SIGTERM stops the work; Ctrl-C leaves it running.
+                        self.assertEqual(cancel != signal.SIGTERM, finished.exists())
 
     def test_pane_wait_fails_if_bootstrap_dies_even_when_pane_survives(self) -> None:
         self.environment.update(HERDR_ENV="1", HERDR_PANE_ID="caller:p1")
@@ -218,6 +231,12 @@ class AgentLauncherTests(unittest.TestCase):
         result = self.run_pane("--", "echo", code=1)
         self.assertIn("retained Herdr pane w9:p1", result.stderr)
         self.assertFalse(any("close" in call for call in self.commands()))
+        self.assertEqual(1, sum(call[:2] == ["pane", "run"] for call in self.commands()))
+        # Only Herdr's pre-send rejection from a still-starting shell is retried.
+        self.calls.write_text("")
+        self.state.write_text(json.dumps({"canonical_rejections": 2}))
+        self.run_pane("--", "echo", "test")
+        self.assertEqual(3, sum(call[:2] == ["pane", "run"] for call in self.commands()))
 
     def test_agent_list_routes_session_and_never_mutates(self) -> None:
         agents = [{"name": "alice", "pane_id": "w1:p1"}]

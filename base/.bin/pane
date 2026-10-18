@@ -57,7 +57,8 @@ def arguments() -> tuple[argparse.Namespace, list[str]]:
     parser.add_argument("-T", "--pane-title", metavar="TITLE")
     parser.add_argument("-f", "--focus", action="store_true")
     parser.add_argument("--herdr-session", metavar="SESSION", help="explicit session; requires -w")
-    parser.add_argument("--wait", action="store_true", help="wait for command exit and return its status; retain pane")
+    parser.add_argument("--wait", action="store_true", help="wait for command exit and return its status; retain pane; "
+                             "SIGTERM stops the command")
     parser.add_argument("--close-on-exit", action="store_true", help="close the created pane when the command exits")
     parser.add_argument("-n", "--dry-run", action="store_true", help="preview without contacting Herdr")
     raw = sys.argv[1:]
@@ -112,22 +113,51 @@ def child_variables(specifications: list[str]) -> dict[str, str]:
 def command_line(command: list[str], close_on_exit: bool, completion: str | None = None) -> str:
     # Herdr's pane run accepts shell text, not argv. Only this fixed Python
     # bootstrap reaches that shell; user argv is encoded data, never shell syntax.
-    source = f'''import os, socket, subprocess, sys
+    source = f'''import os, signal, socket, subprocess, sys, threading
 reporter = None
-if {completion!r} is not None:
+completion = {completion!r}
+if completion is not None:
     reporter = socket.socket(socket.AF_UNIX)
     try:
-        reporter.connect({completion!r})
+        reporter.connect(completion)
     except OSError:
         reporter.close()
         reporter = None  # The caller may already have stopped waiting.
+def stop_on_request(child):
+    # Only an explicit request stops the command; a vanished waiter (Ctrl-C) detaches.
+    try:
+        if reporter.recv(16) != b"stop\\n":
+            return
+    except OSError:
+        return
+    print("\\npane: stop requested; terminating command", file=sys.stderr)
+    try:
+        # The shell's job control gives this bootstrap and its command their own group.
+        if os.getpgrp() != os.getpgid(os.getppid()):
+            os.killpg(os.getpgrp(), signal.SIGTERM)
+        else:
+            child.terminate()
+        child.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        child.kill()
+    except OSError:
+        pass  # The command exited first.
 try:
-    status = subprocess.call({command!r})
+    # A handler (not SIG_IGN) shields the bootstrap from a group stop; exec resets it for the command.
+    signal.signal(signal.SIGTERM, lambda *_: None)
+    child = subprocess.Popen({command!r})
 except OSError as error:
     print("pane: " + str(error), file=sys.stderr)
     status = 127
-except KeyboardInterrupt:
-    status = 130
+else:
+    if reporter is not None:
+        threading.Thread(target=stop_on_request, args=(child,), daemon=True).start()
+    try:
+        status = child.wait()
+    except KeyboardInterrupt:
+        child.kill()
+        child.wait()
+        status = 130
 status = status if status >= 0 else 128 - status
 if reporter is not None:
     try:
@@ -149,6 +179,20 @@ sys.exit(status)
     return f'python3 -c \'import base64; exec(base64.b64decode("{encoded}"))\''
 
 
+def run_in_pane(h, pane: str, text: str) -> dict:
+    # A fresh shell can still be in canonical mode, where Herdr rejects lines over 1024 bytes
+    # before sending anything and asks callers to wait for the prompt. Retry only that rejection.
+    deadline = time.monotonic() + 10
+    while True:
+        try:
+            return h("pane", "run", pane, text)
+        except HerdrError as error:
+            if (error.code != "pane_send_failed" or "canonical mode" not in error.detail
+                    or time.monotonic() >= deadline):
+                raise
+        time.sleep(0.2)
+
+
 def pane_closed(h, pane: str) -> bool:
     try:
         h("pane", "get", pane)
@@ -164,26 +208,65 @@ def report_closed(pane: str) -> int:
     return 1  # Closure without an exit report must not masquerade as command success.
 
 
-def wait_for_exit(h, pane: str, listener: socket.socket) -> int:
-    listener.settimeout(0.5)
-    deadline = time.monotonic() + 30
-    while True:
-        try:
-            connection, _ = listener.accept()
-            break
-        except socket.timeout:
-            if time.monotonic() >= deadline:
-                raise RuntimeError("Command bootstrap did not connect within 30 seconds; inspect pane before retrying")
-            if pane_closed(h, pane):
-                # Completion/auto-close may race the query; accept a queued report first.
-                try:
-                    connection, _ = listener.accept()
-                except socket.timeout:
-                    return report_closed(pane)
-                break
-    with connection:
+def parse_status(data: bytes) -> int:
+    if len(data) > 4 or not data.endswith(b"\n"):
+        raise ValueError("Invalid command exit status")
+    status = int(data)
+    if not 0 <= status <= 255:
+        raise ValueError("Invalid command exit status")
+    return status
+
+
+def stop_command(pane: str, listener: socket.socket, connection: socket.socket | None, data: bytes) -> int:
+    """Forward a supervisor's SIGTERM; the bootstrap stops the command and keeps the pane."""
+    signal.signal(signal.SIGTERM, signal.SIG_IGN)  # A repeated SIGTERM must not abandon the stop.
+    deadline = time.monotonic() + 8  # Inside a supervisor's usual 10s kill grace.
+    accepted = None
+    try:
+        if connection is None:
+            listener.settimeout(2)  # The bootstrap connects as soon as it starts.
+            connection = accepted = listener.accept()[0]
         connection.settimeout(0.5)
-        data = b""
+        connection.sendall(b"stop\n")
+        while not data.endswith(b"\n") and len(data) <= 4 and time.monotonic() < deadline:
+            try:
+                chunk = connection.recv(16)
+            except socket.timeout:
+                continue
+            if not chunk:
+                break
+            data += chunk
+        status = parse_status(data)
+    except (OSError, ValueError) as error:
+        print(f"pane: stop not confirmed ({error}); retained Herdr pane {pane}; inspect it before retrying",
+              file=sys.stderr)
+        return 143
+    finally:
+        if accepted is not None:
+            accepted.close()
+    print(json.dumps({"result": {"pane_id": pane, "exit_code": status, "stopped": True}}), flush=True)
+    return 143
+
+
+def wait_for_exit(h, pane: str, listener: socket.socket) -> int:
+    connection = None
+    data = b""
+    try:
+        listener.settimeout(0.5)
+        deadline = time.monotonic() + 30
+        while connection is None:
+            try:
+                connection, _ = listener.accept()
+            except socket.timeout:
+                if time.monotonic() >= deadline:
+                    raise RuntimeError("Command bootstrap did not connect within 30 seconds; inspect pane before retrying")
+                if pane_closed(h, pane):
+                    # Completion/auto-close may race the query; accept a queued report first.
+                    try:
+                        connection, _ = listener.accept()
+                    except socket.timeout:
+                        return report_closed(pane)
+        connection.settimeout(0.5)
         while not data.endswith(b"\n"):
             try:
                 chunk = connection.recv(16)
@@ -203,9 +286,15 @@ def wait_for_exit(h, pane: str, listener: socket.socket) -> int:
             data += chunk
             if len(data) > 4:
                 raise ValueError("Invalid command exit status")
-        status = int(data)
-        if not 0 <= status <= 255:
-            raise ValueError("Invalid command exit status")
+        status = parse_status(data)
+    except SystemExit as stop:
+        # A supervisor's SIGTERM stops the command it waits on; Ctrl-C only detaches.
+        if stop.code != 143:
+            raise
+        return stop_command(pane, listener, connection, data)
+    finally:
+        if connection is not None:
+            connection.close()
     print(json.dumps({"result": {"pane_id": pane, "exit_code": status}}), flush=True)
     return status
 
@@ -232,7 +321,7 @@ def main() -> int:
                     listener.bind(completion)
                     listener.listen(1)
                 with placed_pane(h, args, variables, tool="pane") as pane:
-                    print(json.dumps(h("pane", "run", pane, command_line(command, args.close_on_exit, completion))),
+                    print(json.dumps(run_in_pane(h, pane, command_line(command, args.close_on_exit, completion))),
                           flush=True)
                     if listener:
                         return wait_for_exit(h, pane, listener)
