@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/brettinternet/tell/main/tell.schema.json
+# Loaded only by noon hooks: tell --config noon-tell.yaml notify "Message".
+# Not named tell.yaml: Tell auto-discovers that as shared config and rejects routing in it.
+version: 1
+notify:
+  via: desktop
