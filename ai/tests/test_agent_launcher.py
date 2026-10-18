@@ -357,6 +357,43 @@ class AgentLauncherTests(unittest.TestCase):
                 if child.poll() is None:
                     child.terminate()
 
+    def test_agent_wait_sigterm_closes_only_the_exact_agent_and_ctrl_c_detaches(self) -> None:
+        identity = self.watch_identity()
+        moved = {**identity, "agent_session": {"kind": "path", "value": "/session/two"}}
+        for sent, current, code, close in ((signal.SIGTERM, identity, 143, True),
+                                           (signal.SIGTERM, moved, 143, False),
+                                           (signal.SIGINT, identity, 130, False)):
+            with self.subTest(signal=sent.name, close=close):
+                self.calls.write_text("")
+                with subprocess.Popen(["pi", "-c", "import time; time.sleep(30)"], executable=sys.executable) as child:
+                    self.state.write_text(json.dumps({"started": identity, "snapshots": [identity, current],
+                                                       "agent_pid": child.pid,
+                                                       "process_info": self.process_info(child.pid)}))
+                    with subprocess.Popen([str(LAUNCHER), "alice", "-t", "--wait"], env=self.environment,
+                                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True) as waiter:
+                        try:
+                            json.loads(waiter.stdout.readline())
+                            deadline = time.monotonic() + 5  # Signal only once the process is pinned.
+                            while (not any(call[:2] == ["agent", "get"] for call in self.commands())
+                                   and time.monotonic() < deadline):
+                                time.sleep(0.02)
+                            time.sleep(0.3)
+                            waiter.send_signal(sent)
+                            _, stderr = waiter.communicate(timeout=5)
+                            self.assertEqual(code, waiter.returncode, stderr)
+                            self.assertEqual(close, any(call[:2] == ["pane", "close"] for call in self.commands()))
+                            if close:
+                                child.wait(timeout=5)  # Closing the pane stopped the agent.
+                            else:
+                                self.assertIsNone(child.poll(), "A detach or unverified stop keeps the agent")
+                                self.assertIn("retained Herdr pane", stderr)
+                        finally:
+                            if waiter.poll() is None:
+                                waiter.kill()
+                                waiter.communicate(timeout=5)
+                            if child.poll() is None:
+                                child.terminate()
+
     def test_pane_wait_reports_external_close_without_inventing_exit_code(self) -> None:
         self.environment.update(HERDR_ENV="1", HERDR_PANE_ID="caller:p1")
         self.state.write_text(json.dumps({"fail": "pane get", "error_code": "pane_not_found"}))
