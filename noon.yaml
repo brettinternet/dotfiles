@@ -5,7 +5,7 @@ timezone: Local
 jobs:
   fetch:
     description: Fetch origin every hour without changing the working tree.
-    schedule: every 1h
+    schedule: "0 6-16 * * *"
     run: [git, fetch, origin]
 
   darwin:
