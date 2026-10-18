@@ -10,7 +10,7 @@ jobs:
 
   darwin:
     description: Install macOS dotfiles each morning.
-    schedule: every day at 7am
+    schedule: every day at 6am
     run: make darwin
     on_failure: >-
       exec tell --config noon-tell.yaml --timeout 10s notify --type failure --title dotfiles
@@ -18,8 +18,16 @@ jobs:
 
   ai:
     description: Install AI dotfiles each morning.
-    schedule: every day at 7am
+    schedule: every day at 6:05am
     run: make ai
     on_failure: >-
       exec tell --config noon-tell.yaml --timeout 10s notify --type failure --title dotfiles
       "make ai ${NOON_STATUS}. See noon logs ${NOON_RUN_ID}."
+
+  update:
+    description: Install AI dotfiles each morning.
+    schedule: every day at 6:10am
+    run: make up
+    on_failure: >-
+      exec tell --config noon-tell.yaml --timeout 10s notify --type failure --title dotfiles
+      "make up ${NOON_STATUS}. See noon logs ${NOON_RUN_ID}."
