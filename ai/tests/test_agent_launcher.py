@@ -6,6 +6,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -46,10 +47,14 @@ elif command in ("workspace create", "tab create", "pane split"):
 elif command in ("tab rename", "pane rename", "pane close"):
     result = {}
 elif command == "pane run":
-    subprocess.run(["sh", "-c", args[3]], cwd=state["launch_cwd"],
+    run = subprocess.Popen if state.get("async_run") else subprocess.run
+    run(["sh", "-c", args[3]], cwd=state["launch_cwd"],
                    env={**os.environ, **state["launch_env"], "HERDR_PANE_ID": "w9:p1"},
-                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                   stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                   start_new_session=True)
     sys.exit(0)  # Herdr pane run returns no JSON; command exit is not submission exit.
+elif command == "pane get":
+    result = {"pane": {"pane_id": args[2]}}
 elif command == "agent start":
     result = {"agent": {**state.get("started", {}), "pane_id": "w9:p1", "name": args[2]}}
 elif command == "agent get":
@@ -83,7 +88,7 @@ class AgentLauncherTests(unittest.TestCase):
 
     def run_agent(self, *args: str, code: int = 0) -> subprocess.CompletedProcess[str]:
         result = subprocess.run([str(LAUNCHER), "--cwd", str(self.project), *args],
-                                env=self.environment, capture_output=True, text=True)
+                                env=self.environment, capture_output=True, text=True, timeout=30)
         self.assertEqual(code, result.returncode, result.stdout + result.stderr)
         return result
 
@@ -92,7 +97,7 @@ class AgentLauncherTests(unittest.TestCase):
 
     def run_pane(self, *args: str, code: int = 0) -> subprocess.CompletedProcess[str]:
         result = subprocess.run([str(PANE), "--cwd", str(self.project), *args],
-                                env=self.environment, capture_output=True, text=True)
+                                env=self.environment, capture_output=True, text=True, timeout=30)
         self.assertEqual(code, result.returncode, result.stdout + result.stderr)
         return result
 
@@ -114,6 +119,66 @@ class AgentLauncherTests(unittest.TestCase):
                 self.assertEqual(["pane", "split", "--current", "--direction", "right"], calls[0][:5])
                 self.assertEqual([["pane", "close", "w9:p1"]] if close else [],
                                  [call for call in calls if call[:2] == ["pane", "close"]])
+
+    def test_pane_wait_returns_command_status_including_close_on_exit(self) -> None:
+        self.environment.update(HERDR_ENV="1", HERDR_PANE_ID="caller:p1")
+        for close in (False, True):
+            with self.subTest(close=close):
+                self.calls.write_text("")
+                result = self.run_pane("--wait", *(["--close-on-exit"] if close else []),
+                                       "--", sys.executable, "-c", "raise SystemExit(7)", code=7)
+                self.assertEqual({"pane_id": "w9:p1", "exit_code": 7},
+                                 json.loads(result.stdout.splitlines()[-1])["result"])
+                self.assertEqual(close, any(call[:2] == ["pane", "close"] for call in self.commands()))
+
+    def test_pane_wait_blocks_after_submission_and_cancellation_retains_work(self) -> None:
+        self.environment.update(HERDR_ENV="1", HERDR_PANE_ID="caller:p1")
+        for cancel in (False, True):
+            with self.subTest(cancel=cancel):
+                self.calls.write_text("")
+                self.state.write_text(json.dumps({"async_run": True}))
+                gate = self.root / f"release-{cancel}"
+                finished = self.root / f"finished-{cancel}"
+                command = ("import pathlib, sys, time; gate = pathlib.Path(sys.argv[1]); "
+                           "deadline = time.monotonic() + 10\n"
+                           "while not gate.exists() and time.monotonic() < deadline: time.sleep(0.02)\n"
+                           "pathlib.Path(sys.argv[2]).write_text('finished'); sys.exit(7)")
+                with subprocess.Popen([str(PANE), "--wait", "--", sys.executable, "-c", command,
+                                       str(gate), str(finished)],
+                                      env=self.environment, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                      text=True) as process:
+                    try:
+                        self.assertTrue(json.loads(process.stdout.readline())["result"]["submitted"])
+                        self.assertIsNone(process.poll())
+                        if cancel:
+                            process.terminate()
+                            _, stderr = process.communicate(timeout=5)
+                            self.assertEqual(143, process.returncode)
+                            self.assertIn("retained Herdr pane", stderr)
+                        else:
+                            gate.write_text("go")
+                            stdout, stderr = process.communicate(timeout=5)
+                            self.assertEqual(7, process.returncode, stderr)
+                            self.assertEqual(7, json.loads(stdout)["result"]["exit_code"])
+                        self.assertFalse(any(call[:2] == ["pane", "close"] for call in self.commands()))
+                    finally:
+                        gate.write_text("go")
+                        if process.poll() is None:
+                            process.kill()
+                            process.communicate(timeout=5)
+                        deadline = time.monotonic() + 5
+                        while not finished.exists() and time.monotonic() < deadline:
+                            time.sleep(0.02)
+                        self.assertTrue(finished.exists(), "Cancellation must not stop the command")
+
+    def test_pane_wait_fails_if_bootstrap_dies_even_when_pane_survives(self) -> None:
+        self.environment.update(HERDR_ENV="1", HERDR_PANE_ID="caller:p1")
+        # The command kills its bootstrap, but the pane's shell survives.
+        self.state.write_text("{}")
+        result = self.run_pane("--wait", "--", sys.executable, "-c",
+                               "import os, signal; os.kill(os.getppid(), signal.SIGKILL)", code=1)
+        self.assertIn("retained Herdr pane", result.stderr)
+        self.assertIn("without reporting completion", result.stderr)
 
     def test_pane_reuses_workspace_and_tab_without_touching_agents(self) -> None:
         state = self.reuse_state()
@@ -174,12 +239,17 @@ class AgentLauncherTests(unittest.TestCase):
         statuses = ["idle", "done", "working", "idle", "done", "done"]
         snapshots = [{**identity, "agent_status": status, "state_change_seq": min(index, 4) + 1}
                      for index, status in enumerate(statuses)]
-        self.state.write_text(json.dumps({"started": identity, "snapshots": snapshots}))
-        self.run_agent("alice", "-t", "--close-on-done")
-        calls = self.commands()
-        self.assertEqual(6, sum(call[:2] == ["agent", "get"] for call in calls))
-        self.assertEqual(["pane", "close", "w9:p1"], calls[-1])
-        self.assertEqual(1, sum(call[:2] == ["pane", "close"] for call in calls))
+        for flag in ("--wait", "--close-on-done"):
+            with self.subTest(flag=flag):
+                self.calls.write_text("")
+                self.state.write_text(json.dumps({"started": identity, "snapshots": snapshots}))
+                result = self.run_agent("alice", "-t", flag)
+                calls = self.commands()
+                self.assertEqual(6, sum(call[:2] == ["agent", "get"] for call in calls))
+                self.assertEqual(int(flag == "--close-on-done"),
+                                 sum(call[:2] == ["pane", "close"] for call in calls))
+                if flag == "--wait":
+                    self.assertTrue(json.loads(result.stdout.splitlines()[-1])["result"]["done"])
 
     def test_close_on_done_cancels_on_uncertainty_without_closing(self) -> None:
         identity = self.watch_identity()
@@ -195,11 +265,11 @@ class AgentLauncherTests(unittest.TestCase):
             {"started": {**working, "state_change_seq": None}, "snapshots": [done, done]},
             {"started": {**identity, "agent_status": "blocked"}, "snapshots": [working, done, done]},
         ]
-        for state in cases:
-            with self.subTest(state=state):
+        for flag, state in ((flag, state) for flag in ("--wait", "--close-on-done") for state in cases):
+            with self.subTest(flag=flag, state=state):
                 self.calls.write_text("")
                 self.state.write_text(json.dumps({"started": identity, **state}))
-                result = self.run_agent("alice", "-t", "--close-on-done", code=1)
+                result = self.run_agent("alice", "-t", flag, code=1)
                 self.assertIn("retained Herdr pane w9:p1", result.stderr)
                 self.assertFalse(any(call[:2] == ["pane", "close"] for call in self.commands()))
 
@@ -209,7 +279,7 @@ class AgentLauncherTests(unittest.TestCase):
         self.environment["CHILD_EXIT"] = "7"
         for kind in ("pi", "claude", "codex"):
             with self.subTest(kind=kind):
-                result = self.run_agent("--kind", kind, "Alice Smith", "--env", "EXTRA",
+                result = self.run_agent("--wait", "--kind", kind, "Alice Smith", "--env", "EXTRA",
                                         "--", "--resume", literal, code=7)
                 received = json.loads(result.stdout)
                 prefix = [] if kind == "codex" else ["--name", "Alice Smith"]

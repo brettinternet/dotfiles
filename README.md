@@ -17,6 +17,7 @@ pane -w test -- echo test
 pane -w maintenance -t logs -- tail -f app.log
 pane -s down -- bun test --watch
 pane -w test -t checks --reuse-tab -- bun test
+pane -t checks --wait -- bun test # block and return bun's exit status; keep output
 pane -t disposable --close-on-exit -- echo done
 pane --herdr-session default -w jobs -C ~/dev/me/project -- bun test
 pane -w test -- sh -c 'echo test; date'
@@ -26,7 +27,9 @@ Without placement flags, `pane` splits the calling pane to the right. `-w` reuse
 
 Commands must follow `--`. Arguments are passed literally, not interpolated into shell text; use `sh -c` explicitly for pipelines, redirects, or expansion. Python 3 must be available in the new pane. `-C` selects cwd, `-e KEY[=VALUE]` copies or sets environment variables (`HERDR_*` overrides are forbidden), and `-T` labels the pane. `-n/--dry-run` prints a plan without contacting Herdr and redacts environment values; command arguments are shown verbatim.
 
-By default, the command returns to the pane’s shell with its output and exit status visible. `--close-on-exit` closes only the created pane after command completion, including failure, and discards its output. The launcher’s JSON acknowledges submission with `pane_id` and `submitted`; its exit status is **not** the command’s eventual exit status. Failed submissions retain the created pane for inspection and are never automatically retried. `pane` does not replace existing processes or offer agent-name operations.
+By default, the command returns to the pane’s shell with its output and exit status visible. `--close-on-exit` closes only the created pane after command completion, including failure, and discards its output. The launcher’s JSON acknowledges submission with `pane_id` and `submitted`; its exit status is **not** the command’s eventual exit status. With `--wait`, the launcher instead stays running until the command exits, prints a second JSON response with `pane_id` and `exit_code`, and returns that exit code (128 + signal for signal termination). The pane stays open unless `--close-on-exit` is also supplied. Completion uses a private Unix socket on the same host, not terminal-output matching; the launcher and pane must share the local filesystem. Before the bootstrap connects, a lost pane, Herdr error, or 30-second startup timeout fails rather than reporting success. After connection, the socket tracks completion directly; if the bootstrap dies without reporting status, waiting fails even if the pane's shell survives.
+
+Ctrl-C exits 130 and SIGTERM exits 143 while waiting, retaining the pane and **leaving the command running**. Scheduler cancellation therefore cancels observation, not the work: inspect or explicitly close the retained pane before retrying. Failed submissions retain the created pane for inspection and are never automatically retried. `pane` does not replace existing processes or offer agent-name operations.
 
 ## Set up a workstation
 

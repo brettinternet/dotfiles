@@ -29,11 +29,16 @@ from __future__ import annotations
 
 import argparse
 import base64
+from contextlib import nullcontext
 import json
 import os
 from pathlib import Path
 import re
+import signal
+import socket
 import sys
+import tempfile
+import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "lib"))
 from herdr_launch import herdr_client, placed_pane
@@ -52,6 +57,7 @@ def arguments() -> tuple[argparse.Namespace, list[str]]:
     parser.add_argument("-T", "--pane-title", metavar="TITLE")
     parser.add_argument("-f", "--focus", action="store_true")
     parser.add_argument("--herdr-session", metavar="SESSION", help="explicit session; requires -w")
+    parser.add_argument("--wait", action="store_true", help="wait for command exit and return its status; retain pane")
     parser.add_argument("--close-on-exit", action="store_true", help="close the created pane when the command exits")
     parser.add_argument("-n", "--dry-run", action="store_true", help="preview without contacting Herdr")
     raw = sys.argv[1:]
@@ -103,10 +109,18 @@ def child_variables(specifications: list[str]) -> dict[str, str]:
     return variables
 
 
-def command_line(command: list[str], close_on_exit: bool) -> str:
+def command_line(command: list[str], close_on_exit: bool, completion: str | None = None) -> str:
     # Herdr's pane run accepts shell text, not argv. Only this fixed Python
     # bootstrap reaches that shell; user argv is encoded data, never shell syntax.
-    source = f'''import os, subprocess, sys
+    source = f'''import os, socket, subprocess, sys
+reporter = None
+if {completion!r} is not None:
+    reporter = socket.socket(socket.AF_UNIX)
+    try:
+        reporter.connect({completion!r})
+    except OSError:
+        reporter.close()
+        reporter = None  # The caller may already have stopped waiting.
 try:
     status = subprocess.call({command!r})
 except OSError as error:
@@ -114,6 +128,14 @@ except OSError as error:
     status = 127
 except KeyboardInterrupt:
     status = 130
+status = status if status >= 0 else 128 - status
+if reporter is not None:
+    try:
+        reporter.sendall((str(status) + "\\n").encode())
+    except OSError:
+        pass  # The caller stopped waiting; command completion still proceeds.
+    finally:
+        reporter.close()
 if {close_on_exit!r}:
     result = subprocess.run(["herdr", "pane", "close", os.environ["HERDR_PANE_ID"]],
                             capture_output=True)
@@ -121,10 +143,43 @@ if {close_on_exit!r}:
         print("pane: could not close completed pane", file=sys.stderr)
 else:
     print("\\npane: command exited with status " + str(status))
-sys.exit(status if status >= 0 else 128 - status)
+sys.exit(status)
 '''
     encoded = base64.b64encode(source.encode()).decode()
     return f'python3 -c \'import base64; exec(base64.b64decode("{encoded}"))\''
+
+
+def wait_for_exit(h, pane: str, listener: socket.socket) -> int:
+    listener.settimeout(0.5)
+    deadline = time.monotonic() + 30
+    while True:
+        try:
+            connection, _ = listener.accept()
+            break
+        except socket.timeout:
+            if time.monotonic() >= deadline:
+                raise RuntimeError("Command bootstrap did not connect within 30 seconds; inspect pane before retrying")
+            try:
+                h("pane", "get", pane)
+            except (OSError, ValueError, RuntimeError):
+                # Completion/auto-close may race the query; accept a queued report first.
+                connection, _ = listener.accept()
+                break
+    with connection:
+        connection.settimeout(None)
+        data = b""
+        while not data.endswith(b"\n"):
+            chunk = connection.recv(16)
+            if not chunk:
+                raise RuntimeError("Command bootstrap exited without reporting completion")
+            data += chunk
+            if len(data) > 4:
+                raise ValueError("Invalid command exit status")
+        status = int(data)
+        if not 0 <= status <= 255:
+            raise ValueError("Invalid command exit status")
+    print(json.dumps({"result": {"pane_id": pane, "exit_code": status}}), flush=True)
+    return status
 
 
 def main() -> int:
@@ -137,11 +192,22 @@ def main() -> int:
                               "session": args.herdr_session or "inherited", "workspace_label": args.workspace,
                               "tab_title": args.tab, "split": args.split, "reuse_tab": args.reuse_tab,
                               "pane_title": args.pane_title, "focus": args.focus,
-                              "close_on_exit": args.close_on_exit}, indent=2))
+                              "wait": args.wait, "close_on_exit": args.close_on_exit}, indent=2))
             return 0
         h = herdr_client(args)
-        with placed_pane(h, args, variables, tool="pane") as pane:
-            print(json.dumps(h("pane", "run", pane, command_line(command, args.close_on_exit))))
+        if args.wait:
+            signal.signal(signal.SIGTERM, lambda *_: sys.exit(143))
+        with tempfile.TemporaryDirectory(prefix="pane-wait-") if args.wait else nullcontext() as directory:
+            completion = str(Path(directory) / "status.sock") if directory else None
+            with socket.socket(socket.AF_UNIX) if args.wait else nullcontext() as listener:
+                if listener:
+                    listener.bind(completion)
+                    listener.listen(1)
+                with placed_pane(h, args, variables, tool="pane") as pane:
+                    print(json.dumps(h("pane", "run", pane, command_line(command, args.close_on_exit, completion))),
+                          flush=True)
+                    if listener:
+                        return wait_for_exit(h, pane, listener)
         return 0
     except (OSError, ValueError, KeyError, TypeError, RuntimeError) as error:
         print(f"pane: {error}", file=sys.stderr)
