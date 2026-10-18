@@ -5,6 +5,7 @@ import argparse
 import json
 import os
 from pathlib import Path
+import platform
 import plistlib
 import re
 import shlex
@@ -128,7 +129,9 @@ def install_url_handler(home, remote_debugging=False):
         bundle = Path(temporary) / destination.name
         contents = bundle / "Contents"
         (contents / "MacOS").mkdir(parents=True)
-        subprocess.run(["/usr/bin/xcrun", "swiftc", "-O", str(script), "-o",
+        # A newer SDK otherwise targets its own macOS, which Launch Services refuses to open here.
+        target = f"{platform.machine()}-apple-macosx{platform.mac_ver()[0]}"
+        subprocess.run(["/usr/bin/xcrun", "swiftc", "-O", "-target", target, str(script), "-o",
                         str(contents / "MacOS/launch")], check=True)
         plist = contents / "Info.plist"
         info = {
