@@ -1,6 +1,6 @@
 ---
 description: Keep selected PRs green and address feedback until ready to merge
-argument-hint: '[pr-number | gh-search-qualifiers...] [--reviewer login]...'
+argument-hint: '[pr-number | gh-search-qualifiers...] [--reviewer login[,login...]]...'
 ---
 
 Repeat `pr-babysit` passes with `$ARGUMENTS` until every selected PR is `READY` or stopped. That command defines selection, authorization, worktrees and workers, conflict, CI, feedback, and reviewer handling, and each pass's report; follow it exactly on every pass, except that this command owns repetition. Drop finished and stopped PRs from later passes.

@@ -1,19 +1,21 @@
 #!/usr/bin/env bash
-# Launch or close a named Herdr agent in this checkout's workspace; cron sets the windows.
-#   agent-window launch NAME PROMPT [GATE]          run one pass; returns once the agent
-#                                                   finishes its turn and its pane closes
-#   agent-window launch --daily NAME PROMPT [GATE]  start once per day; blocks until the agent exits
-#   agent-window close NAME                         close the agent once it's done or idle
+# Run a named Herdr agent as a scheduled job in this checkout's workspace.
+#   agent-job launch NAME PROMPT [GATE]          run one pass; returns once the agent
+#                                                finishes its turn and its pane closes
+#   agent-job launch --daily NAME PROMPT [GATE]  start once per day; blocks until the agent exits
+#   agent-job close NAME                         close the agent once it's done or idle
 # GATE is a shell command printing a fingerprint of the pending work: empty output means
 # nothing to do, and a nonzero exit fails the run so a broken gate is not mistaken for idle.
 # A pass is skipped when the fingerprint matches the one taken before the last completed pass,
 # or while the previous pass is still working or blocked; a finished leftover pane is closed first.
-# Tokens in PROMPT and GATE expand before use; dates are local YYYY-MM-DD:
+# Tokens in PROMPT and GATE expand before use; dates are local YYYY-MM-DD. GATE also sees the
+# environment directly, but PROMPT reaches the agent only through tokens:
+#   {env:NAME}   the value of a nonempty variable, e.g. a job env REVIEWERS: alice,bob
 #   {repo}       this checkout's GitHub OWNER/NAME
 #   {today}      today's date
 #   {yesterday}  one day ago
 #   {today-N}    N days ago, e.g. {today-7}
-# Example: agent-window launch review '/skill:pr-review repo:{repo} updated:>={yesterday}'
+# Example: agent-job launch review '/skill:pr-review repo:{repo} author:{env:AUTHORS} updated:>={yesterday}'
 # Exit 3 = nothing to do (noon records it as noop). macOS only (BSD date).
 set -euo pipefail
 
@@ -37,7 +39,12 @@ agent_status() {
 }
 
 expand_tokens() {
-  local s=$1
+  local s=$1 variable
+  while [[ $s =~ \{env:([A-Za-z_][A-Za-z0-9_]*)\} ]]; do
+    variable=${BASH_REMATCH[1]}
+    [[ -n ${!variable:-} ]] || { echo "{env:$variable} is unset or empty" >&2; exit 1; }
+    s=${s//"${BASH_REMATCH[0]}"/${!variable}}
+  done
   s=${s//"{repo}"/$repo}
   s=${s//"{today}"/$(date +%F)}
   s=${s//"{yesterday}"/$(date -v-1d +%F)}
@@ -60,7 +67,8 @@ case $mode in
     if [[ "$3${4:-}" == *"{repo}"* ]]; then
       repo=$(gh repo view --json nameWithOwner --jq .nameWithOwner) || { echo "cannot resolve {repo}" >&2; exit 1; }
     fi
-    prompt=$(expand_tokens "$3") gate=$(expand_tokens "${4:-}")
+    prompt=$(expand_tokens "$3")
+    gate=$(expand_tokens "${4:-}")
     agent=("$HOME/.bin/agent" "$name" -k pi -w "$(basename "$PWD")" -t "$name" --reuse-tab -C "$PWD"
       --herdr-session default)
     # A daily agent is still needed after a scheduler restart orphans its waiting run. A blocked
@@ -81,7 +89,7 @@ case $mode in
       [[ -n $fingerprint ]] || { echo "nothing to do"; exit 3; }
     fi
     [[ -z $daily ]] || exec "${agent[@]}" --wait --prompt "$prompt"
-    state="${XDG_STATE_HOME:-$HOME/.local/state}/agent-window/$(basename "$PWD")-$name.gate"
+    state="${XDG_STATE_HOME:-$HOME/.local/state}/agent-job/$(basename "$PWD")-$name.gate"
     if [[ -n $fingerprint && -f $state && $(<"$state") == "$fingerprint" ]]; then
       echo "unchanged since last pass"
       exit 3

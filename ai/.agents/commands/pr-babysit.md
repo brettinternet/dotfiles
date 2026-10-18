@@ -1,9 +1,9 @@
 ---
 description: Make one pass getting selected PRs green and through feedback, then exit
-argument-hint: '[pr-number | gh-search-qualifiers...] [--reviewer login]...'
+argument-hint: '[pr-number | gh-search-qualifiers...] [--reviewer login[,login...]]...'
 ---
 
-Make one pass over either one PR identified by a single bare PR number in the current repository, or every open PR matching the supplied `gh search prs` qualifiers, then exit. A scheduler owns repetition; do all currently actionable work, but do not wait for CI or reviewers, poll, or schedule another pass. With no selection arguments, match open PRs authored by the authenticated user. Pass search qualifiers through unchanged, including repository and organization scopes such as `repo:organization/repo` and `org:organization`. Repeat the optional `--reviewer LOGIN` argument to name one or more reviewers; reviewer arguments are not part of the search. Deduplicate repeated reviewer logins. Reject a PR number combined with qualifiers, a missing reviewer login, or otherwise ambiguous arguments.
+Make one pass over either one PR identified by a single bare PR number in the current repository, or every open PR matching the supplied `gh search prs` qualifiers, then exit. A scheduler owns repetition; do all currently actionable work, but do not wait for CI or reviewers, poll, or schedule another pass. With no selection arguments, match open PRs authored by the authenticated user. Pass search qualifiers through unchanged, including repository and organization scopes such as `repo:organization/repo` and `org:organization`. Name reviewers with the optional, repeatable `--reviewer LOGIN[,LOGIN...]` argument; reviewer arguments are not part of the search. Deduplicate repeated reviewer logins. Reject a PR number combined with qualifiers, a missing reviewer login, or otherwise ambiguous arguments.
 
 This command authorizes comments, reviewer requests, item-scoped fixes, commits, and pushes to each selected PR's existing head branch. Never merge, approve on another person's behalf, dismiss reviews, request changes, force-push, or touch another branch.
 
