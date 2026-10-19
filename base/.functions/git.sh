@@ -108,6 +108,7 @@ alias gp='git push'
 alias gu='git pull'
 alias guom='git pull origin main'
 alias gpom='git push origin main'
+alias gmom='git merge --ff-only origin/main'
 alias gwch='git whatchanged -p --abbrev-commit --pretty=medium'
 
 alias gwtl='git worktree list'
