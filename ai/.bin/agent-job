@@ -8,6 +8,8 @@
 # nothing to do, and a nonzero exit fails the run so a broken gate is not mistaken for idle.
 # A pass is skipped when the fingerprint matches the one taken before the last completed pass,
 # or while the previous pass is still working or blocked; a finished leftover pane is closed first.
+# A focused agent pane is never closed or replaced: launch and close skip, and a pass that finishes
+# while focused keeps its pane for the user to close.
 # Tokens in PROMPT and GATE expand before use; dates are local YYYY-MM-DD. GATE also sees the
 # environment directly, but PROMPT reaches the agent only through tokens:
 #   {env:NAME}   the value of a nonempty variable, e.g. a job env REVIEWERS: alice,bob
@@ -26,12 +28,13 @@ if [[ $mode == launch && ${2:-} == --daily ]]; then
 fi
 name=$2
 
-agent_status() {
+# Prints "STATUS FOCUSED", e.g. "done true".
+agent_state() {
   local out
   if out=$(herdr agent get "$name" 2>&1); then
-    jq -r '[.. | objects | .agent_status? | strings][0] // "unknown"' <<<"$out"
+    jq -r '.result.agent | "\(.agent_status // "unknown") \(.focused == true)"' <<<"$out"
   elif grep -q agent_not_found <<<"$out"; then
-    echo absent
+    echo absent false
   else
     echo "herdr agent get $name failed: $out" >&2
     exit 1
@@ -58,8 +61,13 @@ run_gate() {
   bash -c "$gate" || { echo "gate failed" >&2; exit 1; }
 }
 
-status=$(agent_status)
-echo "$name: status=$status"
+state=$(agent_state)
+read -r status focused <<<"$state"
+echo "$name: status=$status focused=$focused"
+if [[ $focused == true ]]; then
+  echo "focused; leaving it to you"
+  exit 3
+fi
 
 case $mode in
   launch)

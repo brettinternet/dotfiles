@@ -18,7 +18,7 @@
 #   agent --list                             # list live agents and their locations
 #   agent --status alice                     # inspect alice's current status as JSON
 #   agent alice -t --close-on-done -- 'Review this diff'
-#                                            # watch working -> done, then close; Ctrl-C cancels
+#                                            # watch working -> done, then close unless focused; Ctrl-C cancels
 #   agent alice -t --wait -- 'Review this diff'
 #                                            # block until exit; SIGTERM closes it, Ctrl-C detaches
 #   agent alice -t --close-on-done -p 'Review this diff'
@@ -108,7 +108,8 @@ def arguments() -> tuple[argparse.Namespace, list[str]]:
                         help="wait for the launched agent process to exit, regardless of lifecycle status; "
                              "SIGTERM closes the agent's pane")
     herdr.add_argument("--close-on-done", action="store_true",
-                       help="stay running; close after observing working then done; cancel on blocked/unknown")
+                       help="stay running; close after observing working then done unless the pane is focused; "
+                            "cancel on blocked/unknown")
     herdr.add_argument("-p", "--prompt", metavar="TEXT",
                        help="submit TEXT once the agent is ready; Herdr start never sees a native prompt's agent "
                             "become ready, so use this for unattended launches")
@@ -349,7 +350,9 @@ def watch_agent(h, pane: str, name: str, started: dict, *, wait: bool, close: bo
                         or checked.get("agent_status") != "done"
                         or checked.get("state_change_seq") != current.get("state_change_seq")):
                     raise ValueError("Agent changed before completion; wait cancelled")
-                print(json.dumps(h("pane", "close", pane)), flush=True)
+                # The user is looking at it; leave closing to them.
+                print(json.dumps({"result": {"pane_id": pane, "name": name, "closed": False, "reason": "focused"}}
+                                 if checked.get("focused") else h("pane", "close", pane)), flush=True)
                 if wait:
                     close = False
                     continue

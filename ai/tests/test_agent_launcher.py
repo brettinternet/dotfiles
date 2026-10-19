@@ -306,6 +306,15 @@ class AgentLauncherTests(unittest.TestCase):
         self.assertEqual(["w9:p1", "Review it"], prompt[2:4])
         self.assertEqual(["pane", "close", "w9:p1"], calls[-1][:3])
 
+    def test_close_on_done_keeps_a_focused_pane(self) -> None:
+        # Scheduled passes must not yank a pane out from under the user reading it.
+        identity = self.watch_identity()
+        done = {**identity, "agent_status": "done", "state_change_seq": 3, "focused": True}
+        self.state.write_text(json.dumps({"started": identity, "snapshots": [done, done]}))
+        result = self.run_agent("alice", "-t", "--close-on-done", "--prompt", "Review it")
+        self.assertFalse(any(call[:2] == ["pane", "close"] for call in self.commands()))
+        self.assertEqual("focused", json.loads(result.stdout.splitlines()[-1])["result"]["reason"])
+
     def test_close_on_done_cancels_on_uncertainty_without_closing(self) -> None:
         identity = self.watch_identity()
         working = {**identity, "agent_status": "working", "state_change_seq": 2}
