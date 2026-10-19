@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Noon on_failure hook: notify once per failure streak through Tell, only when a Tell config file
+# (user config, tell.yaml, or .git/tell.yaml) is loaded for this project. Always exits 0 silently:
+# a hook cannot change the job result, so a missing route or failed delivery only stays quiet.
+#   on_failure: [noon-notify]                               "noon review failed. See noon logs 291."
+#   on_failure: [noon-notify, It may be waiting on you.]    appends the detail
+# Variables come from ~/.envrc through direnv when available, e.g. APPRISE_URLS.
+set -u
+
+# Noon before 0.5 does not set the streak count; treat that as a first failure.
+streak=${NOON_CONSECUTIVE_FAILURES:-1}
+[[ $streak =~ ^[0-9]+$ ]] && ((streak <= 1)) || exit 0
+
+tell_() {
+  if command -v direnv >/dev/null && [[ -f $HOME/.envrc ]]; then
+    direnv exec "$HOME" tell "$@"
+  else
+    tell "$@"
+  fi
+}
+
+sources=$(tell_ --json config 2>/dev/null | jq -r '.config.sources | length' 2>/dev/null)
+[[ ${sources:-0} =~ ^[1-9] ]] || exit 0
+
+message="noon ${NOON_JOB:-job} ${NOON_STATUS:-failed}. See noon logs ${NOON_RUN_ID:-}."
+[[ $# -eq 0 ]] || message+=" $*"
+tell_ --timeout 10s notify --type failure "$message" >/dev/null 2>&1
+exit 0
