@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
-# Noon on_failure hook: notify once per failure streak through Tell, only when a Tell config file
-# (user config, tell.yaml, or .git/tell.yaml) is loaded for this project. Always exits 0 silently:
-# a hook cannot change the job result, so a missing route or failed delivery only stays quiet.
-#   on_failure: [noon-notify]                               "noon review failed. See noon logs 291."
-#   on_failure: [noon-notify, It may be waiting on you.]    appends the detail
-# Variables come from ~/.envrc through direnv when available, e.g. APPRISE_URLS.
+# Noon on_failure hook: tells you a scheduled job failed, once per failure streak, through Tell.
+# Quietly does nothing when no Tell config routes the message; never fails the hook.
+#   on_failure: [noon-notify, It may be waiting on you.]
+# Loads ~/.envrc via direnv so delivery secrets such as APPRISE_URLS stay out of config.
 set -u
 
 # Noon before 0.5 does not set the streak count; treat that as a first failure.
