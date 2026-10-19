@@ -301,6 +301,7 @@ description = "reload Herdr config"
 directory = "~/.herdr/worktrees"
 
 [ui]
+confirm_close = false
 # Order the Agent panel as an attention queue rather than by space, so whoever
 # is blocked surfaces first.
 agent_panel_sort = "priority"
