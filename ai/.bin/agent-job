@@ -17,6 +17,8 @@
 #   {today}      today's date
 #   {yesterday}  one day ago
 #   {today-N}    N days ago, e.g. {today-7}
+# AGENT_KIND selects the agent CLI (pi, claude, or codex; default pi). A leading /skill:NAME in
+# PROMPT becomes /NAME for claude and $NAME for codex.
 # Example: agent-job launch review '/skill:pr-review repo:{repo} author:{env:AUTHORS} updated:>={yesterday}'
 # Exit 3 = nothing to do (noon records it as noop). macOS only (BSD date).
 set -euo pipefail
@@ -77,7 +79,12 @@ case $mode in
     fi
     prompt=$(expand_tokens "$3")
     gate=$(expand_tokens "${4:-}")
-    agent=("$HOME/.bin/agent" "$name" -k pi -w "$(basename "$PWD")" -t "$name" --reuse-tab -C "$PWD"
+    kind=${AGENT_KIND:-pi}
+    case $kind in
+      claude) prompt=${prompt/#\/skill:/\/} ;;
+      codex) prompt=${prompt/#\/skill:/\$} ;;
+    esac
+    agent=("$HOME/.bin/agent" "$name" -k "$kind" -w "$(basename "$PWD")" -t "$name" --reuse-tab -C "$PWD"
       --herdr-session default)
     # A daily agent is still needed after a scheduler restart orphans its waiting run. A blocked
     # pass keeps its pane for the user; once answered and finished, the next pass replaces it.
