@@ -100,6 +100,55 @@ func log(_ message: String) {
     fputs("\(ISO8601DateFormatter().string(from: Date())) \(message)\n", stderr)
 }
 
+func processName(_ pid: pid_t) -> String? {
+    var buffer = [CChar](repeating: 0, count: Int(MAXPATHLEN))
+    guard proc_name(pid, &buffer, UInt32(buffer.count)) > 0 else { return nil }
+    return String(cString: buffer)
+}
+
+// Describes the process and its ancestors up to launchd, nearest first. Root-owned
+// ancestors deny KERN_PROCARGS2, so they fall back to their process name.
+func ancestry(of pid: pid_t) -> String {
+    var hops: [String] = []
+    var current = pid
+    for _ in 0..<8 {
+        var info = proc_bsdinfo()
+        let size = proc_pidinfo(current, PROC_PIDTBSDINFO, 0, &info, Int32(MemoryLayout<proc_bsdinfo>.stride))
+        guard size == MemoryLayout<proc_bsdinfo>.stride else { break }
+        if let arguments = processArguments(current) {
+            hops.append("\(current) \(arguments.joined(separator: " "))")
+        } else {
+            hops.append("\(current) \(processName(current) ?? "?")")
+        }
+        guard info.pbi_ppid > 1, pid_t(info.pbi_ppid) != current else { break }
+        current = pid_t(info.pbi_ppid)
+    }
+    return hops.joined(separator: " <- ")
+}
+
+// Alerts through tell's apprise route so a failed deferral is not only a log line.
+func notifyFailure(_ message: String) {
+    let home = NSHomeDirectory()
+    let tell = home + "/.local/share/mise/installs/github-brettinternet-tell/latest/tell"
+    guard FileManager.default.isExecutableFile(atPath: tell) else {
+        log("tell not found at \(tell); failure notification not sent")
+        return
+    }
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: tell)
+    var arguments = ["--timeout", "10s"]
+    let config = home + "/.dotfiles/tell.yaml"
+    if FileManager.default.fileExists(atPath: config) {
+        arguments += ["--config", config]
+    }
+    process.arguments = arguments + ["notify", "--type", "failure", "--title", "window-rules", message]
+    do {
+        try process.run()
+    } catch {
+        log("tell failed to launch: \(error.localizedDescription)")
+    }
+}
+
 func isRunning(_ pid: pid_t) -> Bool {
     kill(pid, 0) == 0 || errno == EPERM
 }
@@ -140,7 +189,12 @@ func perform(_ action: Action, on target: Target, rule: Rule) {
                 Thread.sleep(forTimeInterval: 0.25)
             }
         }
-        log("\(rule.name): pid \(target.pid) \(isRunning(target.pid) ? "ignored \(attempts) keystrokes" : "quit")")
+        if isRunning(target.pid) {
+            log("\(rule.name): pid \(target.pid) ignored \(attempts) keystrokes")
+            notifyFailure("\(rule.name): pid \(target.pid) ignored \(attempts) deferral keystrokes")
+        } else {
+            log("\(rule.name): pid \(target.pid) quit")
+        }
     }
 }
 
@@ -168,6 +222,7 @@ final class Watcher {
             let target = Target(pid: pid, bundleID: bundleID, arguments: arguments)
             guard let (rule, action) = plan(target, rules: rules) else { continue }
             log("\(rule.name): pid \(pid) matched")
+            log("\(rule.name): ancestry: \(ancestry(of: pid))")
             DispatchQueue.global().async { perform(action, on: target, rule: rule) }
         }
     }

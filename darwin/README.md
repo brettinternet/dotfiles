@@ -210,6 +210,12 @@ The rule matches swiftDialog windows whose title, message, or first button menti
 never quits it any other way. Other swiftDialog prompts are left alone. The prompt
 returns on a later check while uptime stays high, so restart periodically.
 
+Each match also logs the prompt's full arguments and process ancestry, which
+identifies the script that spawned it. If a prompt ignores five deferral keystrokes
+— for example because the deferral path is removed — the agent sends a failure
+notification through tell's apprise route (`tell.yaml`), since the next sign would
+otherwise be an unexpected restart.
+
 To remove: `launchctl bootout gui/$(id -u)/local.window-rules`, then trash the plist
 and the application support directory.
 
