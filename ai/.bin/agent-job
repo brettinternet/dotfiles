@@ -13,6 +13,7 @@
 # Tokens in PROMPT and GATE expand before use; dates are local YYYY-MM-DD. GATE also sees the
 # environment directly, but PROMPT reaches the agent only through tokens:
 #   {env:NAME}   the value of a nonempty variable, e.g. a job env REVIEWERS: alice,bob
+#   {env?:NAME}  the same, or nothing when unset or empty
 #   {repo}       this checkout's GitHub OWNER/NAME
 #   {today}      today's date
 #   {yesterday}  one day ago
@@ -29,26 +30,32 @@ if [[ $mode == launch && ${2:-} == --daily ]]; then
   shift
 fi
 name=$2
+# Herdr agent names are global, so key the agent by checkout, e.g. review-houston-1a2b3c, within
+# Herdr's 32-character limit. NAME must already be a valid lowercase Herdr name.
+[[ $name =~ ^[a-z][a-z0-9_-]{0,15}$ ]] || { echo "invalid NAME: $name" >&2; exit 2; }
+slug=$(printf %s "${PWD##*/}" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9_-' '-' | cut -c"1-$((32 - ${#name} - 8))" |
+  sed -E 's/^[-_]+//; s/[-_]+$//')
+live=$name-${slug:+$slug-}$(printf %s "$PWD" | shasum | cut -c1-6)
 
 # Prints "STATUS FOCUSED", e.g. "done true".
 agent_state() {
   local out
-  if out=$(herdr agent get "$name" 2>&1); then
+  if out=$(herdr agent get "$live" 2>&1); then
     jq -r '.result.agent | "\(.agent_status // "unknown") \(.focused == true)"' <<<"$out"
   elif grep -q agent_not_found <<<"$out"; then
     echo absent false
   else
-    echo "herdr agent get $name failed: $out" >&2
+    echo "herdr agent get $live failed: $out" >&2
     exit 1
   fi
 }
 
 expand_tokens() {
   local s=$1 variable
-  while [[ $s =~ \{env:([A-Za-z_][A-Za-z0-9_]*)\} ]]; do
-    variable=${BASH_REMATCH[1]}
-    [[ -n ${!variable:-} ]] || { echo "{env:$variable} is unset or empty" >&2; exit 1; }
-    s=${s//"${BASH_REMATCH[0]}"/${!variable}}
+  while [[ $s =~ \{env(\?)?:([A-Za-z_][A-Za-z0-9_]*)\} ]]; do
+    variable=${BASH_REMATCH[2]}
+    [[ -n ${BASH_REMATCH[1]} || -n ${!variable:-} ]] || { echo "{env:$variable} is unset or empty" >&2; exit 1; }
+    s=${s//"${BASH_REMATCH[0]}"/${!variable:-}}
   done
   s=${s//"{repo}"/$repo}
   s=${s//"{today}"/$(date +%F)}
@@ -65,7 +72,7 @@ run_gate() {
 
 state=$(agent_state)
 read -r status focused <<<"$state"
-echo "$name: status=$status focused=$focused"
+echo "$live: status=$status focused=$focused"
 if [[ $focused == true ]]; then
   echo "focused; leaving it to you"
   exit 3
@@ -84,7 +91,7 @@ case $mode in
       claude) prompt=${prompt/#\/skill:/\/} ;;
       codex) prompt=${prompt/#\/skill:/\$} ;;
     esac
-    agent=("$HOME/.bin/agent" "$name" -k "$kind" -w "$(basename "$PWD")" -t "$name" --reuse-tab -C "$PWD"
+    agent=("$HOME/.bin/agent" "$live" -k "$kind" -w "$(basename "$PWD")" -t "$name" --reuse-tab -C "$PWD"
       --herdr-session default)
     # A daily agent is still needed after a scheduler restart orphans its waiting run. A blocked
     # pass keeps its pane for the user; once answered and finished, the next pass replaces it.
@@ -104,12 +111,12 @@ case $mode in
       [[ -n $fingerprint ]] || { echo "nothing to do"; exit 3; }
     fi
     [[ -z $daily ]] || exec "${agent[@]}" --wait --prompt "$prompt"
-    state="${XDG_STATE_HOME:-$HOME/.local/state}/agent-job/$(basename "$PWD")-$name.gate"
+    state="${XDG_STATE_HOME:-$HOME/.local/state}/agent-job/$live.gate"
     if [[ -n $fingerprint && -f $state && $(<"$state") == "$fingerprint" ]]; then
       echo "unchanged since last pass"
       exit 3
     fi
-    [[ $status == absent ]] || "$HOME/.bin/agent" --close "$name" --herdr-session default
+    [[ $status == absent ]] || "$HOME/.bin/agent" --close "$live" --herdr-session default
     # Fails, keeping the pane, when the agent blocks on the user.
     "${agent[@]}" --close-on-done --prompt "$prompt"
     mkdir -p "${state%/*}"
@@ -117,7 +124,7 @@ case $mode in
     ;;
   close)
     case $status in
-      done | idle) exec "$HOME/.bin/agent" --close "$name" --herdr-session default ;;
+      done | idle) exec "$HOME/.bin/agent" --close "$live" --herdr-session default ;;
       *) exit 3 ;;
     esac
     ;;

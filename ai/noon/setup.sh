@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Link pr-agents.yaml as each repo's private .git/noon.yaml and seed .git/noon/pr-agents.env.
 # Usage: setup.sh [--force] REPO...
-#   --force  move an existing non-matching .git/noon.yaml to .git/noon.yaml.bak first
+#   --force  move an existing non-matching .git/noon.yaml to .git/noon.yaml.bak first; refuses
+#            when that backup already exists
 # Never overwrites an existing pr-agents.env. Run `noon -C REPO enable` afterward; it also approves
 # any shared noon.yaml jobs, so it is left to you.
 set -euo pipefail
@@ -36,6 +37,11 @@ for repo in "$@"; do
     if [[ -e $config || -L $config ]]; then
       if [[ -z $force ]]; then
         echo "$repo: $config exists; rerun with --force to move it to noon.yaml.bak" >&2
+        status=1
+        continue
+      fi
+      if [[ -e $config.bak || -L $config.bak ]]; then
+        echo "$repo: $config.bak exists; move it aside first" >&2
         status=1
         continue
       fi

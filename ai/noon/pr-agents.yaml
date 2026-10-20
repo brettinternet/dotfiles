@@ -3,8 +3,8 @@
 # the repo's .git/noon/pr-agents.env, never here. {repo} and {env:NAME} come from agent-job, and gh
 # defaults to the checkout. noon-notify sends through Tell only when a Tell config such as
 # .git/tell.yaml exists.
-# Env: REVIEWERS and REVIEW_AUTHORS are comma-separated logins, e.g. alice,bob; REVIEW_AUTHORS: '*'
-# reviews everyone but me. REVIEW_SEARCH defaults to draft:false.
+# Env: see pr-agents.env. Private config runs without approval, so edits here run unreviewed in
+# every linked repo once dotfiles pull.
 version: 1
 timezone: Local
 vars_file: .git/noon/pr-agents.env
@@ -19,13 +19,14 @@ jobs:
 
   babysit:
     description: One PR babysitter pass whenever my non-draft PRs change
-    schedule: "*/15 7-14 * * 1-4"
+    schedule: "${BABYSIT_SCHEDULE:-*/15 7-14 * * 1-4}"
+    jitter: "${BABYSIT_JITTER:-0s}"
     .env_file: .git/noon/pr-agents.env
     run:
       - agent-job
       - launch
       - babysit
-      - /skill:pr-babysit repo:{repo} author:@me --reviewer {env:REVIEWERS}
+      - /skill:pr-babysit repo:{repo} author:@me {env?:BABYSIT_ARGS}
       - >-
         gh pr list --author @me --state open --search draft:false
         --json number,headRefOid,updatedAt,mergeable,reviewDecision,statusCheckRollup
@@ -38,7 +39,7 @@ jobs:
 
   babysit-close:
     description: Close a leftover PR babysitter pane once it's done or idle
-    schedule: "0 13-15 * * 1-4"
+    schedule: "0 15-22 * * 1-4"
     run: [agent-job, close, babysit]
     noop_exit_code: 3
     timeout: 1m
@@ -66,7 +67,7 @@ jobs:
 
   review-close:
     description: Close a leftover PR review pane once it's done or idle
-    schedule: "*/45 15-22 * * 1-4"
+    schedule: "0 15-22 * * 1-4"
     run: [agent-job, close, review]
     noop_exit_code: 3
     timeout: 1m
