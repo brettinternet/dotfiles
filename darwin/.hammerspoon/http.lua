@@ -145,10 +145,6 @@ local actions = {
       end
     end
   end,
-  ["/calendar/work"] = function()
-    openDisposableBrowserWindow("org.chromium.Chromium", "https://pdq-hq.slack.com/archives/D03JDATJ7D5")
-    hs.application.get("com.tinyspeck.slackmacgap"):activate()
-  end,
   ["/calendar/personal"] = getLaunchFocusOrHideAndSwitchBackFn("com.apple.iCal", true),
   ["/claude"] = getLaunchFocusOrHideAndSwitchBackFn("com.anthropic.claudefordesktop"),
 }
