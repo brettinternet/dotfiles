@@ -19,7 +19,8 @@
 #   {yesterday}  one day ago
 #   {today-N}    N days ago, e.g. {today-7}
 # AGENT_KIND selects the agent CLI (pi, claude, or codex; default pi). A leading /skill:NAME in
-# PROMPT becomes /NAME for claude and $NAME for codex.
+# PROMPT becomes /NAME for claude and $NAME for codex. <NAME>_AGENT_ARGS (e.g. REVIEW_AGENT_ARGS), else
+# AGENT_ARGS, adds whitespace-split native CLI arguments, e.g. '--model opus --effort medium'.
 # Example: agent-job launch review '/skill:pr-review repo:{repo} author:{env:AUTHORS} updated:>={yesterday}'
 # Exit 3 = nothing to do (noon records it as noop). macOS only (BSD date).
 set -euo pipefail
@@ -87,6 +88,8 @@ case $mode in
     prompt=$(expand_tokens "$3")
     gate=$(expand_tokens "${4:-}")
     kind=${AGENT_KIND:-pi}
+    job_args=$(printf %s "$name" | tr '[:lower:]-' '[:upper:]_')_AGENT_ARGS
+    read -ra native <<<"${!job_args:-${AGENT_ARGS:-}}"
     case $kind in
       claude) prompt=${prompt/#\/skill:/\/} ;;
       codex) prompt=${prompt/#\/skill:/\$} ;;
@@ -110,7 +113,7 @@ case $mode in
       fingerprint=$(run_gate)
       [[ -n $fingerprint ]] || { echo "nothing to do"; exit 3; }
     fi
-    [[ -z $daily ]] || exec "${agent[@]}" --wait --prompt "$prompt"
+    [[ -z $daily ]] || exec "${agent[@]}" --wait --prompt "$prompt" -- "${native[@]}"
     state="${XDG_STATE_HOME:-$HOME/.local/state}/agent-job/$live.gate"
     if [[ -n $fingerprint && -f $state && $(<"$state") == "$fingerprint" ]]; then
       echo "unchanged since last pass"
@@ -118,7 +121,7 @@ case $mode in
     fi
     [[ $status == absent ]] || "$HOME/.bin/agent" --close "$live" --herdr-session default
     # Fails, keeping the pane, when the agent blocks on the user.
-    "${agent[@]}" --close-on-done --prompt "$prompt"
+    "${agent[@]}" --close-on-done --prompt "$prompt" -- "${native[@]}"
     mkdir -p "${state%/*}"
     printf '%s' "$fingerprint" >"$state"
     ;;
