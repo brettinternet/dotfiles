@@ -1,4 +1,9 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/brettinternet/tell/main/tell.schema.json
 version: 1
 notify:
-  via: apprise
+  via:
+    - apprise
+    - desktop
+    - stderr
+  fallback_on: [not_sent, failed]
+  fallback_notice: title
