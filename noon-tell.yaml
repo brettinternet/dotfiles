@@ -3,4 +3,9 @@
 # Not named tell.yaml: Tell auto-discovers that as shared config and rejects routing in it.
 version: 1
 notify:
-  via: desktop
+  via:
+    - apprise
+    - desktop
+    - stderr
+  fallback_on: [not_sent, failed]
+  fallback_notice: title
