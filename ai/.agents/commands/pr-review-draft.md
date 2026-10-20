@@ -33,8 +33,8 @@ For `COMMENT`, draft each finding as:
 
 ```text
 <path:line>
-<one sentence naming the trigger and breakage>
-<one direct question>
+<one sentence naming the breakage and the caller or input that triggers it>
+<a direct question when an answer is needed, or the requested action when the fix is clear>
 ```
 
 Apply `user-voice`, then `draft-in-editor` with slug `pr-review-<N>`. Do not create a draft for `APPROVE` or `WAIT`.

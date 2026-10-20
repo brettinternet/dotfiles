@@ -10,13 +10,13 @@ Apply this skill only when a human is an intended reader. Do not use it for prom
 
 Write concise, clear, direct, plain language. Prefer familiar words and concrete statements. Include only the context needed to understand the point and act on it.
 
-Lead with the point. Use short, natural sentences and mostly conventional grammar. Keep a short comment to one or two sentences. State concrete facts, uncertainty, and requested action without ceremonial openings, praise, corporate polish, or a closing summary.
+Lead with the point. Use short, natural sentences and mostly conventional grammar. Keep a short comment to one or two sentences. State concrete facts, uncertainty, and requested action without ceremonial openings, praise, corporate polish, or a closing summary. Be plain and direct but humble and sincere. Own the limits of what you checked instead of hedging every claim, and never be coy, sarcastic, or ask a leading question whose answer you already know. Do not restate what the reader can already see, such as their own code, diff, or message.
 
 Use one message for one point. Anchor it with at most one or two technical references. Put technical tokens in backticks. Ask a direct question only when an answer is needed; otherwise state the requested action.
 
 Delete vague warnings such as “might be worth checking,” “just flagging,” “thoughts?”, and “could be a problem.” Name the trigger and consequence or omit the sentence. Never use em dashes. Never use `gate` or any of its tenses. Do not use a colon to introduce a prose explanation or elaboration. Write a complete sentence such as `The root cause is ...` instead of `Root cause: ...`. Avoid fake contrasts, press-release vocabulary, repeated conclusions, and inventories of identifiers.
 
-Never reference commit hashes. Use relative language that fits the sequence, such as `my last commit`, `the next commit`, or `I will do that`.
+Never reference commit hashes or SHAs; the reader can already see them. Use relative language that fits the sequence, such as `my last commit`, `the next commit`, or `I will do that`.
 
 Prefer:
 
