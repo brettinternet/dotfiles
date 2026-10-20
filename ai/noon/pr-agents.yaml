@@ -6,6 +6,7 @@
 # reviews everyone but me. REVIEW_SEARCH defaults to draft:false.
 version: 1
 timezone: Local
+vars_file: .git/pr-agents.env
 
 jobs:
   fetch:
@@ -36,7 +37,7 @@ jobs:
 
   babysit-close:
     description: Close a leftover PR babysitter pane once it's done or idle
-    schedule: "*/15 0-5,15-23 * * 1-4"
+    schedule: "0 13-15 * * 1-4"
     run: [agent-job, close, babysit]
     noop_exit_code: 3
     timeout: 1m
@@ -44,7 +45,8 @@ jobs:
 
   review:
     description: One PR review pass whenever matching PRs by REVIEW_AUTHORS change
-    schedule: "*/15 6-14 * * 1-4"
+    schedule: "${REVIEW_SCHEDULE:-*/15 6-14 * * 1-4}"
+    jitter: "${REVIEW_JITTER}"
     .env_file: .git/pr-agents.env
     run:
       - agent-job
