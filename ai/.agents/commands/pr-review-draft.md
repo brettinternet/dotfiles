@@ -15,6 +15,8 @@ Review proportionately for correctness, regressions, security, data integrity, c
 2. a triggering input, state, or path
 3. an observable breakage
 
+Before reporting, try to disprove each candidate finding against the PR's current head, not the diff alone. List every assumption it depends on, such as that the trigger can occur, the path is reachable, nothing upstream prevents it, nothing downstream recovers, and the behavior is unintended. Confirm each from code you have read: a concrete caller or entry point that produces the trigger; no validation, type, framework, middleware, schema, or test that already prevents or handles it; and no PR description, discussion, or test showing the behavior is intended. Run an existing test or type check when that settles a fact cheaply. Then give each surviving finding, with only the PR reference and the finding, to a fresh-context reviewer told to refute it from code, and drop it if they do. Drop any finding that rests on an unconfirmed assumption; asking the author is not a substitute for checking.
+
 Drop speculation, style preferences, pre-existing problems, duplicate concerns, and cleanup suggestions. A clean review is expected when no defect clears the bar. Keep at most four findings, highest impact first.
 
 Report in chat:
@@ -37,4 +39,4 @@ For `COMMENT`, draft each finding as:
 
 Apply `user-voice`, then `draft-in-editor` with slug `pr-review-<N>`. Do not create a draft for `APPROVE` or `WAIT`.
 
-If the user later authorizes the reported action, reread current PR state first. Approve with no body for `APPROVE`; post the saved draft exactly for `COMMENT`, treating `path:line` as routing metadata and falling back to a top-level review when no changed line fits; post nothing for `WAIT`. Never request changes.
+If the user later authorizes the reported action, reread current PR state first; if the head SHA moved, re-verify affected findings. Approve with no body for `APPROVE`; post the saved draft exactly for `COMMENT`, treating `path:line` as routing metadata and falling back to a top-level review when no changed line fits; post nothing for `WAIT`. Never request changes.
