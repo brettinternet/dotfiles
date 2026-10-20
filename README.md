@@ -7,3 +7,22 @@ Basic dotfiles setup with [dotbot](https://github.com/anishathalye/dotbot/tree/m
 ```sh
 ./install
 ```
+
+Set up a workstation
+
+```
+make {darwin|server|thinkpad|ai}
+```
+
+Upgrade extensions and plugins
+
+```
+make up
+```
+
+Automate those jobs with [noon](https://github.com/brettinternet/noon)
+
+```
+noon enable
+noon service install
+```
