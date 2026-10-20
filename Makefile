@@ -48,8 +48,10 @@ update:
 	@$(MAKE) --no-print-directory update-tmux
 	@$(MAKE) --no-print-directory update-dotbot
 
+# Zinit exits 1 after installing a release update when TERM is unset or dumb (e.g. noon/cron).
 update-zinit:
 	@if command -v zsh >/dev/null 2>&1; then \
+		TERM="$${TERM:-xterm-256color}"; [ "$$TERM" = dumb ] && TERM=xterm-256color; export TERM; \
 		zsh -ic 'if ! command -v zinit >/dev/null 2>&1; then print -r -- "Skipping Zinit update: Zinit is not installed"; exit 0; fi; zinit self-update || exit; for plugin_dir in "$$ZINIT[PLUGINS_DIR]"/*(N/); do plugin=$${plugin_dir:t}; [[ $$plugin = custom || $$plugin = _local---zinit ]] && continue; zinit update "$${plugin//---//}" || exit; done'; \
 	else \
 		printf '%s\n' 'Skipping Zinit update: zsh is not installed'; \
