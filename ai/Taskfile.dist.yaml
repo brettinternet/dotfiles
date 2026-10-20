@@ -1,0 +1,10 @@
+---
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+version: "3"
+
+tasks:
+  noon-setup:
+    desc: "Link PR agent noon jobs into repos: task ai:noon-setup -- [--force] REPO..."
+    dir: "{{.USER_WORKING_DIR}}"
+    cmds:
+      - "{{.TASKFILE_DIR}}/noon/setup.sh {{.CLI_ARGS}}"

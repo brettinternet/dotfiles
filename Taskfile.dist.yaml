@@ -4,6 +4,7 @@ version: "3"
 
 includes:
   setup: Taskfile.{{OS}}.yaml
+  ai: ai/Taskfile.dist.yaml
 
 tasks:
   default:
