@@ -3,8 +3,7 @@
 # the repo's .git/noon/pr-agents.env, never here. {repo} and {env:NAME} come from agent-job, and gh
 # defaults to the checkout. noon-notify sends through Tell only when a Tell config such as
 # .git/tell.yaml exists.
-# Env: see pr-agents.env. Private config runs without approval, so edits here run unreviewed in
-# every linked repo once dotfiles pull.
+# Env: see pr-agents.env.
 version: 1
 timezone: Local
 vars_file: .git/noon/pr-agents.env
@@ -54,9 +53,9 @@ jobs:
       - agent-job
       - launch
       - review
-      - /skill:pr-review repo:{repo} archived:false author:{env:REVIEW_AUTHORS}
+      - /skill:pr-review repo:{repo} archived:false draft:false author:{env:REVIEW_AUTHORS} {env?:REVIEW_SEARCH}
       - >-
-        set -ef; base=${REVIEW_SEARCH:-draft:false}; if [ "$REVIEW_AUTHORS" = "*" ]; then searches=("$base -author:@me");
+        set -ef; base="draft:false ${REVIEW_SEARCH:-}"; if [ "$REVIEW_AUTHORS" = "*" ]; then searches=("$base -author:@me");
         else searches=(); for author in ${REVIEW_AUTHORS//,/ }; do searches+=("$base author:$author"); done; fi;
         for search in "${searches[@]}"; do gh pr list --state open --limit 1000 --search "$search"
         --json number,headRefOid,updatedAt --jq '.[] | [.number, .headRefOid, .updatedAt] | tojson'; done
