@@ -20,6 +20,7 @@ jobs:
   darwin:
     description: Install macOS dotfiles each morning.
     schedule: every day at 6am
+    os: [darwin]
     run: make darwin
     on_failure: >-
       exec tell --config noon-tell.yaml --timeout 10s notify --type failure --title dotfiles
