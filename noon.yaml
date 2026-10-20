@@ -3,10 +3,17 @@ version: 1
 timezone: Local
 
 jobs:
-  fetch:
-    description: Fetch origin every hour without changing the working tree.
-    schedule: "0 6-16 * * *"
-    run: [git, fetch, --quiet, --prune, origin]
+  pull:
+    description: Fast-forward main from origin when clean.
+    schedule: "55 5-16 * * *"
+    run: >-
+      git fetch --quiet --prune origin &&
+      [ "$(git branch --show-current)" = main ] &&
+      git diff --quiet --ignore-submodules HEAD &&
+      git merge-base --is-ancestor HEAD origin/main
+      || exit 3;
+      git merge --ff-only --quiet origin/main
+    noop_exit_code: 3
     timeout: 5m
     missed: skip
 
