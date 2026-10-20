@@ -1,193 +1,111 @@
 # AI agent setup
 
-Shared configuration for Claude Code, Pi, Codex, and Amp.
-
-AI tools are disabled by default. Select them per machine in `~/.envrc`, then install or refresh them:
+Shared config for Claude Code, Pi, Codex, and Amp. Off by default; select per machine in `~/.envrc`:
 
 ```sh
-export DOTFILES_AI_TOOLS=all
-# Or select a subset: pi,claude,codex,amp
-make ai
+export DOTFILES_AI_TOOLS=all   # or pi,claude,codex,amp | none
+make ai                        # install/refresh; deselected tools are removed
+make uninstall-ai              # remove everything managed; local settings kept
 ```
 
-The comma-separated selector also accepts `none`. Any non-empty selection installs the fail-closed destructive-command guard (`dcg`). Removing a tool from the selector removes managed links and generated agent definitions, then uninstalls its Mise package; mutable local settings are preserved.
+Any selection installs the `dcg` destructive-command guard.
 
-To completely remove the AI group, including its helper links, generated profiles, guards, integrations, Mise configuration, and installed packages, run:
+## Layout
 
-```sh
-make uninstall-ai
-```
+| Path | Purpose |
+| --- | --- |
+| [`AGENTS.md`](AGENTS.md) | shared instructions and delegation policy |
+| `manifest.yaml` | models, launchers, per-profile model assignments |
+| `agents/<role>.md` | subagent prompts → `~/.{pi/agent,claude,codex}/agents/` |
+| `.agents/skills/`, `.agents/commands/` | skills (commands render as skills) |
+| `pi/`, `claude/`, `amp/` | harness config |
+| `project/` | project defaults (e.g. `.mcp.json`) |
 
-Unmanaged files and mutable local settings are preserved.
+Generated files are outputs: edit the source here, then `make ai` or `ai-config generate`.
 
-[`ai.yaml`](../ai.yaml) links configuration into each selected tool's home directory. [`AGENTS.md`](AGENTS.md) provides shared instructions.
-
-## Sources
-
-- `manifest.yaml` — Pi model catalog, launchers, and per-profile model assignments (also used for Claude Code and Codex CLI agents); `generate-config.py` renders Pi settings and model overrides
-- `agents/` — shared subagent prompts; `install-agents` renders harness-specific definitions
-- `.agents/skills/` — reusable skills discovered through `~/.agents/skills/`
-- `.agents/commands/` — shared workflows rendered as skills by `install-agent-commands`
-- `pi/`, `claude/`, and `amp/` — harness-specific configuration
-- `project/` — project-level defaults
-
-Generated files under `$HOME` should not be edited directly. Change their source here and rerun `make ai`. Claude preferences from `claude/settings.json` are merged into the mutable user settings on each run, preserving local-only keys such as integration hooks.
-
-## Profiles
+## Profiles and launchers
 
 ```sh
-ai-config use codex       # Pi profile
-ai-config use openrouter  # or: claude; renders to the `or` Pi profile
+ai-config use codex           # ChatGPT subscription models
+ai-config use openrouter      # needs OPENROUTER_API_KEY
 ai-config generate --check
-```
 
-The `pi-profile` command remains available. Generated profile and model files under `pi/` should not be edited directly; change `manifest.yaml` and run `ai-config generate`.
-
-Use `p <launcher> [pi arguments...]` for a manifest-backed Pi launch preset, or `p list` to show presets. Launchers can configure a model, thinking level, arbitrary Pi arguments, or any combination:
-
-```sh
+p list
 p fast
 p oracle --no-session "Review this design"
-p solo --continue # use the active profile defaults without subagent tools
+p solo --continue             # no subagent tools
 ```
 
-Pi combines `pi/profiles/common.json` with the selected generated overlay. `codex` uses ChatGPT subscription models; `or` requires `OPENROUTER_API_KEY`. In `manifest.yaml`, each `[alias, thinking]` pair identifies a Pi model from `models` and its thinking level. `parent` is the interactive Pi model; `defaultSubagent` is the fallback for subagents without an override; `researcher` configures the built-in research subagent; `agents` assigns each named subagent its model and thinking level. `title` and `progress` configure the separate Pi title and progress extensions. `enabled` controls interactive model cycling, while `modelScope` restricts subagent model choices. Agent instructions come from `ai/agents/<role>.md`; `install-agents` generates definitions under `~/.pi/agent/agents/`, `~/.claude/agents/`, and `~/.codex/agents/`. Pi agents take their models from the active profile's `agents` mapping. Standalone Claude Code and Codex CLI agents take theirs from the `claude` and `codex` profiles' `agents` mappings, with the provider prefix removed, so each role's model is defined once per provider.
+In `manifest.yaml`, models are `[alias, thinking]`:
 
-## Pi extensions and MCP
+```yaml
+profiles:
+  codex:
+    parent: [codex-astra, medium]        # interactive model
+    enabled: [codex-luna, codex-sol]     # model cycling
+    defaultSubagent: [codex-sol, high]
+    agents:
+      reviewer: [codex-astra, high]      # standalone Codex/Claude agents use these too
+```
 
-Package sources live in `pi/profiles/common.json` and are unpinned: npm packages follow the latest release, while Git packages follow their default branch. After changing sources, rerender the active profile with `pi-profile use <name>`. Run `make update-pi` to update installed packages and refresh model catalogs.
+## Pi packages and MCP
 
-`pi-subagents` tracks npm's `latest` tag; `pi-extensions` tracks its upstream Git repository. The subagents extension is enabled; packaged skills remain disabled. Restart Pi after updating and after owned background work has finished; creating a fresh session alone does not reload cached extensions.
+```sh
+pi-profile use <name>         # after editing pi/profiles/common.json
+make update-pi                # update packages + model catalogs, then restart Pi
+pi mcp list                   # then /reload
+```
 
-Pi uses its built-in MCP support, not `pi-mcp-adapter`. Configure personal servers in `~/.pi/agent/mcp.json` and project servers in `.pi/mcp.json`; the built-in loader does not discover shared `.mcp.json` files. For a new project, copy the desired entries from `project/.mcp.json` into `.pi/mcp.json`. Run `pi mcp list` to validate connections and `/reload` after changes. MCP tools use built-in `codemode` / `tool_search` rather than the adapter's `mcp` / `mcpScript` tools.
+MCP servers: `~/.pi/agent/mcp.json` (personal, unmanaged) or `.pi/mcp.json` (project, git-ignored). Shared `.mcp.json` is not read; copy entries from `project/.mcp.json`.
 
-For host-local servers shared by all Pi sessions, edit `~/.pi/agent/mcp.json` directly. This is an unmanaged local file, not a dotfiles symlink; `make ai` leaves it alone. The global Git ignore excludes `.pi/mcp.json` for untracked project-local overrides.
+## Directory access
 
-`pi-lsp-adapter` is retired: its fixed-delay diagnostics can report a clean file before analysis finishes or retain an error after a fix. Rerender the active profile and run `pi remove npm:pi-lsp-adapter@0.1.3` to remove an existing installation. `make ai` removes only the old dotfiles-owned `~/.pi/agent/lsp.json` link; custom configuration and runtime data are preserved. Repository lint, typecheck, and test commands remain authoritative.
-
-### Pi directory access
-
-The local `dcg-guard` extension restricts Bash `cd`, `rg`, and `grep` paths to the session root by default. Shell redirections to `/dev/null` (such as `2>/dev/null`) need no access grant; using it as a search path still requires one. It is a command guard, **not a filesystem sandbox**: other commands, file tools, and extensions are not confined by these path checks.
-
-Run `/reload` once after updating the extension. Thereafter, access changes take effect immediately:
+`dcg-guard` limits Bash `cd`/`rg`/`grep` to the session root. It is a command guard, **not a sandbox**.
 
 ```text
-/access allow /absolute/path/to/project
-/access allow --permanent "/absolute/path with spaces"
+/access allow /abs/path
+/access allow --permanent "/abs/path with spaces"   # ~/.pi/agent/access.json
 /access list
-/access revoke /absolute/path/to/project
-/access revoke --permanent "/absolute/path with spaces"
+/access revoke /abs/path
 ```
 
-Tab completion suggests subcommands, `--permanent`, and directory paths (including relative paths and `~/`). For `revoke`, it suggests saved grants in the selected scope, including missing directories. Paths containing spaces or quotes are quoted automatically.
+Blocked commands prompt **Deny / Allow once / Allow for this session**. Session grants survive `/reload` and resume, not forks.
 
-Grants require confirmation. Blocked commands targeting an existing directory or file offer **Deny**, **Allow once** (that tool call), or **Allow for this session**. File requests grant their containing directory. Noninteractive runs cannot approve new access; use an existing grant or start Pi in the target directory. Dynamic shell paths and malformed commands remain blocked.
+## Agents
 
-Session grants are saved as local Pi session entries: they survive `/reload`, resume, and context compaction, but do not transfer to another session or fork. They are session-wide, so `/tree` does not undo a revocation. With `--no-session`, they last only for that process. Custom session storage and exported transcripts may contain these paths; do not commit or share them inadvertently.
-
-Permanent grants live in **`~/.pi/agent/access.json`**, created locally with mode `0600`, never linked or generated by dotfiles installation. Do not symlink this file into the repository. All sessions reread it on each guarded Bash call. A revoke removes the exact grant in the selected scope; a broader parent grant or a grant in the other scope still applies. `/access list` shows both scopes. Malformed storage blocks Bash until repaired. A leftover `access.json.pending` after a crash blocks permanent updates; inspect it and move it aside only after confirming no Pi process is writing it.
-
-Approvals cover the canonical directory and its descendants, not symlink escapes. They relax only these path checks: local destructive-command policy and `dcg` checks still run. No agent-callable approval tool is registered. This is an interactive convenience policy, not protection against arbitrary code modifying local session/configuration files.
-
-## Shared agents
-
-The roster covers discovery (`explore`), implementation (`executor`), verification (`verifier`), review (`reviewer`), judgment (`oracle`), PR monitoring (`pr-watcher`), and explicit maintainability audits (`thermo-nuclear-code-quality-review`). Pi also keeps the builtin `researcher` for sourced web research.
-
-Pi disables the overlapping builtin `scout`, `worker`, and `delegate` roles. It also disables the optional `claude-code`, `codex-exec`, and `cursor-agent` read-only/writer pairs: those are isolated one-shot adapters to separately installed CLIs, not native Pi roles, and duplicate this roster without supporting native model routing. They can be re-enabled in `pi/profiles/common.json` if a separate CLI subscription or runtime is intentionally needed.
-
-Pi subagent assignments are listed explicitly in each profile's `agents` mapping; roles can share a model with different thinking levels.
-
-Delegation policy lives in [`AGENTS.md`](AGENTS.md); role instructions and harness routing live in `agents/<role>.md`.
+`explore`, `executor`, `verifier`, `reviewer`, `oracle`, `pr-watcher`, `thermo-nuclear-code-quality-review`, plus Pi's `researcher`.
 
 ## Named launches
 
-`agent NAME` (`ai/.bin/agent`, linked by `make ai`) launches Pi by default, or Claude Code / Codex with `-k/--kind`. For arbitrary scripts and commands, use the sibling [`pane`](../README.md#herdr-command-panes) launcher instead. It is stateless: a name is a label, not automatic resume or a durable identity registry. Native arguments go after `--`; the wrapper does not replace the native CLIs. `agent --help` lists every flag with examples.
-
 ```sh
-agent alice
-agent bob -k claude
-agent alice -- --session-id alice # explicitly create/reopen this Pi conversation
-agent carol -k codex -- resume
+agent alice                           # Pi in this terminal
+agent bob -k claude                   # or -k codex
+agent alice -- --session-id alice     # native args after --
+agent alice -s down                   # Herdr split
+agent "Auth review" -t                # new tab
+agent alice -w maintenance -t review  # workspace by label + cwd
+agent alice -w maintenance -t review --reuse-pane   # replace alice
+agent alice -t -p 'Review this diff' --close-on-done
+agent alice -t -p 'Review this diff' --wait          # until process exits
+agent alice -t -e APPRISE_URLS -n     # dry-run JSON plan
+agent --list | --status alice | --close alice
 ```
 
-Pi and Claude receive `--name`. All children receive `AGENT_NAME`; Codex has no native `--name`, so it gets only the environment and the Herdr live name. The environment variable is metadata, not an instruction to the model or an authorization mechanism. With no placement flags, the helper replaces itself with the native CLI in the current terminal and preserves its exit status—even inside Herdr. It does not rename that existing Herdr pane's agent.
+Use `-p`, not a native prompt arg, with Herdr placement. `--wait` returns 0 on exit; it is not a success code. Ctrl-C detaches; SIGTERM under `--wait` closes the pane. For non-agent commands use `pane`. See `agent --help`.
 
-### Herdr placement
-
-```sh
-agent alice -s                    # split the calling pane to the right
-agent alice -s down -T "Dependency PRs" --startup-timeout 60
-agent "Auth review" -t            # fresh tab titled "Auth review" in the caller's workspace
-agent alice -w maintenance -t review
-
-# An explicit session works outside Herdr too, including from a scheduler.
-agent reviewer --herdr-session default -w maintenance -t review -C ~/dev/me/maintenance
-```
-
-`-w/--workspace` is a **label**, matched together with canonical `-C/--cwd` (default: current directory) against workspace panes. One match always reuses that workspace; no match gets a new workspace with its initial tab renamed. Among multiple matches, the caller’s workspace wins if it is one of them and the session is inherited; otherwise ambiguity fails. An explicit `--herdr-session` never uses the caller’s workspace ID to break a tie. Tabs and panes are fresh by default. `-t/--tab` takes an optional title that defaults to NAME, as does the tab when only `-w` is given. `-s/--split` takes an optional direction (`right` by default), targets only the calling pane, and cannot be combined with workspace, tab, or session selection. Put NAME before a bare `-s` or `-t`, since they would otherwise consume it as their value.
-
-Placement uses the inherited Herdr session unless `--herdr-session` is explicit. An explicit session requires `-w`, so it never falls back to another session's focused workspace. Focus is preserved unless `-f/--focus` is supplied. The Herdr live name is derived from NAME (`Auth review` → `auth-review`) and gets a numeric suffix (`auth-review-2`) if taken, so repeated scheduled jobs need no unique name. `--herdr-name` sets an exact live name matching `[a-z][a-z0-9_-]{0,31}` and fails on collision instead. Neither path interrupts an existing agent unless `--reuse-pane` is requested.
-
-Reuse is opt-in:
+Scheduled jobs (Noon):
 
 ```sh
-agent alice -w maintenance -t review --reuse-tab  # add a split to the matching tab
-agent alice -w maintenance -t review --reuse-pane # replace alice there; implies --reuse-tab
-agent alice -t --wait --prompt 'Review this diff' # wait until the agent process exits
-agent alice -t --close-on-done -p 'Review this diff'      # close when the turn is done
-agent --status alice                             # current live status as Herdr JSON
-agent --list                                     # live agents and locations as Herdr JSON
-agent --list --herdr-session default              # inspect an explicit session
-agent --close alice                              # terminate alice's pane
-agent --close alice --herdr-session default      # also works outside Herdr
+agent-job launch review '/skill:pr-review repo:{repo} author:{env:AUTHORS}' \
+  "gh pr list --json number,headRefOid --jq 'if length == 0 then empty else tojson end'"
+agent-job launch --daily babysit '/skill:pr-babysit-loop'
+agent-job close review
 ```
 
-`--reuse-tab` matches the exact tab title within the selected workspace; no match creates a tab, and multiple matches select the first in Herdr’s returned tab order. `--reuse-pane` matches the exact live name (`--herdr-name` or the derived NAME, without a numeric suffix) within that tab. If absent, it adds a pane; if that name exists elsewhere, it fails rather than replacing an unrelated agent. Both flags require `-w` or `-t` and cannot be combined with `-s`.
-
-Herdr has no in-place process restart: replacement creates a fresh adjacent pane with the requested cwd/environment, closes the old pane, then starts the new agent under the same live name. This terminates the old pane's processes and loses its scrollback; the pane ID changes. A failed start does not restore the old agent. Other panes are preserved.
-
-`--status NAME` returns Herdr’s current agent record for the exact live name, including `agent_status` (`idle`, `working`, `blocked`, `done`, or `unknown`). Missing names fail. It accepts `--herdr-session` and `--dry-run`, but no launch options.
-
-`--wait` keeps the launcher running after printing the start JSON until the original agent **process exits**, for any reason, including termination by a user or another agent. It does not close anything or react to `idle`, `working`, `done`, `blocked`, focus, or session changes. A finished turn or a suspended process is not an exit. It follows foreground process ancestry to the shell's agent child, validates the executable and Herdr identity, then pins its PID and start time on the local host. A later agent or reused PID cannot extend the wait. If the process cannot be identified safely, waiting fails rather than following the pane's shell.
-
-On observed exit, the launcher returns 0 and prints `pane_id`, `name`, `exited: true`, and `exit_code: null`. Herdr does not expose the agent's exit code: 0 means **exit observed**, not task success. This lets schedulers such as Noon track lifetime rather than treating submission or turn completion as exit. Without Herdr placement, the launcher already replaces itself with the agent process: `--wait` is accepted but changes nothing, and the caller receives the actual process exit status.
-
-`--close-on-done` is a separate, opt-in closing policy requiring Herdr placement. It keeps the launcher running while watching for `working` → `done`, then closes the pane and prints the close response; a pane focused at that point is kept and reported with reason `focused`. It pins pane, terminal, name, kind, and agent-session identity and rechecks identity, completion status, and state-change sequence before closing. Initial idle/done and later idle states never trigger a close. Blocked/unknown states, missing identity/state metadata, changed identity, or Herdr errors cancel automatic closing and retain the pane. Without `--wait`, this returns a nonzero exit; with `--wait`, it warns, disables automatic closing, and continues waiting for the pinned process to exit. Combined with `--wait`, an earlier process exit also releases the caller; after automatic closing it waits for process exit and prints the exit observation.
-
-Ctrl-C exits 130 and only detaches: **the agent keeps running** in the retained pane. With `--wait`, SIGTERM (a scheduler's cancel, timeout, or shutdown) stops the work being waited on: the launcher rechecks pane, terminal, name, kind, and agent-session identity, closes the pane, prints the close response, and exits 143. Further SIGTERMs are ignored while closing. If identity changed or Herdr fails, it retains the pane, warns, and still exits 143. Without `--wait`, SIGTERM exits 143 and retains the pane; inspect or explicitly close it before retrying a scheduled job.
-
-Automatic closing is best-effort turn completion detection—not proof the requested task succeeded or an agent process exit code. It polls every half-second, so very short activity can be missed; a focused agent may report idle rather than done. In either case it keeps waiting until an observed working → done transition, or cancellation. It cannot detect questions incorrectly reported as done, and Herdr provides no atomic conditional-close operation: do not reuse or manipulate the watched pane concurrently. Closing discards the result/scrollback and terminates the agent. The watcher is not detached or durable across terminal/session exits.
-
-`--list` returns Herdr’s live agent list, including names and pane/tab/workspace IDs. It accepts `--herdr-session` without `-w` and `--dry-run`, but no NAME or launch options.
-
-`--close NAME` requires the exact live name, not a display name or pane ID, and closes only its hosting pane (including all processes there). An absent name succeeds without closing anything and returns `{"result":{"name":"NAME","closed":false,"reason":"not_found"}}`. Ambiguous names and Herdr lookup/close failures still fail. Closing the last pane can also remove its tab/workspace. Close accepts `--herdr-session` without `-w` and supports `--dry-run` without contacting Herdr.
-
-`-p/--prompt TEXT` submits TEXT with `herdr agent prompt` once the agent is ready, and waits for the turn to start, so `--close-on-done` cannot miss a brief turn. Use it instead of a native prompt argument with Herdr placement: `herdr agent start` succeeds only when the agent is ready for input, which an agent already working on a native prompt never reports, so the launch times out and fails.
-
-`-T/--pane-title TEXT` explicitly labels only the newly created pane; your pane-title plugin respects that label. Omit it to retain dynamic titles. `--startup-timeout SECONDS` controls Herdr's wait for interactive readiness (1–300; default 30), not the duration of the agent's work. Both require Herdr placement.
-
-Use `-n/--dry-run` to print a JSON plan containing the native argv, canonical cwd, environment overrides, and optional Herdr placement:
-
-```sh
-agent reviewer --herdr-session default -w maintenance -t review -T "Dependency PRs" -e APPRISE_URLS -n
-```
-
-Dry-run validates local arguments and environment references but never starts a process or contacts Herdr. Workspace resolution, live-name collision checks, and readiness checks occur only on a real launch; the plan is not a reservation or a guarantee that launch will succeed. All environment override values are redacted. Native argv and titles are shown verbatim, so do not put secrets in those fields when sharing the output. Without Herdr placement, dry-run previews the local CLI invocation.
-
-Use repeatable `-e/--env KEY` to copy exported variables into the new terminal, or `--env KEY=VALUE` to set them. Do not assume a long-running Herdr server has your scheduler's environment. `AGENT_NAME` and `HERDR_*` overrides are rejected. Values sent through Herdr's CLI may be visible in process arguments, so prefer credential files or agent-native secret lookup for stronger isolation.
-
-For a scheduled job, use `agent-job` from the checkout's Noon jobs:
-
-```sh
-agent-job launch review '/skill:pr-review repo:{repo} author:{env:AUTHORS}' "gh pr list --json number,headRefOid --jq 'if length == 0 then empty else tojson end'"
-agent-job launch --daily babysit '/skill:pr-babysit-loop'  # one long-lived agent per day
-agent-job close review                                    # close a leftover done or idle pane
-```
-
-By default each launch runs one pass in the checkout's workspace and returns once its pane closes on `done`. The optional gate prints a fingerprint of pending work: empty output is a noop (exit 3), a nonzero exit fails the run, and a fingerprint matching the one taken before the last completed pass is a noop. A working or blocked pass is never replaced; a blocked pass fails its run and keeps its pane for you, and the next launch closes it once it is done or idle. A focused agent pane is never closed or replaced: launch and close are noops while you are on it, and a pass that finishes while focused keeps its pane for you to close. Fingerprints live in `~/.local/state/agent-job/`. `{env:NAME}` expands to a nonempty variable such as a Noon job `env` value, `{repo}` to the checkout's GitHub `OWNER/NAME`, and `{today}`, `{yesterday}`, and `{today-N}` to local dates, so one Noon file can serve several checkouts. The gate also reads job variables directly; the agent's prompt sees them only through `{env:NAME}`.
-
-Herdr launches print the successful `agent start` JSON, including the resolved live name, to stdout. Failed starts return nonzero and leave the created pane in place, reporting its ID when available; inspect it before retrying. A timeout does not prove nothing started. The helper never retries or resubmits work; it closes panes only for explicit replacement or `--close`.
+The gate prints a work fingerprint; empty or unchanged output skips the run. Focused panes are never closed.
 
 ## Herdr
 
-Herdr keeps terminal and agent processes alive across disconnects. `make ai` installs integrations for locally available agents; manage them with `herdr integration status`, `install`, and `uninstall`.
+```sh
+herdr integration status      # make ai installs available integrations
+```

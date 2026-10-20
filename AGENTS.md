@@ -61,3 +61,4 @@ task check   # runs lint checks
 - Don't run `git push` without explicit instruction
 - Don't open PRs without explicit instruction
 - Don't edit files outside the current task scope
+- Never update the project root `README.md`; put documentation in subdirectory READMEs
