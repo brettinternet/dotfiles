@@ -103,20 +103,6 @@ return {
     init = function() vim.g.loaded_netrwPlugin = 1 end,
   },
 
-  {
-    "m4xshen/hardtime.nvim",
-    lazy = false,
-    dependencies = { "MunifTanjim/nui.nvim" },
-    opts = {
-      enabled = true,
-      hint = true,
-      notification = true,
-      timeout = 5000,
-      restriction_mode = "hint",
-      disable_mouse = false,
-    },
-  },
-
   -- AstroNvim v6 uses snacks.nvim for the dashboard, picker and notifier.
   {
     "folke/snacks.nvim",
