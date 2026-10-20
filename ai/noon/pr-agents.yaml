@@ -7,7 +7,7 @@
 # reviews everyone but me. REVIEW_SEARCH defaults to draft:false.
 version: 1
 timezone: Local
-vars_file: .git/pr-agents.env
+vars_file: .git/noon/pr-agents.env
 
 jobs:
   fetch:
@@ -47,7 +47,7 @@ jobs:
   review:
     description: One PR review pass whenever matching PRs by REVIEW_AUTHORS change
     schedule: "${REVIEW_SCHEDULE:-*/15 6-14 * * 1-4}"
-    jitter: "${REVIEW_JITTER}"
+    jitter: "${REVIEW_JITTER:-0s}"
     .env_file: .git/noon/pr-agents.env
     run:
       - agent-job
