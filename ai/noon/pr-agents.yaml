@@ -20,8 +20,8 @@ jobs:
   babysit:
     description: One PR babysitter pass whenever my non-draft PRs change
     schedule: "${BABYSIT_SCHEDULE:-*/15 7-14 * * 1-4}"
-    jitter: "${BABYSIT_JITTER:-0s}"
-    .env_file: .git/noon/pr-agents.env
+    jitter: "${BABYSIT_JITTER:-1s}"
+    env_file: .git/noon/pr-agents.env
     run:
       - agent-job
       - launch
@@ -48,8 +48,8 @@ jobs:
   review:
     description: One PR review pass whenever matching PRs by REVIEW_AUTHORS change
     schedule: "${REVIEW_SCHEDULE:-*/15 6-14 * * 1-4}"
-    jitter: "${REVIEW_JITTER:-0s}"
-    .env_file: .git/noon/pr-agents.env
+    jitter: "${REVIEW_JITTER:-1s}"
+    env_file: .git/noon/pr-agents.env
     run:
       - agent-job
       - launch
