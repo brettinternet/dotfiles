@@ -46,7 +46,7 @@ jobs:
       - launch
       - review
       - >-
-        /skill:pr-review repo:{repo} archived:false draft:false author:{env:REVIEW_AUTHORS} {env?:REVIEW_SEARCH}
+        /skill:pr-review repo:{repo} archived:false draft:false updated:>={yesterday} author:{env:REVIEW_AUTHORS} {env?:REVIEW_SEARCH}
         -- After each completed PR review (APPROVE, COMMENT, or WAIT), append its canonical GitHub PR URL
         as one line to noon/reviews/YYYY-MM-DD.log under this checkout's absolute Git common directory
         (resolve with git rev-parse --path-format=absolute --git-common-dir before changing directories),
@@ -54,7 +54,7 @@ jobs:
         COMMENT only after GitHub confirms the review was posted; do not log skipped or failed reviews.
         Keep previous daily logs. If logging fails, report it without reposting the GitHub review.
       - >-
-        set -ef; base="draft:false ${REVIEW_SEARCH:-}"; if [ "$REVIEW_AUTHORS" = "*" ]; then searches=("$base -author:@me");
+        set -ef; base="draft:false updated:>={yesterday} ${REVIEW_SEARCH:-}"; if [ "$REVIEW_AUTHORS" = "*" ]; then searches=("$base -author:@me");
         else searches=(); for author in ${REVIEW_AUTHORS//,/ }; do searches+=("$base author:$author"); done; fi;
         for search in "${searches[@]}"; do gh pr list --state open --limit 1000 --search "$search"
         --json number,headRefOid,updatedAt --jq '.[] | [.number, .headRefOid, .updatedAt] | tojson'; done
