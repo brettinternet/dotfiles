@@ -32,16 +32,8 @@ jobs:
         --jq 'if length == 0 then empty else map([.number, .headRefOid, .updatedAt, .mergeable, .reviewDecision,
         ([.statusCheckRollup[] | (.conclusion | select(. != "")) // .status // .state] | unique)]) | tojson end'
     noop_exit_code: 3
-    timeout: 2h
+    timeout: "${AGENT_JOB_TIMEOUT:-3h}"
     on_failure: [noon-notify, It may be waiting on you.]
-    missed: skip
-
-  babysit-close:
-    description: Close a leftover PR babysitter pane once it's done or idle
-    schedule: "0 15-22 * * 1-4"
-    run: [agent-job, close, babysit]
-    noop_exit_code: 3
-    timeout: 1m
     missed: skip
 
   review:
@@ -67,14 +59,6 @@ jobs:
         for search in "${searches[@]}"; do gh pr list --state open --limit 1000 --search "$search"
         --json number,headRefOid,updatedAt --jq '.[] | [.number, .headRefOid, .updatedAt] | tojson'; done
     noop_exit_code: 3
-    timeout: 2h
+    timeout: "${AGENT_JOB_TIMEOUT:-3h}"
     on_failure: [noon-notify, It may be waiting on you.]
-    missed: skip
-
-  review-close:
-    description: Close a leftover PR review pane once it's done or idle
-    schedule: "0 15-22 * * 1-4"
-    run: [agent-job, close, review]
-    noop_exit_code: 3
-    timeout: 1m
     missed: skip

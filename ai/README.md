@@ -85,7 +85,7 @@ agent alice -s down                   # Herdr split
 agent "Auth review" -t                # new tab
 agent alice -w maintenance -t review  # workspace by label + cwd
 agent alice -w maintenance -t review --reuse-pane   # replace alice
-agent alice -t -p 'Review this diff' --close-on-done
+agent alice -t -p 'Review this diff' --close-on-done --retain-for 30m
 agent alice -t -p 'Review this diff' --wait          # until process exits
 agent alice -t -e APPRISE_URLS -n     # dry-run JSON plan
 agent --list | --status alice | --close alice
@@ -103,6 +103,13 @@ agent-job close review
 ```
 
 The gate prints a work fingerprint; empty or unchanged output skips the run. Focused panes are never closed.
+One-pass jobs retain completed panes for `AGENT_RETENTION` (default `30m`), overridden by
+`BABYSIT_RETENTION` or `REVIEW_RETENTION`. Configure these in each repo's `.git/noon/pr-agents.env`;
+`ai/noon/pr-agents.env` is the template. Durations accept integer `s`, `m`, or `h`; `0s` closes immediately.
+Manual closure after observed completion succeeds. New work resets retention, and identity changes or
+blocked/unknown states cancel auto-close. At expiry, a focused pane is left open for manual closure.
+The Noon job stays running through retention; `AGENT_JOB_TIMEOUT` (default `3h`) must cover work plus
+retention. Daily jobs still wait for process exit and ignore retention.
 
 The Noon PR review job asks the agent to append each completed review's GitHub PR URL to
 `.git/noon/reviews/YYYY-MM-DD.log` (local completion date), one link per line. The path is resolved

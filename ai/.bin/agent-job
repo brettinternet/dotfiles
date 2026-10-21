@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Run a named Herdr agent as a scheduled job in this checkout's workspace.
 #   agent-job launch NAME PROMPT [GATE]          run one pass; returns once the agent
-#                                                finishes its turn and its pane closes
+#                                                finishes its turn and retention expires
 #   agent-job launch --daily NAME PROMPT [GATE]  start once per day; blocks until the agent exits
 #   agent-job close NAME                         close the agent once it's done or idle
 # GATE is a shell command printing a fingerprint of the pending work: empty output means
@@ -21,6 +21,8 @@
 # AGENT_KIND selects the agent CLI (pi, claude, or codex; default pi). A leading /skill:NAME in
 # PROMPT becomes /NAME for claude and $NAME for codex. <NAME>_AGENT_ARGS (e.g. REVIEW_AGENT_ARGS), else
 # AGENT_ARGS, adds whitespace-split native CLI arguments, e.g. '--model opus --effort medium'.
+# AGENT_RETENTION (default 30m), overridden by <NAME>_RETENTION, keeps completed panes open
+# before auto-close. Use integer s/m/h, including 0s for immediate closure. Daily jobs ignore it.
 # Example: agent-job launch review '/skill:pr-review repo:{repo} author:{env:AUTHORS} updated:>={yesterday}'
 # Exit 3 = nothing to do (noon records it as noop). macOS only (BSD date).
 set -euo pipefail
@@ -121,7 +123,9 @@ case $mode in
     fi
     [[ $status == absent ]] || "$HOME/.bin/agent" --close "$live" --herdr-session default
     # Fails, keeping the pane, when the agent blocks on the user.
-    "${agent[@]}" --close-on-done --prompt "$prompt" -- "${native[@]}"
+    retention_var=$(printf %s "$name" | tr '[:lower:]-' '[:upper:]_')_RETENTION
+    "${agent[@]}" --close-on-done --retain-for "${!retention_var:-${AGENT_RETENTION:-30m}}" \
+      --prompt "$prompt" -- "${native[@]}"
     mkdir -p "${state%/*}"
     printf '%s' "$fingerprint" >"$state"
     ;;

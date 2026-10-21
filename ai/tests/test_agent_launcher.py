@@ -75,7 +75,9 @@ elif command == "agent start":
 elif command == "agent prompt":
     result = {"agent": {**state.get("started", {}), "pane_id": args[2], "agent_status": "working"}}
 elif command == "agent get":
-    snapshot = state["snapshots"].pop(0)
+    snapshot = state["snapshots"][0]
+    if len(state["snapshots"]) > 1 or not state.get("repeat_last"):
+        state["snapshots"].pop(0)
     pathlib.Path(os.environ["STATE"]).write_text(json.dumps(state))
     if snapshot.get("error_code"):
         print(json.dumps({"error": {"code": snapshot["error_code"]}}), file=sys.stderr)
@@ -325,6 +327,42 @@ class AgentLauncherTests(unittest.TestCase):
                     if error == "agent_not_found":
                         self.assertEqual("already_closed", json.loads(result.stdout.splitlines()[-1])["result"]["reason"])
                         self.assertNotIn("retained Herdr pane", result.stderr)
+
+    def test_retention_delays_close_and_respects_manual_close_and_new_activity(self) -> None:
+        identity = self.watch_identity()
+        done = {**identity, "agent_status": "done", "state_change_seq": 3}
+        working = {**identity, "agent_status": "working", "state_change_seq": 4}
+        cases = [
+            ("elapsed", [done], 0, True),
+            ("manual", [done, done, {"error_code": "agent_not_found"}], 0, False),
+            ("resumed", [done, done, working, {**done, "state_change_seq": 5}], 0, True),
+            ("focused", [done, done, {**done, "focused": True}], 0, False),
+            ("replaced", [done, done, {**done, "terminal_id": "replacement"}], 1, False),
+            ("blocked", [done, done, {**done, "agent_status": "blocked"}], 1, False),
+        ]
+        for label, snapshots, code, closed in cases:
+            with self.subTest(label=label):
+                self.calls.write_text("")
+                self.state.write_text(json.dumps({"started": identity, "snapshots": snapshots, "repeat_last": True}))
+                start = time.monotonic()
+                result = self.run_agent("alice", "-t", "--close-on-done", "--retain-for", "1s",
+                                        "--prompt", "Review it", code=code)
+                elapsed = time.monotonic() - start
+                self.assertEqual(closed, any(call[:2] == ["pane", "close"] for call in self.commands()))
+                if closed or label == "focused":
+                    self.assertGreaterEqual(elapsed, 2 if label == "resumed" else 1)
+                if label == "manual":
+                    self.assertEqual("already_closed", json.loads(result.stdout.splitlines()[-1])["result"]["reason"])
+
+    def test_retention_duration_validation(self) -> None:
+        self.watch_identity()
+        for duration, seconds in (("0s", 0), ("30m", 1800), ("2h", 7200)):
+            result = self.run_agent("alice", "-t", "--close-on-done", "--retain-for", duration, "--dry-run")
+            self.assertEqual(seconds, json.loads(result.stdout)["herdr"]["retention_seconds"])
+        for duration in ("-1s", "forever", "30", "1.5m"):
+            self.run_agent("alice", "-t", "--close-on-done", f"--retain-for={duration}", "--dry-run", code=2)
+        self.run_agent("alice", "-t", "--retain-for", "30m", "--dry-run", code=2)
+        self.assertEqual([], self.commands())
 
     def test_close_on_done_keeps_a_focused_pane(self) -> None:
         # Scheduled passes must not yank a pane out from under the user reading it.

@@ -110,6 +110,8 @@ def arguments() -> tuple[argparse.Namespace, list[str]]:
     herdr.add_argument("--close-on-done", action="store_true",
                        help="stay running; close after observing working then done/idle unless the pane is focused; "
                             "cancel on blocked/unknown")
+    herdr.add_argument("--retain-for", metavar="DURATION",
+                       help="retain a completed pane before auto-close, e.g. 30m; integer s/m/h (default: 0s)")
     herdr.add_argument("-p", "--prompt", metavar="TEXT",
                        help="submit TEXT once the agent is ready; Herdr start never sees a native prompt's agent "
                             "become ready, so use this for unattended launches")
@@ -143,6 +145,15 @@ def arguments() -> tuple[argparse.Namespace, list[str]]:
             parser.error("Herdr session must not be blank")
         return args, native
 
+    if args.retain_for is not None:
+        if not args.close_on_done:
+            parser.error("--retain-for requires --close-on-done")
+        duration = re.fullmatch(r"([0-9]+)([smh])", args.retain_for)
+        if duration is None:
+            parser.error("--retain-for must be a nonnegative integer followed by s, m, or h")
+        args.retain_for = int(duration[1]) * {"s": 1, "m": 60, "h": 3600}[duration[2]]
+    else:
+        args.retain_for = 0
     args.reuse_tab = args.reuse_tab or args.reuse_pane
     if args.reuse_tab and (args.split or (args.workspace is None and args.tab is None)):
         parser.error("reuse requires --workspace or --tab, and cannot be combined with --split")
@@ -239,6 +250,7 @@ def preview(args: argparse.Namespace, native: list[str], variables: dict[str, st
             "startup_timeout_seconds": args.startup_timeout or DEFAULT_STARTUP_TIMEOUT,
             "wait": args.wait,
             "close_on_done": args.close_on_done,
+            "retention_seconds": args.retain_for,
             "prompt": args.prompt,
         }
     print(json.dumps({
@@ -279,7 +291,7 @@ def process_identity(pid: int) -> tuple[int, str] | None:
     return None if fields[1].startswith("Z") else (int(parent), birth)
 
 
-def watch_agent(h, pane: str, name: str, started: dict, *, wait: bool, close: bool) -> None:
+def watch_agent(h, pane: str, name: str, started: dict, *, wait: bool, close: bool, retention: int = 0) -> None:
     """Process waiting and optional, conservative turn cleanup are separate policies."""
     pid = birth = None
     if wait:
@@ -320,6 +332,7 @@ def watch_agent(h, pane: str, name: str, started: dict, *, wait: bool, close: bo
         close = False
         print("agent: auto-close cancelled (incomplete identity); still waiting for process exit", file=sys.stderr)
     working = False
+    deadline = None
     current = started
     while True:
         if wait:
@@ -331,7 +344,7 @@ def watch_agent(h, pane: str, name: str, started: dict, *, wait: bool, close: bo
         if not close:
             time.sleep(0.5)
             continue
-        completed = False
+        completed = deadline is not None
         try:
             if current is None:
                 current = h("agent", "get", pane)["result"]["agent"]
@@ -344,6 +357,8 @@ def watch_agent(h, pane: str, name: str, started: dict, *, wait: bool, close: bo
                 raise ValueError("Agent is blocked or its state is unknown; wait cancelled")
             if status == "working":
                 working = True
+                deadline = None
+                completed = False
             elif status in ("done", "idle") and working:
                 completed = True
                 # Re-read before accepting completion or closing. Pane IDs are never reused.
@@ -352,6 +367,12 @@ def watch_agent(h, pane: str, name: str, started: dict, *, wait: bool, close: bo
                         or checked.get("agent_status") != status
                         or checked.get("state_change_seq") != current.get("state_change_seq")):
                     raise ValueError("Agent changed before completion; wait cancelled")
+                if deadline is None:
+                    deadline = time.monotonic() + retention
+                if time.monotonic() < deadline:
+                    time.sleep(0.5)
+                    current = None
+                    continue
                 # The user is looking at it; leave closing to them.
                 print(json.dumps({"result": {"pane_id": pane, "name": name, "closed": False, "reason": "focused"}}
                                  if checked.get("focused") else h("pane", "close", pane)), flush=True)
@@ -422,7 +443,8 @@ def launch_herdr(args: argparse.Namespace, native: list[str], variables: dict[st
                         "--until", "working", "--until", "blocked")["result"]["agent"]
         if args.wait or args.close_on_done:
             try:
-                watch_agent(h, pane, name, started, wait=args.wait, close=args.close_on_done)
+                watch_agent(h, pane, name, started, wait=args.wait, close=args.close_on_done,
+                            retention=args.retain_for)
             except SystemExit as stop:
                 # A supervisor's SIGTERM stops the work it waits on; Ctrl-C only detaches.
                 if not (args.wait and stop.code == 143 and stop_agent(h, pane, result["result"]["agent"])):
