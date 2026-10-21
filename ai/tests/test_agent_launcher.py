@@ -77,6 +77,9 @@ elif command == "agent prompt":
 elif command == "agent get":
     snapshot = state["snapshots"].pop(0)
     pathlib.Path(os.environ["STATE"]).write_text(json.dumps(state))
+    if snapshot.get("error_code"):
+        print(json.dumps({"error": {"code": snapshot["error_code"]}}), file=sys.stderr)
+        sys.exit(1)
     if snapshot.get("exit_agent"):
         import signal
         os.kill(snapshot["exit_agent"], signal.SIGTERM)
@@ -271,7 +274,7 @@ class AgentLauncherTests(unittest.TestCase):
 
     def test_close_on_done_requires_work_and_rechecks_completion(self) -> None:
         identity = self.watch_identity()
-        statuses = ["idle", "done", "working", "idle", "done", "done"]
+        statuses = ["idle", "done", "working", "working", "done", "done"]
         snapshots = [{**identity, "agent_status": status, "state_change_seq": min(index, 4) + 1}
                      for index, status in enumerate(statuses)]
         for options in (("--close-on-done",), ("--close-on-done", "--wait")):
@@ -306,6 +309,23 @@ class AgentLauncherTests(unittest.TestCase):
         self.assertEqual(["w9:p1", "Review it"], prompt[2:4])
         self.assertEqual(["pane", "close", "w9:p1"], calls[-1][:3])
 
+    def test_close_on_done_accepts_idle_and_manual_close_after_completion(self) -> None:
+        identity = self.watch_identity()
+        for status in ("idle", "done"):
+            settled = {**identity, "agent_status": status, "state_change_seq": 3}
+            for error in (None, "agent_not_found", "connection_failed"):
+                with self.subTest(status=status, error=error):
+                    self.calls.write_text("")
+                    self.state.write_text(json.dumps({"started": identity, "snapshots": [
+                        settled, {"error_code": error} if error else settled]}))
+                    result = self.run_agent("alice", "-t", "--close-on-done", "--prompt", "Review it",
+                                            code=1 if error == "connection_failed" else 0)
+                    closes = [call for call in self.commands() if call[:2] == ["pane", "close"]]
+                    self.assertEqual(0 if error else 1, len(closes))
+                    if error == "agent_not_found":
+                        self.assertEqual("already_closed", json.loads(result.stdout.splitlines()[-1])["result"]["reason"])
+                        self.assertNotIn("retained Herdr pane", result.stderr)
+
     def test_close_on_done_keeps_a_focused_pane(self) -> None:
         # Scheduled passes must not yank a pane out from under the user reading it.
         identity = self.watch_identity()
@@ -325,6 +345,8 @@ class AgentLauncherTests(unittest.TestCase):
             {"snapshots": [working, done, {**done, "agent_session": {"value": "/session/two"}}]},
             {"snapshots": [working, done, {**working, "state_change_seq": 4}]},
             {"fail": "agent get"},
+            {"snapshots": [working, {"error_code": "agent_not_found"}]},
+            {"snapshots": [identity, {"error_code": "agent_not_found"}]},
             {"started": {}},
             {"started": {**working, "state_change_seq": None}, "snapshots": [done, done]},
             {"started": {**identity, "agent_status": "blocked"}, "snapshots": [working, done, done]},

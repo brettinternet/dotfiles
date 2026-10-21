@@ -18,7 +18,7 @@
 #   agent --list                             # list live agents and their locations
 #   agent --status alice                     # inspect alice's current status as JSON
 #   agent alice -t --close-on-done -- 'Review this diff'
-#                                            # watch working -> done, then close unless focused; Ctrl-C cancels
+#                                            # watch working -> done/idle, then close unless focused; Ctrl-C cancels
 #   agent alice -t --wait -- 'Review this diff'
 #                                            # block until exit; SIGTERM closes it, Ctrl-C detaches
 #   agent alice -t --close-on-done -p 'Review this diff'
@@ -43,7 +43,7 @@ import sys
 import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "base/lib"))
-from herdr_launch import herdr_client, placed_pane
+from herdr_launch import HerdrError, herdr_client, placed_pane
 
 KINDS = ("pi", "claude", "codex")
 LIVE_NAME = re.compile(r"[a-z][a-z0-9_-]{0,31}")
@@ -108,7 +108,7 @@ def arguments() -> tuple[argparse.Namespace, list[str]]:
                         help="wait for the launched agent process to exit, regardless of lifecycle status; "
                              "SIGTERM closes the agent's pane")
     herdr.add_argument("--close-on-done", action="store_true",
-                       help="stay running; close after observing working then done unless the pane is focused; "
+                       help="stay running; close after observing working then done/idle unless the pane is focused; "
                             "cancel on blocked/unknown")
     herdr.add_argument("-p", "--prompt", metavar="TEXT",
                        help="submit TEXT once the agent is ready; Herdr start never sees a native prompt's agent "
@@ -331,6 +331,7 @@ def watch_agent(h, pane: str, name: str, started: dict, *, wait: bool, close: bo
         if not close:
             time.sleep(0.5)
             continue
+        completed = False
         try:
             if current is None:
                 current = h("agent", "get", pane)["result"]["agent"]
@@ -343,11 +344,12 @@ def watch_agent(h, pane: str, name: str, started: dict, *, wait: bool, close: bo
                 raise ValueError("Agent is blocked or its state is unknown; wait cancelled")
             if status == "working":
                 working = True
-            elif status == "done" and working:
+            elif status in ("done", "idle") and working:
+                completed = True
                 # Re-read before accepting completion or closing. Pane IDs are never reused.
                 checked = h("agent", "get", pane)["result"]["agent"]
                 if (any(checked.get(key) != value for key, value in identity.items())
-                        or checked.get("agent_status") != "done"
+                        or checked.get("agent_status") != status
                         or checked.get("state_change_seq") != current.get("state_change_seq")):
                     raise ValueError("Agent changed before completion; wait cancelled")
                 # The user is looking at it; leave closing to them.
@@ -358,6 +360,12 @@ def watch_agent(h, pane: str, name: str, started: dict, *, wait: bool, close: bo
                     continue
                 return
         except (OSError, ValueError, KeyError, TypeError, RuntimeError) as error:
+            if completed and isinstance(error, HerdrError) and error.code in ("agent_not_found", "pane_not_found"):
+                # Manual closure can race the completion recheck or our pane close.
+                if not wait:
+                    print(json.dumps({"result": {"pane_id": pane, "name": name,
+                                                 "closed": True, "reason": "already_closed"}}), flush=True)
+                    return
             if not wait:
                 raise
             # A failed closing policy must not abandon an independent lifetime wait.
