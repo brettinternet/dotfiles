@@ -104,6 +104,11 @@ agent-job close review
 
 The gate prints a work fingerprint; empty or unchanged output skips the run. Focused panes are never closed.
 
+The Noon PR review job asks the agent to append each completed review's GitHub PR URL to
+`.git/noon/reviews/YYYY-MM-DD.log` (local completion date), one link per line. The path is resolved
+from Git's common directory so worktrees share the repository's logs. This includes `WAIT` decisions
+but excludes skipped or failed reviews. Files are append-only and retained across days.
+
 ## Herdr
 
 ```sh
