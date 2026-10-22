@@ -132,10 +132,13 @@ Scheduled jobs (Noon):
 agent-job launch review '/skill:pr-review repo:{repo} author:{env:AUTHORS}' \
   "gh pr list --json number,headRefOid --jq 'if length == 0 then empty else tojson end'"
 agent-job launch --daily babysit '/skill:pr-babysit-loop'
+agent-job launch --pr '/skill:pr-review {pr}' review '/skill:pr-review repo:{repo}' GATE
 agent-job close review
 ```
 
 The gate prints a work fingerprint; empty or unchanged output skips the run. Focused panes are never closed.
+With `--pr`, `noon run review --data '{"pr":123}'` runs the `--pr` prompt once as agent `review-123`,
+ignoring the gate and its fingerprint, and fails rather than skipping when that agent is busy or focused.
 One-pass jobs retain completed panes for `AGENT_RETENTION` (default `30m`), overridden by
 `BABYSIT_RETENTION` or `REVIEW_RETENTION`. Configure these in each repo's `.git/noon/pr-agents.env`;
 `ai/noon/pr-agents.env` is the template. Durations accept integer `s`, `m`, or `h`; `0s` closes immediately.

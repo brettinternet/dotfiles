@@ -2,7 +2,8 @@
 # Generic PR agent jobs. `task ai:noon-setup -- REPO...` links this as .git/noon.yaml; keep logins in
 # the repo's .git/noon/pr-agents.env, never here. {repo} and {env:NAME} come from agent-job, and gh
 # defaults to the checkout. noon-notify sends through Tell only when a Tell config such as
-# .git/tell.yaml exists.
+# .git/tell.yaml exists. For one PR now, ignoring the schedule's selection and gate:
+#   noon run review --data '{"pr":123}'
 # Env: see pr-agents.env.
 version: 1
 timezone: Local
@@ -24,6 +25,8 @@ jobs:
     run:
       - agent-job
       - launch
+      - --pr
+      - /skill:pr-babysit {pr} {env?:BABYSIT_ARGS}
       - babysit
       - /skill:pr-babysit repo:{repo} author:@me {env?:BABYSIT_ARGS}
       - >-
@@ -41,18 +44,23 @@ jobs:
     schedule: "${REVIEW_SCHEDULE:-*/15 6-14 * * 1-4}"
     jitter: "${REVIEW_JITTER:-1s}"
     env_file: .git/noon/pr-agents.env
-    run:
-      - agent-job
-      - launch
-      - review
-      - >-
-        /skill:pr-review repo:{repo} archived:false draft:false updated:>={yesterday} author:{env:REVIEW_AUTHORS} {env?:REVIEW_SEARCH}
-        -- After each completed PR review (APPROVE, COMMENT, or WAIT), append its canonical GitHub PR URL
+    env:
+      REVIEW_GUIDANCE: >-
+        After each completed PR review (APPROVE, COMMENT, or WAIT), append its canonical GitHub PR URL
         as one line to noon/reviews/YYYY-MM-DD.log under this checkout's absolute Git common directory
         (resolve with git rev-parse --path-format=absolute --git-common-dir before changing directories),
         using the local date at completion. Create the directory if needed and append without overwriting existing entries. Log APPROVE and
         COMMENT only after GitHub confirms the review was posted; do not log skipped or failed reviews.
         Keep previous daily logs. If logging fails, report it without reposting the GitHub review.
+    run:
+      - agent-job
+      - launch
+      - --pr
+      - /skill:pr-review {pr} -- {env:REVIEW_GUIDANCE}
+      - review
+      - >-
+        /skill:pr-review repo:{repo} archived:false draft:false updated:>={yesterday} author:{env:REVIEW_AUTHORS} {env?:REVIEW_SEARCH}
+        -- {env:REVIEW_GUIDANCE}
       - >-
         set -ef; base="draft:false updated:>={yesterday} ${REVIEW_SEARCH:-}"; if [ "$REVIEW_AUTHORS" = "*" ]; then searches=("$base -author:@me");
         else searches=(); for author in ${REVIEW_AUTHORS//,/ }; do searches+=("$base author:$author"); done; fi;

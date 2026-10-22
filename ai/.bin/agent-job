@@ -3,6 +3,7 @@
 #   agent-job launch NAME PROMPT [GATE]          run one pass; returns once the agent
 #                                                finishes its turn and retention expires
 #   agent-job launch --daily NAME PROMPT [GATE]  start once per day; blocks until the agent exits
+#   agent-job launch --pr PR_PROMPT NAME ...     also accept one-off runs for a single PR
 #   agent-job close NAME                         close the agent once it's done or idle
 # GATE is a shell command printing a fingerprint of the pending work: empty output means
 # nothing to do, and a nonzero exit fails the run so a broken gate is not mistaken for idle.
@@ -10,6 +11,9 @@
 # or while the previous pass is still working or blocked; a finished leftover pane is closed first.
 # A focused agent pane is never closed or replaced: launch and close skip, and a pass that finishes
 # while focused keeps its pane for the user to close.
+# A noon run whose event data names a PR, e.g. noon run NAME --data '{"pr":123}', runs PR_PROMPT
+# once as agent NAME-123 instead: it ignores GATE, --daily, and the last fingerprint, and it fails
+# instead of skipping when that agent is busy or focused. Without --pr such a run fails.
 # Tokens in PROMPT and GATE expand before use; dates are local YYYY-MM-DD. GATE also sees the
 # environment directly, but PROMPT reaches the agent only through tokens:
 #   {env:NAME}   the value of a nonempty variable, e.g. a job env REVIEWERS: alice,bob
@@ -18,6 +22,7 @@
 #   {today}      today's date
 #   {yesterday}  one day ago
 #   {today-N}    N days ago, e.g. {today-7}
+#   {pr}         the one-off run's PR number
 # AGENT_KIND selects the agent CLI (pi, claude, or codex; default pi). A leading /skill:NAME in
 # PROMPT becomes /NAME for claude and $NAME for codex. <NAME>_AGENT_ARGS (e.g. REVIEW_AGENT_ARGS), else
 # AGENT_ARGS, adds whitespace-split native CLI arguments, e.g. '--model opus --effort medium'.
@@ -27,18 +32,49 @@
 # Exit 3 = nothing to do (noon records it as noop). macOS only (BSD date).
 set -euo pipefail
 
-mode=$1 daily=
-if [[ $mode == launch && ${2:-} == --daily ]]; then
-  daily=1
-  shift
+usage() {
+  echo "usage: $0 launch [--daily] [--pr PR_PROMPT] NAME PROMPT [GATE] | close NAME" >&2
+  exit 2
+}
+
+mode=${1:-} daily= pr_prompt=
+shift || usage
+while [[ $mode == launch && ${1:-} == --* ]]; do
+  case $1 in
+    --daily) daily=1; shift ;;
+    --pr)
+      [[ $# -ge 2 ]] || usage
+      pr_prompt=$2
+      shift 2
+      ;;
+    *) usage ;;
+  esac
+done
+[[ $# -ge 1 ]] || usage
+name=$1
+[[ $name =~ ^[a-z][a-z0-9_-]{0,15}$ ]] || { echo "invalid NAME: $name" >&2; exit 2; }
+pr=
+if [[ $mode == launch && -n ${NOON_EVENT_FILE:-} ]]; then
+  pr=$(jq -r '.data | objects | .pr // empty | tostring' "$NOON_EVENT_FILE")
+  if [[ -n $pr ]]; then
+    [[ $pr =~ ^[1-9][0-9]{0,5}$ ]] || { echo "invalid event pr: $pr" >&2; exit 2; }
+    [[ -n $pr_prompt ]] || { echo "$name does not accept a PR" >&2; exit 2; }
+    daily=
+  fi
 fi
-name=$2
 # Herdr agent names are global, so key the agent by checkout, e.g. review-houston-1a2b3c, within
 # Herdr's 32-character limit. NAME must already be a valid lowercase Herdr name.
-[[ $name =~ ^[a-z][a-z0-9_-]{0,15}$ ]] || { echo "invalid NAME: $name" >&2; exit 2; }
-slug=$(printf %s "${PWD##*/}" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9_-' '-' | cut -c"1-$((32 - ${#name} - 8))" |
-  sed -E 's/^[-_]+//; s/[-_]+$//')
-live=$name-${slug:+$slug-}$(printf %s "$PWD" | shasum | cut -c1-6)
+agent_name=$name${pr:+-$pr}
+slug=$(printf %s "${PWD##*/}" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9_-' '-' |
+  cut -c"1-$((32 - ${#agent_name} - 8))" | sed -E 's/^[-_]+//; s/[-_]+$//')
+live=$agent_name-${slug:+$slug-}$(printf %s "$PWD" | shasum | cut -c1-6)
+
+# Exits as a noop, except that a one-off PR run must not silently do nothing.
+skip() {
+  [[ -z $pr ]] || { echo "$live: $1; not starting PR $pr" >&2; exit 1; }
+  echo "$1"
+  exit 3
+}
 
 # Prints "STATUS FOCUSED", e.g. "done true".
 agent_state() {
@@ -61,6 +97,7 @@ expand_tokens() {
     s=${s//"${BASH_REMATCH[0]}"/${!variable:-}}
   done
   s=${s//"{repo}"/$repo}
+  s=${s//"{pr}"/$pr}
   s=${s//"{today}"/$(date +%F)}
   s=${s//"{yesterday}"/$(date -v-1d +%F)}
   while [[ $s =~ \{today-([0-9]+)\} ]]; do
@@ -76,19 +113,19 @@ run_gate() {
 state=$(agent_state)
 read -r status focused <<<"$state"
 echo "$live: status=$status focused=$focused"
-if [[ $focused == true ]]; then
-  echo "focused; leaving it to you"
-  exit 3
-fi
+[[ $focused != true ]] || skip "focused; leaving it to you"
 
 case $mode in
   launch)
+    [[ $# -ge 2 ]] || usage
+    prompt=$2 gate=${3:-}
+    [[ -z $pr ]] || prompt=$pr_prompt gate=
     repo=
-    if [[ "$3${4:-}" == *"{repo}"* ]]; then
+    if [[ "$prompt$gate" == *"{repo}"* ]]; then
       repo=$(gh repo view --json nameWithOwner --jq .nameWithOwner) || { echo "cannot resolve {repo}" >&2; exit 1; }
     fi
-    prompt=$(expand_tokens "$3")
-    gate=$(expand_tokens "${4:-}")
+    prompt=$(expand_tokens "$prompt")
+    gate=$(expand_tokens "$gate")
     kind=${AGENT_KIND:-pi}
     job_args=$(printf %s "$name" | tr '[:lower:]-' '[:upper:]_')_AGENT_ARGS
     read -ra native <<<"${!job_args:-${AGENT_ARGS:-}}"
@@ -102,8 +139,8 @@ case $mode in
     # pass keeps its pane for the user; once answered and finished, the next pass replaces it.
     case $status in
       absent) ;;
-      done | idle) [[ -z $daily ]] || exit 3 ;;
-      *) exit 3 ;;
+      done | idle) [[ -z $daily ]] || skip "already running" ;;
+      *) skip "busy: $status" ;;
     esac
     # NOON_LAST_SUCCESS_AT is the UTC start of the last run whose agent exited normally.
     if [[ -n $daily && -n ${NOON_LAST_SUCCESS_AT:-} ]]; then
@@ -126,6 +163,7 @@ case $mode in
     retention_var=$(printf %s "$name" | tr '[:lower:]-' '[:upper:]_')_RETENTION
     "${agent[@]}" --close-on-done --retain-for "${!retention_var:-${AGENT_RETENTION:-30m}}" \
       --prompt "$prompt" -- "${native[@]}"
+    [[ -z $pr ]] || exit 0
     mkdir -p "${state%/*}"
     printf '%s' "$fingerprint" >"$state"
     ;;
@@ -135,8 +173,5 @@ case $mode in
       *) exit 3 ;;
     esac
     ;;
-  *)
-    echo "usage: $0 launch [--daily] NAME PROMPT [GATE] | close NAME" >&2
-    exit 2
-    ;;
+  *) usage ;;
 esac
