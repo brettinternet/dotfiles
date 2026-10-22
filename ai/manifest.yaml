@@ -56,15 +56,15 @@ models:
 # The claude and codex profiles' agents also set standalone Claude Code and Codex CLI agent models.
 profiles:
   codex:
-    parent: [codex-astra, medium]
+    parent: [codex-sol, medium]
     enabled: [codex-luna, codex-sol, codex-astra, claude-opus]
-    defaultSubagent: [codex-sol, high]
+    defaultSubagent: [codex-sol, medium]
     researcher: [codex-sol, medium]
     title: [codex-luna, low]
     progress: [codex-luna, low]
     agents:
-      reviewer: [codex-astra, high]
-      oracle: [codex-astra, max]
+      reviewer: [codex-astra, medium]
+      oracle: [codex-astra, xhigh]
       explore: [codex-luna, high]
       executor: [codex-luna, max]
       verifier: [codex-luna, high]
