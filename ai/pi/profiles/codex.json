@@ -1,6 +1,6 @@
 {
   "defaultProvider": "openai-codex",
-  "defaultModel": "gpt-6-astra",
+  "defaultModel": "gpt-6.1-sol",
   "defaultThinkingLevel": "medium",
   "enabledModels": [
     "openai-codex/gpt-6-luna",
@@ -11,7 +11,7 @@
   "subagents": {
     "defaultModel": "openai-codex/gpt-6.1-sol",
     "defaultProvider": "openai-codex",
-    "defaultThinking": "high",
+    "defaultThinking": "medium",
     "agentOverrides": {
       "researcher": {
         "model": "openai-codex/gpt-6.1-sol",
@@ -19,11 +19,11 @@
       },
       "reviewer": {
         "model": "openai-codex/gpt-6-astra",
-        "thinking": "high"
+        "thinking": "medium"
       },
       "oracle": {
         "model": "openai-codex/gpt-6-astra",
-        "thinking": "max"
+        "thinking": "xhigh"
       },
       "explore": {
         "model": "openai-codex/gpt-6-luna",
