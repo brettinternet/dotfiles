@@ -70,6 +70,11 @@ elif command == "pane process-info":
     result = {"process_info": state["process_info"]}
 elif command == "pane get":
     result = {"pane": {"pane_id": args[2]}}
+elif command == "agent start" and state.get("busy_starts"):
+    state["busy_starts"] -= 1
+    pathlib.Path(os.environ["STATE"]).write_text(json.dumps(state))
+    print(json.dumps({"error": {"code": "agent_pane_busy"}}), file=sys.stderr)
+    sys.exit(1)
 elif command == "agent start":
     result = {"agent": {**state.get("started", {}), "pane_id": "w9:p1", "name": args[2]}}
 elif command == "agent prompt":
@@ -299,12 +304,15 @@ class AgentLauncherTests(unittest.TestCase):
 
     def test_prompt_is_submitted_after_readiness_and_counts_as_work(self) -> None:
         # A native prompt keeps Herdr's start readiness check from passing, so every scheduled launch failed.
+        # Herdr also rejects a new pane until its shell reaches a prompt, which intermittently failed launches.
         identity = self.watch_identity()
         done = {**identity, "agent_status": "done", "state_change_seq": 3}
-        self.state.write_text(json.dumps({"started": identity, "snapshots": [done, done]}))
+        self.state.write_text(json.dumps({"started": identity, "snapshots": [done, done], "busy_starts": 2}))
         self.run_agent("alice", "-t", "--close-on-done", "--prompt", "Review it")
         calls = self.commands()
-        start = next(call for call in calls if call[:2] == ["agent", "start"])
+        starts = [call for call in calls if call[:2] == ["agent", "start"]]
+        self.assertEqual(3, len(starts))
+        start = starts[-1]
         self.assertNotIn("Review it", start)
         prompt = next(call for call in calls if call[:2] == ["agent", "prompt"])
         self.assertLess(calls.index(start), calls.index(prompt))
