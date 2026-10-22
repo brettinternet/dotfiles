@@ -16,6 +16,8 @@ When making technical decisions, do not give much weight to development time cos
 
 Before introducing a new pattern, search for an existing implementation and reuse or extend it. Announce "CODE PATTERN:" with a very brief description only when introducing a genuinely new reusable pattern or consolidating a duplicate.
 
+For UI changes: cut taglines, helper text and secondary labels. If a screen needs them to make sense, fix the layout. Make the best decision that will elevate all three: the user experience, developer experience, and agent experience always, without breaking anything.
+
 ## Testing
 
 Never use TDD or write tests first. Implement, then verify with the existing suite and direct execution.
