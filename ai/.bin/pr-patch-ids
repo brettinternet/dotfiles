@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Print `patch_id<TAB>sha<TAB>subject` for each non-merge commit of a PR.
+#   pr-patch-ids OWNER/REPO PR
+# Patch IDs come from `git patch-id --stable`, so they survive rebases but change with content.
+set -euo pipefail
+
+if [ $# -ne 2 ]; then
+  printf 'usage: %s OWNER/REPO PR\n' "${0##*/}" >&2
+  exit 2
+fi
+repo=$1
+pr=$2
+
+gh api --paginate "repos/$repo/pulls/$pr/commits" \
+  --jq '.[] | select((.parents | length) == 1) | [.sha, (.commit.message | split("\n")[0])] | @tsv' |
+  while IFS=$'\t' read -r sha subject; do
+    patch_id=$(gh api "repos/$repo/commits/$sha" -H 'Accept: application/vnd.github.diff' |
+      git patch-id --stable | cut -d' ' -f1)
+    # An empty diff has no patch ID; fall back to the SHA so the commit is still tracked.
+    printf '%s\t%s\t%s\n' "${patch_id:-$sha}" "$sha" "$subject"
+  done

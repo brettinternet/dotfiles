@@ -81,7 +81,7 @@ one matching evaluation (even a diagnostic `dcg test`/`explain`), or expires aft
 to diagnose missing codes; do not disable the guard or add broad allowlists.
 This manual flow also works for Claude’s hard denials.
 
-Run `dcg doctor` to check wiring. In Codex, open `/hooks` and trust the DCG hook
+Run `dcg doctor` to check wiring. `ai/dcg/config.toml` enables history and a blocked-command log; review past ASK/deny events with `dcg history stats` or `~/.local/share/dcg/blocked.log`. In Codex, open `/hooks` and trust the DCG hook
 if it is not enabled. Registration does not prove every shell path is intercepted:
 Codex’s `unified_exec` interception is incomplete upstream.
 

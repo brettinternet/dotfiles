@@ -39,6 +39,7 @@ Add tests only for critical logic: data integrity, security and authorization bo
 - Prefer fast local CLIs for code navigation: use `rg`/ripgrep for content search, `fd` for file discovery, and `ast-grep` for structural code search/refactors before falling back to fragile regex edits.
 - Use `bun` and `bunx` instead of `npm` or `npx`.
 - When fixtures or documentation contain destructive command text, use `edit` or `write`; never embed that text in a Bash heredoc or inline interpreter command. Run validation separately so safety guards do not mistake fixture data for an executable command.
+- Never truncate-redirect (`>`) to a variable-built path; use a literal path, `>>`, or a script that opens its own output. Write multi-line scripts with `write`/`edit` and run them in a separate call.
 - NEVER use `rm`; use `trash` to delete files so removals are recoverable.
 - Never carry generic shell variables such as `$dir`, `$path`, `$target`, or `$tmp` across interactive commands. Keep them local to one shell function or one command invocation and use a purpose-specific name.
 - Never execute or suggest `trash`, `rm`, or destructive `find` commands with variable-derived targets unless cleanup occurs in the same shell function, the variable is local, the resolved target is beneath the canonical OS temporary directory with an expected prefix, and an ownership marker is present. Otherwise leave the path in place and report it. Never use `$HOME` as a destructive target.

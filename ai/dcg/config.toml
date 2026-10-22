@@ -1,0 +1,7 @@
+# Overrides only; dcg merges these onto its built-in defaults. Inspect events with `dcg history stats`.
+[general]
+log_file = "~/.local/share/dcg/blocked.log"
+
+[history]
+enabled = true
+redaction_mode = "pattern"

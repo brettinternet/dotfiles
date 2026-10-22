@@ -132,6 +132,7 @@
     ~/.bin/:
       glob: true
       path: ai/.bin/*
+    ~/.config/dcg/config.toml: ai/dcg/config.toml
     # Claude
     ~/.claude/CLAUDE.md:
       path: ai/AGENTS.md
