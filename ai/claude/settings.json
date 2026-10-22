@@ -1,5 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "env": {
+    "DCG_POLICY_DEFAULT_MODE": "ask"
+  },
   "permissions": {
     "defaultMode": "auto",
     "deny": ["Bash(rm *)"]

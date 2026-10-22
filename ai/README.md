@@ -58,7 +58,40 @@ pi mcp list                   # then /reload
 
 MCP servers: `~/.pi/agent/mcp.json` (personal, unmanaged) or `.pi/mcp.json` (project, git-ignored). Shared `.mcp.json` is not read; copy entries from `project/.mcp.json`.
 
+## Command approvals (Claude and Codex)
+
+Claude’s DCG hook requests native approval for dangerous commands, including in
+`auto` permission mode. Explicit permission denies (such as `Bash(rm *)`) still
+win. The hook covers `Bash`, `PowerShell`, and `Monitor`. Claude’s managed
+`env.DCG_POLICY_DEFAULT_MODE=ask` selects review mode without changing Codex’s
+policy. Restart Claude after refreshing settings with `make ai`.
+
+Codex does not support DCG’s native `ask` decision. Keep the command blocked and
+approve its exact invocation from your own terminal in the original working
+directory, using the code in the denial:
+
+```sh
+dcg allow-once CODE --dry-run --single-use   # review command, directory and scope
+dcg allow-once CODE --single-use             # confirm interactively
+```
+
+Then ask the agent to retry the **unchanged** command. The grant is consumed by
+one matching evaluation (even a diagnostic `dcg test`/`explain`), or expires after
+24 hours. Agents must not redeem codes themselves. Use `dcg allow-once list --json`
+to diagnose missing codes; do not disable the guard or add broad allowlists.
+This manual flow also works for Claude’s hard denials.
+
+Run `dcg doctor` to check wiring. In Codex, open `/hooks` and trust the DCG hook
+if it is not enabled. Registration does not prove every shell path is intercepted:
+Codex’s `unified_exec` interception is incomplete upstream.
+
 ## Directory access
+
+Pi’s `/access` grants below are **Pi-only**, not DCG CLI commands. For Claude,
+use `/add-dir /abs/path` or launch with `claude --add-dir /abs/path`. For Codex,
+`codex --add-dir /abs/path` adds a writable directory to its sandbox; native
+sandbox approvals are separate from DCG command approvals. Do not disable the
+sandbox to fix a DCG denial.
 
 `dcg-guard` limits Bash `cd`/`rg`/`grep` to the session root. It is a command guard, **not a sandbox**.
 

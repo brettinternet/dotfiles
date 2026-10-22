@@ -297,7 +297,11 @@ class AiInstallTests(unittest.TestCase):
                             {
                                 "matcher": "Read",
                                 "hooks": [{"type": "command", "command": "preserve"}],
-                            }
+                            },
+                            {
+                                "matcher": "Bash|PowerShell",
+                                "hooks": [{"type": "command", "command": str(dcg)}],
+                            },
                         ]
                     }
                 }
