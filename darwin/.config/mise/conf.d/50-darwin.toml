@@ -18,7 +18,7 @@ rust = { version = "latest", postinstall = "rustup component add rust-analyzer" 
 ruby = "latest"
 bun = "latest"
 k9s = "latest"
-hunk = { version = "v0.23.0", matching_regex = '^hunkdiff-darwin-arm64\.tar\.gz$', strip_components = 1, checksum = "sha256:ae42cfe52798a4f51d25f63ceb8685ca2a6cb3039a124d6a6fc172a112f8d6b8" }
+hunk = { version = "latest", matching_regex = '^hunkdiff-darwin-arm64\.tar\.gz$', strip_components = 1 }
 gh = { version = "latest", postinstall = "gh extension install github/gh-stack --force" }
 biome = "latest"
 "vfox:jdx/vfox-eza" = "latest"
