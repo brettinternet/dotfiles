@@ -272,8 +272,25 @@ local function isYoutubePlaying()
 end
 
 local function youtubeVideoShortcutIfOpen(action)
-  if not findYoutubeVideoTab() then
+  local tab = findYoutubeVideoTab()
+  if not tab then
     return false
+  end
+
+  if action == "play_pause" then
+    local script = ([[(function() {
+      var browser = Application('%s');
+      for (var win of browser.windows()) {
+        if (String(win.id()) !== '%s') {
+          continue;
+        }
+        return win.tabs()[%d].execute({ javascript: "(function(){var video=document.querySelector('video');if(!video){return false;}if(video.paused || video.ended){video.play();}else{video.pause();}return true;})()" });
+      }
+      return false;
+    })();
+    ]]):format(youtubeBrowserBundleID, tab.windowId, tonumber(tab.tabIndex) - 1)
+    local success, result = hs.osascript.javascript(script)
+    return success and result == true
   end
 
   return youtubeShortcut(action)

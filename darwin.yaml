@@ -16,6 +16,8 @@
 - link:
     ~/.bin/chromium-apps:
       path: darwin/scripts/chromium-apps.py
+    ~/Library/Application Support/Chromium/Chromium Initial Preferences:
+      path: darwin/chromium/initial-preferences.json
     ~/.gitconfig:
       path: darwin/.gitconfig
     ~/.gitignore:

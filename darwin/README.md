@@ -16,6 +16,10 @@ chromium-apps                     # → ~/Applications/<name>.app
 
 Each app's data lives in `~/Library/Application Support/Chromium-Profiles/<id>`; keep `id` stable when renaming. Removing an entry leaves its app and data. Separate data, **not a sandbox**.
 
+### Hammerspoon media control
+
+`make darwin` installs Chromium initial preferences enabling **View → Developer → Allow JavaScript from Apple Events** for first-run setup. This lets local automation execute JavaScript in browser tabs. Existing profiles must enable the setting manually; their live preferences are not overwritten.
+
 ### Route external links to base Chromium
 
 ```sh
