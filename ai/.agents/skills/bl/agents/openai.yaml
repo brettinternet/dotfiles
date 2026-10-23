@@ -1,0 +1,6 @@
+interface:
+  display_name: "bl"
+  short_description: "Operate on bl backlogs through the bl CLI"
+  default_prompt: "Use $bl for backlog operations."
+policy:
+  allow_implicit_invocation: true

@@ -102,11 +102,11 @@ Emit exactly these five sections, in this order, always — an empty one prints
 ## Blocked
 | Ref | Blocker | Needs |
 |---|---|---|
-| [GC-19](backlog/tasks/GC-19-formula-run-targets.md) | formula run_targets fixture-bound | real-rig decision from Brett |
+| [GC-19](backlog/GC-19.md) | formula run_targets fixture-bound | real-rig decision from Brett |
 
 ## Today
 - Land [app#10090](https://github.com/acme/app/pull/10090)
-- Start [GC-19](backlog/tasks/GC-19-formula-run-targets.md)
+- Start [GC-19](backlog/GC-19.md)
 ```
 
 Column and glyph vocabulary is closed. Do not invent new ones.
