@@ -15,12 +15,14 @@ When `WORKLEASE_RUN_ID` is set, this process runs under `worklease run`, which a
 
 ## Session selection
 
-Choose one full, collision-resistant identifier for each independent worker or repeated loop. Never truncate an identifier or derive one from a prefix.
+Choose one full, collision-resistant identifier for each independent worker or repeated loop. Prefer the harness's own ID: the claim records it as `sessionId`, which is how a person later finds the transcript that worked an item. Never truncate an identifier or derive one from a prefix, pane, or label. Use the first that applies:
 
 - When `PI_LOOP_RUN_ID` is non-empty, use its exact value as the contextual handle selector for the entire Pi loop. Pass `--session "$PI_LOOP_RUN_ID"` to every CLI lifecycle command, or set `WORKLEASE_SESSION_ID="$PI_LOOP_RUN_ID"` for that invocation. Pass the same exact value as `sessionId` to MCP `acquire`, then use the returned opaque `lease` for later MCP lifecycle calls. Never substitute `PI_SESSION_ID` while `PI_LOOP_RUN_ID` is available. If the loop's claim expires, reacquire the same item only after proving every delegated executor and command has stopped, confirming there is no active conflicting claim, and revalidating provider eligibility. Expiry alone is insufficient.
-- Otherwise, use an existing non-empty `WORKLEASE_SESSION_ID`.
-- For one-shot work, a full harness-provided session ID is suitable; in Pi, use `PI_SESSION_ID`.
-- For a repeated workflow in another harness, use its stable workflow or loop ID, not an iteration, turn, or replacement-session ID. If none is available, create one full UUID before acquire and preserve it for the complete claim lifecycle.
+- For a repeated workflow in another harness, use its stable workflow or loop ID, not an iteration, turn, or replacement-session ID.
+- Otherwise, use the harness session ID: `PI_SESSION_ID` in Pi, `CLAUDE_CODE_SESSION_ID` in Claude Code.
+- Otherwise, use an existing non-empty `WORKLEASE_SESSION_ID`, or create one full UUID before acquire and preserve it for the complete claim lifecycle.
+
+A delegated worker that claims its own items is an independent worker: give it its own ID, never the parent's.
 
 ## Continuation and ownership evidence
 
