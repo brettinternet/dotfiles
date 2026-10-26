@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# Update one PR's entry in the pr-review state file, preserving every other entry.
+#   pr-review-record OWNER/REPO PR APPROVE|COMMENT|WAIT [STATUS]  save current patch IDs, action, time
+#   pr-review-record OWNER/REPO PR skip REASON                    mark the PR skipped by the user
+#   pr-review-record OWNER/REPO PR resume                         remove the skip mark
+# Writing here keeps agents from composing temp-file-and-mv chains into a home dotfile path, which dcg blocks.
+set -euo pipefail
+
+usage() {
+  sed -n '3,5s/^#   //p' "$0" | sed "s/^/usage: /" >&2
+  exit 2
+}
+
+[ $# -ge 3 ] || usage
+repo=$1
+pr=$2
+action=$3
+detail=${4:-}
+state=${PR_REVIEW_STATE:-$HOME/.local/state/pr-review.json}
+now=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+case $action in
+APPROVE | COMMENT | WAIT)
+  [ $# -le 4 ] || usage
+  patch_ids=$(pr-patch-ids "$repo" "$pr" | cut -f1 | jq -R . | jq -sc .)
+  filter='.[$repo][$pr] = ((.[$repo][$pr] // {}) + {patch_ids: $ids, action: $action, at: $now}
+    | if $detail == "" then del(.status) else .status = $detail end)'
+  ;;
+skip)
+  [ $# -eq 4 ] && [ -n "$detail" ] || usage
+  patch_ids=null
+  filter='.[$repo][$pr] = ((.[$repo][$pr] // {}) + {skipped: {at: $now, reason: $detail}})'
+  ;;
+resume)
+  [ $# -eq 3 ] || usage
+  patch_ids=null
+  filter='if .[$repo][$pr] then del(.[$repo][$pr].skipped) else . end'
+  ;;
+*) usage ;;
+esac
+
+mkdir -p "$(dirname "$state")"
+[ -s "$state" ] || printf '{}\n' >"$state"
+tmp=$(mktemp "$state.XXXXXX")
+trap 'trash "$tmp" 2>/dev/null || true' EXIT
+jq --arg repo "$repo" --arg pr "$pr" --arg action "$action" --arg detail "$detail" \
+  --arg now "$now" --argjson ids "$patch_ids" "$filter" "$state" >"$tmp"
+mv "$tmp" "$state"
+trap - EXIT
