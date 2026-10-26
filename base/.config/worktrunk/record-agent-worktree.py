@@ -10,16 +10,19 @@ import sys
 from pathlib import Path
 
 
-def main() -> int:
+def main(argv: list[str]) -> int:
     session_id = os.environ.get("PI_SESSION_ID")
     if not session_id:
         return 0  # Human-created worktrees must not become agent-owned.
 
     try:
-        context = json.load(sys.stdin)
-        if context["hook_type"] != "pre-start":
+        # Worktrunk passes context as template vars: hook_type worktree_path [branch].
+        if len(argv) not in (2, 3):
+            raise ValueError("usage: HOOK_TYPE WORKTREE_PATH [BRANCH]")
+        hook_type, worktree_path, hook_branch = (*argv, None)[:3]
+        if hook_type != "pre-start":
             raise ValueError("creation receipts require the pre-start hook")
-        checkout = Path(context["worktree_path"]).resolve(strict=True)
+        checkout = Path(worktree_path).resolve(strict=True)
 
         def git(*args: str) -> str:
             return subprocess.check_output(
@@ -33,7 +36,7 @@ def main() -> int:
         if git_dir == common_dir or not (git_dir / "gitdir").is_file():
             raise ValueError("refusing to record a primary checkout")
         branch = git("branch", "--show-current") or None
-        if branch != context.get("branch"):
+        if branch != hook_branch:
             raise ValueError("hook branch does not match checkout")
         receipt = {
             "version": 1,
@@ -56,8 +59,6 @@ def main() -> int:
         OSError,
         subprocess.CalledProcessError,
         ValueError,
-        KeyError,
-        TypeError,
     ) as error:
         print(f"Could not record agent worktree: {error}", file=sys.stderr)
         return 1
@@ -65,4 +66,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main(sys.argv[1:]))

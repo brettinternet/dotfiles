@@ -51,16 +51,20 @@ class WorktrunkReceiptTests(unittest.TestCase):
         )
 
     def record(self, **context: str) -> subprocess.CompletedProcess[str]:
+        context = {
+            "hook_type": "pre-start",
+            "worktree_path": str(self.checkout),
+            "branch": "feature",
+            **context,
+        }
         return subprocess.run(
-            ["python3", str(SCRIPT)],
-            input=json.dumps(
-                {
-                    "hook_type": "pre-start",
-                    "worktree_path": str(self.checkout),
-                    "branch": "feature",
-                    **context,
-                }
-            ),
+            [
+                "python3",
+                str(SCRIPT),
+                context["hook_type"],
+                context["worktree_path"],
+                context["branch"],
+            ],
             text=True,
             capture_output=True,
             env=self.env,
