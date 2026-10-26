@@ -5,6 +5,7 @@ mise.local.toml
 .worktrees
 .hum.yaml
 .worktreeinclude
+backlog.local.yaml
 
 # AI
 .rtk
