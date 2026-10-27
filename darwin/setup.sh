@@ -20,9 +20,20 @@ fi
 
 brew bundle --file "${BREWFILE}"
 
-if [ -d "/Applications/Xcode.app" ]; then
-  sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+readonly XCODE_DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"
+readonly CLT_DEVELOPER_DIR="/Library/Developer/CommandLineTools"
+
+# Xcode's linker can lag behind a newer Command Line Tools SDK on a newer macOS.
+links_c() {
+  echo 'int main(void){return 0;}' \
+    | DEVELOPER_DIR="$1" xcrun clang -x c - -o /dev/null >/dev/null 2>&1
+}
+
+if [ -d "${XCODE_DEVELOPER_DIR}" ] && links_c "${XCODE_DEVELOPER_DIR}"; then
+  sudo xcode-select -s "${XCODE_DEVELOPER_DIR}"
   sudo xcodebuild -license accept
+elif [ -d "${CLT_DEVELOPER_DIR}" ]; then
+  sudo xcode-select -s "${CLT_DEVELOPER_DIR}"
 elif ! xcode-select -p >/dev/null 2>&1; then
   xcode-select --install
 fi
