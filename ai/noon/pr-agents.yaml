@@ -46,10 +46,8 @@ jobs:
     env_file: .git/noon/pr-agents.env
     env:
       REVIEW_GUIDANCE: >-
-        After each completed PR review (APPROVE, COMMENT, or WAIT), append its canonical GitHub PR URL
-        as one line to noon/reviews/YYYY-MM-DD.log under this checkout's absolute Git common directory
-        (resolve with git rev-parse --path-format=absolute --git-common-dir before changing directories),
-        using the local date at completion. Create the directory if needed and append without overwriting existing entries. Log APPROVE and
+        After each completed PR review (APPROVE, COMMENT, or WAIT), log its canonical GitHub PR URL by running
+        pr-review-log <url> from this checkout before changing directories; never write the log file directly. Log APPROVE and
         COMMENT only after GitHub confirms the review was posted; do not log skipped or failed reviews.
         Keep previous daily logs. If logging fails, report it without reposting the GitHub review.
     run:

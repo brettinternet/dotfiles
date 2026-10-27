@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Append PR URLs to today's review log in this checkout's Git common directory.
+#   pr-review-log URL...
+# Writing here keeps agents from composing redirects into a computed .git path, which dcg blocks.
+set -euo pipefail
+
+[ $# -ge 1 ] || {
+  echo "usage: pr-review-log URL..." >&2
+  exit 2
+}
+
+log_dir="$(git rev-parse --path-format=absolute --git-common-dir)/noon/reviews"
+mkdir -p "$log_dir"
+printf '%s\n' "$@" >>"$log_dir/$(date +%F).log"
