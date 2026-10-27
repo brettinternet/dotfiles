@@ -6,7 +6,7 @@ hunk = "github:modem-dev/hunk"
 [tools]
 # personal
 "github:brettinternet/worklease" = { version = "latest", minimum_release_age = "0" }
-"github:brettinternet/panelctl" = { version = "latest", minimum_release_age = "0", matching_regex = '^panelctl-cli-v.*-macos-universal\.zip$' }
+"github:brettinternet/DisplayPanel" = { version = "latest", minimum_release_age = "0" }
 "github:brettinternet/hum" = { version = "latest", minimum_release_age = "0" }
 "github:brettinternet/noon" = { version = "latest", minimum_release_age = "0" }
 "github:brettinternet/tell" = { version = "latest", minimum_release_age = "0" }
