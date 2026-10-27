@@ -60,6 +60,8 @@ npm.package_manager = "bun"
 experimental = true
 # Guard: the gh shim can re-enter mise, which would rerun this command forever.
 github.credential_command = '[ -z "$MISE_GH_CREDENTIAL_GUARD" ] && MISE_GH_CREDENTIAL_GUARD=1 gh auth token'
+# The mise-versions mirror lags new releases of brettinternet/* tools; disabling it lists from GitHub.
+# use_versions_host = false
 
 # minimum_release_age = "12h"
 # minimum_release_age_excludes = [
