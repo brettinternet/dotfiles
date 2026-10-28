@@ -20,6 +20,8 @@ Each app's data lives in `~/Library/Application Support/Chromium-Profiles/<id>`;
 
 `make darwin` installs Chromium initial preferences enabling **View → Developer → Allow JavaScript from Apple Events** for first-run setup. This lets local automation execute JavaScript in browser tabs. Existing profiles must enable the setting manually; their live preferences are not overwritten.
 
+The same file sets WebRTC to `default_public_interface_only`. ungoogled-chromium defaults to `disable_non_proxied_udp`, which leaves voice calls (Discord, Meet) stuck connecting without a proxy. Existing profiles need `webrtc.ip_handling_policy` set in their `Default/Preferences` while Chromium is quit.
+
 ### Route external links to base Chromium
 
 ```sh

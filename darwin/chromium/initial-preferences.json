@@ -1,5 +1,8 @@
 {
   "browser": {
     "allow_javascript_apple_events": true
+  },
+  "webrtc": {
+    "ip_handling_policy": "default_public_interface_only"
   }
 }
