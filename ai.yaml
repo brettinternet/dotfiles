@@ -143,6 +143,9 @@
     ~/.claude/keybindings.json:
       path: ai/claude/keybindings.json
       if: ai/.bin/ai-tool-enabled claude
+    ~/.claude/hooks/session-title.py:
+      path: ai/claude/session-title.py
+      if: ai/.bin/ai-tool-enabled claude
     ~/.claude/skills/:
       glob: true
       relink: false
