@@ -32,7 +32,25 @@ for repo in "$@"; do
   config=$git_dir/noon.d/pr-agents.yaml
   env_file=$git_dir/noon.d/pr-agents.env
 
-  if [[ -L $config && $(readlink "$config") == "$template" ]]; then
+  # Migration from .git/noon.yaml and .git/noon/pr-agents.env; remove once every machine has run it.
+  old_config=$git_dir/noon.yaml old_env=$git_dir/noon/pr-agents.env
+  if [[ -L $old_config && $(readlink "$old_config") == "$template" ]]; then
+    if [[ -e $config || -L $config ]]; then
+      echo "$repo: both $old_config and $config exist; move one aside" >&2
+      status=1
+      continue
+    fi
+    mkdir -p "${config%/*}"
+    mv "$old_config" "$config"
+    echo "$repo: moved $old_config to $config"
+  fi
+  if [[ -e $old_env && ! -e $env_file ]]; then
+    mkdir -p "${env_file%/*}"
+    mv "$old_env" "$env_file"
+    echo "$repo: moved $old_env to $env_file"
+  fi
+
+  if [[ -L $config &&$(readlink "$config") == "$template" ]]; then
     echo "$repo: $config already linked"
   else
     if [[ -e $config || -L $config ]]; then
