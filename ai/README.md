@@ -140,7 +140,7 @@ The gate prints a work fingerprint; empty or unchanged output skips the run. Foc
 With `--pr`, `noon run review --data '{"pr":123}'` runs the `--pr` prompt once as agent `review-123`,
 ignoring the gate and its fingerprint, and fails rather than skipping when that agent is busy or focused.
 One-pass jobs retain completed panes for `AGENT_RETENTION` (default `30m`), overridden by
-`BABYSIT_RETENTION` or `REVIEW_RETENTION`. Configure these in each repo's `.git/noon/pr-agents.env`;
+`BABYSIT_RETENTION` or `REVIEW_RETENTION`. Configure these in each repo's `.git/noon.d/pr-agents.env`;
 `ai/noon/pr-agents.env` is the template. Durations accept integer `s`, `m`, or `h`; `0s` closes immediately.
 Manual closure after observed completion succeeds. New work resets retention, and identity changes or
 blocked/unknown states cancel auto-close. At expiry, a focused pane is left open for manual closure.

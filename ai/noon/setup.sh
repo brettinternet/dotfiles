@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Link pr-agents.yaml as each repo's private .git/noon.yaml and seed .git/noon/pr-agents.env.
+# Link pr-agents.yaml as each repo's private .git/noon.d/pr-agents.yaml and seed
+# .git/noon.d/pr-agents.env.
 # Usage: setup.sh [--force] REPO...
-#   --force  move an existing non-matching .git/noon.yaml to .git/noon.yaml.bak first; refuses
-#            when that backup already exists
+#   --force  move an existing non-matching fragment to pr-agents.yaml.bak first; refuses when
+#            that backup already exists
 # Never overwrites an existing pr-agents.env. Run `noon -C REPO enable` afterward; it also approves
 # any shared noon.yaml jobs, so it is left to you.
 set -euo pipefail
@@ -28,15 +29,15 @@ for repo in "$@"; do
     status=1
     continue
   fi
-  config=$git_dir/noon.yaml
-  env_file=$git_dir/noon/pr-agents.env
+  config=$git_dir/noon.d/pr-agents.yaml
+  env_file=$git_dir/noon.d/pr-agents.env
 
   if [[ -L $config && $(readlink "$config") == "$template" ]]; then
     echo "$repo: $config already linked"
   else
     if [[ -e $config || -L $config ]]; then
       if [[ -z $force ]]; then
-        echo "$repo: $config exists; rerun with --force to move it to noon.yaml.bak" >&2
+        echo "$repo: $config exists; rerun with --force to move it to pr-agents.yaml.bak" >&2
         status=1
         continue
       fi
@@ -48,6 +49,7 @@ for repo in "$@"; do
       mv "$config" "$config.bak"
       echo "$repo: moved $config to $config.bak"
     fi
+    mkdir -p "${config%/*}"
     ln -s "$template" "$config"
     echo "$repo: linked $config"
   fi
