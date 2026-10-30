@@ -38,6 +38,7 @@ Add tests only for critical logic: data integrity, security and authorization bo
 - Verify web UI changes in an actual browser using the agent's available browser tooling.
 - Prefer fast local CLIs for code navigation: use `rg`/ripgrep for content search, `fd` for file discovery, and `ast-grep` for structural code search/refactors before falling back to fragile regex edits.
 - Use `bun` and `bunx` instead of `npm` or `npx`.
+- When work must outlive a tool call or run alongside you (dev servers, watchers, long builds, interactive programs), run it in Herdr, never tmux: `pane -s -- <cmd>` for commands, `agent <name> -s -p '<prompt>'` for agents, `herdr pane read`/`wait-output` to inspect, and close panes you created when done. Prefer the harness's native background execution when it suffices.
 - When fixtures or documentation contain destructive command text, use `edit` or `write`; never embed that text in a Bash heredoc or inline interpreter command. Run validation separately so safety guards do not mistake fixture data for an executable command.
 - Never truncate-redirect (`>`) to a variable-built path; use a literal path, `>>`, or a script that opens its own output. Write multi-line scripts with `write`/`edit` and run them in a separate call.
 - NEVER use `rm`; use `trash` to delete files so removals are recoverable.
