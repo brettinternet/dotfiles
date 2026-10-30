@@ -26,6 +26,12 @@ With `coordination` in `backlog.yaml`, `bl` owns Worklease claims; never call `w
 
 Without coordination, a status is not a claim; do not select an item already in an active status unless it was handed to you.
 
+## Handoffs
+
+A handoff (`bl handoff ID - --session S --json`) records what this session did and where it stopped; it needs a session but no claim. Read prior sessions' handoffs with `bl history ID --json` before resuming an item.
+
+For a linked PR phase, the item is the leading `PREFIX-N` of the PR's head branch, upper-cased (`bl-12-fix-login` is `BL-12`); read the branch from the PR, never the current checkout. Run `bl -C DIR` from a local checkout of the PR's repository, and record one or two lines: what you did and what's next. Pass your harness's session ID (for example `CLAUDE_CODE_SESSION_ID`). Skip silently without a checkout, a session ID, or an item: exit 3 means the branch names no item. Report a failed handoff; never fail the calling pass for one.
+
 ## Items
 
 Keep description, acceptance criteria, Definition of Done, plan, notes, and summary distinct. Record each criterion's verification with `bl ac ID check N --evidence TEXT --if-version V`, never as numbered note lines. Preserve checked entries and stable IDs. Use `blocked_by` for required ordering and `parent` only for grouping. Complete an item only when every criterion has evidence and delivery obligations are met; archive only when requested.

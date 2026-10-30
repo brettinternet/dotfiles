@@ -17,6 +17,8 @@ bl claim ID --session S --json
 bl heartbeat --session S --json
 bl release ID --session S --json
 bl done ID --session S --if-version V --json
+printf '%s\n' 'What I did. Next: ...' | bl handoff ID - --session S --json
+bl history ID --json
 
 bl new 'Outcome title !high #label <BL-7 ^BL-1 ~m-1' --ac 'AC text' --json
 printf '%s\n' 'Context and scope' | bl new 'Outcome title' --body - --json

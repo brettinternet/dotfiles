@@ -5,7 +5,7 @@ argument-hint: '[pr-number | gh-search-qualifiers...] [--reviewer login[,login..
 
 Make one pass over either one PR identified by a single bare PR number in the current repository, or every open PR matching the supplied `gh search prs` qualifiers, then exit. A scheduler owns repetition; do all currently actionable work, but do not wait for CI or reviewers, poll, or schedule another pass. With no selection arguments, match open PRs authored by the authenticated user. Pass search qualifiers through unchanged, including repository and organization scopes such as `repo:organization/repo` and `org:organization`. Name reviewers with the optional, repeatable `--reviewer LOGIN[,LOGIN...]` argument; reviewer arguments are not part of the search. Deduplicate repeated reviewer logins. Reject a PR number combined with qualifiers, a missing reviewer login, or otherwise ambiguous arguments.
 
-This command authorizes comments, reviewer requests, item-scoped fixes, commits, and pushes to each selected PR's existing head branch. Never merge, approve on another person's behalf, dismiss reviews, request changes, force-push, or touch another branch.
+This command authorizes comments, reviewer requests, item-scoped fixes, commits, and pushes to each selected PR's existing head branch, and recording a linked PR phase on its backlog item. Never merge, approve on another person's behalf, dismiss reviews, request changes, force-push, or touch another branch.
 
 ## Select safely
 
@@ -31,5 +31,7 @@ Do not weaken tests, suppress symptoms, make unrelated changes, or argue repeate
 ## Reviewers and report
 
 Once the PR is mergeable, current feedback is clear, and CI has no known failure, request every named reviewer who has neither approved the current head nor a pending request, and confirm each request landed.
+
+For each PR this pass pushed to, commented on, or requested review for, record a linked PR phase through `backlog-source-workflow`.
 
 Report a Markdown table sorted by repository and ascending PR number with the head SHA, action taken this pass, CI and review state, unresolved findings, worktree status, and status: `READY` when mergeable, gating CI is green, feedback is clear, and every named reviewer approved the current head (or none was named); `WAITING` naming the pending CI or reviewer; or `BLOCKED` naming the blocker. Never merge.

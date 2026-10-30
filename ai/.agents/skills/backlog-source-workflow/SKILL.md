@@ -17,6 +17,8 @@ For `bl` sources, let `bl next --claim --start` select and claim as the `bl` ski
 
 Otherwise use provider-native claims or concurrency controls when available. When `WORKLEASE_RUN_ID` is set, a supervising `worklease run` already holds, renews, and on exit releases the Worklease claim for the handed-off item: do not acquire, heartbeat, or release it, use the inherited session for `worklease verify`, and before exiting write `{"outcome":"done|blocked|review|failed","summary":"..."}` to `$WORKLEASE_RUN_RESULT`. Refresh before consequential writes, record useful progress in the provider, and reread after writing. Never create a writable local shadow for remote work.
 
+When a command works a PR without claiming its item (PR follow-up, review), record a linked PR phase only for PRs it acted on: for `bl` sources, record a handoff as the `bl` skill describes. Other sources record nothing.
+
 When refining an item, preserve product intent and stable IDs. Record a bounded next action, observable acceptance, affected surfaces, and genuine dependencies. Split only independently deliverable work; keep tightly coupled steps together.
 
 When unblocking, investigate repository and provider evidence before asking the user. Preserve a blocker only for a real decision, external action, unavailable capability, or unresolved dependency. Record the answer or objective unblock condition where the next agent will find it.
