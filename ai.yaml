@@ -123,6 +123,32 @@
       description: Generate shared skills and Claude command adapters
       stdout: true
       stderr: true
+    - command: |
+        set -eu
+        rev=c1c8a8c1471069fb0e188eeaff69b8e8db6564a8
+        skill_src="$HOME/.local/share/agent-skills/security-audit-$rev"
+        if [ ! -d "$skill_src" ]; then
+          if ! command -v gh >/dev/null 2>&1; then
+            echo 'gh not on PATH; skipping external skills'
+            exit 0
+          fi
+          stage="$(mktemp -d "${TMPDIR:-/tmp}/security-audit-skill.XXXXXX")"
+          gh api "repos/cloudflare/security-audit-skill/tarball/$rev" | tar -xz -C "$stage" --strip-components=1
+          # Explicit invocation only
+          awk '{ print } /^name: security-audit$/ { print "disable-model-invocation: true" }' \
+            "$stage/skills/security-audit/SKILL.md" > "$stage/SKILL.md"
+          mv "$stage/SKILL.md" "$stage/skills/security-audit/SKILL.md"
+          cp "$stage/LICENSE" "$stage/skills/security-audit/"
+          mkdir -p "$(dirname "$skill_src")"
+          mv "$stage/skills/security-audit" "$skill_src"
+          trash "$stage"
+        fi
+        link_skill() { mkdir -p "$1"; ln -sfn "$skill_src" "$1/security-audit"; }
+        if ai/.bin/ai-tool-enabled pi || ai/.bin/ai-tool-enabled codex; then link_skill "$HOME/.agents/skills"; fi
+        if ai/.bin/ai-tool-enabled claude; then link_skill "$HOME/.claude/skills"; fi
+      description: Install pinned external skills
+      stdout: true
+      stderr: true
     - command: ai/.bin/install-agents
       description: Generate Claude, Pi, and Codex agent definitions
       stdout: true
