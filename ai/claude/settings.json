@@ -7,7 +7,7 @@
     "defaultMode": "auto",
     "deny": ["Bash(rm *)"]
   },
-  "model": "opusplan",
+  "model": "opus",
   "fallbackModel": ["sonnet"],
   "autoCompactWindow": 200000,
   "statusLine": {
