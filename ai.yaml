@@ -158,6 +158,7 @@
     ~/.bin/:
       glob: true
       path: ai/.bin/*
+      exclude: [ai/.bin/__pycache__]
     ~/.config/dcg/config.toml: ai/dcg/config.toml
     # Claude
     ~/.claude/CLAUDE.md:

@@ -101,6 +101,7 @@
     ~/.bin/:
       glob: true
       path: base/.bin/*
+      exclude: [base/.bin/__pycache__]
     ~/.functions/:
       glob: true
       path: base/.functions/*
