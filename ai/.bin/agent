@@ -109,6 +109,7 @@ def arguments() -> tuple[argparse.Namespace, list[str]]:
                              "SIGTERM closes the agent's pane")
     herdr.add_argument("--close-on-done", action="store_true",
                        help="stay running; close after observing working then done/idle unless the pane is focused; "
+                            "after completion, focused new work or blocking hands the pane to the user; "
                             "cancel on blocked/unknown")
     herdr.add_argument("--retain-for", metavar="DURATION",
                        help="retain a completed pane before auto-close, e.g. 30m; integer s/m/h (default: 0s)")
@@ -353,6 +354,14 @@ def watch_agent(h, pane: str, name: str, started: dict, *, wait: bool, close: bo
             if not isinstance(current.get("state_change_seq"), int):
                 raise ValueError("Agent state sequence is unavailable; wait cancelled")
             status = current.get("agent_status")
+            if completed and status not in ("done", "idle") and current.get("focused"):
+                # The user continued the finished turn; the pass succeeded and the pane is theirs now.
+                print(json.dumps({"result": {"pane_id": pane, "name": name, "closed": False,
+                                             "reason": "taken_over"}}), flush=True)
+                if wait:
+                    close = False
+                    continue
+                return
             if status not in ("idle", "working", "done"):
                 raise ValueError("Agent is blocked or its state is unknown; wait cancelled")
             if status == "working":

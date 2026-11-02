@@ -144,6 +144,7 @@ One-pass jobs retain completed panes for `AGENT_RETENTION` (default `30m`), over
 `ai/noon/pr-agents.env` is the template. Durations accept integer `s`, `m`, or `h`; `0s` closes immediately.
 Manual closure after observed completion succeeds. New work resets retention, and identity changes or
 blocked/unknown states cancel auto-close. At expiry, a focused pane is left open for manual closure.
+Continuing a completed pass from its focused pane ends the job successfully and leaves the pane to you.
 The Noon job stays running through retention; `AGENT_JOB_TIMEOUT` (default `3h`) must cover work plus
 retention. Daily jobs still wait for process exit and ignore retention.
 

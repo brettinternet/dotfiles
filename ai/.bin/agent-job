@@ -10,7 +10,8 @@
 # A pass is skipped when the fingerprint matches the one taken before the last completed pass,
 # or while the previous pass is still working or blocked; a finished leftover pane is closed first.
 # A focused agent pane is never closed or replaced: launch and close skip, and a pass that finishes
-# while focused keeps its pane for the user to close.
+# while focused keeps its pane for the user to close. Continuing a finished pass from its focused pane
+# ends the run successfully and hands the pane to the user.
 # A noon run whose event data names a PR, e.g. noon run NAME --data '{"pr":123}', runs PR_PROMPT
 # once as agent NAME-123 instead: it ignores GATE, --daily, and the last fingerprint, and it fails
 # instead of skipping when that agent is busy or focused. Without --pr such a run fails.

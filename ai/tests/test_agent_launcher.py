@@ -345,6 +345,8 @@ class AgentLauncherTests(unittest.TestCase):
             ("manual", [done, done, {"error_code": "agent_not_found"}], 0, False),
             ("resumed", [done, done, working, {**done, "state_change_seq": 5}], 0, True),
             ("focused", [done, done, {**done, "focused": True}], 0, False),
+            ("taken_over", [done, done, {**working, "focused": True}], 0, False),
+            ("taken_over_blocked", [done, done, {**done, "agent_status": "blocked", "focused": True}], 0, False),
             ("replaced", [done, done, {**done, "terminal_id": "replacement"}], 1, False),
             ("blocked", [done, done, {**done, "agent_status": "blocked"}], 1, False),
         ]
@@ -361,6 +363,8 @@ class AgentLauncherTests(unittest.TestCase):
                     self.assertGreaterEqual(elapsed, 2 if label == "resumed" else 1)
                 if label == "manual":
                     self.assertEqual("already_closed", json.loads(result.stdout.splitlines()[-1])["result"]["reason"])
+                if label.startswith("taken_over"):
+                    self.assertEqual("taken_over", json.loads(result.stdout.splitlines()[-1])["result"]["reason"])
 
     def test_retention_duration_validation(self) -> None:
         self.watch_identity()
