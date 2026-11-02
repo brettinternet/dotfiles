@@ -35,6 +35,7 @@ Add tests only for critical logic: data integrity, security and authorization bo
 
 - Use `gh` for all GitHub operations, including `gh api`/`gh api graphql` when no subcommand covers it; never curl the API or open browser URLs.
 - Use `mise exec <tool> -- <cmd>` when a tool is installed via mise and may not be in PATH.
+- Never override `MISE_DATA_DIR`, `MISE_CACHE_DIR`, or `MISE_CONFIG_DIR`, and never run `mise install`/`mise use` just to test whether a tool resolves; it desyncs mise from the shims on PATH and can recurse into a runaway process tree. Check release asset names with `gh release view` instead.
 - Verify web UI changes in an actual browser using the agent's available browser tooling.
 - Prefer fast local CLIs for code navigation: use `rg`/ripgrep for content search, `fd` for file discovery, and `ast-grep` for structural code search/refactors before falling back to fragile regex edits.
 - Use `bun` and `bunx` instead of `npm` or `npx`.

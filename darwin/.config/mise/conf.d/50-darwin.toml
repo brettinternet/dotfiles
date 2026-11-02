@@ -15,14 +15,14 @@ hunk = "github:modem-dev/hunk"
 # dev
 go = { version = "latest", postinstall = 'go env -w GOPATH="$HOME/.go"' }
 rust = { version = "latest", postinstall = "rustup component add rust-analyzer" }
-ruby = "latest"
 bun = "latest"
 k9s = "latest"
 hunk = { version = "latest", matching_regex = '^hunkdiff-darwin-arm64\.tar\.gz$', strip_components = 1 }
 gh = { version = "latest", postinstall = "gh extension install github/gh-stack --force" }
 biome = "latest"
 "vfox:jdx/vfox-eza" = "latest"
-"gem:vimgolf" = { version = "latest", depends = ["ruby"] }
+# No ruby or gem: backend tools. The gem backend runs `gem sources`, and `gem` on
+# PATH is a mise shim; if mise can't resolve ruby, the shim re-enters mise forever.
 
 ast-grep = "latest"
 
