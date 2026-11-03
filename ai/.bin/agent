@@ -110,7 +110,7 @@ def arguments() -> tuple[argparse.Namespace, list[str]]:
     herdr.add_argument("--close-on-done", action="store_true",
                        help="stay running; close after observing working then done/idle unless the pane is focused; "
                             "after completion, focused new work or blocking hands the pane to the user; "
-                            "cancel on blocked/unknown")
+                            "report blocking once per episode and keep waiting; cancel on unknown")
     herdr.add_argument("--retain-for", metavar="DURATION",
                        help="retain a completed pane before auto-close, e.g. 30m; integer s/m/h (default: 0s)")
     herdr.add_argument("-p", "--prompt", metavar="TEXT",
@@ -333,6 +333,7 @@ def watch_agent(h, pane: str, name: str, started: dict, *, wait: bool, close: bo
         close = False
         print("agent: auto-close cancelled (incomplete identity); still waiting for process exit", file=sys.stderr)
     working = False
+    blocked = False
     deadline = None
     current = started
     while True:
@@ -362,9 +363,13 @@ def watch_agent(h, pane: str, name: str, started: dict, *, wait: bool, close: bo
                     close = False
                     continue
                 return
-            if status not in ("idle", "working", "done"):
-                raise ValueError("Agent is blocked or its state is unknown; wait cancelled")
-            if status == "working":
+            if status not in ("idle", "working", "done", "blocked"):
+                raise ValueError("Agent state is unknown; wait cancelled")
+            if status == "blocked" and not blocked:
+                # The agent waits on the user; report it and keep watching for the answered turn to finish.
+                print(json.dumps({"result": {"pane_id": pane, "name": name, "blocked": True}}), flush=True)
+            blocked = status == "blocked"
+            if status in ("working", "blocked"):
                 working = True
                 deadline = None
                 completed = False

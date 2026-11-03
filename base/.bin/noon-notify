@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Noon on_failure hook: tells you a scheduled job failed, once per failure streak, through Tell.
 # Quietly does nothing when no Tell config routes the message; never fails the hook.
-#   on_failure: [noon-notify, It may be waiting on you.]
+#   on_failure: [noon-notify]
+# agent-job also calls it with NOON_STATUS set when an agent blocks on you.
 # Loads ~/.envrc via direnv so delivery secrets such as APPRISE_URLS stay out of config.
 set -u
 

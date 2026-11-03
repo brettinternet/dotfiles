@@ -143,7 +143,8 @@ One-pass jobs retain completed panes for `AGENT_RETENTION` (default `30m`), over
 `BABYSIT_RETENTION` or `REVIEW_RETENTION`. Configure these in each repo's `.git/noon.d/pr-agents.env`;
 `ai/noon/pr-agents.env` is the template. Durations accept integer `s`, `m`, or `h`; `0s` closes immediately.
 Manual closure after observed completion succeeds. New work resets retention, and identity changes or
-blocked/unknown states cancel auto-close. At expiry, a focused pane is left open for manual closure.
+unknown states cancel auto-close. A blocked agent prints a `"blocked": true` result once per episode and
+keeps waiting; `agent-job` forwards it to `noon-notify`, and the job succeeds once the answered turn finishes. At expiry, a focused pane is left open for manual closure.
 Continuing a completed pass from its focused pane ends the job successfully and leaves the pane to you.
 The Noon job stays running through retention; `AGENT_JOB_TIMEOUT` (default `3h`) must cover work plus
 retention. Daily jobs still wait for process exit and ignore retention.

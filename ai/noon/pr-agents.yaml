@@ -36,7 +36,7 @@ jobs:
         ([.statusCheckRollup[] | (.conclusion | select(. != "")) // .status // .state] | unique)]) | tojson end'
     noop_exit_code: 3
     timeout: "${AGENT_JOB_TIMEOUT:-3h}"
-    on_failure: [noon-notify, It may be waiting on you.]
+    on_failure: [noon-notify]
     missed: skip
 
   review:
@@ -67,5 +67,5 @@ jobs:
         --json number,headRefOid,updatedAt --jq '.[] | [.number, .headRefOid, .updatedAt] | tojson'; done
     noop_exit_code: 3
     timeout: "${AGENT_JOB_TIMEOUT:-3h}"
-    on_failure: [noon-notify, It may be waiting on you.]
+    on_failure: [noon-notify]
     missed: skip

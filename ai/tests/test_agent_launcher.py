@@ -348,7 +348,9 @@ class AgentLauncherTests(unittest.TestCase):
             ("taken_over", [done, done, {**working, "focused": True}], 0, False),
             ("taken_over_blocked", [done, done, {**done, "agent_status": "blocked", "focused": True}], 0, False),
             ("replaced", [done, done, {**done, "terminal_id": "replacement"}], 1, False),
-            ("blocked", [done, done, {**done, "agent_status": "blocked"}], 1, False),
+            # A blocked agent waits on the user; the job must outlast the answer instead of failing.
+            ("blocked", [{**done, "agent_status": "blocked"}, {**done, "agent_status": "blocked"}, working,
+                         done, done, {**done, "agent_status": "blocked"}, {**done, "state_change_seq": 5}], 0, True),
         ]
         for label, snapshots, code, closed in cases:
             with self.subTest(label=label):
@@ -363,6 +365,8 @@ class AgentLauncherTests(unittest.TestCase):
                     self.assertGreaterEqual(elapsed, 2 if label == "resumed" else 1)
                 if label == "manual":
                     self.assertEqual("already_closed", json.loads(result.stdout.splitlines()[-1])["result"]["reason"])
+                if label == "blocked":
+                    self.assertEqual(2, result.stdout.count('"blocked": true'))
                 if label.startswith("taken_over"):
                     self.assertEqual("taken_over", json.loads(result.stdout.splitlines()[-1])["result"]["reason"])
 
@@ -390,7 +394,6 @@ class AgentLauncherTests(unittest.TestCase):
         working = {**identity, "agent_status": "working", "state_change_seq": 2}
         done = {**identity, "agent_status": "done", "state_change_seq": 3}
         cases = [
-            {"snapshots": [working, {**done, "agent_status": "blocked"}]},
             {"snapshots": [working, {**done, "agent_status": "unknown"}]},
             {"snapshots": [working, done, {**done, "agent_session": {"value": "/session/two"}}]},
             {"snapshots": [working, done, {**working, "state_change_seq": 4}]},
@@ -399,7 +402,6 @@ class AgentLauncherTests(unittest.TestCase):
             {"snapshots": [identity, {"error_code": "agent_not_found"}]},
             {"started": {}},
             {"started": {**working, "state_change_seq": None}, "snapshots": [done, done]},
-            {"started": {**identity, "agent_status": "blocked"}, "snapshots": [working, done, done]},
         ]
         for state in cases:
             with self.subTest(state=state):
@@ -436,7 +438,7 @@ class AgentLauncherTests(unittest.TestCase):
                             self.assertEqual(0, waiter.returncode, stderr)
                             if close:
                                 self.assertIn("auto-close cancelled", stderr)
-                            result = json.loads(stdout)["result"]
+                            result = json.loads(stdout.splitlines()[-1])["result"]
                             self.assertTrue(result["exited"])
                             self.assertIsNone(result["exit_code"])
                             self.assertFalse(any(call[:2] == ["pane", "close"] for call in self.commands()))

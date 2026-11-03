@@ -9,6 +9,8 @@
 # nothing to do, and a nonzero exit fails the run so a broken gate is not mistaken for idle.
 # A pass is skipped when the fingerprint matches the one taken before the last completed pass,
 # or while the previous pass is still working or blocked; a finished leftover pane is closed first.
+# A pass that blocks on the user notifies through noon-notify and keeps running until the answered
+# turn finishes, bounded by the job timeout.
 # A focused agent pane is never closed or replaced: launch and close skip, and a pass that finishes
 # while focused keeps its pane for the user to close. Continuing a finished pass from its focused pane
 # ends the run successfully and hands the pane to the user.
@@ -160,10 +162,13 @@ case $mode in
       exit 3
     fi
     [[ $status == absent ]] || "$HOME/.bin/agent" --close "$live" --herdr-session default
-    # Fails, keeping the pane, when the agent blocks on the user.
     retention_var=$(printf %s "$name" | tr '[:lower:]-' '[:upper:]_')_RETENTION
     "${agent[@]}" --close-on-done --retain-for "${!retention_var:-${AGENT_RETENTION:-30m}}" \
-      --prompt "$prompt" -- "${native[@]}"
+      --prompt "$prompt" -- "${native[@]}" | while IFS= read -r line; do
+      printf '%s\n' "$line"
+      [[ $line != *'"blocked": true'* ]] ||
+        NOON_CONSECUTIVE_FAILURES=1 NOON_STATUS="is waiting on you in $live" noon-notify
+    done
     [[ -z $pr ]] || exit 0
     mkdir -p "${state%/*}"
     printf '%s' "$fingerprint" >"$state"
