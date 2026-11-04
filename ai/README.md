@@ -58,6 +58,8 @@ pi mcp list                   # then /reload
 
 MCP servers: `~/.pi/agent/mcp.json` (personal, unmanaged) or `.pi/mcp.json` (project, git-ignored). Shared `.mcp.json` is not read; copy entries from `project/.mcp.json`.
 
+Claude gets `chrome-devtools` at user scope from `make ai`, attached to `http://127.0.0.1:9222`. Start the browser through Chromium Default with remote debugging ([darwin/README.md](../darwin/README.md#remote-debugging-of-the-everyday-browser)).
+
 ## Command approvals (Claude and Codex)
 
 Claude’s DCG hook requests native approval for dangerous commands, including in

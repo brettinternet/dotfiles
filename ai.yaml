@@ -68,8 +68,11 @@
           for name in time chrome-devtools git; do
             claude mcp remove "$name" --scope user >/dev/null 2>&1 || true
           done
+          # Attach to the browser chromium-apps starts with remote debugging (no consent prompt).
+          claude mcp add --scope user chrome-devtools -- \
+            bunx -y chrome-devtools-mcp@latest --browserUrl=http://127.0.0.1:9222 >/dev/null
         fi
-      description: Remove retired global MCP servers
+      description: Converge global Claude MCP servers
       stdout: true
       stderr: true
 
