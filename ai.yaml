@@ -65,14 +65,13 @@
       stderr: true
     - command: |
         if ai/.bin/ai-tool-enabled claude && command -v claude >/dev/null 2>&1; then
-          for name in time chrome-devtools git; do
-            claude mcp remove "$name" --scope user >/dev/null 2>&1 || true
-          done
           # Attach to the browser chromium-apps starts with remote debugging (no consent prompt).
+          # Re-adding refreshes the definition; add refuses an existing name.
+          claude mcp remove chrome-devtools --scope user >/dev/null 2>&1 || true
           claude mcp add --scope user chrome-devtools -- \
             bunx -y chrome-devtools-mcp@latest --browserUrl=http://127.0.0.1:9222 >/dev/null
         fi
-      description: Converge global Claude MCP servers
+      description: Install the global Claude chrome-devtools MCP server
       stdout: true
       stderr: true
 
