@@ -82,7 +82,7 @@ end
 
 -- YouTube
 
-local youtubeBrowserBundleID = "org.chromium.Chromium"
+local youtubeBrowserBundleID = require("browser").bundleID
 local youtubeTabPattern = "youtube\\.com|youtu\\.be"
 local youtubeHomeUrl = "https://www.youtube.com"
 local lastPausedMedia = nil

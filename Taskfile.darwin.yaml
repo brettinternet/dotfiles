@@ -23,8 +23,18 @@ tasks:
     cmd: python3 "{{.ROOT_DIR}}/darwin/scripts/install-lid-awake.py" {{.CLI_ARGS}}
 
   browser:
-    desc: Install default browser handler with custom arguments
-    cmd: chromium-apps --install-url-handler --enable-remote-debugging --set-default
+    desc: Install the default browser handler with remote debugging (-- --browser chrome on Chrome-only Macs)
+    cmd: chromium-apps --install-url-handler --enable-remote-debugging --set-default {{.CLI_ARGS}}
+
+  browser-entra-sso:
+    desc: Enable Entra PRT web SSO in Chromium via Company Portal (managed Macs whose IT allows ungoogled-chromium)
+    preconditions:
+      - msg: "Company Portal not installed; unmanaged Macs do not need this task"
+        sh: test -f "/Applications/Company Portal.app/Contents/Resources/com.microsoft.browsercore.json"
+    cmds:
+      - mkdir -p "$HOME/Library/Application Support/Chromium/NativeMessagingHosts"
+      - cp "/Applications/Company Portal.app/Contents/Resources/com.microsoft.browsercore.json" "$HOME/Library/Application Support/Chromium/NativeMessagingHosts/"
+      - echo "Copied; fully quit Chromium (Cmd-Q) so the manifest loads on next start"
 
   window-rules:
     desc: Install the per-user window-rules agent (defers the MDM restart prompt; needs Device Control and Data Access)

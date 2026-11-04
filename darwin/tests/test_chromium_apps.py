@@ -28,7 +28,7 @@ class ChromiumAppsTests(unittest.TestCase):
 
     def generate(self, apps):
         self.config.write_text(json.dumps({"apps": apps}))
-        module.generate(self.config, self.home, self.browser)
+        module.generate(self.config, self.home, module.BROWSERS["chromium"]._replace(executable=self.browser))
 
     def test_launch_arguments_isolation_icons_and_rename(self):
         icon = self.home / "custom.icns"
@@ -92,11 +92,12 @@ class ChromiumAppsTests(unittest.TestCase):
         self.assertEqual(saved.read_bytes(), before)
 
     def test_missing_config_and_browser(self):
-        module.generate(self.config, self.home, self.browser)
+        module.generate(self.config, self.home)
         self.assertFalse((self.home / "Applications").exists())
         self.config.write_text('{"apps": [{"id": "one", "name": "One"}]}')
+        missing = module.BROWSERS["chrome"]._replace(executable=self.home / "missing")
         with self.assertRaisesRegex(ValueError, "executable not found"):
-            module.generate(self.config, self.home, self.home / "missing")
+            module.generate(self.config, self.home, missing)
         self.assertFalse((self.home / "Applications").exists())
 
 
@@ -133,7 +134,7 @@ class SetupTests(unittest.TestCase):
             home = Path(temporary)
             bundle = home / "Applications/Chromium Default.app"
             bundle.mkdir(parents=True)
-            browser = module.BROWSER.parent.parent.parent
+            browser = module.BROWSERS["chrome"].app
             for existing, expected in (
                 ([], ["--add", str(bundle)]),
                 ([browser], ["--add", str(bundle), "--replacing", str(browser)]),
@@ -146,7 +147,7 @@ class SetupTests(unittest.TestCase):
                     with self.subTest(existing=existing, as_url=as_url), \
                             patch.object(module.shutil, "which", return_value="dockutil"), \
                             patch.object(module.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, listing)) as run:
-                        module.pin_to_dock(home)
+                        module.pin_to_dock(home, module.BROWSERS["chrome"])
                         self.assertEqual(run.call_count, 2 if expected else 1)
                         if expected:
                             self.assertEqual(run.call_args.args[0], ["dockutil"] + expected)
@@ -168,11 +169,11 @@ class URLHandlerTests(unittest.TestCase):
             recorder.chmod(0o755)
             source = Path(module.__file__).with_name("chromium-url-handler.swift").read_text()
             source = source.replace('"/usr/bin/open"', json.dumps(str(recorder)))
-            browser = home / "Chromium.app"
-            executable = browser / "Contents/MacOS/Chromium"
+            app = home / "Google Chrome.app"
+            executable = app / "Contents/MacOS/Google Chrome"
             executable.parent.mkdir(parents=True)
             executable.symlink_to(recorder)
-            source = source.replace('"/Applications/Chromium.app"', json.dumps(str(browser)))
+            browser = module.BROWSERS["chrome"]._replace(app=app, executable=executable)
             script = home / "chromium-url-handler.swift"
             script.write_text(source)
             bundle = home / "Applications/Chromium Default.app"
@@ -182,10 +183,8 @@ class URLHandlerTests(unittest.TestCase):
                     return subprocess.CompletedProcess(args, 0)
                 return run(args, **kwargs)
 
-            expected = [
-                "-n", "-a", str(browser), "--args",
-                f"--user-data-dir={Path.home()}/Library/Application Support/Chromium",
-            ]
+            # Chrome refuses remote debugging on its default data directory.
+            data_dirs = {False: "Google/Chrome", True: "Google/Chrome-Remote-Debugging"}
             url = "https://example.org/?q=one's%20two&literal=$(echo%20unexpected)"
             document = home / "one's $(echo unexpected).xhtml"
             document.write_text("<html/>")
@@ -193,7 +192,11 @@ class URLHandlerTests(unittest.TestCase):
                 with self.subTest(enabled=enabled), \
                         patch.object(module, "__file__", str(home / "chromium-apps.py")), \
                         patch.object(module.subprocess, "run", side_effect=without_registration):
-                    module.install_url_handler(home, remote_debugging=enabled)
+                    module.install_url_handler(home, browser, remote_debugging=enabled)
+                expected = [
+                    "-n", "-a", str(app), "--args",
+                    f"--user-data-dir={home}/Library/Application Support/{data_dirs[enabled]}",
+                ]
                 # Updating must replace the bundle, not retain old AppleScript resources.
                 self.assertFalse((bundle / "Contents/Resources/Scripts").exists())
                 subprocess.run(["codesign", "--verify", "--deep", "--strict", str(bundle)], check=True)

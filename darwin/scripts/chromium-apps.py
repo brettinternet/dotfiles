@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate local macOS Chromium launchers from a private JSON configuration."""
+"""Generate local macOS Chromium or Chrome launchers from a private JSON configuration."""
 
 import argparse
 import json
@@ -12,14 +12,53 @@ import shlex
 import shutil
 import subprocess
 import tempfile
+from typing import NamedTuple
 from urllib.parse import unquote, urlsplit
 
 
 PREFIX = "local.chromium-apps."
-BROWSER = Path("/Applications/Chromium.app/Contents/MacOS/Chromium")
 
 
-def generate(config, home, browser=BROWSER):
+class Browser(NamedTuple):
+    name: str
+    app: Path
+    executable: Path
+    bundle_id: str
+    # Relative to ~/Library/Application Support.
+    data_dir: str
+    debug_data_dir: str
+    profiles_dir: str
+
+
+BROWSERS = {
+    "chromium": Browser("Chromium", Path("/Applications/Chromium.app"),
+                        Path("/Applications/Chromium.app/Contents/MacOS/Chromium"),
+                        "org.chromium.Chromium", "Chromium", "Chromium", "Chromium-Profiles"),
+    # Chrome 136+ ignores --remote-debugging-port on its default data directory.
+    "chrome": Browser("Google Chrome", Path("/Applications/Google Chrome.app"),
+                      Path("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"),
+                      "com.google.Chrome", "Google/Chrome", "Google/Chrome-Remote-Debugging",
+                      "Google/Chrome-Profiles"),
+}
+
+
+def default_browser(home):
+    """Use the installed handler's browser, else Chromium, else Chrome when only Chrome exists."""
+    try:
+        with (home / "Applications/Chromium Default.app/Contents/Info.plist").open("rb") as source:
+            bundle_id = plistlib.load(source).get("BrowserBundleIdentifier")
+    except (OSError, ValueError, AttributeError, plistlib.InvalidFileException):
+        bundle_id = None
+    for key, browser in BROWSERS.items():
+        if browser.bundle_id == bundle_id:
+            return key
+    if not os.access(BROWSERS["chromium"].executable, os.X_OK) \
+            and os.access(BROWSERS["chrome"].executable, os.X_OK):
+        return "chrome"
+    return "chromium"
+
+
+def generate(config, home, browser=BROWSERS["chromium"]):
     if not config.exists():
         print(f"No configuration at {config}; nothing to generate.")
         return
@@ -74,18 +113,18 @@ def generate(config, home, browser=BROWSER):
                 if (previous / relative).is_symlink():
                     raise ValueError(f"Refusing to update symlink inside {previous}")
         plans.append((app_id, name, icon, previous, destination))
-    if plans and not os.access(browser, os.X_OK):
-        raise ValueError(f"Chromium executable not found: {browser}")
+    if plans and not os.access(browser.executable, os.X_OK):
+        raise ValueError(f"{browser.name} executable not found: {browser.executable}")
     for app_id, name, icon, previous, destination in plans:
         if previous != destination and previous.exists():
             previous.rename(destination)
         contents = destination / "Contents"
         (contents / "MacOS").mkdir(parents=True, exist_ok=True)
         (contents / "Resources").mkdir(exist_ok=True)
-        profile = home / "Library/Application Support/Chromium-Profiles" / app_id
+        profile = home / "Library/Application Support" / browser.profiles_dir / app_id
         executable = contents / "MacOS/launch"
         executable.write_text(
-            "#!/bin/sh\nexec " + shlex.quote(str(browser)) + " "
+            "#!/bin/sh\nexec " + shlex.quote(str(browser.executable)) + " "
             + shlex.quote(f"--user-data-dir={profile}") + ' "$@"\n'
         )
         executable.chmod(0o755)
@@ -98,8 +137,8 @@ def generate(config, home, browser=BROWSER):
             "CFBundleVersion": "1",
             "ChromiumAppsID": app_id,
         }
-        # Use Chromium's icon when no custom icon is configured.
-        icon = icon or browser.parent.parent / "Resources/app.icns"
+        # Use the browser's icon when no custom icon is configured.
+        icon = icon or browser.executable.parent.parent / "Resources/app.icns"
         if icon.is_file():
             shutil.copyfile(icon, contents / "Resources/app.icns")
             info["CFBundleIconFile"] = "app.icns"
@@ -108,7 +147,7 @@ def generate(config, home, browser=BROWSER):
         print(f"Generated {destination} (profile: {profile})")
 
 
-def install_url_handler(home, remote_debugging=False):
+def install_url_handler(home, browser=BROWSERS["chromium"], remote_debugging=False):
     """Build a URL-event receiver; default-browser selection remains explicit."""
     destination = home / "Applications/Chromium Default.app"
     identifier = "local.chromium-default-url-handler"
@@ -122,6 +161,10 @@ def install_url_handler(home, remote_debugging=False):
             raise ValueError(f"Refusing to overwrite unmanaged app: {destination}") from error
         if not isinstance(old, dict) or old.get("CFBundleIdentifier") != identifier:
             raise ValueError(f"Refusing to overwrite unmanaged app: {destination}")
+    if not os.access(browser.executable, os.X_OK):
+        raise ValueError(f"{browser.name} executable not found: {browser.executable}")
+    data_dir = home / "Library/Application Support" / (
+        browser.debug_data_dir if remote_debugging else browser.data_dir)
     script = Path(__file__).resolve().with_name("chromium-url-handler.swift")
     # Build on the destination filesystem before replacing the managed bundle.
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -137,6 +180,9 @@ def install_url_handler(home, remote_debugging=False):
         info = {
             "CFBundleExecutable": "launch",
             "CFBundlePackageType": "APPL",
+            "BrowserApplication": str(browser.app),
+            "BrowserBundleIdentifier": browser.bundle_id,
+            "BrowserUserDataDir": str(data_dir),
             "ChromiumRemoteDebuggingEnabled": remote_debugging,
             "CFBundleIdentifier": identifier,
             "CFBundleName": "Chromium Default",
@@ -155,7 +201,7 @@ def install_url_handler(home, remote_debugging=False):
                 "CFBundleURLSchemes": ["http", "https"],
             }],
         }
-        icon = BROWSER.parent.parent / "Resources/app.icns"
+        icon = browser.executable.parent.parent / "Resources/app.icns"
         if icon.is_file():
             (contents / "Resources").mkdir()
             shutil.copyfile(icon, contents / "Resources/app.icns")
@@ -176,11 +222,13 @@ def install_url_handler(home, remote_debugging=False):
         "/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister",
         "-f", str(destination),
     ], check=True)
-    print(f"Installed {destination}")
+    print(f"Installed {destination} for {browser.name} (data: {data_dir})")
     print("Select Chromium Default in System Settings → Desktop & Dock → Default web browser.")
     if remote_debugging:
         print("Remote debugging enabled on loopback port 9222: local processes can access your browser.")
-        print("Quit Chromium normally, then open Chromium Default to apply the launch flags.")
+        if browser.debug_data_dir != browser.data_dir:
+            print(f"{browser.name} refuses remote debugging on its default profile; sign in to this one.")
+        print(f"Quit {browser.name} normally, then open Chromium Default to apply the launch flags.")
 
 
 def set_default_browser(home):
@@ -190,7 +238,7 @@ def set_default_browser(home):
                     str(home / "Applications/Chromium Default.app")], check=True)
 
 
-def pin_to_dock(home):
+def pin_to_dock(home, browser=BROWSERS["chromium"]):
     bundle = home / "Applications/Chromium Default.app"
     if not bundle.is_dir():
         raise ValueError("Install Chromium Default with --install-url-handler first")
@@ -198,7 +246,7 @@ def pin_to_dock(home):
     if not dockutil:
         raise ValueError("Dock setup requires dockutil (brew install dockutil)")
     # Match the real browser by URL, not a potentially unrelated tile's label.
-    browser = BROWSER.parent.parent.parent
+    browser = browser.app
     listing = subprocess.run([dockutil, "--list"], check=True, capture_output=True, text=True)
     paths = set()
     for line in listing.stdout.splitlines():
@@ -220,26 +268,29 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", type=Path,
                         default=Path.home() / ".config/chromium-apps/config.json")
+    parser.add_argument("--browser", choices=BROWSERS, default=default_browser(Path.home()),
+                        help="Browser to launch (default: the installed handler's, else chromium if installed)")
     parser.add_argument("--install-url-handler", action="store_true",
-                        help="Install Chromium Default.app for base-profile HTTP/HTTPS routing")
+                        help="Install Chromium Default.app to route HTTP/HTTPS to the base browser profile")
     parser.add_argument("--enable-remote-debugging", action="store_true",
                         help="With --install-url-handler, enable unauthenticated loopback CDP on port 9222")
     parser.add_argument("--set-default", action="store_true",
                         help="Set and verify Chromium Default as the HTTP/HTTPS handler (macOS may prompt)")
     parser.add_argument("--pin-to-dock", action="store_true",
-                        help="Pin Chromium Default, replacing a Chromium tile if present (requires dockutil)")
+                        help="Pin Chromium Default, replacing the browser's tile if present (requires dockutil)")
     args = parser.parse_args()
     if args.enable_remote_debugging and not args.install_url_handler:
         parser.error("--enable-remote-debugging requires --install-url-handler")
+    browser = BROWSERS[args.browser]
     try:
         if args.install_url_handler:
-            install_url_handler(Path.home(), remote_debugging=args.enable_remote_debugging)
+            install_url_handler(Path.home(), browser, remote_debugging=args.enable_remote_debugging)
         if args.set_default:
             set_default_browser(Path.home())
         if args.pin_to_dock:
-            pin_to_dock(Path.home())
+            pin_to_dock(Path.home(), browser)
         if not (args.install_url_handler or args.set_default or args.pin_to_dock):
-            generate(args.config.expanduser(), Path.home())
+            generate(args.config.expanduser(), Path.home(), browser)
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
         parser.exit(1, f"chromium-apps: {error}\n")
 

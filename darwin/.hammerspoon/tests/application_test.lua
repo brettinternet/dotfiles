@@ -81,6 +81,7 @@ local activation_callback
 local valid_icon = false
 local image_load_calls = 0
 _G.hs = {
+  plist = { read = function() end },
   application = {
     get = function()
       return running_application

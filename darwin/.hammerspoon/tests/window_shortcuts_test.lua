@@ -26,6 +26,7 @@ local app = {
 }
 local frontmost = app
 _G.hs = {
+  plist = { read = function() end },
   keycodes = {
     map = {
       left = 123,

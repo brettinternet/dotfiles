@@ -2,7 +2,7 @@
 
 ## Isolated Chromium launchers
 
-Needs `/Applications/Chromium.app` (Brewfile's ungoogled-chromium).
+Needs `/Applications/Chromium.app` (Brewfile's ungoogled-chromium) or `/Applications/Google Chrome.app`. Every `chromium-apps` command takes `--browser chromium|chrome`; it defaults to Chromium, or Chrome when Chromium is missing.
 
 ```sh
 mkdir -p ~/.config/chromium-apps/icons
@@ -14,11 +14,11 @@ chromium-apps                     # → ~/Applications/<name>.app
 { "apps": [{ "id": "work", "name": "Work", "icon": "~/.config/chromium-apps/icons/work.icns" }] }
 ```
 
-Each app's data lives in `~/Library/Application Support/Chromium-Profiles/<id>`; keep `id` stable when renaming. Removing an entry leaves its app and data. Separate data, **not a sandbox**.
+Each app's data lives in `~/Library/Application Support/Chromium-Profiles/<id>` (Chrome: `Google/Chrome-Profiles/<id>`); keep `id` stable when renaming. Removing an entry leaves its app and data. Separate data, **not a sandbox**.
 
 ### Hammerspoon media control
 
-`make darwin` installs Chromium initial preferences enabling **View → Developer → Allow JavaScript from Apple Events** for first-run setup. This lets local automation execute JavaScript in browser tabs. Existing profiles must enable the setting manually; their live preferences are not overwritten.
+`make darwin` installs Chromium initial preferences enabling **View → Developer → Allow JavaScript from Apple Events** for first-run setup. This lets local automation execute JavaScript in browser tabs. Existing profiles, and all Chrome profiles, must enable the setting manually; their live preferences are not overwritten.
 
 The same file sets WebRTC to `default_public_interface_only`. ungoogled-chromium defaults to `disable_non_proxied_udp`, which leaves voice calls (Discord, Meet) stuck connecting without a proxy. Existing profiles need `webrtc.ip_handling_policy` set in their `Default/Preferences` while Chromium is quit.
 
@@ -28,23 +28,39 @@ The same file sets WebRTC to `default_public_interface_only`. ungoogled-chromium
 chromium-apps --install-url-handler --set-default   # needs Xcode CLT
 ```
 
-Installs **Chromium Default**, an HTTP/HTTPS handler that opens base Chromium even while isolated profiles run. Undo by picking another default browser.
+Installs **Chromium Default**, an HTTP/HTTPS handler that opens the base browser profile even while isolated profiles run. It records the chosen browser, which Hammerspoon also targets. Undo by picking another default browser.
 
 ### Remote debugging of the everyday browser
 
 ```sh
 make darwin
-chromium-apps --install-url-handler --enable-remote-debugging --set-default --pin-to-dock
-# quit Chromium, open "Chromium Default", then:
+task setup:browser                         # or: -- --browser chrome
+chromium-apps --pin-to-dock                # optional; pass the same --browser
+# quit the browser, open "Chromium Default", then:
 curl -s http://127.0.0.1:9222/json/version
 ```
 
-MCP config: `--browserUrl=http://127.0.0.1:9222` (not `--autoConnect`). Hammerspoon and Stream Deck launch through the wrapper. Opening `Chromium.app` directly skips the flag.
+MCP config: `--browserUrl=http://127.0.0.1:9222` (not `--autoConnect`). Hammerspoon and Stream Deck launch through the wrapper. Opening the browser app directly skips the flag.
+
+Chrome 136+ ignores the flag on its default data directory, so Chrome debugging uses `~/Library/Application Support/Google/Chrome-Remote-Debugging`; sign in there once. Chromium keeps its default profile. Managed Chrome can also block it with the `RemoteDebuggingAllowed` policy.
 
 > [!WARNING]
 > Port 9222 is unauthenticated: any local process gets your signed-in browser. Keep it on loopback.
 
-Disable: rerun `chromium-apps --install-url-handler` without `--enable-remote-debugging`, then restart Chromium.
+Disable: rerun `chromium-apps --install-url-handler` without `--enable-remote-debugging`, then restart the browser. Chrome then returns to its default profile.
+
+### Entra SSO on managed Macs
+
+For managed Macs where IT supports ungoogled-chromium, this gives Chromium Entra PRT-based web SSO. Chrome-only Macs need none of this.
+
+```sh
+task setup:browser-entra-sso
+```
+
+Company Portal ships a `com.microsoft.browsercore.json` native-messaging manifest but only installs it for Chrome/Edge; Chromium-brand builds need a copy in their own `NativeMessagingHosts` directory so the Microsoft Single Sign On extension can reach the broker. The task copies it into the base Chromium profile, which Chromium Default also uses; isolated `Chromium-Profiles/<id>` apps don't get it. Fully quit Chromium afterwards (native messaging hosts are resolved at startup). Chrome reads Company Portal's system-wide `/Library/Google/Chrome/NativeMessagingHosts` copy for every profile.
+
+> [!NOTE]
+> The copy only enables the extension → broker path. A tenant's SSO profile may still reject fresh sign-ins at the broker's browser-signature allowlist (Google/Microsoft/Mozilla/Apple team IDs); ungoogled-chromium passes only if IT has allowlisted it. Existing sessions keep working either way.
 
 ```sh
 python3 -m unittest discover -s darwin/tests

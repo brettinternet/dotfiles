@@ -33,13 +33,16 @@ final class ChromiumURLHandler: NSObject, NSApplicationDelegate {
     }
 
     private func launchChromium(_ target: String?) {
-        let browser = "/Applications/Chromium.app"
-        guard FileManager.default.isExecutableFile(atPath: browser + "/Contents/MacOS/Chromium") else {
-            report("Chromium executable not found: \(browser)")
+        // chromium-apps records the machine's browser and profile at install time.
+        guard let browser = Bundle.main.object(forInfoDictionaryKey: "BrowserApplication") as? String,
+              let profile = Bundle.main.object(forInfoDictionaryKey: "BrowserUserDataDir") as? String else {
+            report("Missing browser settings; reinstall with chromium-apps --install-url-handler.")
             return
         }
-        let profile = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent("Library/Application Support/Chromium").path
+        guard FileManager.default.fileExists(atPath: browser) else {
+            report("Browser not found: \(browser)")
+            return
+        }
         var arguments = ["-n", "-a", browser, "--args", "--user-data-dir=\(profile)"]
         if Bundle.main.object(forInfoDictionaryKey: "ChromiumRemoteDebuggingEnabled") as? Bool == true {
             arguments.append("--remote-debugging-port=9222")

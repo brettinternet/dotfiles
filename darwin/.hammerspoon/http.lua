@@ -1,8 +1,10 @@
 -- Useful for actions with Stream Deck or macropad (without hotkeys)
 -- localhost GET requests to run actions in background
 
+local browser = require("browser").bundleID
+
 local actions = {
-  ["/chrome"] = getLaunchFocusOrHideAndSwitchBackFn("org.chromium.Chromium"),
+  ["/chrome"] = getLaunchFocusOrHideAndSwitchBackFn(browser),
   ["/zed"] = getLaunchFocusOrHideAndSwitchBackFn("dev.zed.Zed"),
   ["/github"] = getLaunchFocusOrHideAndSwitchBackFn("com.github.GitHubClient"),
   ["/spotify"] = getLaunchFocusOrHideAndSwitchBackFn("com.spotify.client"),
@@ -15,9 +17,9 @@ local actions = {
   ["/discord"] = getLaunchFocusOrHideAndSwitchBackFn("com.hnc.Discord"),
   ["/messages"] = getLaunchFocusOrHideAndSwitchBackFn("com.apple.MobileSMS"),
   ["/homeassistant"] = function()
-    local success, windowId = openBrowserTab("org.chromium.Chromium", "home.gardiner")
+    local success, windowId = openBrowserTab(browser, "home.gardiner")
     if success and windowId then
-      hs.application.get("org.chromium.Chromium"):activate()
+      hs.application.get(browser):activate()
     else
       getLaunchFocusOrHideAndSwitchBackFn("io.robbie.HomeAssistant")()
     end
@@ -133,7 +135,6 @@ local actions = {
   end,
   -- ["/sleep"] = systemSleep,
   ["/outlook"] = function()
-    local browser = "org.chromium.Chromium"
     local success, windowId = openBrowserTab(browser, "outlook.office.com")
     if success and windowId then
       hs.application.get(browser):activate()

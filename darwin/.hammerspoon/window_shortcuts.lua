@@ -1,3 +1,4 @@
+local browser = require("browser").bundleID
 local M = {}
 
 function M.start()
@@ -32,9 +33,9 @@ function M.start()
 
       -- Preserve the existing native Fn-Control-R behavior when available.
       local app = hs.application.frontmostApplication()
-      -- Shell-launched Chromium profiles can have an invalid application PID.
+      -- Shell-launched browser profiles can have an invalid application PID.
       -- Their menus are inaccessible to Hammerspoon; leave native input intact.
-      if app and app:bundleID() == "org.chromium.Chromium" and app:pid() == -1 then
+      if app and app:bundleID() == browser and app:pid() == -1 then
         return false
       end
       local path = { "Window", "Move & Resize", command or "Return to Previous Size" }
