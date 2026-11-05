@@ -39,6 +39,7 @@ bindkey -e # emacs mode
 # Some terminals can send Shift+Enter as LF (^J) while plain Enter sends CR (^M).
 # Keep Enter submitting, but make Shift+Enter/Ctrl-J insert a literal newline.
 bindkey '^J' self-insert
+bindkey '^U' backward-kill-line # Mirror ^K (kill-line) instead of killing the whole line
 
 # Source: https://wiki.archlinux.org/index.php/Zsh#Key_bindings
 #
