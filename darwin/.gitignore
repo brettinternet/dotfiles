@@ -8,6 +8,7 @@ mise.local.toml
 backlog.local.yaml
 lefthook-local.*
 .lefthook-local.*
+hk.local.pkl
 .backlog/
 
 # AI
