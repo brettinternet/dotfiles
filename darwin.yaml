@@ -81,6 +81,10 @@
         '{"UserKeyMapping":[{"HIDKeyboardModifierMappingSrc":0x700000039,"HIDKeyboardModifierMappingDst":0x700000029}]}'
       description: Remap Caps Lock to Escape
       stdout: true
+    # The text-cursor input indicator can steal key focus for a background app, sending every
+    # keystroke to an invisible window (seen with Ghostty: ghostty-org/ghostty discussion 14892).
+    - command: defaults write -g TSMLanguageIndicatorEnabled -bool false
+      description: Disable text-cursor input indicator
     # Keep the login keychain unlocked once unlocked (no idle timeout, no lock on sleep).
     # A locked keychain or non-GUI session cannot be changed, so warn instead of failing.
     - command: |
