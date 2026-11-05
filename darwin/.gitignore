@@ -6,6 +6,8 @@ mise.local.toml
 .hum.yaml
 .worktreeinclude
 backlog.local.yaml
+lefthook-local.*
+.lefthook-local.*
 .backlog/
 
 # AI
