@@ -135,7 +135,12 @@
             exit 0
           fi
           stage="$(mktemp -d "${TMPDIR:-/tmp}/security-audit-skill.XXXXXX")"
-          gh api "repos/cloudflare/security-audit-skill/tarball/$rev" | tar -xz -C "$stage" --strip-components=1
+          if ! gh api "repos/cloudflare/security-audit-skill/tarball/$rev" > "$stage/skill.tar.gz"; then
+            echo 'gh download failed; skipping external skills'
+            trash "$stage"
+            exit 0
+          fi
+          tar -xzf "$stage/skill.tar.gz" -C "$stage" --strip-components=1
           # Explicit invocation only
           awk '{ print } /^name: security-audit$/ { print "disable-model-invocation: true" }' \
             "$stage/skills/security-audit/SKILL.md" > "$stage/SKILL.md"

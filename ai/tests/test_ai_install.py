@@ -282,7 +282,8 @@ class AiInstallTests(unittest.TestCase):
         self.assertEqual(["Read"], merged["permissions"]["allow"])
         self.assertEqual(preferred["effortLevel"], merged["effortLevel"])
         self.assertEqual(
-            {"PreToolUse": [{"matcher": "preserve"}]}, merged["hooks"]
+            {"PreToolUse": [{"matcher": "preserve"}], **preferred["hooks"]},
+            merged["hooks"],
         )
 
     def test_destructive_command_guards_are_installed_idempotently(self) -> None:
