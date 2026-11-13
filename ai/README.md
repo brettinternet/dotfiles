@@ -151,10 +151,8 @@ Continuing a completed pass from its focused pane ends the job successfully and 
 The Noon job stays running through retention; `AGENT_JOB_TIMEOUT` (default `3h`) must cover work plus
 retention. Daily jobs still wait for process exit and ignore retention.
 
-The Noon PR review job asks the agent to run `pr-review-log <url>` for each completed review, which
-appends to `.git/noon/reviews/YYYY-MM-DD.log` (local completion date), one link per line. The path is resolved
-from Git's common directory so worktrees share the repository's logs. This includes `WAIT` decisions
-but excludes skipped or failed reviews. Files are append-only and retained across days.
+Set `REVIEW_INSTRUCTIONS` in a repo's `.git/noon.d/pr-agents.env` to pass project-specific review
+guidance to the Noon PR review job.
 
 ## Herdr
 

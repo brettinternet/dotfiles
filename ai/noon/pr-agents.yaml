@@ -45,21 +45,15 @@ jobs:
     parallel: true
     jitter: "${REVIEW_JITTER:-15m}"
     env_file: .git/noon.d/pr-agents.env
-    env:
-      REVIEW_GUIDANCE: >-
-        After each completed PR review (APPROVE, COMMENT, or WAIT), log its canonical GitHub PR URL by running
-        pr-review-log <url> from this checkout before changing directories; never write the log file directly. Log APPROVE and
-        COMMENT only after GitHub confirms the review was posted; do not log skipped or failed reviews.
-        Keep previous daily logs. If logging fails, report it without reposting the GitHub review.
     run:
       - agent-job
       - launch
       - --pr
-      - /skill:pr-review {pr} -- {env:REVIEW_GUIDANCE}
+      - /skill:pr-review {pr} -- {env?:REVIEW_INSTRUCTIONS}
       - review
       - >-
         /skill:pr-review repo:{repo} archived:false draft:false updated:>={yesterday} author:{env:REVIEW_AUTHORS} {env?:REVIEW_SEARCH}
-        -- {env:REVIEW_GUIDANCE}
+        -- {env?:REVIEW_INSTRUCTIONS}
       - >-
         set -ef; base="draft:false updated:>={yesterday} ${REVIEW_SEARCH:-}"; if [ "$REVIEW_AUTHORS" = "*" ]; then searches=("$base -author:@me");
         else searches=(); for author in ${REVIEW_AUTHORS//,/ }; do searches+=("$base author:$author"); done; fi;
