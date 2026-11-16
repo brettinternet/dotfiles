@@ -1,4 +1,5 @@
 import Foundation
+import IOKit
 import IOKit.ps
 
 // The installing user owns this directory, so requests need no sudo. The daemon
@@ -9,20 +10,19 @@ let request = "/Library/Application Support/local.lid-awake/enabled"
 struct LidState {
     var wasOnAC: Bool?
     var needsReset = true
-    var applied = false
 
     // Returns the override to write, or nil when nothing should change.
-    mutating func next(onAC: Bool?, requested: Bool) -> Bool? {
+    mutating func next(onAC: Bool?, requested: Bool, applied: Bool?) -> Bool? {
         if let onAC {
             if wasOnAC == true && !onAC { needsReset = true }
             wasOnAC = onAC
         }
         if needsReset { return false }
+        guard let applied else { return nil }
         return requested == applied ? nil : requested
     }
 
     mutating func wrote(_ disabled: Bool) {
-        applied = disabled
         if !disabled { needsReset = false }
     }
 }
@@ -51,6 +51,14 @@ func setSleepDisabled(_ disabled: Bool) throws {
 
 func clearRequest() throws {
     guard unlink(request) == 0 || errno == ENOENT else { throw fail(String(cString: strerror(errno))) }
+}
+
+let rootDomain = IOServiceGetMatchingService(kIOMainPortDefault, IOServiceMatching("IOPMrootDomain"))
+
+func sleepDisabled() -> Bool? {
+    guard rootDomain != 0 else { return nil }
+    return IORegistryEntryCreateCFProperty(rootDomain, "SleepDisabled" as CFString, kCFAllocatorDefault, 0)?
+        .takeRetainedValue() as? Bool
 }
 
 func onACPower() -> Bool? {
@@ -87,7 +95,7 @@ struct LidAwake {
         source?.setEventHandler { wake.signal() }
         source?.resume()
         while true {
-            if let value = state.next(onAC: onACPower(), requested: access(request, F_OK) == 0) {
+            if let value = state.next(onAC: onACPower(), requested: access(request, F_OK) == 0, applied: sleepDisabled()) {
                 do {
                     // A reset consumes the request so it cannot re-enable the override.
                     if state.needsReset { try clearRequest() }
