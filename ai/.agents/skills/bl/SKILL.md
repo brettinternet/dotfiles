@@ -1,6 +1,6 @@
 ---
 name: bl
-description: Use the bl CLI or MCP for backlog operations in repositories with a backlog.yaml.
+description: Use the bl CLI or MCP for backlog operations in repositories with a backlog.yaml or backlog.local.yaml.
 ---
 
 # bl
@@ -16,7 +16,7 @@ Use `backlog-source-workflow` for source selection, dependencies, refinement, an
 
 ## Claims
 
-With `coordination` in `backlog.yaml`, `bl` owns Worklease claims; never call `worklease` directly for a `bl` item or derive alternate resource keys. A status change is never a claim on its own.
+With `coordination` in `backlog.yaml` or `backlog.local.yaml`, `bl` owns Worklease claims; never call `worklease` directly for a `bl` item or derive alternate resource keys. A status change is never a claim on its own.
 
 - Select one stable session per loop using the `worklease` skill's session rules, and pass it with `--session` on every claim-affecting call (`next --claim`, `claim`, `heartbeat`, `start`, `set status=`, `done`, `release`). Never switch sessions to get past an uncertain or held claim.
 - Select and claim new work with `bl next --claim --start --session S --json`; claim an explicitly assigned item with `bl claim ID --session S`. Plain `bl next` is read-only. On empty results, read `--explain` reasons instead of guessing readiness.

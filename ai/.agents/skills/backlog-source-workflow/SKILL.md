@@ -9,7 +9,7 @@ Keep the selected provider authoritative. The calling command supplies intent an
 
 Resolve explicit sources first. Without one, use repository configuration or ask only when several sources are equally plausible. Match items by stable ID before exact title; do not fuzzy-match ambiguity away.
 
-Use the provider's supported interface: use the `bl` skill when the repository has a `backlog.yaml` (including GitHub, Linear, or other sources configured there), preserve loose Markdown structure, use `gh` for GitHub Issues, and an authenticated first-party integration for other providers.
+Use the provider's supported interface: use the `bl` skill when the repository has a `backlog.yaml` or `backlog.local.yaml` (including GitHub, Linear, or other sources configured there), preserve loose Markdown structure, use `gh` for GitHub Issues, and an authenticated first-party integration for other providers.
 
 Read enough collection state to understand status, dependencies, active claims, and prior progress. Prerequisites precede dependents. Prefer resumable work in the earliest ready wave. Treat ordinary implementation difficulty and failing tests as work, not blockers.
 
