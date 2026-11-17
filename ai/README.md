@@ -3,7 +3,7 @@
 Shared config for Claude Code, Pi, Codex, and Amp. Off by default; select per machine in `~/.envrc`:
 
 ```sh
-export DOTFILES_AI_TOOLS=all   # or pi,claude,codex,amp | none
+export DOTFILES_AI_TOOLS=all   # or pi,claude,codex | none
 make ai                        # install/refresh; deselected tools are removed
 make uninstall-ai              # remove everything managed; local settings kept
 ```
@@ -18,7 +18,7 @@ Any selection installs the `dcg` destructive-command guard.
 | `manifest.yaml` | models, launchers, per-profile model assignments |
 | `agents/<role>.md` | subagent prompts → `~/.{pi/agent,claude,codex}/agents/` |
 | `.agents/skills/`, `.agents/commands/` | skills (commands render as skills) |
-| `pi/`, `claude/`, `amp/` | harness config |
+| `pi/`, `claude/` | harness config |
 | `project/` | project defaults (e.g. `.mcp.json`) |
 
 Generated files are outputs: edit the source here, then `make ai` or `ai-config generate`.

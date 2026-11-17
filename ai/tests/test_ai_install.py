@@ -447,7 +447,7 @@ class AiInstallTests(unittest.TestCase):
             "ai/.bin/ai-tool-enabled", "--validate", expected_code=2
         )
         self.assertIn("unknown tool: dsh", completed.stderr)
-        for retired in ("omp", "opencode"):
+        for retired in ("omp", "opencode", "amp"):
             self.environment["DOTFILES_AI_TOOLS"] = retired
             completed = self.run_command(
                 "ai/.bin/ai-tool-enabled", "--validate", expected_code=2
