@@ -117,8 +117,8 @@
       description: Install Herdr agent integrations and select the Pi lifecycle provider
       stdout: true
       stderr: true
-    - command: ai/.bin/install-dcg-guards
-      description: Enforce destructive-command guards for installed AI harnesses
+    - command: ai/.bin/retire-dcg-hooks
+      description: Remove retired dcg hooks from Claude and Codex
       stdout: true
       stderr: true
     - command: ai/.bin/install-agent-commands

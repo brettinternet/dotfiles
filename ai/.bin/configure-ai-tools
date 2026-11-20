@@ -294,7 +294,8 @@ def main() -> int:
     previous = previous_tools(previous_path)
 
     lines = [MARKER, f"# DOTFILES_AI_TOOLS={','.join(selected)}", "", "[tools]"]
-    if selected:
+    # Only Pi's dcg-guard extension uses dcg.
+    if "pi" in selected_set:
         lines.append(f'"{DCG_MISE_NAME}" = "latest"')
     for tool in selected:
         key, value = TOOLS[tool]
@@ -329,7 +330,9 @@ def main() -> int:
         if shim.is_symlink() and shim.resolve() == Path(mise).resolve():
             trash(shim)
     if selected:
-        install = [DCG_MISE_NAME, *[mise_name(tool) for tool in selected]]
+        install = [mise_name(tool) for tool in selected]
+        if "pi" in selected_set:
+            install.insert(0, DCG_MISE_NAME)
         subprocess.run([mise, "install", "--yes", *install], check=True)
     state.parent.mkdir(parents=True, exist_ok=True)
     write_atomic(state, f"{MARKER}\nDOTFILES_AI_TOOLS={','.join(selected)}\n")
