@@ -15,7 +15,7 @@ hk.local.pkl
 .rtk
 CLAUDE.local.md
 AGENTS.local.md
-.claude/settings.local.json
+**/.claude/settings.local.json
 .pi/mcp.json
 
 # System
