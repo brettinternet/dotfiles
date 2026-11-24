@@ -6,6 +6,9 @@
 # Loads ~/.envrc via direnv so delivery secrets such as APPRISE_URLS stay out of config.
 set -u
 
+# Report every failure to the heartbeat monitor, even later in a streak.
+! command -v noon-healthchecks >/dev/null || noon-healthchecks || :
+
 # Noon before 0.5 does not set the streak count; treat that as a first failure.
 streak=${NOON_CONSECUTIVE_FAILURES:-1}
 [[ $streak =~ ^[0-9]+$ ]] && ((streak <= 1)) || exit 0
