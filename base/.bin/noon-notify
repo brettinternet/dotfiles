@@ -23,5 +23,10 @@ sources=$(tell_ --json config 2>/dev/null | jq -r '.config.sources | length' 2>/
 
 message="noon ${NOON_JOB:-job} ${NOON_STATUS:-failed}. See noon logs ${NOON_RUN_ID:-}."
 [[ $# -eq 0 ]] || message+=" $*"
+# Noon appends hook output only after the hook exits, so the log still ends with the job's own output.
+if [[ -n ${NOON_LOG_FILE:-} && -r $NOON_LOG_FILE ]]; then
+  tail_lines=$(tail -c 4096 "$NOON_LOG_FILE" | sed '/^\[noon: on_[a-z_]* hook/,$d' | sed $'s/\e\\[[0-9;?]*[A-Za-z]//g' | grep -v '^[[:space:]]*$' | tail -n 3 | cut -c1-300)
+  [[ -z $tail_lines ]] || message+=$'\n'"$tail_lines"
+fi
 tell_ --timeout 10s notify --type failure "$message" >/dev/null 2>&1
 exit 0

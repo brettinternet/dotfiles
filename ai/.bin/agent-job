@@ -167,7 +167,7 @@ case $mode in
       --prompt "$prompt" -- "${native[@]}" | while IFS= read -r line; do
       printf '%s\n' "$line"
       [[ $line != *'"blocked": true'* ]] ||
-        NOON_CONSECUTIVE_FAILURES=1 NOON_STATUS="is waiting on you in $live" noon-notify
+        NOON_LOG_FILE='' NOON_CONSECUTIVE_FAILURES=1 NOON_STATUS="is waiting on you in $live" noon-notify
     done
     [[ -z $pr ]] || exit 0
     mkdir -p "${state%/*}"
