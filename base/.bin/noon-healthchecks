@@ -2,6 +2,7 @@
 # Noon hook: ping a Healthchecks check named HOST-PROJECT-JOB for every finished run.
 #   on_success / on_noop / on_failure: [noon-healthchecks]
 # Succeeded and noop runs ping the check; failed and timed_out runs ping its /fail endpoint.
+# A job without a matching check (HTTP 404) is unmonitored, so the checks choose what to watch.
 # The ping base (https://HOST/ping/PING_KEY) is a secret: it lives only in a private file,
 # never in config, Git, or output. Without that file this exits 0 so unmonitored machines stay quiet.
 set -eu
@@ -23,7 +24,11 @@ case "${NOON_STATUS:-}" in
 esac
 
 # -q first ignores ~/.curlrc; never print the URL or response body.
-curl -q --silent --fail --proto '=https' --connect-timeout 3 --max-time 8 \
-  --retry 2 --retry-delay 1 --retry-max-time 20 --output /dev/null \
-  --url "$base/$check$suffix" 2>/dev/null ||
-  { echo "noon-healthchecks: ping failed for $check" >&2; exit 1; }
+code=$(curl -q --silent --proto '=https' --connect-timeout 3 --max-time 8 \
+  --retry 2 --retry-delay 1 --retry-max-time 20 --output /dev/null --write-out '%{http_code}' \
+  --url "$base/$check$suffix" 2>/dev/null) || code=${code:-000}
+case "$code" in
+  2??) ;;
+  404) ;; # No such check: this job is deliberately unmonitored.
+  *) echo "noon-healthchecks: ping failed for $check (HTTP $code)" >&2; exit 1 ;;
+esac
