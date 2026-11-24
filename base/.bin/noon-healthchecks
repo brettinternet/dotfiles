@@ -1,0 +1,29 @@
+#!/bin/sh
+# Noon hook: ping a Healthchecks check named HOST-PROJECT-JOB for every finished run.
+#   on_success / on_noop / on_failure: [noon-healthchecks]
+# Succeeded and noop runs ping the check; failed and timed_out runs ping its /fail endpoint.
+# The ping base (https://HOST/ping/PING_KEY) is a secret: it lives only in a private file,
+# never in config, Git, or output. Without that file this exits 0 so unmonitored machines stay quiet.
+set -eu
+
+url_file=${NOON_HEALTHCHECKS_URL_FILE:-${XDG_CONFIG_HOME:-$HOME/.config}/noon/healthchecks.url}
+[ -r "$url_file" ] || exit 0
+base=$(sed -n '1{s/[[:space:]]*$//;s:/*$::;p;}' "$url_file")
+case "$base" in https://*/ping/*) ;; *) echo 'noon-healthchecks: invalid ping URL file' >&2; exit 1 ;; esac
+
+slug() { printf '%s' "$1" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9-' '-' | sed 's/--*/-/g;s/^-//;s/-$//'; }
+host=$(hostname -s)
+project=${NOON_PROJECT:?}
+check=$(slug "$host")-$(slug "${project##*/}")-$(slug "${NOON_JOB:?}")
+
+case "${NOON_STATUS:-}" in
+  succeeded | noop) suffix= ;;
+  failed | timed_out) suffix=/fail ;;
+  *) exit 0 ;;
+esac
+
+# -q first ignores ~/.curlrc; never print the URL or response body.
+curl -q --silent --fail --proto '=https' --connect-timeout 3 --max-time 8 \
+  --retry 2 --retry-delay 1 --retry-max-time 20 --output /dev/null \
+  --url "$base/$check$suffix" 2>/dev/null ||
+  { echo "noon-healthchecks: ping failed for $check" >&2; exit 1; }
